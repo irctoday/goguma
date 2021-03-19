@@ -10,17 +10,69 @@ class Goguma extends StatelessWidget {
 		return MaterialApp(
 			title: 'Goguma',
 			theme: ThemeData(primarySwatch: Colors.indigo),
-			home: BufferListPage(),
+			//home: BufferListPage(),
+			home: ConnectPage(),
 			debugShowCheckedModeBanner: false,
 		);
 	}
 }
 
-class BufferListPage extends StatefulWidget {
-	BufferListPage({Key? key}) : super(key: key);
+class ConnectPage extends StatefulWidget {
+	@override
+	ConnectPageState createState() => ConnectPageState();
+}
+
+class ConnectPageState extends State<ConnectPage> {
+	final formKey = GlobalKey<FormState>();
+
+	void submit() {
+		Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+			return BufferListPage();
+		}));
+	}
 
 	@override
-	_BufferListPageState createState() => _BufferListPageState();
+	Widget build(BuildContext context) {
+		final focusNode = FocusScope.of(context);
+		return Scaffold(
+			appBar: AppBar(
+				title: Text('Goguma'),
+			),
+			body: Form(
+				key: formKey,
+				child: Container(padding: EdgeInsets.all(10), child: Column(children: [
+					TextFormField(
+						keyboardType: TextInputType.url,
+						decoration: InputDecoration(labelText: "Server"),
+						autofocus: true,
+						onEditingComplete: () => focusNode.nextFocus(),
+					),
+					TextFormField(
+						decoration: InputDecoration(labelText: "Username"),
+						onEditingComplete: () => focusNode.nextFocus(),
+					),
+					TextFormField(
+						obscureText: true,
+						decoration: InputDecoration(labelText: "Password"),
+						onFieldSubmitted: (_) {
+							focusNode.unfocus();
+							submit();
+						},
+					),
+					SizedBox(height: 20),
+					FloatingActionButton.extended(
+						onPressed: submit,
+						label: Text('Connect'),
+					),
+				])),
+			),
+		);
+	}
+}
+
+class BufferListPage extends StatefulWidget {
+	@override
+	BufferListPageState createState() => BufferListPageState();
 }
 
 class Buffer {
@@ -41,7 +93,7 @@ String initials(String name) {
 	return '';
 }
 
-class _BufferListPageState extends State<BufferListPage> {
+class BufferListPageState extends State<BufferListPage> {
 	List<Buffer> buffers = [
 		Buffer(title: '#dri-devel', subtitle: '<ajax> nothing involved with X should ever be unable to find a bar'),
 		Buffer(title: '#wayland', subtitle: 'https://wayland.freedesktop.org | Discussion about the Wayland protocol and its implementations, plus libinput'),
@@ -136,10 +188,8 @@ class _BufferListPageState extends State<BufferListPage> {
 }
 
 class BufferPage extends StatefulWidget {
-	BufferPage({Key? key}) : super(key: key);
-
 	@override
-	_BufferPageState createState() => _BufferPageState();
+	BufferPageState createState() => BufferPageState();
 }
 
 class Message {
@@ -149,7 +199,7 @@ class Message {
 	Message({ required this.sender, required this.body });
 }
 
-class _BufferPageState extends State<BufferPage> {
+class BufferPageState extends State<BufferPage> {
 	List<Message> messages = [
 		Message(sender: 'romangg', body: 'I think it would be a nice way to push improvements for multi-seat'),
 		Message(sender: 'emersion', body: 'just need to make sure we didn\'t miss any use-case'),
