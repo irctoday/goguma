@@ -1,34 +1,93 @@
 import 'package:flutter/material.dart';
 
 void main() {
-	runApp(Goguma());
+	runApp(GogumaApp());
 }
 
-class Goguma extends StatelessWidget {
+class GogumaApp extends StatelessWidget {
 	@override
 	Widget build(BuildContext context) {
 		return MaterialApp(
 			title: 'Goguma',
 			theme: ThemeData(primarySwatch: Colors.indigo),
-			//home: BufferListPage(),
-			home: ConnectPage(),
+			home: Goguma(),
 			debugShowCheckedModeBanner: false,
 		);
 	}
 }
 
+class Goguma extends StatelessWidget {
+	ConnectParams? connectParams;
+
+	Goguma() {
+		// TODO: hardcoded for debugging
+		connect(ConnectParams(host: '127.0.0.1', port: 6667, nick: 'emersion'));
+	}
+
+	connect(ConnectParams params) {
+		connectParams = params;
+	}
+
+	@override
+	Widget build(BuildContext context) {
+		if (connectParams == null) {
+			return ConnectPage(onSubmit: (params) {
+				connect(params);
+
+				Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+					return BufferListPage();
+				}));
+			});
+		} else {
+			return BufferListPage();
+		}
+	}
+}
+
+class ConnectParams {
+	String host;
+	int port;
+	String nick;
+	String? pass;
+
+	ConnectParams({ required this.host, this.port = 6697, required this.nick, this.pass });
+}
+
+typedef ConnectParamsCallback(ConnectParams);
+
 class ConnectPage extends StatefulWidget {
+	final ConnectParamsCallback? onSubmit;
+
+	ConnectPage({ Key? key, this.onSubmit }) : super(key: key);
+
 	@override
 	ConnectPageState createState() => ConnectPageState();
 }
 
 class ConnectPageState extends State<ConnectPage> {
 	final formKey = GlobalKey<FormState>();
+	final serverController = TextEditingController();
+	final usernameController = TextEditingController();
+	final passwordController = TextEditingController();
 
 	void submit() {
-		Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-			return BufferListPage();
-		}));
+		if (!formKey.currentState!.validate()) {
+			return;
+		}
+
+		widget.onSubmit?.call(ConnectParams(
+			host: serverController.text,
+			nick: usernameController.text,
+			pass: passwordController.text,
+		));
+	}
+
+	@override
+	void dispose() {
+		serverController.dispose();
+		usernameController.dispose();
+		passwordController.dispose();
+		super.dispose();
 	}
 
 	@override
@@ -43,17 +102,26 @@ class ConnectPageState extends State<ConnectPage> {
 				child: Container(padding: EdgeInsets.all(10), child: Column(children: [
 					TextFormField(
 						keyboardType: TextInputType.url,
-						decoration: InputDecoration(labelText: "Server"),
+						decoration: InputDecoration(labelText: 'Server'),
+						controller: serverController,
 						autofocus: true,
 						onEditingComplete: () => focusNode.nextFocus(),
+						validator: (value) {
+							return (value!.isEmpty) ? 'Required' : null;
+						},
 					),
 					TextFormField(
-						decoration: InputDecoration(labelText: "Username"),
+						decoration: InputDecoration(labelText: 'Username'),
+						controller: usernameController,
 						onEditingComplete: () => focusNode.nextFocus(),
+						validator: (value) {
+							return (value!.isEmpty) ? 'Required' : null;
+						},
 					),
 					TextFormField(
 						obscureText: true,
-						decoration: InputDecoration(labelText: "Password"),
+						decoration: InputDecoration(labelText: 'Password'),
+						controller: passwordController,
 						onFieldSubmitted: (_) {
 							focusNode.unfocus();
 							submit();
