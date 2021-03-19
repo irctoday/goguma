@@ -103,6 +103,12 @@ class BufferListPageState extends State<BufferListPage> {
 	TextEditingController searchController = TextEditingController();
 	List<Buffer> filteredBuffers = [];
 
+	@override
+	void dispose() {
+		searchController.dispose();
+		super.dispose();
+	}
+
 	void search(String query) {
 		query = query.toLowerCase();
 		setState(() {
