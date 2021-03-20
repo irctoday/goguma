@@ -67,11 +67,6 @@ class GogumaState extends State<Goguma> {
 	}
 
 	@override
-	void dispose() {
-		super.dispose();
-	}
-
-	@override
 	Widget build(BuildContext context) {
 		return ConnectPage(onSubmit: (params) {
 			SharedPreferences.getInstance().then((prefs) {
