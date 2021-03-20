@@ -30,7 +30,7 @@ class BufferListModel extends ChangeNotifier {
 }
 
 class BufferModel extends ChangeNotifier {
-	String name;
+	final String name;
 	String? _subtitle;
 
 	List<IRCMessage> _messages = [];
