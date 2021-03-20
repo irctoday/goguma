@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'client.dart';
+import 'irc.dart';
 
 void main() {
 	runApp(MultiProvider(
