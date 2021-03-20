@@ -69,7 +69,7 @@ class GogumaState extends State<Goguma> {
 				break;
 			case 'PRIVMSG':
 				var target = msg.params[0];
-				bufferList.getByName(target)?.messages.add(msg);
+				bufferList.getByName(target)?.addMessage(msg);
 				break;
 			}
 		});

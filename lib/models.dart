@@ -33,7 +33,9 @@ class BufferModel extends ChangeNotifier {
 	String name;
 	String? _subtitle;
 
-	final MessageListModel messages = MessageListModel();
+	List<IRCMessage> _messages = [];
+
+	UnmodifiableListView<IRCMessage> get messages => UnmodifiableListView(_messages);
 
 	BufferModel({ required this.name, String? subtitle }) : _subtitle = subtitle;
 
@@ -43,14 +45,8 @@ class BufferModel extends ChangeNotifier {
 		_subtitle = subtitle;
 		notifyListeners();
 	}
-}
 
-class MessageListModel extends ChangeNotifier {
-	List<IRCMessage> _messages = [];
-
-	UnmodifiableListView<IRCMessage> get list => UnmodifiableListView(_messages);
-
-	void add(IRCMessage msg) {
+	void addMessage(IRCMessage msg) {
 		// TODO: insert at correct position
 		_messages.add(msg);
 		notifyListeners();

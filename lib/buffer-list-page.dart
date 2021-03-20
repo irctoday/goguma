@@ -139,7 +139,6 @@ class BufferItem extends StatelessWidget {
 						return MultiProvider(
 							providers: [
 								ChangeNotifierProvider<BufferModel>.value(value: buf),
-								ChangeNotifierProvider<MessageListModel>.value(value: buf.messages),
 								Provider<Client>.value(value: client),
 							],
 							child: BufferPage(),

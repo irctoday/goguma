@@ -21,7 +21,7 @@ class BufferPageState extends State<BufferPage> {
 			var client = context.read<Client>();
 			var msg = IRCMessage('PRIVMSG', params: [buffer.name, composerController.text]);
 			client.send(msg);
-			buffer.messages.add(IRCMessage(msg.cmd, params: msg.params, prefix: IRCPrefix(client.nick)));
+			buffer.addMessage(IRCMessage(msg.cmd, params: msg.params, prefix: IRCPrefix(client.nick)));
 		}
 		composerFormKey.currentState!.reset();
 		composerFocusNode.requestFocus();
@@ -37,7 +37,7 @@ class BufferPageState extends State<BufferPage> {
 	Widget build(BuildContext context) {
 		var client = context.read<Client>();
 		var buffer = context.watch<BufferModel>();
-		var messages = context.watch<MessageListModel>().list;
+		var messages = buffer.messages;
 		return Scaffold(
 			appBar: AppBar(
 				title: Column(
