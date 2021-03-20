@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'buffer-list-page.dart';
 import 'client.dart';
+import 'client-controller.dart';
 import 'connect-page.dart';
 import 'irc.dart';
 import 'models.dart';
 
 void main() {
+	var bufferList = BufferListModel();
 	runApp(MultiProvider(
 		providers: [
-			ChangeNotifierProvider(create: (context) => BufferListModel()),
+			Provider<ClientController>.value(value: ClientController(bufferList)),
+			ChangeNotifierProvider<BufferListModel>.value(value: bufferList),
 		],
 		child: GogumaApp(),
 	));
@@ -34,67 +38,59 @@ class Goguma extends StatefulWidget {
 }
 
 class GogumaState extends State<Goguma> {
-	ConnectParams? connectParams;
-	ServerModel? server;
-	Client? client;
+	@override
+	void initState() {
+		super.initState();
+
+		// TODO: wait for the prefs to be loaded before rendering connect page
+		SharedPreferences.getInstance().then((prefs) {
+			if (!prefs.containsKey('server.host')) {
+				return;
+			}
+
+			context.read<ClientController>().connect(ConnectParams(
+				host: prefs.getString('server.host')!,
+				port: prefs.getInt('server.port')!,
+				tls: prefs.getBool('server.tls')!,
+				nick: prefs.getString('server.nick')!,
+				pass: prefs.getString('server.pass'),
+			));
+
+			Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+				return BufferListPage();
+			}));
+		});
+	}
 
 	connect(ConnectParams params) {
-		connectParams = params;
-		server = ServerModel();
-		client = Client(params: params);
-
-		client!.messages.listen((msg) {
-			var bufferList = context.read<BufferListModel>();
-			switch (msg.cmd) {
-			case 'JOIN':
-				if (msg.prefix?.name != client!.nick) {
-					break;
-				}
-				bufferList.add(BufferModel(name: msg.params[0], server: server!));
-				break;
-			case RPL_TOPIC:
-				var channel = msg.params[1];
-				var topic = msg.params[2];
-				bufferList.get(channel, server!)?.subtitle = topic;
-				break;
-			case RPL_NOTOPIC:
-				var channel = msg.params[1];
-				bufferList.get(channel, server!)?.subtitle = null;
-				break;
-			case 'TOPIC':
-				var channel = msg.params[0];
-				String? topic = null;
-				if (msg.params.length > 1) {
-					topic = msg.params[1];
-				}
-				bufferList.get(channel, server!)?.subtitle = topic;
-				break;
-			case 'PRIVMSG':
-				var target = msg.params[0];
-				bufferList.get(target, server!)?.addMessage(msg);
-				break;
-			}
-		});
+		context.read<ClientController>().connect(params);
 	}
 
 	@override
 	void dispose() {
-		client?.disconnect();
 		super.dispose();
 	}
 
 	@override
 	Widget build(BuildContext context) {
-		if (connectParams == null) {
-			return ConnectPage(onSubmit: (params) {
-				connect(params);
-
-				Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-					return BufferListPage();
-				}));
+		return ConnectPage(onSubmit: (params) {
+			SharedPreferences.getInstance().then((prefs) {
+				prefs.setString('server.host', params.host);
+				prefs.setInt('server.port', params.port);
+				prefs.setBool('server.tls', params.tls);
+				prefs.setString('server.nick', params.nick);
+				if (params.pass != null) {
+					prefs.setString('server.pass', params.pass!);
+				} else {
+					prefs.remove('server.pass');
+				}
 			});
-		} else {
-			return Provider<Client>.value(value: client!, child: BufferListPage());
-		}
+
+			connect(params);
+
+			Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+				return BufferListPage();
+			}));
+		});
 	}
 }

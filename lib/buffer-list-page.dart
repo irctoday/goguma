@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'buffer-page.dart';
 import 'client.dart';
+import 'client-controller.dart';
 import 'irc.dart';
 import 'join-dialog.dart';
 import 'models.dart';
@@ -65,7 +66,9 @@ class BufferListPageState extends State<BufferListPage> {
 	void showJoinDialog(BuildContext context) {
 		showDialog(context: context, builder: (dialogContext) {
 			return JoinDialog(onSubmit: (channel) {
-				context.read<Client>().send(IRCMessage('JOIN', params: [channel]));
+				// TODO: ask the user which server to use
+				var client = context.read<ClientController>().get(ServerModel());
+				client.send(IRCMessage('JOIN', params: [channel]));
 			});
 		});
 	}
@@ -134,7 +137,7 @@ class BufferItem extends StatelessWidget {
 				title: Text(buf.name, overflow: TextOverflow.ellipsis),
 				subtitle: buf.subtitle != null ? Text(buf.subtitle!, overflow: TextOverflow.ellipsis) : null,
 				onTap: () {
-					var client = context.read<Client>();
+					var client = context.read<ClientController>().get(buf.server);
 					Navigator.push(context, MaterialPageRoute(builder: (context) {
 						return MultiProvider(
 							providers: [

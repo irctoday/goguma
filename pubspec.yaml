@@ -12,6 +12,7 @@ dependencies:
   flutter:
     sdk: flutter
   provider: '^5.0.0'
+  shared_preferences: '^2.0.5'
 
 flutter:
   uses-material-design: true
