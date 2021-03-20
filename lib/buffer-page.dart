@@ -68,9 +68,10 @@ class BufferPageState extends State<BufferPage> {
 			),
 			body: Column(children: [
 				Expanded(child: ListView.builder(
+					reverse: true,
 					itemCount: messages.length,
 					itemBuilder: (context, index) {
-						var msg = messages[index];
+						var msg = messages[messages.length - index - 1];
 						assert(msg.cmd == 'PRIVMSG');
 
 						var sender = msg.prefix!.name;
@@ -90,9 +91,9 @@ class BufferPageState extends State<BufferPage> {
 						}
 
 						const margin = 16.0;
-						var marginTop = margin;
+						var marginBottom = margin;
 						if (index > 0) {
-							marginTop = 0.0;
+							marginBottom = 0.0;
 						}
 
 						return Align(
@@ -103,7 +104,7 @@ class BufferPageState extends State<BufferPage> {
 									color: boxColor,
 								),
 								padding: EdgeInsets.all(10),
-								margin: EdgeInsets.only(left: margin, right: margin, top: marginTop, bottom: margin),
+								margin: EdgeInsets.only(left: margin, right: margin, top: margin, bottom: marginBottom),
 								child: RichText(text: TextSpan(
 									children: [
 										TextSpan(text: sender + '\n', style: TextStyle(fontWeight: FontWeight.bold)),
