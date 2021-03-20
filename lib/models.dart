@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 
 import 'irc.dart';
 
+class ServerModel {}
+
 class BufferListModel extends ChangeNotifier {
 	List<BufferModel> _buffers = [];
 
@@ -31,13 +33,14 @@ class BufferListModel extends ChangeNotifier {
 
 class BufferModel extends ChangeNotifier {
 	final String name;
+	final ServerModel server;
 	String? _subtitle;
 
 	List<IRCMessage> _messages = [];
 
 	UnmodifiableListView<IRCMessage> get messages => UnmodifiableListView(_messages);
 
-	BufferModel({ required this.name, String? subtitle }) : _subtitle = subtitle;
+	BufferModel({ required this.name, required this.server, String? subtitle }) : _subtitle = subtitle;
 
 	String? get subtitle => _subtitle;
 

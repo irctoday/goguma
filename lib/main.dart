@@ -35,10 +35,12 @@ class Goguma extends StatefulWidget {
 
 class GogumaState extends State<Goguma> {
 	ConnectParams? connectParams;
+	ServerModel? server;
 	Client? client;
 
 	connect(ConnectParams params) {
 		connectParams = params;
+		server = ServerModel();
 		client = Client(params: params);
 
 		client!.messages.listen((msg) {
@@ -48,7 +50,7 @@ class GogumaState extends State<Goguma> {
 				if (msg.prefix?.name != client!.nick) {
 					break;
 				}
-				bufferList.add(BufferModel(name: msg.params[0]));
+				bufferList.add(BufferModel(name: msg.params[0], server: server!));
 				break;
 			case RPL_TOPIC:
 				var channel = msg.params[1];
