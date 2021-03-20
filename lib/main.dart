@@ -51,13 +51,21 @@ class GogumaState extends State<Goguma> {
 				bufferList.add(BufferItemModel(name: msg.params[0]));
 				break;
 			case RPL_TOPIC:
-				var name = msg.params[1];
+				var channel = msg.params[1];
 				var topic = msg.params[2];
-				bufferList.getByName(name)?.subtitle = topic;
+				bufferList.getByName(channel)?.subtitle = topic;
 				break;
 			case RPL_NOTOPIC:
-				var name = msg.params[1];
-				bufferList.getByName(name)?.subtitle = null;
+				var channel = msg.params[1];
+				bufferList.getByName(channel)?.subtitle = null;
+				break;
+			case 'TOPIC':
+				var channel = msg.params[0];
+				String? topic = null;
+				if (msg.params.length > 1) {
+					topic = msg.params[1];
+				}
+				bufferList.getByName(channel)?.subtitle = topic;
 				break;
 			}
 		});
@@ -80,7 +88,7 @@ class GogumaState extends State<Goguma> {
 				}));
 			});
 		} else {
-			return Provider.value(value: client!, child: BufferListPage());
+			return Provider<Client>.value(value: client!, child: BufferListPage());
 		}
 	}
 }
