@@ -67,6 +67,10 @@ class GogumaState extends State<Goguma> {
 				}
 				bufferList.getByName(channel)?.subtitle = topic;
 				break;
+			case 'PRIVMSG':
+				var target = msg.params[0];
+				bufferList.getByName(target)?.messages.add(msg);
+				break;
 			}
 		});
 	}
