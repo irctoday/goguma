@@ -1,7 +1,16 @@
+import 'dart:collection';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'client.dart';
 
 void main() {
-	runApp(GogumaApp());
+	runApp(MultiProvider(
+		providers: [
+			ChangeNotifierProvider(create: (context) => BufferListModel()),
+		],
+		child: GogumaApp(),
+	));
 }
 
 class GogumaApp extends StatelessWidget {
@@ -16,16 +25,36 @@ class GogumaApp extends StatelessWidget {
 	}
 }
 
-class Goguma extends StatelessWidget {
-	ConnectParams? connectParams;
+class Goguma extends StatefulWidget {
+	@override
+	GogumaState createState() => GogumaState();
+}
 
-	Goguma() {
-		// TODO: hardcoded for debugging
-		connect(ConnectParams(host: '127.0.0.1', port: 6667, nick: 'emersion'));
-	}
+class GogumaState extends State<Goguma> {
+	ConnectParams? connectParams;
+	Client? client;
 
 	connect(ConnectParams params) {
 		connectParams = params;
+		client = Client(params: params);
+
+		client!.messages.listen((msg) {
+			switch (msg.cmd) {
+			case 'JOIN':
+				if (msg.prefix?.name != client!.nick) {
+					break;
+				}
+				var bufferList = Provider.of<BufferListModel>(context, listen: false);
+				bufferList.add(Buffer(title: msg.params[0]));
+				break;
+			}
+		});
+	}
+
+	@override
+	void dispose() {
+		client?.disconnect();
+		super.dispose();
 	}
 
 	@override
@@ -44,13 +73,15 @@ class Goguma extends StatelessWidget {
 	}
 }
 
-class ConnectParams {
-	String host;
-	int port;
-	String nick;
-	String? pass;
+class BufferListModel extends ChangeNotifier {
+	List<Buffer> _buffers = [];
 
-	ConnectParams({ required this.host, this.port = 6697, required this.nick, this.pass });
+	UnmodifiableListView<Buffer> get buffers => UnmodifiableListView(_buffers);
+
+	void add(Buffer buf) {
+		_buffers.add(buf);
+		notifyListeners();
+	}
 }
 
 typedef ConnectParamsCallback(ConnectParams);
@@ -145,9 +176,9 @@ class BufferListPage extends StatefulWidget {
 
 class Buffer {
 	String title;
-	String subtitle;
+	String? subtitle;
 
-	Buffer({ required this.title, required this.subtitle });
+	Buffer({ required this.title, this.subtitle });
 }
 
 String initials(String name) {
@@ -162,14 +193,8 @@ String initials(String name) {
 }
 
 class BufferListPageState extends State<BufferListPage> {
-	List<Buffer> buffers = [
-		Buffer(title: '#dri-devel', subtitle: '<ajax> nothing involved with X should ever be unable to find a bar'),
-		Buffer(title: '#wayland', subtitle: 'https://wayland.freedesktop.org | Discussion about the Wayland protocol and its implementations, plus libinput'),
-	];
-
-	bool searching = false;
+	String? searchQuery;
 	TextEditingController searchController = TextEditingController();
-	List<Buffer> filteredBuffers = [];
 
 	@override
 	void dispose() {
@@ -178,26 +203,18 @@ class BufferListPageState extends State<BufferListPage> {
 	}
 
 	void search(String query) {
-		query = query.toLowerCase();
 		setState(() {
-			filteredBuffers.clear();
-			for (var buf in buffers) {
-				if (buf.title.toLowerCase().contains(query) || buf.subtitle.toLowerCase().contains(query)) {
-					filteredBuffers.add(buf);
-				}
-			}
+			searchQuery = query.toLowerCase();
 		});
 	}
 
 	void startSearch() {
 		ModalRoute.of(context)?.addLocalHistoryEntry(LocalHistoryEntry(onRemove: () {
-			searching = false;
-			filteredBuffers.clear();
+			setState(() {
+				searchQuery = null;
+			});
 			searchController.text = '';
 		}));
-		setState(() {
-			searching = true;
-		});
 		search('');
 	}
 
@@ -216,16 +233,23 @@ class BufferListPageState extends State<BufferListPage> {
 
 	@override
 	Widget build(BuildContext context) {
-		var bufs = buffers;
-		if (searching) {
-			bufs = filteredBuffers;
+		List<Buffer> buffers = context.watch<BufferListModel>().buffers;
+		if (searchQuery != null) {
+			var query = searchQuery!;
+			List<Buffer> filtered = [];
+			for (var buf in buffers) {
+				if (buf.title.toLowerCase().contains(query) || (buf.subtitle ?? '').toLowerCase().contains(query)) {
+					filtered.add(buf);
+				}
+			}
+			buffers = filtered;
 		}
 
 		return Scaffold(
 			appBar: AppBar(
-				leading: searching ? CloseButton() : null,
-				title: searching ? buildSearchField(context) : Text('Goguma'),
-				actions: searching ? null : [
+				leading: searchQuery != null ? CloseButton() : null,
+				title: searchQuery != null ? buildSearchField(context) : Text('Goguma'),
+				actions: searchQuery != null ? null : [
 					IconButton(
 						tooltip: 'Search',
 						icon: const Icon(Icons.search),
@@ -242,13 +266,13 @@ class BufferListPageState extends State<BufferListPage> {
 				],
 			),
 			body: ListView.builder(
-				itemCount: bufs.length,
+				itemCount: buffers.length,
 				itemBuilder: (context, index) {
-					Buffer buf = bufs[index];
+					Buffer buf = buffers[index];
 					return ListTile(
 						leading: CircleAvatar(child: Text(initials(buf.title))),
 						title: Text(buf.title, overflow: TextOverflow.ellipsis),
-						subtitle: Text(buf.subtitle, overflow: TextOverflow.ellipsis),
+						subtitle: buf.subtitle != null ? Text(buf.subtitle!, overflow: TextOverflow.ellipsis) : null,
 						onTap: () {
 							Navigator.push(context, MaterialPageRoute(builder: (context) {
 								return BufferPage();
