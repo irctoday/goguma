@@ -5,29 +5,44 @@ import 'irc.dart';
 
 class ServerModel {}
 
-class BufferListModel extends ChangeNotifier {
-	List<BufferModel> _buffers = [];
+class BufferKey {
+	final String name;
+	final ServerModel server;
 
-	UnmodifiableListView<BufferModel> get buffers => UnmodifiableListView(_buffers);
+	BufferKey(this.name, this.server);
+
+	@override
+	bool operator ==(Object other) {
+		if (identical(this, other)) {
+			return true;
+		}
+		return other is BufferKey && name == other.name && server == other.server;
+	}
+
+	@override
+	int get hashCode {
+		return hashValues(name, server);
+	}
+}
+
+class BufferListModel extends ChangeNotifier {
+	Map<BufferKey, BufferModel> _buffers = Map();
+
+	UnmodifiableListView<BufferModel> get buffers => UnmodifiableListView(_buffers.values);
 
 	@override
 	void dispose() {
-		_buffers.forEach((buf) => buf.dispose());
+		_buffers.values.forEach((buf) => buf.dispose());
 		super.dispose();
 	}
 
 	void add(BufferModel buf) {
-		_buffers.add(buf);
+		_buffers[BufferKey(buf.name, buf.server)] = buf;
 		notifyListeners();
 	}
 
-	BufferModel? getByName(String name) {
-		for (var item in _buffers) {
-			if (item.name == name) {
-				return item;
-			}
-		}
-		return null;
+	BufferModel? get(String name, ServerModel server) {
+		return _buffers[BufferKey(name, server)];
 	}
 }
 

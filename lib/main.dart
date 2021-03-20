@@ -55,11 +55,11 @@ class GogumaState extends State<Goguma> {
 			case RPL_TOPIC:
 				var channel = msg.params[1];
 				var topic = msg.params[2];
-				bufferList.getByName(channel)?.subtitle = topic;
+				bufferList.get(channel, server!)?.subtitle = topic;
 				break;
 			case RPL_NOTOPIC:
 				var channel = msg.params[1];
-				bufferList.getByName(channel)?.subtitle = null;
+				bufferList.get(channel, server!)?.subtitle = null;
 				break;
 			case 'TOPIC':
 				var channel = msg.params[0];
@@ -67,11 +67,11 @@ class GogumaState extends State<Goguma> {
 				if (msg.params.length > 1) {
 					topic = msg.params[1];
 				}
-				bufferList.getByName(channel)?.subtitle = topic;
+				bufferList.get(channel, server!)?.subtitle = topic;
 				break;
 			case 'PRIVMSG':
 				var target = msg.params[0];
-				bufferList.getByName(target)?.addMessage(msg);
+				bufferList.get(target, server!)?.addMessage(msg);
 				break;
 			}
 		});
