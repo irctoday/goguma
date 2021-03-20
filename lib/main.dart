@@ -62,10 +62,6 @@ class GogumaState extends State<Goguma> {
 		});
 	}
 
-	connect(ConnectParams params) {
-		context.read<ClientController>().connect(params);
-	}
-
 	@override
 	Widget build(BuildContext context) {
 		return ConnectPage(onSubmit: (params) {
@@ -81,7 +77,7 @@ class GogumaState extends State<Goguma> {
 				}
 			});
 
-			connect(params);
+			context.read<ClientController>().connect(params);
 
 			Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
 				return BufferListPage();
