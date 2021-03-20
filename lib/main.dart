@@ -42,7 +42,7 @@ class GogumaState extends State<Goguma> {
 		client = Client(params: params);
 
 		client!.messages.listen((msg) {
-			var bufferList = Provider.of<BufferListModel>(context, listen: false);
+			var bufferList = context.read<BufferListModel>();
 			switch (msg.cmd) {
 			case 'JOIN':
 				if (msg.prefix?.name != client!.nick) {
