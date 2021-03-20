@@ -24,8 +24,11 @@ class ConnectPageState extends State<ConnectPage> {
 			return;
 		}
 
+		var uri = Uri.parse('irc://' + serverController.text);
+
 		widget.onSubmit?.call(ConnectParams(
-			host: serverController.text,
+			host: uri.host,
+			port: uri.hasPort ? uri.port : 6697,
 			nick: usernameController.text,
 			pass: passwordController.text,
 		));
