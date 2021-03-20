@@ -261,8 +261,15 @@ class BufferItem extends StatelessWidget {
 				title: Text(buf.name, overflow: TextOverflow.ellipsis),
 				subtitle: buf.subtitle != null ? Text(buf.subtitle!, overflow: TextOverflow.ellipsis) : null,
 				onTap: () {
+					var client = context.read<Client>();
 					Navigator.push(context, MaterialPageRoute(builder: (context) {
-						return BufferPage();
+						return MultiProvider(
+							providers: [
+								ChangeNotifierProvider<BufferItemModel>.value(value: buf),
+								Provider<Client>.value(value: client),
+							],
+							child: BufferPage(),
+						);
 					}));
 				},
 			);
@@ -311,22 +318,30 @@ class BufferPageState extends State<BufferPage> {
 
 	@override
 	Widget build(BuildContext context) {
+		BufferItemModel buffer = context.watch<BufferItemModel>();
 		return Scaffold(
 			appBar: AppBar(
 				title: Column(
 					mainAxisAlignment: MainAxisAlignment.center,
 					crossAxisAlignment: CrossAxisAlignment.start,
 					children: [
-						Text('#wayland'),
-						Text('https://wayland.freedesktop.org | Discussion about the Wayland protocol and its implementations, plus libinput', style: TextStyle(fontSize: 12.0)),
+						Text(buffer.name),
+						Text(buffer.subtitle ?? "", style: TextStyle(fontSize: 12.0)),
 					],
 				),
 				actions: [
-					PopupMenuButton<Text>(
+					PopupMenuButton<String>(
+						onSelected: (key) {
+							switch (key) {
+							case 'part':
+								context.read<Client>().send(IRCMessage('PART', params: [buffer.name]));
+								break;
+							}
+						},
 						itemBuilder: (context) {
 							return [
-								PopupMenuItem(child: Text('Details')),
-								PopupMenuItem(child: Text('Leave')),
+								PopupMenuItem(child: Text('Details'), value: 'details'),
+								PopupMenuItem(child: Text('Leave'), value: 'part'),
 							];
 						},
 					),
