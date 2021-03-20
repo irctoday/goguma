@@ -48,7 +48,7 @@ class GogumaState extends State<Goguma> {
 				if (msg.prefix?.name != client!.nick) {
 					break;
 				}
-				bufferList.add(BufferItemModel(name: msg.params[0]));
+				bufferList.add(BufferModel(name: msg.params[0]));
 				break;
 			case RPL_TOPIC:
 				var channel = msg.params[1];
@@ -94,9 +94,9 @@ class GogumaState extends State<Goguma> {
 }
 
 class BufferListModel extends ChangeNotifier {
-	List<BufferItemModel> _buffers = [];
+	List<BufferModel> _buffers = [];
 
-	UnmodifiableListView<BufferItemModel> get buffers => UnmodifiableListView(_buffers);
+	UnmodifiableListView<BufferModel> get buffers => UnmodifiableListView(_buffers);
 
 	@override
 	void dispose() {
@@ -104,12 +104,12 @@ class BufferListModel extends ChangeNotifier {
 		super.dispose();
 	}
 
-	void add(BufferItemModel buf) {
+	void add(BufferModel buf) {
 		_buffers.add(buf);
 		notifyListeners();
 	}
 
-	BufferItemModel? getByName(String name) {
+	BufferModel? getByName(String name) {
 		for (var item in _buffers) {
 			if (item.name == name) {
 				return item;
@@ -125,11 +125,11 @@ class BufferListPage extends StatefulWidget {
 	BufferListPageState createState() => BufferListPageState();
 }
 
-class BufferItemModel extends ChangeNotifier {
+class BufferModel extends ChangeNotifier {
 	String name;
 	String? _subtitle;
 
-	BufferItemModel({ required this.name, String? subtitle }) : _subtitle = subtitle;
+	BufferModel({ required this.name, String? subtitle }) : _subtitle = subtitle;
 
 	String? get subtitle => _subtitle;
 
@@ -199,10 +199,10 @@ class BufferListPageState extends State<BufferListPage> {
 
 	@override
 	Widget build(BuildContext context) {
-		List<BufferItemModel> buffers = context.watch<BufferListModel>().buffers;
+		List<BufferModel> buffers = context.watch<BufferListModel>().buffers;
 		if (searchQuery != null) {
 			var query = searchQuery!;
-			List<BufferItemModel> filtered = [];
+			List<BufferModel> filtered = [];
 			for (var buf in buffers) {
 				if (buf.name.toLowerCase().contains(query) || (buf.subtitle ?? '').toLowerCase().contains(query)) {
 					filtered.add(buf);
@@ -255,7 +255,7 @@ class BufferListPageState extends State<BufferListPage> {
 class BufferItem extends StatelessWidget {
 	@override
 	Widget build(BuildContext context) {
-		return Consumer<BufferItemModel>(builder: (context, buf, child) {
+		return Consumer<BufferModel>(builder: (context, buf, child) {
 			return ListTile(
 				leading: CircleAvatar(child: Text(initials(buf.name))),
 				title: Text(buf.name, overflow: TextOverflow.ellipsis),
@@ -265,7 +265,7 @@ class BufferItem extends StatelessWidget {
 					Navigator.push(context, MaterialPageRoute(builder: (context) {
 						return MultiProvider(
 							providers: [
-								ChangeNotifierProvider<BufferItemModel>.value(value: buf),
+								ChangeNotifierProvider<BufferModel>.value(value: buf),
 								Provider<Client>.value(value: client),
 							],
 							child: BufferPage(),
@@ -318,7 +318,7 @@ class BufferPageState extends State<BufferPage> {
 
 	@override
 	Widget build(BuildContext context) {
-		BufferItemModel buffer = context.watch<BufferItemModel>();
+		BufferModel buffer = context.watch<BufferModel>();
 		return Scaffold(
 			appBar: AppBar(
 				title: Column(
