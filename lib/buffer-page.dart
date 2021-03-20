@@ -23,8 +23,11 @@ class BufferPageState extends State<BufferPage> {
 
 	void submitComposer() {
 		if (composerController.text != '') {
+			var buffer = context.read<BufferModel>();
+			var client = context.read<Client>();
+			client.send(IRCMessage('PRIVMSG', params: [buffer.name, composerController.text]));
 			setState(() {
-				messages.add(Message(sender: 'emersion', body: composerController.text));
+				messages.add(Message(sender: client.nick, body: composerController.text));
 			});
 		}
 		composerFormKey.currentState!.reset();
@@ -39,7 +42,7 @@ class BufferPageState extends State<BufferPage> {
 
 	@override
 	Widget build(BuildContext context) {
-		BufferModel buffer = context.watch<BufferModel>();
+		var buffer = context.watch<BufferModel>();
 		return Scaffold(
 			appBar: AppBar(
 				title: Column(
