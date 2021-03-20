@@ -3,9 +3,9 @@ const RPL_NOTOPIC = '331';
 const RPL_TOPIC = '332';
 
 class IRCMessage {
-	IRCPrefix? prefix;
-	String cmd;
-	List<String> params;
+	final IRCPrefix? prefix;
+	final String cmd;
+	final List<String> params;
 
 	IRCMessage(this.cmd, { this.params = const [], this.prefix });
 
@@ -69,9 +69,9 @@ class IRCMessage {
 }
 
 class IRCPrefix {
-	String name;
-	String? user;
-	String? host;
+	final String name;
+	final String? user;
+	final String? host;
 
 	IRCPrefix(this.name, { this.user, this.host });
 
