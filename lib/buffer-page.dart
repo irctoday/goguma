@@ -11,11 +11,7 @@ class BufferPage extends StatefulWidget {
 }
 
 class BufferPageState extends State<BufferPage> {
-	List<Message> messages = [
-		Message(sender: 'romangg', body: 'I think it would be a nice way to push improvements for multi-seat'),
-		Message(sender: 'emersion', body: 'just need to make sure we didn\'t miss any use-case'),
-		Message(sender: 'pq', body: 'iirc it uses text-input-unstable something something'),
-	];
+	List<IRCMessage> messages = [];
 
 	final composerFocusNode = FocusNode();
 	final composerFormKey = GlobalKey<FormState>();
@@ -25,9 +21,10 @@ class BufferPageState extends State<BufferPage> {
 		if (composerController.text != '') {
 			var buffer = context.read<BufferModel>();
 			var client = context.read<Client>();
-			client.send(IRCMessage('PRIVMSG', params: [buffer.name, composerController.text]));
+			var msg = IRCMessage('PRIVMSG', params: [buffer.name, composerController.text]);
+			client.send(msg);
 			setState(() {
-				messages.add(Message(sender: client.nick, body: composerController.text));
+				messages.add(IRCMessage(msg.cmd, params: msg.params, prefix: IRCPrefix(client.nick)));
 			});
 		}
 		composerFormKey.currentState!.reset();
@@ -42,6 +39,7 @@ class BufferPageState extends State<BufferPage> {
 
 	@override
 	Widget build(BuildContext context) {
+		var client = context.read<Client>();
 		var buffer = context.watch<BufferModel>();
 		return Scaffold(
 			appBar: AppBar(
@@ -76,15 +74,19 @@ class BufferPageState extends State<BufferPage> {
 					itemCount: messages.length,
 					itemBuilder: (context, index) {
 						var msg = messages[index];
+						assert(msg.cmd == 'PRIVMSG');
 
-						var colorSwatch = Colors.primaries[msg.sender.hashCode % Colors.primaries.length];
+						var sender = msg.prefix!.name;
+						var body = msg.params[1];
+
+						var colorSwatch = Colors.primaries[sender.hashCode % Colors.primaries.length];
 						var colorScheme = ColorScheme.fromSwatch(primarySwatch: colorSwatch);
 
 						//var boxColor = Theme.of(context).accentColor;
 						var boxColor = colorScheme.primary;
 						var boxAlignment = Alignment.centerLeft;
 						var textStyle = DefaultTextStyle.of(context).style.apply(color: colorScheme.onPrimary);
-						if (msg.sender == 'emersion') {
+						if (sender == client.nick) {
 							boxColor = Colors.grey[200]!;
 							boxAlignment = Alignment.centerRight;
 							textStyle = DefaultTextStyle.of(context).style;
@@ -107,8 +109,8 @@ class BufferPageState extends State<BufferPage> {
 								margin: EdgeInsets.only(left: margin, right: margin, top: marginTop, bottom: margin),
 								child: RichText(text: TextSpan(
 									children: [
-										TextSpan(text: msg.sender + '\n', style: TextStyle(fontWeight: FontWeight.bold)),
-										TextSpan(text: msg.body),
+										TextSpan(text: sender + '\n', style: TextStyle(fontWeight: FontWeight.bold)),
+										TextSpan(text: body),
 									],
 									style: textStyle,
 								)),

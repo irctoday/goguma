@@ -40,10 +40,3 @@ class BufferModel extends ChangeNotifier {
 		notifyListeners();
 	}
 }
-
-class Message {
-	String sender;
-	String body;
-
-	Message({ required this.sender, required this.body });
-}
