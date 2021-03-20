@@ -2,6 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+const RPL_WELCOME = '001';
+const RPL_NOTOPIC = '331';
+const RPL_TOPIC = '332';
+
 class ConnectParams {
 	String host;
 	int port;

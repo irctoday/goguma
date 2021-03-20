@@ -39,13 +39,22 @@ class GogumaState extends State<Goguma> {
 		client = Client(params: params);
 
 		client!.messages.listen((msg) {
+			var bufferList = Provider.of<BufferListModel>(context, listen: false);
 			switch (msg.cmd) {
 			case 'JOIN':
 				if (msg.prefix?.name != client!.nick) {
 					break;
 				}
-				var bufferList = Provider.of<BufferListModel>(context, listen: false);
-				bufferList.add(Buffer(title: msg.params[0]));
+				bufferList.add(BufferItemModel(name: msg.params[0]));
+				break;
+			case RPL_TOPIC:
+				var name = msg.params[1];
+				var topic = msg.params[2];
+				bufferList.getByName(name)?.subtitle = topic;
+				break;
+			case RPL_NOTOPIC:
+				var name = msg.params[1];
+				bufferList.getByName(name)?.subtitle = null;
 				break;
 			}
 		});
@@ -74,13 +83,28 @@ class GogumaState extends State<Goguma> {
 }
 
 class BufferListModel extends ChangeNotifier {
-	List<Buffer> _buffers = [];
+	List<BufferItemModel> _buffers = [];
 
-	UnmodifiableListView<Buffer> get buffers => UnmodifiableListView(_buffers);
+	UnmodifiableListView<BufferItemModel> get buffers => UnmodifiableListView(_buffers);
 
-	void add(Buffer buf) {
+	@override
+	void dispose() {
+		_buffers.forEach((buf) => buf.dispose());
+		super.dispose();
+	}
+
+	void add(BufferItemModel buf) {
 		_buffers.add(buf);
 		notifyListeners();
+	}
+
+	BufferItemModel? getByName(String name) {
+		for (var item in _buffers) {
+			if (item.name == name) {
+				return item;
+			}
+		}
+		return null;
 	}
 }
 
@@ -174,11 +198,18 @@ class BufferListPage extends StatefulWidget {
 	BufferListPageState createState() => BufferListPageState();
 }
 
-class Buffer {
-	String title;
-	String? subtitle;
+class BufferItemModel extends ChangeNotifier {
+	String name;
+	String? _subtitle;
 
-	Buffer({ required this.title, this.subtitle });
+	BufferItemModel({ required this.name, String? subtitle }) : _subtitle = subtitle;
+
+	String? get subtitle => _subtitle;
+
+	set subtitle(String? subtitle) {
+		_subtitle = subtitle;
+		notifyListeners();
+	}
 }
 
 String initials(String name) {
@@ -233,12 +264,12 @@ class BufferListPageState extends State<BufferListPage> {
 
 	@override
 	Widget build(BuildContext context) {
-		List<Buffer> buffers = context.watch<BufferListModel>().buffers;
+		List<BufferItemModel> buffers = context.watch<BufferListModel>().buffers;
 		if (searchQuery != null) {
 			var query = searchQuery!;
-			List<Buffer> filtered = [];
+			List<BufferItemModel> filtered = [];
 			for (var buf in buffers) {
-				if (buf.title.toLowerCase().contains(query) || (buf.subtitle ?? '').toLowerCase().contains(query)) {
+				if (buf.name.toLowerCase().contains(query) || (buf.subtitle ?? '').toLowerCase().contains(query)) {
 					filtered.add(buf);
 				}
 			}
@@ -268,20 +299,32 @@ class BufferListPageState extends State<BufferListPage> {
 			body: ListView.builder(
 				itemCount: buffers.length,
 				itemBuilder: (context, index) {
-					Buffer buf = buffers[index];
-					return ListTile(
-						leading: CircleAvatar(child: Text(initials(buf.title))),
-						title: Text(buf.title, overflow: TextOverflow.ellipsis),
-						subtitle: buf.subtitle != null ? Text(buf.subtitle!, overflow: TextOverflow.ellipsis) : null,
-						onTap: () {
-							Navigator.push(context, MaterialPageRoute(builder: (context) {
-								return BufferPage();
-							}));
-						},
+					var buf = buffers[index];
+					return ChangeNotifierProvider.value(
+						value: buf,
+						child: BufferItem(),
 					);
 				},
 			),
 		);
+	}
+}
+
+class BufferItem extends StatelessWidget {
+	@override
+	Widget build(BuildContext context) {
+		return Consumer<BufferItemModel>(builder: (context, buf, child) {
+			return ListTile(
+				leading: CircleAvatar(child: Text(initials(buf.name))),
+				title: Text(buf.name, overflow: TextOverflow.ellipsis),
+				subtitle: buf.subtitle != null ? Text(buf.subtitle!, overflow: TextOverflow.ellipsis) : null,
+				onTap: () {
+					Navigator.push(context, MaterialPageRoute(builder: (context) {
+						return BufferPage();
+					}));
+				},
+			);
+		});
 	}
 }
 
