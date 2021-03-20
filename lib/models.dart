@@ -41,6 +41,11 @@ class BufferListModel extends ChangeNotifier {
 		notifyListeners();
 	}
 
+	void clear() {
+		_buffers.clear();
+		notifyListeners();
+	}
+
 	BufferModel? get(String name, ServerModel server) {
 		return _buffers[BufferKey(name, server)];
 	}

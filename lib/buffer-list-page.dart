@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'buffer-page.dart';
 import 'client.dart';
@@ -7,6 +8,7 @@ import 'client-controller.dart';
 import 'irc.dart';
 import 'join-dialog.dart';
 import 'models.dart';
+import 'main.dart';
 
 class BufferListPage extends StatefulWidget {
 	@override
@@ -73,6 +75,22 @@ class BufferListPageState extends State<BufferListPage> {
 		});
 	}
 
+	void logout(BuildContext context) {
+		context.read<ClientController>().disconnectAll();
+
+		SharedPreferences.getInstance().then((prefs) {
+			prefs.remove('server.host');
+			prefs.remove('server.port');
+			prefs.remove('server.tls');
+			prefs.remove('server.nick');
+			prefs.remove('server.pass');
+		});
+
+		Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+			return Goguma();
+		}));
+	}
+
 	@override
 	Widget build(BuildContext context) {
 		List<BufferModel> buffers = context.watch<BufferListModel>().buffers;
@@ -103,12 +121,16 @@ class BufferListPageState extends State<BufferListPage> {
 							case 'join':
 								showJoinDialog(context);
 								break;
+							case 'logout':
+								logout(context);
+								break;
 							}
 						},
 						itemBuilder: (context) {
 							return [
 								PopupMenuItem(child: Text('Join'), value: 'join'),
 								PopupMenuItem(child: Text('Settings'), value: 'settings'),
+								PopupMenuItem(child: Text('Logout'), value: 'logout'),
 							];
 						},
 					),
