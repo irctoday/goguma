@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'client.dart';
 import 'connect-page.dart';
 import 'irc.dart';
+import 'join-dialog.dart';
 
 void main() {
 	runApp(MultiProvider(
@@ -79,7 +80,7 @@ class GogumaState extends State<Goguma> {
 				}));
 			});
 		} else {
-			return BufferListPage();
+			return Provider.value(value: client!, child: BufferListPage());
 		}
 	}
 }
@@ -180,6 +181,14 @@ class BufferListPageState extends State<BufferListPage> {
 		);
 	}
 
+	void showJoinDialog(BuildContext context) {
+		showDialog(context: context, builder: (dialogContext) {
+			return JoinDialog(onSubmit: (channel) {
+				context.read<Client>().send(IRCMessage('JOIN', params: [channel]));
+			});
+		});
+	}
+
 	@override
 	Widget build(BuildContext context) {
 		List<BufferItemModel> buffers = context.watch<BufferListModel>().buffers;
@@ -204,11 +213,18 @@ class BufferListPageState extends State<BufferListPage> {
 						icon: const Icon(Icons.search),
 						onPressed: startSearch,
 					),
-					PopupMenuButton<Text>(
+					PopupMenuButton(
+						onSelected: (key) {
+							switch (key) {
+							case 'join':
+								showJoinDialog(context);
+								break;
+							}
+						},
 						itemBuilder: (context) {
 							return [
-								PopupMenuItem(child: Text('Join')),
-								PopupMenuItem(child: Text('Settings')),
+								PopupMenuItem(child: Text('Join'), value: 'join'),
+								PopupMenuItem(child: Text('Settings'), value: 'settings'),
 							];
 						},
 					),
