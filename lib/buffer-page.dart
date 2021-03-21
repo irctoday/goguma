@@ -72,7 +72,7 @@ class BufferPageState extends State<BufferPage> {
 					itemCount: messages.length,
 					itemBuilder: (context, index) {
 						var msg = messages[messages.length - index - 1];
-						assert(msg.cmd == 'PRIVMSG');
+						assert(msg.cmd == 'PRIVMSG' || msg.cmd == 'NOTICE');
 
 						var sender = msg.prefix!.name;
 						var body = msg.params[1];
