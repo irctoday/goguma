@@ -66,6 +66,7 @@ class GogumaState extends State<Goguma> {
 	Widget build(BuildContext context) {
 		return ConnectPage(onSubmit: (params) {
 			SharedPreferences.getInstance().then((prefs) {
+				// TODO: save credentials in keyring instead
 				prefs.setString('server.host', params.host);
 				prefs.setInt('server.port', params.port);
 				prefs.setBool('server.tls', params.tls);
