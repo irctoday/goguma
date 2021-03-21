@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'client.dart';
+import 'client-snackbar.dart';
 import 'irc.dart';
 import 'models.dart';
 
@@ -66,7 +67,7 @@ class BufferPageState extends State<BufferPage> {
 					),
 				],
 			),
-			body: Column(children: [
+			body: ClientSnackbar(client: client, child: Column(children: [
 				Expanded(child: ListView.builder(
 					reverse: true,
 					itemCount: messages.length,
@@ -141,7 +142,7 @@ class BufferPageState extends State<BufferPage> {
 						),
 					])),
 				)),
-			]),
+			])),
 		);
 	}
 }

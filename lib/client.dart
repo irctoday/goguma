@@ -14,12 +14,13 @@ class ConnectParams {
 	ConnectParams({ required this.host, this.port = 6697, this.tls = true, required this.nick, this.pass });
 }
 
-enum ClientState { disconnected, connecting, connected }
+enum ClientState { disconnected, connecting, registering, registered }
 
 class Client {
 	final ConnectParams params;
 	String nick;
 	IRCPrefix? serverPrefix;
+	ClientState state = ClientState.disconnected;
 
 	Socket? _socket;
 	StreamController<IRCMessage> _messagesController = StreamController.broadcast();
@@ -32,6 +33,8 @@ class Client {
 	}
 
 	_connect() {
+		state = ClientState.connecting;
+
 		Future<Socket> socketFuture;
 		if (params.tls) {
 			socketFuture = SecureSocket.connect(
@@ -49,7 +52,10 @@ class Client {
 
 			socket.done.then((_) {
 				print('Connection closed');
-				// TODO: reset state, try to reconnect
+				state = ClientState.disconnected;
+				_socket = null;
+				_availableCaps.clear();
+				// TODO: try to reconnect
 			});
 
 			var text = utf8.decoder.bind(socket);
@@ -66,6 +72,7 @@ class Client {
 
 	_register() {
 		nick = params.nick;
+		state = ClientState.registering;
 
 		send(IRCMessage('CAP', params: ['LS', '302']));
 		if (params.pass != null) {
@@ -81,6 +88,7 @@ class Client {
 		switch (msg.cmd) {
 		case RPL_WELCOME:
 			print('Registration complete');
+			state = ClientState.registered;
 			serverPrefix = msg.prefix;
 			break;
 		case 'CAP':
@@ -93,6 +101,18 @@ class Client {
 			break;
 		case 'PING':
 			send(IRCMessage('PONG', params: msg.params));
+			break;
+		case ERR_NICKLOCKED:
+		case ERR_PASSWDMISMATCH:
+		case ERR_ERRONEUSNICKNAME:
+		case ERR_NICKNAMEINUSE:
+		case ERR_NICKCOLLISION:
+		case ERR_UNAVAILRESOURCE:
+		case ERR_NOPERMFORHOST:
+		case ERR_YOUREBANNEDCREEP:
+			if (state != ClientState.registered) {
+				disconnect();
+			}
 			break;
 		}
 

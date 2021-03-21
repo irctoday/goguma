@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'buffer-page.dart';
 import 'client.dart';
 import 'client-controller.dart';
+import 'client-snackbar.dart';
 import 'irc.dart';
 import 'join-dialog.dart';
 import 'models.dart';
@@ -106,6 +107,8 @@ class BufferListPageState extends State<BufferListPage> {
 			buffers = filtered;
 		}
 
+		// TODO: aggregate all client errors
+		var client = context.read<ClientController>().get(ServerModel());
 		return Scaffold(
 			appBar: AppBar(
 				leading: searchQuery != null ? CloseButton() : null,
@@ -137,7 +140,7 @@ class BufferListPageState extends State<BufferListPage> {
 					),
 				],
 			),
-			body: ListView.builder(
+			body: ClientSnackbar(client: client, child: ListView.builder(
 				itemCount: buffers.length,
 				itemBuilder: (context, index) {
 					var buf = buffers[index];
@@ -146,7 +149,7 @@ class BufferListPageState extends State<BufferListPage> {
 						child: BufferItem(),
 					);
 				},
-			),
+			)),
 		);
 	}
 }
