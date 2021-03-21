@@ -22,6 +22,7 @@ class Client {
 
 	Socket? _socket;
 	StreamController<IRCMessage> _messagesController = StreamController.broadcast();
+	Map<String, String?> _availableCaps = Map();
 
 	Stream<IRCMessage> get messages => _messagesController.stream;
 
@@ -64,6 +65,7 @@ class Client {
 	_register() {
 		nick = params.nick;
 
+		send(IRCMessage('CAP', params: ['LS', '302']));
 		if (params.pass != null) {
 			send(IRCMessage('PASS', params: [params.pass!]));
 		}
@@ -75,6 +77,9 @@ class Client {
 		print('Received: ' + msg.toString());
 
 		switch (msg.cmd) {
+		case 'CAP':
+			_handleCap(msg);
+			break;
 		case 'NICK':
 			if (msg.prefix?.name == nick) {
 				nick = msg.params[0];
@@ -86,6 +91,42 @@ class Client {
 		}
 
 		_messagesController.add(msg);
+	}
+
+	_handleCap(IRCMessage msg) {
+		var subcommand = msg.params[1].toUpperCase();
+		var params = msg.params.sublist(2);
+		switch (subcommand) {
+		case 'LS':
+			_addAvailableCaps(params[params.length - 1]);
+			if (params[0] != '*') {
+				send(IRCMessage('CAP', params: ['END']));
+			}
+			break;
+		case 'NEW':
+			_addAvailableCaps(params[0]);
+			break;
+		case 'DEL':
+			for (var cap in params[0].split(' ')) {
+				_availableCaps.remove(cap.toLowerCase());
+			}
+			break;
+		default:
+			throw FormatException('Unknown CAP subcommand: ' + subcommand);
+		}
+	}
+
+	_addAvailableCaps(String caps) {
+		for (var s in caps.split(' ')) {
+			var i = s.indexOf('=');
+			String k = s;
+			String? v = null;
+			if (i >= 0) {
+				k = s.substring(0, i);
+				v = s.substring(i + 1);
+			}
+			_availableCaps[k.toLowerCase()] = v;
+		}
 	}
 
 	disconnect() {
