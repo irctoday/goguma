@@ -61,6 +61,7 @@ class BufferListPageState extends State<BufferListPage> {
 				border: InputBorder.none,
 			),
 			style: Theme.of(context).accentTextTheme.bodyText2,
+			cursorColor: Theme.of(context).accentTextTheme.bodyText2?.color,
 			onChanged: search,
 		);
 	}
