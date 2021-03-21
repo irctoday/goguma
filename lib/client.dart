@@ -19,6 +19,7 @@ enum ClientState { disconnected, connecting, connected }
 class Client {
 	final ConnectParams params;
 	String nick;
+	IRCPrefix? serverPrefix;
 
 	Socket? _socket;
 	StreamController<IRCMessage> _messagesController = StreamController.broadcast();
@@ -48,6 +49,7 @@ class Client {
 
 			socket.done.then((_) {
 				print('Connection closed');
+				// TODO: reset state, try to reconnect
 			});
 
 			var text = utf8.decoder.bind(socket);
@@ -77,6 +79,10 @@ class Client {
 		print('Received: ' + msg.toString());
 
 		switch (msg.cmd) {
+		case RPL_WELCOME:
+			print('Registration complete');
+			serverPrefix = msg.prefix;
+			break;
 		case 'CAP':
 			_handleCap(msg);
 			break;
