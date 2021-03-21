@@ -1,10 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_linkify/flutter_linkify.dart';
+import 'package:linkify/linkify.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'client.dart';
 import 'client-snackbar.dart';
 import 'irc.dart';
 import 'models.dart';
+
+TextSpan _linkify(BuildContext context, String text) {
+	var elements = linkify(text, options: LinkifyOptions(
+		humanize: false,
+		defaultToHttps: true,
+	));
+	var linkStyle = DefaultTextStyle.of(context).style.apply(color: Colors.blue);
+	return buildTextSpan(
+		elements,
+		onOpen: (link) {
+			launch(link.url);
+		},
+		linkStyle: linkStyle,
+	);
+}
 
 class BufferPage extends StatefulWidget {
 	@override
@@ -109,7 +127,7 @@ class BufferPageState extends State<BufferPage> {
 								child: RichText(text: TextSpan(
 									children: [
 										TextSpan(text: sender + '\n', style: TextStyle(fontWeight: FontWeight.bold)),
-										TextSpan(text: body),
+										_linkify(context, body),
 									],
 									style: textStyle,
 								)),
