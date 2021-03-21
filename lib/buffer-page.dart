@@ -9,7 +9,7 @@ import 'client-snackbar.dart';
 import 'irc.dart';
 import 'models.dart';
 
-TextSpan _linkify(BuildContext context, String text) {
+TextSpan _linkify(BuildContext context, String text, TextStyle textStyle) {
 	var elements = linkify(text, options: LinkifyOptions(
 		humanize: false,
 		defaultToHttps: true,
@@ -20,6 +20,7 @@ TextSpan _linkify(BuildContext context, String text) {
 		onOpen: (link) {
 			launch(link.url);
 		},
+		style: textStyle,
 		linkStyle: linkStyle,
 	);
 }
@@ -127,7 +128,7 @@ class BufferPageState extends State<BufferPage> {
 								child: RichText(text: TextSpan(
 									children: [
 										TextSpan(text: sender + '\n', style: TextStyle(fontWeight: FontWeight.bold)),
-										_linkify(context, body),
+										_linkify(context, body, textStyle),
 									],
 									style: textStyle,
 								)),
