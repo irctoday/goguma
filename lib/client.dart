@@ -18,7 +18,7 @@ enum ClientState { disconnected, connecting, connected }
 
 class Client {
 	final ConnectParams params;
-	String nick = '';
+	String nick;
 
 	Socket? _socket;
 	StreamController<IRCMessage> _messagesController = StreamController.broadcast();
@@ -26,7 +26,7 @@ class Client {
 
 	Stream<IRCMessage> get messages => _messagesController.stream;
 
-	Client({ required this.params }) {
+	Client({ required this.params }) : nick = params.nick {
 		_connect();
 	}
 
