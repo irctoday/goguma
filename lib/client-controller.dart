@@ -42,7 +42,13 @@ class ClientController {
 			case 'PRIVMSG':
 			case 'NOTICE':
 				var target = msg.params[0];
-				_bufferList.get(target, server!)?.addMessage(msg);
+				var buf = _bufferList.get(target, server!);
+				// TODO: put server messages in a buffer, too
+				if (buf == null && target == client!.nick) {
+					buf = BufferModel(name: msg.prefix!.name, server: server!);
+					_bufferList.add(buf);
+				}
+				buf?.addMessage(msg);
 				break;
 			}
 		});
