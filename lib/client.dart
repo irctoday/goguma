@@ -69,6 +69,9 @@ class Client {
 			});
 
 			_register();
+		}).catchError((err) {
+			print('Connection failed: ' + err.toString());
+			_setState(ClientState.disconnected);
 		});
 	}
 
