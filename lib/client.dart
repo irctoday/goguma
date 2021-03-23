@@ -35,6 +35,8 @@ class Client {
 	_connect() {
 		state = ClientState.connecting;
 
+		print('Connecting to ' + params.host + '...');
+
 		Future<Socket> socketFuture;
 		if (params.tls) {
 			socketFuture = SecureSocket.connect(
