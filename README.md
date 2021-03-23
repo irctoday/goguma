@@ -6,13 +6,17 @@ An IRC client for mobile devices.
 
 ### For the Linux platform
 
+Setup the project with:
+
+    flutter config --enable-linux-desktop
+    flutter create --project-name goguma --platforms linux .
+
 Develop with:
 
     flutter run -d linux
 
 Build with:
 
-    flutter create --project-name goguma --platforms linux .
     flutter build linux
 
 The built binary is in `build/linux/release/bundle/goguma`.
