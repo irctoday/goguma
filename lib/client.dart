@@ -54,6 +54,9 @@ class Client {
 
 			socket.done.then((_) {
 				print('Connection closed');
+			}).catchError((err) {
+				print('Connection error: ' + err.toString());
+			}).whenComplete(() {
 				_setState(ClientState.disconnected);
 				_socket = null;
 				_availableCaps.clear();
