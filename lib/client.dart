@@ -33,7 +33,7 @@ class Client {
 	}
 
 	_connect() {
-		state = ClientState.connecting;
+		_setState(ClientState.connecting);
 
 		print('Connecting to ' + params.host + '...');
 
@@ -54,7 +54,7 @@ class Client {
 
 			socket.done.then((_) {
 				print('Connection closed');
-				state = ClientState.disconnected;
+				_setState(ClientState.disconnected);
 				_socket = null;
 				_availableCaps.clear();
 				// TODO: try to reconnect
@@ -72,9 +72,13 @@ class Client {
 		});
 	}
 
+	_setState(ClientState state) {
+		this.state = state;
+	}
+
 	_register() {
 		nick = params.nick;
-		state = ClientState.registering;
+		_setState(ClientState.registering);
 
 		send(IRCMessage('CAP', params: ['LS', '302']));
 		if (params.pass != null) {
@@ -90,7 +94,7 @@ class Client {
 		switch (msg.cmd) {
 		case RPL_WELCOME:
 			print('Registration complete');
-			state = ClientState.registered;
+			_setState(ClientState.registered);
 			serverPrefix = msg.prefix;
 			break;
 		case 'CAP':
