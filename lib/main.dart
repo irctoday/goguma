@@ -38,11 +38,12 @@ class Goguma extends StatefulWidget {
 }
 
 class GogumaState extends State<Goguma> {
+	bool loading = true;
+
 	@override
 	void initState() {
 		super.initState();
 
-		// TODO: wait for the prefs to be loaded before rendering connect page
 		SharedPreferences.getInstance().then((prefs) {
 			if (!prefs.containsKey('server.host')) {
 				return;
@@ -59,11 +60,19 @@ class GogumaState extends State<Goguma> {
 			Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
 				return BufferListPage();
 			}));
+		}).whenComplete(() {
+			setState(() {
+				loading = false;
+			});
 		});
 	}
 
 	@override
 	Widget build(BuildContext context) {
+		if (loading) {
+			return Container();
+		}
+
 		return ConnectPage(onSubmit: (params) {
 			SharedPreferences.getInstance().then((prefs) {
 				// TODO: save credentials in keyring instead
