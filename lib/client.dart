@@ -102,6 +102,7 @@ class Client {
 			print('Registration complete');
 			_setState(ClientState.registered);
 			serverPrefix = msg.prefix;
+			nick = msg.params[0];
 			break;
 		case 'CAP':
 			_handleCap(msg);
