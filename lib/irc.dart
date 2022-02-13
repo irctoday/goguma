@@ -147,3 +147,19 @@ class IRCPrefix {
 		return name + '!' + user! + '@' + host!;
 	}
 }
+
+class IRCException implements Exception {
+	final IRCMessage msg;
+
+	IRCException(this.msg) {
+		assert(msg.isError());
+	}
+
+	@override
+	String toString() {
+		if (msg.params.length > 0) {
+			return msg.params.last;
+		}
+		return msg.toString();
+	}
+}

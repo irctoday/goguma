@@ -109,7 +109,7 @@ class Client {
 			case ERR_NOPERMFORHOST:
 			case ERR_YOUREBANNEDCREEP:
 				disconnect();
-				throw Exception('Connection registration failed');
+				throw IRCException(msg);
 			}
 			return false;
 		});
