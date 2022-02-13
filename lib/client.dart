@@ -28,11 +28,9 @@ class Client {
 
 	Stream<IRCMessage> get messages => _messagesController.stream;
 
-	Client({ required this.params }) : nick = params.nick {
-		_connect();
-	}
+	Client({ required this.params }) : nick = params.nick {}
 
-	_connect() {
+	Future<void> connect() {
 		_setState(ClientState.connecting);
 
 		print('Connecting to ' + params.host + '...');
@@ -48,7 +46,7 @@ class Client {
 			socketFuture = Socket.connect(params.host, params.port);
 		}
 
-		socketFuture.then((socket) {
+		return socketFuture.then((socket) {
 			print('Connection opened');
 			_socket = socket;
 
@@ -71,10 +69,11 @@ class Client {
 				_handleMessage(msg);
 			});
 
-			_register();
+			return _register();
 		}).catchError((err) {
 			print('Connection failed: ' + err.toString());
 			_setState(ClientState.disconnected);
+			throw err;
 		});
 	}
 
@@ -82,7 +81,7 @@ class Client {
 		this.state = state;
 	}
 
-	_register() {
+	Future<void> _register() {
 		nick = params.nick;
 		_setState(ClientState.registering);
 
@@ -92,18 +91,34 @@ class Client {
 		}
 		send(IRCMessage('NICK', params: [params.nick]));
 		send(IRCMessage('USER', params: [params.nick, '0', '*', params.nick]));
+
+		return messages.firstWhere((msg) {
+			switch (msg.cmd) {
+			case RPL_WELCOME:
+				print('Registration complete');
+				_setState(ClientState.registered);
+				serverPrefix = msg.prefix;
+				nick = msg.params[0];
+				return true;
+			case ERR_NICKLOCKED:
+			case ERR_PASSWDMISMATCH:
+			case ERR_ERRONEUSNICKNAME:
+			case ERR_NICKNAMEINUSE:
+			case ERR_NICKCOLLISION:
+			case ERR_UNAVAILRESOURCE:
+			case ERR_NOPERMFORHOST:
+			case ERR_YOUREBANNEDCREEP:
+				disconnect();
+				throw Exception('Connection registration failed');
+			}
+			return false;
+		});
 	}
 
 	_handleMessage(IRCMessage msg) {
 		print('Received: ' + msg.toString());
 
 		switch (msg.cmd) {
-		case RPL_WELCOME:
-			print('Registration complete');
-			_setState(ClientState.registered);
-			serverPrefix = msg.prefix;
-			nick = msg.params[0];
-			break;
 		case 'CAP':
 			_handleCap(msg);
 			break;
@@ -114,18 +129,6 @@ class Client {
 			break;
 		case 'PING':
 			send(IRCMessage('PONG', params: msg.params));
-			break;
-		case ERR_NICKLOCKED:
-		case ERR_PASSWDMISMATCH:
-		case ERR_ERRONEUSNICKNAME:
-		case ERR_NICKNAMEINUSE:
-		case ERR_NICKCOLLISION:
-		case ERR_UNAVAILRESOURCE:
-		case ERR_NOPERMFORHOST:
-		case ERR_YOUREBANNEDCREEP:
-			if (state != ClientState.registered) {
-				disconnect();
-			}
 			break;
 		}
 

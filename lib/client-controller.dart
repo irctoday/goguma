@@ -10,7 +10,7 @@ class ClientController {
 
 	ClientController(BufferListModel bufferList) : _bufferList = bufferList;
 
-	void connect(ConnectParams params) {
+	Future<void> connect(ConnectParams params) {
 		server = ServerModel();
 		client = Client(params: params);
 
@@ -52,6 +52,8 @@ class ClientController {
 				break;
 			}
 		});
+
+		return client!.connect();
 	}
 
 	Client get(ServerModel server) {
