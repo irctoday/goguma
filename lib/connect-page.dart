@@ -16,6 +16,30 @@ class ConnectPage extends StatefulWidget {
 	ConnectPageState createState() => ConnectPageState();
 }
 
+Uri _parseServerUri(String rawUri) {
+	if (!rawUri.contains('://')) {
+		rawUri = 'ircs://' + rawUri;
+	}
+
+	var uri = Uri.parse(rawUri);
+	if (uri.host == '') {
+		throw FormatException('Host is required in URI');
+	}
+	switch (uri.scheme) {
+	case 'ircs':
+	case 'irc+insecure':
+		break; // supported
+	default:
+		throw FormatException('Unsupported URI scheme: ' + uri.scheme);
+	}
+
+	if (!uri.hasPort) {
+		uri = uri.replace(port: uri.scheme == 'irc+insecure' ? 6667 : 6697);
+	}
+
+	return uri;
+}
+
 class ConnectPageState extends State<ConnectPage> {
 	final formKey = GlobalKey<FormState>();
 	final serverController = TextEditingController();
@@ -27,13 +51,13 @@ class ConnectPageState extends State<ConnectPage> {
 			return;
 		}
 
-		var uri = Uri.parse('irc://' + serverController.text);
-
+		Uri uri = _parseServerUri(serverController.text);
 		widget.onSubmit?.call(ConnectParams(
 			host: uri.host,
-			port: uri.hasPort ? uri.port : 6697,
+			port: uri.port,
 			nick: usernameController.text,
 			pass: passwordController.text,
+			tls: uri.scheme != 'irc+insecure',
 		));
 	}
 
@@ -87,7 +111,15 @@ class ConnectPageState extends State<ConnectPage> {
 						autofocus: true,
 						onEditingComplete: () => focusNode.nextFocus(),
 						validator: (value) {
-							return (value!.isEmpty) ? 'Required' : null;
+							if (value!.isEmpty) {
+								return 'Required';
+							}
+							try {
+								_parseServerUri(value);
+							} on FormatException catch(e) {
+								return e.message;
+							}
+							return null;
 						},
 					),
 					TextFormField(
