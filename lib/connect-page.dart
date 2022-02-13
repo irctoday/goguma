@@ -56,7 +56,7 @@ class ConnectPageState extends State<ConnectPage> {
 			host: uri.host,
 			port: uri.port,
 			nick: usernameController.text,
-			pass: passwordController.text,
+			pass: passwordController.text.isNotEmpty ? passwordController.text : null,
 			tls: uri.scheme != 'irc+insecure',
 		));
 	}
