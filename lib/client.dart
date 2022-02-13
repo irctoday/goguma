@@ -118,6 +118,8 @@ class Client {
 				throw IRCException(msg);
 			}
 			return false;
+		}).timeout(Duration(seconds: 15), onTimeout: () {
+			throw TimeoutException('Connection registration timed out');
 		});
 	}
 
