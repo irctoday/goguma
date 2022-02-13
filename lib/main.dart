@@ -40,7 +40,7 @@ class Goguma extends StatefulWidget {
 class GogumaState extends State<Goguma> {
 	bool initing = true;
 	bool loading = false;
-	String? errorMsg = null;
+	Exception? error = null;
 
 	@override
 	void initState() {
@@ -75,7 +75,7 @@ class GogumaState extends State<Goguma> {
 			return Container();
 		}
 
-		return ConnectPage(loading: loading, errorMsg: errorMsg, onSubmit: (params) {
+		return ConnectPage(loading: loading, error: error, onSubmit: (params) {
 			setState(() {
 				loading = true;
 			});
@@ -99,7 +99,7 @@ class GogumaState extends State<Goguma> {
 				}));
 			}).catchError((err) {
 				setState(() {
-					errorMsg = err.toString();
+					error = err;
 				});
 			}).whenComplete(() {
 				setState(() {

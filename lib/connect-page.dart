@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 
 import 'client.dart';
+import 'irc.dart';
 
 typedef ConnectParamsCallback(ConnectParams);
 
 class ConnectPage extends StatefulWidget {
 	final ConnectParamsCallback? onSubmit;
 	final bool loading;
-	final String? errorMsg;
+	final Exception? error;
 
-	ConnectPage({ Key? key, this.onSubmit, this.loading = false, this.errorMsg = null }) : super(key: key);
+	ConnectPage({ Key? key, this.onSubmit, this.loading = false, this.error = null }) : super(key: key);
 
 	@override
 	ConnectPageState createState() => ConnectPageState();
@@ -46,6 +47,28 @@ class ConnectPageState extends State<ConnectPage> {
 
 	@override
 	Widget build(BuildContext context) {
+		String? serverErr = null, usernameErr = null, passwordErr = null;
+		if (widget.error is IRCException) {
+			final ircErr = widget.error as IRCException;
+			switch (ircErr.msg.cmd) {
+			case ERR_PASSWDMISMATCH:
+				passwordErr = ircErr.toString();
+				break;
+			case ERR_NICKLOCKED:
+			case ERR_ERRONEUSNICKNAME:
+			case ERR_NICKNAMEINUSE:
+			case ERR_NICKCOLLISION:
+			case ERR_YOUREBANNEDCREEP:
+				usernameErr = ircErr.toString();
+				break;
+			default:
+				serverErr = ircErr.toString();
+				break;
+			}
+		} else {
+			serverErr = widget.error?.toString();
+		}
+
 		final focusNode = FocusScope.of(context);
 		return Scaffold(
 			appBar: AppBar(
@@ -58,7 +81,7 @@ class ConnectPageState extends State<ConnectPage> {
 						keyboardType: TextInputType.url,
 						decoration: InputDecoration(
 							labelText: 'Server',
-							errorText: widget.errorMsg,
+							errorText: serverErr,
 						),
 						controller: serverController,
 						autofocus: true,
@@ -68,7 +91,10 @@ class ConnectPageState extends State<ConnectPage> {
 						},
 					),
 					TextFormField(
-						decoration: InputDecoration(labelText: 'Username'),
+						decoration: InputDecoration(
+							labelText: 'Username',
+							errorText: usernameErr,
+						),
 						controller: usernameController,
 						onEditingComplete: () => focusNode.nextFocus(),
 						validator: (value) {
@@ -77,7 +103,10 @@ class ConnectPageState extends State<ConnectPage> {
 					),
 					TextFormField(
 						obscureText: true,
-						decoration: InputDecoration(labelText: 'Password'),
+						decoration: InputDecoration(
+							labelText: 'Password',
+							errorText: passwordErr,
+						),
 						controller: passwordController,
 						onFieldSubmitted: (_) {
 							focusNode.unfocus();
