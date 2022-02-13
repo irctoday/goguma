@@ -52,7 +52,11 @@ class Client {
 			);
 		}
 
-		return socketFuture.then((socket) {
+		return socketFuture.catchError((err) {
+			print('Connection failed: ' + err.toString());
+			_setState(ClientState.disconnected);
+			throw err;
+		}).then((socket) {
 			print('Connection opened');
 			_socket = socket;
 
@@ -76,10 +80,6 @@ class Client {
 			});
 
 			return _register();
-		}).catchError((err) {
-			print('Connection failed: ' + err.toString());
-			_setState(ClientState.disconnected);
-			throw err;
 		});
 	}
 
