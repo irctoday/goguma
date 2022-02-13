@@ -101,10 +101,6 @@ class Client {
 		return messages.firstWhere((msg) {
 			switch (msg.cmd) {
 			case RPL_WELCOME:
-				print('Registration complete');
-				_setState(ClientState.registered);
-				serverPrefix = msg.prefix;
-				nick = msg.params[0];
 				return true;
 			case ERR_NICKLOCKED:
 			case ERR_PASSWDMISMATCH:
@@ -129,6 +125,12 @@ class Client {
 		switch (msg.cmd) {
 		case 'CAP':
 			_handleCap(msg);
+			break;
+		case RPL_WELCOME:
+			print('Registration complete');
+			_setState(ClientState.registered);
+			serverPrefix = msg.prefix;
+			nick = msg.params[0];
 			break;
 		case 'NICK':
 			if (msg.prefix?.name == nick) {
