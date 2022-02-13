@@ -6,8 +6,10 @@ typedef ConnectParamsCallback(ConnectParams);
 
 class ConnectPage extends StatefulWidget {
 	final ConnectParamsCallback? onSubmit;
+	final bool loading;
+	final String? errorMsg;
 
-	ConnectPage({ Key? key, this.onSubmit }) : super(key: key);
+	ConnectPage({ Key? key, this.onSubmit, this.loading = false, this.errorMsg = null }) : super(key: key);
 
 	@override
 	ConnectPageState createState() => ConnectPageState();
@@ -20,7 +22,7 @@ class ConnectPageState extends State<ConnectPage> {
 	final passwordController = TextEditingController();
 
 	void submit() {
-		if (!formKey.currentState!.validate()) {
+		if (!formKey.currentState!.validate() || widget.loading) {
 			return;
 		}
 
@@ -54,7 +56,10 @@ class ConnectPageState extends State<ConnectPage> {
 				child: Container(padding: EdgeInsets.all(10), child: Column(children: [
 					TextFormField(
 						keyboardType: TextInputType.url,
-						decoration: InputDecoration(labelText: 'Server'),
+						decoration: InputDecoration(
+							labelText: 'Server',
+							errorText: widget.errorMsg,
+						),
 						controller: serverController,
 						autofocus: true,
 						onEditingComplete: () => focusNode.nextFocus(),
@@ -80,10 +85,12 @@ class ConnectPageState extends State<ConnectPage> {
 						},
 					),
 					SizedBox(height: 20),
-					FloatingActionButton.extended(
-						onPressed: submit,
-						label: Text('Connect'),
-					),
+					widget.loading
+						? CircularProgressIndicator()
+						: FloatingActionButton.extended(
+							onPressed: submit,
+							label: Text('Connect'),
+						),
 				])),
 			),
 		);

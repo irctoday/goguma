@@ -38,7 +38,9 @@ class Goguma extends StatefulWidget {
 }
 
 class GogumaState extends State<Goguma> {
-	bool loading = true;
+	bool initing = true;
+	bool loading = false;
+	String? errorMsg = null;
 
 	@override
 	void initState() {
@@ -62,36 +64,48 @@ class GogumaState extends State<Goguma> {
 			}));
 		}).whenComplete(() {
 			setState(() {
-				loading = false;
+				initing = false;
 			});
 		});
 	}
 
 	@override
 	Widget build(BuildContext context) {
-		if (loading) {
+		if (initing) {
 			return Container();
 		}
 
-		return ConnectPage(onSubmit: (params) {
-			SharedPreferences.getInstance().then((prefs) {
-				// TODO: save credentials in keyring instead
-				prefs.setString('server.host', params.host);
-				prefs.setInt('server.port', params.port);
-				prefs.setBool('server.tls', params.tls);
-				prefs.setString('server.nick', params.nick);
-				if (params.pass != null) {
-					prefs.setString('server.pass', params.pass!);
-				} else {
-					prefs.remove('server.pass');
-				}
+		return ConnectPage(loading: loading, errorMsg: errorMsg, onSubmit: (params) {
+			setState(() {
+				loading = true;
 			});
 
-			context.read<ClientController>().connect(params);
+			context.read<ClientController>().connect(params).then((_) {
+				SharedPreferences.getInstance().then((prefs) {
+					// TODO: save credentials in keyring instead
+					prefs.setString('server.host', params.host);
+					prefs.setInt('server.port', params.port);
+					prefs.setBool('server.tls', params.tls);
+					prefs.setString('server.nick', params.nick);
+					if (params.pass != null) {
+						prefs.setString('server.pass', params.pass!);
+					} else {
+						prefs.remove('server.pass');
+					}
+				});
 
-			Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-				return BufferListPage();
-			}));
+				Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+					return BufferListPage();
+				}));
+			}).catchError((err) {
+				setState(() {
+					errorMsg = err.toString();
+				});
+			}).whenComplete(() {
+				setState(() {
+					loading = false;
+				});
+			});
 		});
 	}
 }
