@@ -35,15 +35,21 @@ class Client {
 
 		print('Connecting to ' + params.host + '...');
 
+		final connectTimeout = Duration(seconds: 15);
 		Future<Socket> socketFuture;
 		if (params.tls) {
 			socketFuture = SecureSocket.connect(
 				params.host,
 				params.port,
 				supportedProtocols: ['irc'],
+				timeout: connectTimeout,
 			);
 		} else {
-			socketFuture = Socket.connect(params.host, params.port);
+			socketFuture = Socket.connect(
+				params.host,
+				params.port,
+				timeout: connectTimeout,
+			);
 		}
 
 		return socketFuture.then((socket) {
