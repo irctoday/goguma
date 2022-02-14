@@ -111,7 +111,7 @@ class DB {
 
 		return _getBasePath().then((basePath) {
 			return openDatabase(
-				join(basePath, 'goguma', 'main.db'),
+				join(basePath, 'main.db'),
 				onConfigure: (db) {
 					// Enable support for ON DELETE CASCADE
 					return db.execute('PRAGMA foreign_keys = ON');
@@ -165,7 +165,7 @@ class DB {
 		}
 
 		var xdgDataHome = Platform.environment['XDG_DATA_HOME'] ?? join(Platform.environment['HOME']!, '.local', 'share');
-		return Future.value(xdgDataHome);
+		return Future.value(join(xdgDataHome, 'goguma'));
 	}
 
 	Future<void> close() {
