@@ -37,59 +37,67 @@ class ClientController {
 			server.state = state;
 		});
 
-		client.messages.listen((msg) {
-			switch (msg.cmd) {
-			case RPL_ISUPPORT:
-				server.network = client.isupport.network;
-				break;
-			case 'JOIN':
-				var channel = msg.params[0];
-				if (msg.prefix?.name != client.nick) {
-					break;
-				}
-				_createBuffer(channel, server);
-				break;
-			case RPL_TOPIC:
-				var channel = msg.params[1];
-				var topic = msg.params[2];
-				_bufferList.get(channel, server)?.subtitle = topic;
-				break;
-			case RPL_NOTOPIC:
-				var channel = msg.params[1];
-				_bufferList.get(channel, server)?.subtitle = null;
-				break;
-			case 'TOPIC':
-				var channel = msg.params[0];
-				String? topic = null;
-				if (msg.params.length > 1) {
-					topic = msg.params[1];
-				}
-				_bufferList.get(channel, server)?.subtitle = topic;
-				break;
-			case 'PRIVMSG':
-			case 'NOTICE':
-				var target = msg.params[0];
-				Future<BufferModel> bufFuture;
-				if (target == client.nick) {
-					bufFuture = _createBuffer(target, server);
-				} else {
-					var buf = _bufferList.get(target, server);
-					if (buf == null) {
-						break;
-					}
-					bufFuture = Future.value(buf);
-				}
-				bufFuture.then((buf) {
-					_db.storeMessage(MessageEntry(msg, buf.id)).then((entry) {
-						if (!buf.messageHistoryLoaded) {
-							return;
-						}
-						buf.addMessage(MessageModel(entry: entry, buffer: buf));
-					});
-				});
-				break;
+		var messagesSubscription;
+		messagesSubscription = client.messages.listen((msg) {
+			var future = _handleMessage(client, server, msg);
+			if (future != null) {
+				messagesSubscription.pause();
+				future.whenComplete(() => messagesSubscription.resume());
 			}
 		});
+	}
+
+	Future<void>? _handleMessage(Client client, ServerModel server, IRCMessage msg) {
+		switch (msg.cmd) {
+		case RPL_ISUPPORT:
+			server.network = client.isupport.network;
+			break;
+		case 'JOIN':
+			var channel = msg.params[0];
+			if (msg.prefix?.name != client.nick) {
+				break;
+			}
+			return _createBuffer(channel, server);
+		case RPL_TOPIC:
+			var channel = msg.params[1];
+			var topic = msg.params[2];
+			_bufferList.get(channel, server)?.subtitle = topic;
+			break;
+		case RPL_NOTOPIC:
+			var channel = msg.params[1];
+			_bufferList.get(channel, server)?.subtitle = null;
+			break;
+		case 'TOPIC':
+			var channel = msg.params[0];
+			String? topic = null;
+			if (msg.params.length > 1) {
+				topic = msg.params[1];
+			}
+			_bufferList.get(channel, server)?.subtitle = topic;
+			break;
+		case 'PRIVMSG':
+		case 'NOTICE':
+			var target = msg.params[0];
+			Future<BufferModel> bufFuture;
+			if (target == client.nick) {
+				bufFuture = _createBuffer(target, server);
+			} else {
+				var buf = _bufferList.get(target, server);
+				if (buf == null) {
+					break;
+				}
+				bufFuture = Future.value(buf);
+			}
+			return bufFuture.then((buf) {
+				return _db.storeMessage(MessageEntry(msg, buf.id)).then((entry) {
+					if (!buf.messageHistoryLoaded) {
+						return;
+					}
+					buf.addMessage(MessageModel(entry: entry, buffer: buf));
+				});
+			});
+		}
+		return null;
 	}
 
 	Future<BufferModel> _createBuffer(String name, ServerModel server) {
