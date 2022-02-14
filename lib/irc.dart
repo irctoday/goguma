@@ -163,3 +163,37 @@ class IRCException implements Exception {
 		return msg.toString();
 	}
 }
+
+class IRCIsupport {
+	String? _network;
+
+	String? get network => _network;
+
+	void parse(List<String> tokens) {
+		tokens.forEach((tok) {
+			if (tok.startsWith('-')) {
+				var k = tok.substring(1).toUpperCase();
+				switch (k) {
+				case "NETWORK":
+					_network = null;
+					break;
+				}
+				return;
+			}
+
+			var i = tok.indexOf('=');
+			var k = tok, v = null;
+			if (i >= 0) {
+				k = tok.substring(0, i);
+				v = tok.substring(i + 1);
+				v = v.replaceAll('\\x20', '').replaceAll('\\x5C', '').replaceAll('\\x3D', '');
+			}
+
+			switch (k.toUpperCase()) {
+			case "NETWORK":
+				_network = v;
+				break;
+			}
+		});
+	}
+}
