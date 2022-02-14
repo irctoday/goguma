@@ -117,7 +117,8 @@ class DB {
 					return db.execute('PRAGMA foreign_keys = ON');
 				},
 				onCreate: (db, version) {
-					return db.execute('''
+					var batch = db.batch();
+					batch.execute('''
 						CREATE TABLE Server (
 							id INTEGER PRIMARY KEY,
 							host TEXT NOT NULL,
@@ -126,7 +127,8 @@ class DB {
 							nick TEXT,
 							pass TEXT
 						);
-
+					''');
+					batch.execute('''
 						CREATE TABLE Buffer (
 							id INTEGER PRIMARY KEY,
 							name TEXT NOT NULL,
@@ -134,7 +136,8 @@ class DB {
 							FOREIGN KEY (server) REFERENCES Server(id) ON DELETE CASCADE,
 							UNIQUE(name, server)
 						);
-
+					''');
+					batch.execute('''
 						CREATE TABLE Message (
 							id INTEGER PRIMARY KEY,
 							time TEXT NOT NULL,
@@ -144,6 +147,7 @@ class DB {
 							FOREIGN KEY (buffer) REFERENCES Buffer(id) ON DELETE CASCADE
 						);
 					''');
+					return batch.commit();
 				},
 				onUpgrade: (db, prevVersion, newVersion) {
 					return Future.value();
