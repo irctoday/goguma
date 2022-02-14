@@ -21,6 +21,7 @@ class Client {
 	String nick;
 	IRCPrefix? serverPrefix;
 	ClientState state = ClientState.disconnected;
+	final IRCIsupport isupport = IRCIsupport();
 
 	Socket? _socket;
 	StreamController<IRCMessage> _messagesController = StreamController.broadcast();
@@ -137,6 +138,9 @@ class Client {
 			_setState(ClientState.registered);
 			serverPrefix = msg.prefix;
 			nick = msg.params[0];
+			break;
+		case RPL_ISUPPORT:
+			isupport.parse(msg.params.sublist(1, msg.params.length - 1));
 			break;
 		case 'NICK':
 			if (msg.prefix?.name == nick) {
