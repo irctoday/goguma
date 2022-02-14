@@ -218,10 +218,14 @@ class IRCCapRegistry {
 	}
 }
 
+const _DEFAULT_CHANTYPES = '#';
+
 class IRCIsupportRegistry {
 	String? _network;
+	String _chanTypes = _DEFAULT_CHANTYPES;
 
 	String? get network => _network;
+	String get chanTypes => _chanTypes;
 
 	void parse(List<String> tokens) {
 		tokens.forEach((tok) {
@@ -230,6 +234,9 @@ class IRCIsupportRegistry {
 				switch (k) {
 				case "NETWORK":
 					_network = null;
+					break;
+				case "CHANTYPES":
+					_chanTypes = _DEFAULT_CHANTYPES;
 					break;
 				}
 				return;
@@ -246,6 +253,9 @@ class IRCIsupportRegistry {
 			switch (k.toUpperCase()) {
 			case "NETWORK":
 				_network = v;
+				break;
+			case "CHANTYPES":
+				_chanTypes = v ?? '';
 				break;
 			}
 		});
