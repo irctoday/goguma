@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'client.dart';
 import 'client-snackbar.dart';
+import 'database.dart';
 import 'irc.dart';
 import 'models.dart';
 
@@ -74,6 +75,9 @@ class BufferPageState extends State<BufferPage> {
 							switch (key) {
 							case 'part':
 								context.read<Client>().send(IRCMessage('PART', params: [buffer.name]));
+								context.read<BufferListModel>().remove(buffer);
+								context.read<DB>().deleteBuffer(buffer.entry.id!);
+								Navigator.pop(context);
 								break;
 							}
 						},

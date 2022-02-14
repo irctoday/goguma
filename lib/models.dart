@@ -75,6 +75,11 @@ class BufferListModel extends ChangeNotifier {
 		notifyListeners();
 	}
 
+	void remove(BufferModel buf) {
+		_buffers.remove(BufferKey(buf.name, buf.server));
+		notifyListeners();
+	}
+
 	void clear() {
 		_buffers.clear();
 		notifyListeners();
