@@ -21,12 +21,12 @@ class Client {
 	String nick;
 	IRCPrefix? serverPrefix;
 	ClientState state = ClientState.disconnected;
+	final IRCCapRegistry caps = IRCCapRegistry();
 	final IRCIsupport isupport = IRCIsupport();
 
 	Socket? _socket;
 	StreamController<IRCMessage> _messagesController = StreamController.broadcast();
 	StreamController<ClientState> _statesController = StreamController.broadcast();
-	Map<String, String?> _availableCaps = Map();
 
 	Stream<IRCMessage> get messages => _messagesController.stream;
 	Stream<ClientState> get states => _statesController.stream;
@@ -70,7 +70,7 @@ class Client {
 			}).whenComplete(() {
 				_setState(ClientState.disconnected);
 				_socket = null;
-				_availableCaps.clear();
+				caps.clear();
 				// TODO: try to reconnect
 			});
 
@@ -104,6 +104,7 @@ class Client {
 		}
 		send(IRCMessage('NICK', params: [params.nick]));
 		send(IRCMessage('USER', params: [params.nick, '0', '*', params.nick]));
+		send(IRCMessage('CAP', params: ['END']));
 
 		return messages.firstWhere((msg) {
 			switch (msg.cmd) {
@@ -131,7 +132,7 @@ class Client {
 
 		switch (msg.cmd) {
 		case 'CAP':
-			_handleCap(msg);
+			caps.parse(msg);
 			break;
 		case RPL_WELCOME:
 			print('Registration complete');
@@ -153,42 +154,6 @@ class Client {
 		}
 
 		_messagesController.add(msg);
-	}
-
-	_handleCap(IRCMessage msg) {
-		var subcommand = msg.params[1].toUpperCase();
-		var params = msg.params.sublist(2);
-		switch (subcommand) {
-		case 'LS':
-			_addAvailableCaps(params[params.length - 1]);
-			if (params[0] != '*') {
-				send(IRCMessage('CAP', params: ['END']));
-			}
-			break;
-		case 'NEW':
-			_addAvailableCaps(params[0]);
-			break;
-		case 'DEL':
-			for (var cap in params[0].split(' ')) {
-				_availableCaps.remove(cap.toLowerCase());
-			}
-			break;
-		default:
-			throw FormatException('Unknown CAP subcommand: ' + subcommand);
-		}
-	}
-
-	_addAvailableCaps(String caps) {
-		for (var s in caps.split(' ')) {
-			var i = s.indexOf('=');
-			String k = s;
-			String? v = null;
-			if (i >= 0) {
-				k = s.substring(0, i);
-				v = s.substring(i + 1);
-			}
-			_availableCaps[k.toLowerCase()] = v;
-		}
 	}
 
 	disconnect() {

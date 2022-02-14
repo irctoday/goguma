@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 // RFC 1459
 const RPL_WELCOME = '001';
 const RPL_YOURHOST = '002';
@@ -161,6 +163,51 @@ class IRCException implements Exception {
 			return msg.params.last;
 		}
 		return msg.toString();
+	}
+}
+
+class IRCCapRegistry {
+	Map<String, String?> _available = Map();
+
+	UnmodifiableMapView get available => UnmodifiableMapView(_available);
+
+	void parse(IRCMessage msg) {
+		assert(msg.cmd == 'CAP');
+
+		var subcommand = msg.params[1].toUpperCase();
+		var params = msg.params.sublist(2);
+		switch (subcommand) {
+		case 'LS':
+			_addAvailable(params[params.length - 1]);
+			break;
+		case 'NEW':
+			_addAvailable(params[0]);
+			break;
+		case 'DEL':
+			for (var cap in params[0].split(' ')) {
+				_available.remove(cap.toLowerCase());
+			}
+			break;
+		default:
+			throw FormatException('Unknown CAP subcommand: ' + subcommand);
+		}
+	}
+
+	_addAvailable(String caps) {
+		for (var s in caps.split(' ')) {
+			var i = s.indexOf('=');
+			String k = s;
+			String? v = null;
+			if (i >= 0) {
+				k = s.substring(0, i);
+				v = s.substring(i + 1);
+			}
+			_available[k.toLowerCase()] = v;
+		}
+	}
+
+	void clear() {
+		_available.clear();
 	}
 }
 
