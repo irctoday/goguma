@@ -80,7 +80,7 @@ class ClientController {
 			var target = msg.params[0];
 			Future<BufferModel> bufFuture;
 			if (target == client.nick) {
-				bufFuture = _createBuffer(target, server);
+				bufFuture = _createBuffer(msg.prefix!.name, server);
 			} else {
 				var buf = _bufferList.get(target, server);
 				if (buf == null) {
