@@ -101,7 +101,10 @@ class BufferPageState extends State<BufferPage> {
 						onSelected: (key) {
 							switch (key) {
 							case 'part':
-								context.read<Client>().send(IRCMessage('PART', params: [buffer.name]));
+								var client = context.read<Client>();
+								if (client.isChannel(buffer.name)) {
+									client.send(IRCMessage('PART', params: [buffer.name]));
+								}
 								context.read<BufferListModel>().remove(buffer);
 								context.read<DB>().deleteBuffer(buffer.entry.id!);
 								Navigator.pop(context);
