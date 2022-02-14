@@ -10,10 +10,12 @@ import 'irc.dart';
 import 'models.dart';
 
 void main() {
+	var serverList = ServerListModel();
 	var bufferList = BufferListModel();
 	runApp(MultiProvider(
 		providers: [
-			Provider<ClientController>.value(value: ClientController(bufferList)),
+			Provider<ClientController>.value(value: ClientController(serverList, bufferList)),
+			ChangeNotifierProvider<ServerListModel>.value(value: serverList),
 			ChangeNotifierProvider<BufferListModel>.value(value: bufferList),
 		],
 		child: GogumaApp(),
@@ -51,13 +53,15 @@ class GogumaState extends State<Goguma> {
 				return;
 			}
 
-			context.read<ClientController>().connect(ConnectParams(
+			var clientController = context.read<ClientController>();
+			var server = clientController.addServer(ConnectParams(
 				host: prefs.getString('server.host')!,
 				port: prefs.getInt('server.port')!,
 				tls: prefs.getBool('server.tls')!,
 				nick: prefs.getString('server.nick')!,
 				pass: prefs.getString('server.pass'),
 			));
+			clientController.get(server).connect();
 
 			Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
 				return BufferListPage();
@@ -80,7 +84,9 @@ class GogumaState extends State<Goguma> {
 				loading = true;
 			});
 
-			context.read<ClientController>().connect(params).then((_) {
+			var clientController = context.read<ClientController>();
+			var server = clientController.addServer(params);
+			clientController.get(server).connect().then((_) {
 				SharedPreferences.getInstance().then((prefs) {
 					// TODO: save credentials in keyring instead
 					prefs.setString('server.host', params.host);

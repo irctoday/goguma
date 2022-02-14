@@ -71,7 +71,8 @@ class BufferListPageState extends State<BufferListPage> {
 		showDialog(context: context, builder: (dialogContext) {
 			return JoinDialog(onSubmit: (channel) {
 				// TODO: ask the user which server to use
-				var client = context.read<ClientController>().get(ServerModel());
+				var server = context.read<ServerListModel>().servers[0];
+				var client = context.read<ClientController>().get(server);
 				client.send(IRCMessage('JOIN', params: [channel]));
 			});
 		});
@@ -108,7 +109,8 @@ class BufferListPageState extends State<BufferListPage> {
 		}
 
 		// TODO: aggregate all client errors
-		var client = context.read<ClientController>().get(ServerModel());
+		var server = context.watch<ServerListModel>().servers[0];
+		var client = context.read<ClientController>().get(server);
 		return Scaffold(
 			appBar: AppBar(
 				leading: searchQuery != null ? CloseButton() : null,

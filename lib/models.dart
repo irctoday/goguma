@@ -3,6 +3,22 @@ import 'package:flutter/material.dart';
 
 import 'irc.dart';
 
+class ServerListModel extends ChangeNotifier {
+	List<ServerModel> _servers = [];
+
+	UnmodifiableListView<ServerModel> get servers => UnmodifiableListView(_servers);
+
+	void add(ServerModel server) {
+		_servers.add(server);
+		notifyListeners();
+	}
+
+	void clear() {
+		_servers.clear();
+		notifyListeners();
+	}
+}
+
 class ServerModel {}
 
 class BufferKey {
