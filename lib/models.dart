@@ -19,7 +19,11 @@ class ServerListModel extends ChangeNotifier {
 	}
 }
 
-class ServerModel {}
+class ServerModel {
+	final String host;
+
+	ServerModel(this.host);
+}
 
 class BufferKey {
 	final String name;

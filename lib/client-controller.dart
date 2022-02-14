@@ -11,7 +11,7 @@ class ClientController {
 	ClientController(ServerListModel serverList, BufferListModel bufferList) : _serverList = serverList, _bufferList = bufferList;
 
 	ServerModel addServer(ConnectParams params) {
-		var server = ServerModel();
+		var server = ServerModel(params.host);
 		_serverList.add(server);
 
 		var client = Client(params: params);
