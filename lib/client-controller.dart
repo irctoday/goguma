@@ -19,6 +19,9 @@ class ClientController {
 
 		client.messages.listen((msg) {
 			switch (msg.cmd) {
+			case RPL_ISUPPORT:
+				server.network = client.isupport.network;
+				break;
 			case 'JOIN':
 				if (msg.prefix?.name != client.nick) {
 					break;

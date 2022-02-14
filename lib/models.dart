@@ -19,10 +19,19 @@ class ServerListModel extends ChangeNotifier {
 	}
 }
 
-class ServerModel {
+class ServerModel extends ChangeNotifier {
 	final String host;
 
+	String? _network;
+
 	ServerModel(this.host);
+
+	String? get network => _network;
+
+	set network(String? network) {
+		_network = network;
+		notifyListeners();
+	}
 }
 
 class BufferKey {
