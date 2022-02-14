@@ -112,6 +112,10 @@ class DB {
 		return _getBasePath().then((basePath) {
 			return openDatabase(
 				join(basePath, 'goguma', 'main.db'),
+				onConfigure: (db) {
+					// Enable support for ON DELETE CASCADE
+					return db.execute('PRAGMA foreign_keys = ON');
+				},
 				onCreate: (db, version) {
 					return db.execute('''
 						CREATE TABLE Server(
@@ -127,7 +131,7 @@ class DB {
 							id INTEGER PRIMARY KEY,
 							name TEXT NOT NULL,
 							server INTEGER NOT NULL,
-							FOREIGN KEY (server) REFERENCES Server(id),
+							FOREIGN KEY (server) REFERENCES Server(id) ON DELETE CASCADE,
 							UNIQUE(name, server)
 						);
 
@@ -137,7 +141,7 @@ class DB {
 							buffer INTEGER NOT NULL,
 							raw TEXT NOT NULL,
 							flags INTEGER NOT NULL DEFAULT 0,
-							FOREIGN KEY (buffer) REFERENCES Buffer(id)
+							FOREIGN KEY (buffer) REFERENCES Buffer(id) ON DELETE CASCADE
 						);
 					''');
 				},
