@@ -15,12 +15,47 @@ class ClientSnackbar extends StatefulWidget {
 }
 
 class ClientSnackbarState extends State<ClientSnackbar> {
-	StreamSubscription? subscription;
+	StreamSubscription? messagesSubscription;
+	StreamSubscription? statesSubscription;
 
 	@override
 	void initState() {
 		super.initState();
-		subscription = widget.client.messages.listen((msg) {
+
+		statesSubscription = widget.client.states.listen((state) {
+			String text;
+			bool persistent = true;
+			switch (state) {
+			case ClientState.disconnected:
+				text = 'Disconnected from server';
+				break;
+			case ClientState.connecting:
+				text = 'Connecting to server…';
+				break;
+			case ClientState.registering:
+				text = 'Logging in…';
+				break;
+			case ClientState.registered:
+				text = 'Connected to server';
+				persistent = false;
+				break;
+			}
+			var snackbar;
+			if (persistent) {
+				snackbar = SnackBar(
+					content: Text(text),
+					dismissDirection: DismissDirection.none,
+					// Apparently there is no way to disable this...
+					duration: Duration(days: 365),
+				);
+			} else {
+				snackbar = SnackBar(content: Text(text));
+			}
+			ScaffoldMessenger.of(context).hideCurrentSnackBar();
+			ScaffoldMessenger.of(context).showSnackBar(snackbar);
+		});
+
+		messagesSubscription = widget.client.messages.listen((msg) {
 			if (msg.isError()) {
 				var snackbar = SnackBar(content: Text(msg.params[msg.params.length - 1]));
 				ScaffoldMessenger.of(context).showSnackBar(snackbar);
@@ -30,7 +65,8 @@ class ClientSnackbarState extends State<ClientSnackbar> {
 
 	@override
 	void dispose() {
-		subscription?.cancel();
+		messagesSubscription?.cancel();
+		statesSubscription?.cancel();
 		super.dispose();
 	}
 
