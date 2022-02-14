@@ -51,7 +51,7 @@ class ClientSnackbarState extends State<ClientSnackbar> {
 			} else {
 				snackbar = SnackBar(content: Text(text));
 			}
-			ScaffoldMessenger.of(context).hideCurrentSnackBar();
+			ScaffoldMessenger.of(context).clearSnackBars();
 			ScaffoldMessenger.of(context).showSnackBar(snackbar);
 		});
 
