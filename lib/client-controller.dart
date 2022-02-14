@@ -30,6 +30,13 @@ class ClientController {
 	void add(Client client, ServerModel server) {
 		_clients[server] = client;
 
+		server.state = client.state;
+		server.network = client.isupport.network;
+
+		client.states.listen((state) {
+			server.state = state;
+		});
+
 		client.messages.listen((msg) {
 			switch (msg.cmd) {
 			case RPL_ISUPPORT:

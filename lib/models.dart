@@ -1,6 +1,7 @@
 import 'dart:collection';
 import 'package:flutter/material.dart';
 
+import 'client.dart';
 import 'database.dart';
 import 'irc.dart';
 
@@ -23,6 +24,7 @@ class ServerListModel extends ChangeNotifier {
 class ServerModel extends ChangeNotifier {
 	final ServerEntry entry;
 
+	ClientState _state = ClientState.disconnected;
 	String? _network;
 
 	ServerModel(this.entry) {
@@ -32,9 +34,15 @@ class ServerModel extends ChangeNotifier {
 	int get id => entry.id!;
 
 	String? get network => _network;
+	ClientState get state => _state;
 
 	set network(String? network) {
 		_network = network;
+		notifyListeners();
+	}
+
+	set state(ClientState state) {
+		_state = state;
 		notifyListeners();
 	}
 }

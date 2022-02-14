@@ -83,6 +83,8 @@ class BufferPageState extends State<BufferPage> {
 	Widget build(BuildContext context) {
 		var client = context.read<Client>();
 		var buffer = context.watch<BufferModel>();
+		var server = context.watch<ServerModel>();
+		var connected = server.state == ClientState.registered;
 		var messages = buffer.messages;
 		return Scaffold(
 			appBar: AppBar(
@@ -165,7 +167,7 @@ class BufferPageState extends State<BufferPage> {
 						);
 					},
 				)),
-				Material(elevation: 15, child: Container(
+				if (connected) Material(elevation: 15, child: Container(
 					padding: EdgeInsets.all(10),
 					child: Form(key: composerFormKey, child: Row(children: [
 						Expanded(child: TextFormField(
