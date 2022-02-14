@@ -183,4 +183,8 @@ class Client {
 		print('Sent: ' + msg.toString());
 		return _socket!.write(msg.toString() + '\r\n');
 	}
+
+	bool isChannel(String name) {
+		return name.length > 0 && isupport.chanTypes.contains(name[0]);
+	}
 }
