@@ -118,7 +118,7 @@ class DB {
 				},
 				onCreate: (db, version) {
 					return db.execute('''
-						CREATE TABLE Server(
+						CREATE TABLE Server (
 							id INTEGER PRIMARY KEY,
 							host TEXT NOT NULL,
 							port INTEGER,
@@ -127,7 +127,7 @@ class DB {
 							pass TEXT
 						);
 
-						CREATE TABLE Buffer(
+						CREATE TABLE Buffer (
 							id INTEGER PRIMARY KEY,
 							name TEXT NOT NULL,
 							server INTEGER NOT NULL,
@@ -135,7 +135,7 @@ class DB {
 							UNIQUE(name, server)
 						);
 
-						CREATE TABLE Message(
+						CREATE TABLE Message (
 							id INTEGER PRIMARY KEY,
 							time TEXT NOT NULL,
 							buffer INTEGER NOT NULL,
