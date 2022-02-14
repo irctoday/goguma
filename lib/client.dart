@@ -24,9 +24,11 @@ class Client {
 
 	Socket? _socket;
 	StreamController<IRCMessage> _messagesController = StreamController.broadcast();
+	StreamController<ClientState> _statesController = StreamController.broadcast();
 	Map<String, String?> _availableCaps = Map();
 
 	Stream<IRCMessage> get messages => _messagesController.stream;
+	Stream<ClientState> get states => _statesController.stream;
 
 	Client({ required this.params }) : nick = params.nick {}
 
@@ -84,7 +86,11 @@ class Client {
 	}
 
 	_setState(ClientState state) {
+		if (this.state == state) {
+			return;
+		}
 		this.state = state;
+		_statesController.add(state);
 	}
 
 	Future<void> _register() {
@@ -110,7 +116,7 @@ class Client {
 			case ERR_UNAVAILRESOURCE:
 			case ERR_NOPERMFORHOST:
 			case ERR_YOUREBANNEDCREEP:
-				disconnect();
+				_socket?.close();
 				throw IRCException(msg);
 			}
 			return false;
@@ -184,6 +190,7 @@ class Client {
 	disconnect() {
 		_socket?.close();
 		_messagesController.close();
+		_statesController.close();
 	}
 
 	send(IRCMessage msg) {
