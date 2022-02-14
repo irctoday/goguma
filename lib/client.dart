@@ -27,6 +27,8 @@ class Client {
 	Socket? _socket;
 	StreamController<IRCMessage> _messagesController = StreamController.broadcast();
 	StreamController<ClientState> _statesController = StreamController.broadcast();
+	Timer? _reconnectTimer;
+	bool _autoReconnect = true;
 
 	Stream<IRCMessage> get messages => _messagesController.stream;
 	Stream<ClientState> get states => _statesController.stream;
@@ -68,11 +70,11 @@ class Client {
 			}).catchError((err) {
 				print('Connection error: ' + err.toString());
 			}).whenComplete(() {
-				_setState(ClientState.disconnected);
 				_socket = null;
 				caps.clear();
 				isupport.clear();
-				// TODO: try to reconnect
+
+				_setState(ClientState.disconnected);
 			});
 
 			var text = utf8.decoder.bind(socket);
@@ -93,6 +95,16 @@ class Client {
 		}
 		this.state = state;
 		_statesController.add(state);
+
+		if (state == ClientState.disconnected && _autoReconnect) {
+			_reconnectTimer?.cancel();
+
+			print('Reconnecting in 10s');
+			_reconnectTimer = Timer(Duration(seconds: 10), () {
+				_reconnectTimer = null;
+				connect();
+			});
+		}
 	}
 
 	Future<void> _register() {
@@ -158,6 +170,7 @@ class Client {
 	}
 
 	disconnect() {
+		_autoReconnect = false;
 		_socket?.close();
 		_messagesController.close();
 		_statesController.close();
