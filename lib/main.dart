@@ -16,7 +16,7 @@ void main() {
 		runApp(MultiProvider(
 			providers: [
 				Provider<DB>.value(value: db),
-				Provider<ClientController>.value(value: ClientController(serverList, bufferList)),
+				Provider<ClientController>.value(value: ClientController(bufferList)),
 				ChangeNotifierProvider<ServerListModel>.value(value: serverList),
 				ChangeNotifierProvider<BufferListModel>.value(value: bufferList),
 			],
@@ -51,18 +51,24 @@ class GogumaState extends State<Goguma> {
 	void initState() {
 		super.initState();
 
-		var clientController = context.read<ClientController>();
-		context.read<DB>().listServers().then((servers) {
-			if (servers.length == 0) {
-				return;
+		context.read<DB>().listServers().then((entries) {
+			if (entries.length == 0) {
+				return null;
 			}
 
-			servers.forEach((entry) {
-				var server = clientController.addServer(entry);
-				clientController.get(server).connect();
+			var serverList = context.read<ServerListModel>();
+			var clientController = context.read<ClientController>();
+			entries.forEach((entry) {
+				var server = ServerModel(entry);
+				serverList.add(server);
+
+				var client = Client(params: connectParamsFromServerEntry(entry));
+				clientController.add(client, server);
+
+				client.connect();
 			});
 
-			Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+			return Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
 				return BufferListPage();
 			}));
 		}).whenComplete(() {
@@ -83,16 +89,19 @@ class GogumaState extends State<Goguma> {
 				loading = true;
 			});
 
-			var clientController = context.read<ClientController>();
-			var server = clientController.addServer(entry);
-			clientController.get(server).connect().then((_) {
+			var client = Client(params: connectParamsFromServerEntry(entry));
+			client.connect().then((_) {
 				return context.read<DB>().storeServer(entry);
 			}).then((_) {
-				Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+				var server = ServerModel(entry);
+				context.read<ServerListModel>().add(server);
+				context.read<ClientController>().add(client, server);
+
+				return Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
 					return BufferListPage();
 				}));
 			}).catchError((err) {
-				clientController.disconnectAll();
+				client.disconnect();
 				setState(() {
 					error = err;
 				});

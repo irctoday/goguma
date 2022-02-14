@@ -80,11 +80,12 @@ class BufferListPageState extends State<BufferListPage> {
 
 	void logout(BuildContext context) {
 		var db = context.read<DB>();
-		context.read<ServerListModel>().servers.forEach((server) {
-			if (server.entry.id != null) {
-				db.deleteServer(server.entry.id!);
-			}
+		var serverList = context.read<ServerListModel>();
+
+		serverList.servers.forEach((server) {
+			db.deleteServer(server.entry.id!);
 		});
+		serverList.clear();
 		context.read<ClientController>().disconnectAll();
 
 		Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {

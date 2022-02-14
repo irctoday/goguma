@@ -3,25 +3,24 @@ import 'database.dart';
 import 'irc.dart';
 import 'models.dart';
 
+ConnectParams connectParamsFromServerEntry(ServerEntry entry) {
+	return ConnectParams(
+		host: entry.host,
+		port: entry.port ?? (entry.tls ? 6697 : 6667),
+		tls: entry.tls,
+		nick: entry.nick!, // TODO: add a fallback
+		pass: entry.pass,
+	);
+}
+
 class ClientController {
 	Map<ServerModel, Client> _clients = Map();
 
-	final ServerListModel _serverList;
 	final BufferListModel _bufferList;
 
-	ClientController(ServerListModel serverList, BufferListModel bufferList) : _serverList = serverList, _bufferList = bufferList;
+	ClientController(BufferListModel bufferList) : _bufferList = bufferList;
 
-	ServerModel addServer(ServerEntry entry) {
-		var server = ServerModel(entry);
-		_serverList.add(server);
-
-		var client = Client(params: ConnectParams(
-			host: entry.host,
-			port: entry.port ?? (entry.tls ? 6697 : 6667),
-			tls: entry.tls,
-			nick: entry.nick!, // TODO: make optional
-			pass: entry.pass,
-		));
+	void add(Client client, ServerModel server) {
 		_clients[server] = client;
 
 		client.messages.listen((msg) {
@@ -65,8 +64,6 @@ class ClientController {
 				break;
 			}
 		});
-
-		return server;
 	}
 
 	Client get(ServerModel server) {
@@ -75,7 +72,6 @@ class ClientController {
 
 	void disconnectAll() {
 		_clients.values.forEach((client) => client.disconnect());
-		_serverList.clear();
 		_bufferList.clear();
 	}
 }
