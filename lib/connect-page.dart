@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'client.dart';
+import 'database.dart';
 import 'irc.dart';
 
-typedef ConnectParamsCallback(ConnectParams);
+typedef ConnectParamsCallback(ServerEntry);
 
 class ConnectPage extends StatefulWidget {
 	final ConnectParamsCallback? onSubmit;
@@ -33,10 +33,6 @@ Uri _parseServerUri(String rawUri) {
 		throw FormatException('Unsupported URI scheme: ' + uri.scheme);
 	}
 
-	if (!uri.hasPort) {
-		uri = uri.replace(port: uri.scheme == 'irc+insecure' ? 6667 : 6697);
-	}
-
 	return uri;
 }
 
@@ -52,9 +48,9 @@ class ConnectPageState extends State<ConnectPage> {
 		}
 
 		Uri uri = _parseServerUri(serverController.text);
-		widget.onSubmit?.call(ConnectParams(
+		widget.onSubmit?.call(ServerEntry(
 			host: uri.host,
-			port: uri.port,
+			port: uri.hasPort ? uri.port : null,
 			nick: usernameController.text,
 			pass: passwordController.text.isNotEmpty ? passwordController.text : null,
 			tls: uri.scheme != 'irc+insecure',

@@ -1,6 +1,7 @@
 import 'dart:collection';
 import 'package:flutter/material.dart';
 
+import 'database.dart';
 import 'irc.dart';
 
 class ServerListModel extends ChangeNotifier {
@@ -20,11 +21,11 @@ class ServerListModel extends ChangeNotifier {
 }
 
 class ServerModel extends ChangeNotifier {
-	final String host;
+	final ServerEntry entry;
 
 	String? _network;
 
-	ServerModel(this.host);
+	ServerModel(this.entry);
 
 	String? get network => _network;
 

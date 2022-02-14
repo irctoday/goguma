@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'buffer-page.dart';
 import 'client.dart';
 import 'client-controller.dart';
 import 'client-snackbar.dart';
+import 'database.dart';
 import 'irc.dart';
 import 'join-dialog.dart';
 import 'models.dart';
@@ -79,15 +79,13 @@ class BufferListPageState extends State<BufferListPage> {
 	}
 
 	void logout(BuildContext context) {
-		context.read<ClientController>().disconnectAll();
-
-		SharedPreferences.getInstance().then((prefs) {
-			prefs.remove('server.host');
-			prefs.remove('server.port');
-			prefs.remove('server.tls');
-			prefs.remove('server.nick');
-			prefs.remove('server.pass');
+		var db = context.read<DB>();
+		context.read<ServerListModel>().servers.forEach((server) {
+			if (server.entry.id != null) {
+				db.deleteServer(server.entry.id!);
+			}
 		});
+		context.read<ClientController>().disconnectAll();
 
 		Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
 			return Goguma();

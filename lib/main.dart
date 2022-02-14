@@ -1,25 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'buffer-list-page.dart';
 import 'client.dart';
 import 'client-controller.dart';
 import 'connect-page.dart';
+import 'database.dart';
 import 'irc.dart';
 import 'models.dart';
 
 void main() {
-	var serverList = ServerListModel();
-	var bufferList = BufferListModel();
-	runApp(MultiProvider(
-		providers: [
-			Provider<ClientController>.value(value: ClientController(serverList, bufferList)),
-			ChangeNotifierProvider<ServerListModel>.value(value: serverList),
-			ChangeNotifierProvider<BufferListModel>.value(value: bufferList),
-		],
-		child: GogumaApp(),
-	));
+	DB.open().then((db) {
+		var serverList = ServerListModel();
+		var bufferList = BufferListModel();
+		runApp(MultiProvider(
+			providers: [
+				Provider<DB>.value(value: db),
+				Provider<ClientController>.value(value: ClientController(serverList, bufferList)),
+				ChangeNotifierProvider<ServerListModel>.value(value: serverList),
+				ChangeNotifierProvider<BufferListModel>.value(value: bufferList),
+			],
+			child: GogumaApp(),
+		));
+	});
 }
 
 class GogumaApp extends StatelessWidget {
@@ -48,20 +51,16 @@ class GogumaState extends State<Goguma> {
 	void initState() {
 		super.initState();
 
-		SharedPreferences.getInstance().then((prefs) {
-			if (!prefs.containsKey('server.host')) {
+		var clientController = context.read<ClientController>();
+		context.read<DB>().listServers().then((servers) {
+			if (servers.length == 0) {
 				return;
 			}
 
-			var clientController = context.read<ClientController>();
-			var server = clientController.addServer(ConnectParams(
-				host: prefs.getString('server.host')!,
-				port: prefs.getInt('server.port')!,
-				tls: prefs.getBool('server.tls')!,
-				nick: prefs.getString('server.nick')!,
-				pass: prefs.getString('server.pass'),
-			));
-			clientController.get(server).connect();
+			servers.forEach((entry) {
+				var server = clientController.addServer(entry);
+				clientController.get(server).connect();
+			});
 
 			Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
 				return BufferListPage();
@@ -79,31 +78,21 @@ class GogumaState extends State<Goguma> {
 			return Container();
 		}
 
-		return ConnectPage(loading: loading, error: error, onSubmit: (params) {
+		return ConnectPage(loading: loading, error: error, onSubmit: (entry) {
 			setState(() {
 				loading = true;
 			});
 
 			var clientController = context.read<ClientController>();
-			var server = clientController.addServer(params);
+			var server = clientController.addServer(entry);
 			clientController.get(server).connect().then((_) {
-				SharedPreferences.getInstance().then((prefs) {
-					// TODO: save credentials in keyring instead
-					prefs.setString('server.host', params.host);
-					prefs.setInt('server.port', params.port);
-					prefs.setBool('server.tls', params.tls);
-					prefs.setString('server.nick', params.nick);
-					if (params.pass != null) {
-						prefs.setString('server.pass', params.pass!);
-					} else {
-						prefs.remove('server.pass');
-					}
-				});
-
+				return context.read<DB>().storeServer(entry);
+			}).then((_) {
 				Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
 					return BufferListPage();
 				}));
 			}).catchError((err) {
+				clientController.disconnectAll();
 				setState(() {
 					error = err;
 				});

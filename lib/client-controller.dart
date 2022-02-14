@@ -1,4 +1,5 @@
 import 'client.dart';
+import 'database.dart';
 import 'irc.dart';
 import 'models.dart';
 
@@ -10,11 +11,17 @@ class ClientController {
 
 	ClientController(ServerListModel serverList, BufferListModel bufferList) : _serverList = serverList, _bufferList = bufferList;
 
-	ServerModel addServer(ConnectParams params) {
-		var server = ServerModel(params.host);
+	ServerModel addServer(ServerEntry entry) {
+		var server = ServerModel(entry);
 		_serverList.add(server);
 
-		var client = Client(params: params);
+		var client = Client(params: ConnectParams(
+			host: entry.host,
+			port: entry.port ?? (entry.tls ? 6697 : 6667),
+			tls: entry.tls,
+			nick: entry.nick!, // TODO: make optional
+			pass: entry.pass,
+		));
 		_clients[server] = client;
 
 		client.messages.listen((msg) {
