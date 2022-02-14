@@ -68,7 +68,7 @@ class GogumaState extends State<Goguma> {
 			return db.listBuffers();
 		}).then((entries) {
 			entries.forEach((entry) {
-				var server = serverList.servers.firstWhere((server) => server.entry.id! == entry.server);
+				var server = serverList.servers.firstWhere((server) => server.id == entry.server);
 				bufferList.add(BufferModel(entry: entry, server: server));
 			});
 

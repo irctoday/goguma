@@ -25,7 +25,11 @@ class ServerModel extends ChangeNotifier {
 
 	String? _network;
 
-	ServerModel(this.entry);
+	ServerModel(this.entry) {
+		assert(entry.id != null);
+	}
+
+	int get id => entry.id!;
 
 	String? get network => _network;
 
@@ -91,9 +95,10 @@ class BufferModel extends ChangeNotifier {
 	UnmodifiableListView<IRCMessage> get messages => UnmodifiableListView(_messages);
 
 	BufferModel({ required this.entry, required this.server, String? subtitle }) : _subtitle = subtitle {
-		assert(server.entry.id != null);
+		assert(entry.id != null);
 	}
 
+	int get id => entry.id!;
 	String get name => entry.name;
 	String? get subtitle => _subtitle;
 

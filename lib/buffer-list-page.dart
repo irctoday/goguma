@@ -83,7 +83,7 @@ class BufferListPageState extends State<BufferListPage> {
 		var serverList = context.read<ServerListModel>();
 
 		serverList.servers.forEach((server) {
-			db.deleteServer(server.entry.id!);
+			db.deleteServer(server.id);
 		});
 		serverList.clear();
 		context.read<ClientController>().disconnectAll();

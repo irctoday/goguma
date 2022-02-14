@@ -80,7 +80,7 @@ class ClientController {
 			return Future.value(buffer);
 		}
 
-		var entry = BufferEntry(name: name, server: server.entry.id!);
+		var entry = BufferEntry(name: name, server: server.id);
 		return _db.storeBuffer(entry).then((_) {
 			var buffer = BufferModel(entry: entry, server: server);
 			_bufferList.add(buffer);
