@@ -22,7 +22,7 @@ class Client {
 	IRCPrefix? serverPrefix;
 	ClientState state = ClientState.disconnected;
 	final IRCCapRegistry caps = IRCCapRegistry();
-	final IRCIsupport isupport = IRCIsupport();
+	final IRCIsupportRegistry isupport = IRCIsupportRegistry();
 
 	Socket? _socket;
 	StreamController<IRCMessage> _messagesController = StreamController.broadcast();

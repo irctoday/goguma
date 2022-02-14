@@ -211,7 +211,7 @@ class IRCCapRegistry {
 	}
 }
 
-class IRCIsupport {
+class IRCIsupportRegistry {
 	String? _network;
 
 	String? get network => _network;
