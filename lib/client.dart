@@ -71,6 +71,7 @@ class Client {
 				_setState(ClientState.disconnected);
 				_socket = null;
 				caps.clear();
+				isupport.clear();
 				// TODO: try to reconnect
 			});
 

@@ -243,4 +243,8 @@ class IRCIsupport {
 			}
 		});
 	}
+
+	void clear() {
+		_network = null;
+	}
 }
