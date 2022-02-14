@@ -94,10 +94,11 @@ class BufferModel extends ChangeNotifier {
 	final BufferEntry entry;
 	final ServerModel server;
 	String? _subtitle;
+	bool _messageHistoryLoaded = false;
 
-	List<IRCMessage> _messages = [];
+	List<MessageModel> _messages = [];
 
-	UnmodifiableListView<IRCMessage> get messages => UnmodifiableListView(_messages);
+	UnmodifiableListView<MessageModel> get messages => UnmodifiableListView(_messages);
 
 	BufferModel({ required this.entry, required this.server, String? subtitle }) : _subtitle = subtitle {
 		assert(entry.id != null);
@@ -106,15 +107,34 @@ class BufferModel extends ChangeNotifier {
 	int get id => entry.id!;
 	String get name => entry.name;
 	String? get subtitle => _subtitle;
+	bool get messageHistoryLoaded => _messageHistoryLoaded;
 
 	set subtitle(String? subtitle) {
 		_subtitle = subtitle;
 		notifyListeners();
 	}
 
-	void addMessage(IRCMessage msg) {
+	void addMessage(MessageModel msg) {
 		// TODO: insert at correct position
 		_messages.add(msg);
 		notifyListeners();
 	}
+
+	void populateMessageHistory(List<MessageModel> l) {
+		_messages = l + _messages;
+		_messageHistoryLoaded = true;
+		notifyListeners();
+	}
+}
+
+class MessageModel {
+	final MessageEntry entry;
+	final BufferModel buffer;
+
+	MessageModel({ required this.entry, required this.buffer }) {
+		assert(entry.id != null);
+	}
+
+	int get id => entry.id!;
+	IRCMessage get msg => entry.msg;
 }

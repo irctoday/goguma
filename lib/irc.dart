@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:core';
 
 // RFC 1459
 const RPL_WELCOME = '001';
@@ -31,6 +32,12 @@ const ERR_SASLFAIL = '904';
 const ERR_SASLTOOLONG = '905';
 const ERR_SASLABORTED = '906';
 const ERR_SASLALREADY = '907';
+
+String formatIRCTime(DateTime dt) {
+	dt = dt.toUtc();
+	// toIso8601String omits the microseconds if zero
+	return DateTime.utc(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.millisecond).toIso8601String();
+}
 
 class IRCMessage {
 	final IRCPrefix? prefix;

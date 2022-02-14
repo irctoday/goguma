@@ -36,13 +36,38 @@ class BufferPageState extends State<BufferPage> {
 	final composerFormKey = GlobalKey<FormState>();
 	final composerController = TextEditingController();
 
+	@override
+	void initState() {
+		super.initState();
+
+		var buffer = context.read<BufferModel>();
+		if (buffer.messageHistoryLoaded) {
+			return;
+		}
+
+		// TODO: only load a partial view of the messages
+		context.read<DB>().listMessages(buffer.id).then((entries) {
+			buffer.populateMessageHistory(entries.map((entry) {
+				return MessageModel(entry: entry, buffer: buffer);
+			}).toList());
+		});
+	}
+
 	void submitComposer() {
 		if (composerController.text != '') {
 			var buffer = context.read<BufferModel>();
 			var client = context.read<Client>();
+
 			var msg = IRCMessage('PRIVMSG', params: [buffer.name, composerController.text]);
 			client.send(msg);
-			buffer.addMessage(IRCMessage(msg.cmd, params: msg.params, prefix: IRCPrefix(client.nick)));
+
+			msg = IRCMessage(msg.cmd, params: msg.params, prefix: IRCPrefix(client.nick));
+			context.read<DB>().storeMessage(MessageEntry(msg, buffer.id)).then((entry) {
+				if (!buffer.messageHistoryLoaded) {
+					return;
+				}
+				buffer.addMessage(MessageModel(entry: entry, buffer: buffer));
+			});
 		}
 		composerFormKey.currentState!.reset();
 		composerFocusNode.requestFocus();
@@ -95,7 +120,7 @@ class BufferPageState extends State<BufferPage> {
 					reverse: true,
 					itemCount: messages.length,
 					itemBuilder: (context, index) {
-						var msg = messages[messages.length - index - 1];
+						var msg = messages[messages.length - index - 1].msg;
 						assert(msg.cmd == 'PRIVMSG' || msg.cmd == 'NOTICE');
 
 						var sender = msg.prefix!.name;

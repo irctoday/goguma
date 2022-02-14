@@ -62,13 +62,24 @@ class ClientController {
 			case 'PRIVMSG':
 			case 'NOTICE':
 				var target = msg.params[0];
-				var bufFuture;
+				Future<BufferModel> bufFuture;
 				if (target == client.nick) {
 					bufFuture = _createBuffer(target, server);
 				} else {
-					bufFuture = _bufferList.get(target, server);
+					var buf = _bufferList.get(target, server);
+					if (buf == null) {
+						break;
+					}
+					bufFuture = Future.value(buf);
 				}
-				bufFuture.then((buf) => buf?.addMessage(msg));
+				bufFuture.then((buf) {
+					_db.storeMessage(MessageEntry(msg, buf.id)).then((entry) {
+						if (!buf.messageHistoryLoaded) {
+							return;
+						}
+						buf.addMessage(MessageModel(entry: entry, buffer: buf));
+					});
+				});
 				break;
 			}
 		});

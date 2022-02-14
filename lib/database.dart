@@ -6,6 +6,8 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import 'irc.dart';
+
 class ServerEntry {
 	int? id;
 	String host;
@@ -55,6 +57,43 @@ class BufferEntry {
 		id = m['id'],
 		name = m['name'],
 		server = m['server'];
+}
+
+class MessageEntry {
+	int? id;
+	final String time;
+	final int buffer;
+	final String raw;
+	int flags;
+
+	IRCMessage? _msg;
+
+	Map<String, Object?> toMap() {
+		return <String, Object?>{
+			'id': id,
+			'time': time,
+			'buffer': buffer,
+			'raw': raw,
+			'flags': flags,
+		};
+	}
+
+	MessageEntry(IRCMessage msg, this.buffer) :
+		time = formatIRCTime(DateTime.now()),
+		raw = msg.toString(),
+		flags = 0,
+		_msg = msg;
+
+	MessageEntry.fromMap(Map<String, dynamic> m) :
+		id = m['id'],
+		time = m['time'],
+		buffer = m['buffer'],
+		raw = m['raw'],
+		flags = m['flags'];
+
+	IRCMessage get msg {
+		return _msg ?? IRCMessage.parse(raw);
+	}
 }
 
 class DB {
@@ -165,5 +204,24 @@ class DB {
 
 	Future<void> deleteBuffer(int id) {
 		return _db.rawDelete('DELETE FROM Buffer WHERE id = ?', [id]);
+	}
+
+	Future<List<MessageEntry>> listMessages(int buffer) {
+		return _db.rawQuery('''
+			SELECT id, time, buffer, raw, flags FROM Message WHERE buffer = ? ORDER BY time
+		''', [buffer]).then((entries) {
+			return entries.map((m) => MessageEntry.fromMap(m)).toList();
+		});
+	}
+
+	Future<MessageEntry> storeMessage(MessageEntry entry) {
+		if (entry.id == null) {
+			return _db.insert('Message', entry.toMap()).then((id) {
+				entry.id = id;
+				return entry;
+			});
+		} else {
+			return _db.update('Message', entry.toMap()).then((_) => entry);
+		}
 	}
 }
