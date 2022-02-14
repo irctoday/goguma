@@ -82,7 +82,7 @@ class BufferListModel extends ChangeNotifier {
 }
 
 class BufferModel extends ChangeNotifier {
-	final String name;
+	final BufferEntry entry;
 	final ServerModel server;
 	String? _subtitle;
 
@@ -90,10 +90,11 @@ class BufferModel extends ChangeNotifier {
 
 	UnmodifiableListView<IRCMessage> get messages => UnmodifiableListView(_messages);
 
-	BufferModel({ required this.name, required this.server, String? subtitle }) : _subtitle = subtitle {
+	BufferModel({ required this.entry, required this.server, String? subtitle }) : _subtitle = subtitle {
 		assert(server.entry.id != null);
 	}
 
+	String get name => entry.name;
 	String? get subtitle => _subtitle;
 
 	set subtitle(String? subtitle) {

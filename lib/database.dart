@@ -36,6 +36,27 @@ class ServerEntry {
 		pass = m['pass'];
 }
 
+class BufferEntry {
+	int? id;
+	final String name;
+	final int server;
+
+	Map<String, Object?> toMap() {
+		return <String, Object?>{
+			'id': id,
+			'name': name,
+			'server': server,
+		};
+	}
+
+	BufferEntry({ required this.name, required this.server });
+
+	BufferEntry.fromMap(Map<String, dynamic> m) :
+		id = m['id'],
+		name = m['name'],
+		server = m['server'];
+}
+
 class DB {
 	final Database _db;
 
@@ -123,5 +144,26 @@ class DB {
 
 	Future<void> deleteServer(int id) {
 		return _db.rawDelete('DELETE FROM Server WHERE id = ?', [id]);
+	}
+
+	Future<List<BufferEntry>> listBuffers() {
+		return _db.rawQuery('''
+			SELECT id, name, server FROM Buffer ORDER BY id
+		''').then((entries) => entries.map((m) => BufferEntry.fromMap(m)).toList());
+	}
+
+	Future<BufferEntry> storeBuffer(BufferEntry entry) {
+		if (entry.id == null) {
+			return _db.insert('Buffer', entry.toMap()).then((id) {
+				entry.id = id;
+				return entry;
+			});
+		} else {
+			return _db.update('Buffer', entry.toMap()).then((_) => entry);
+		}
+	}
+
+	Future<void> deleteBuffer(int id) {
+		return _db.rawDelete('DELETE FROM Buffer WHERE id = ?', [id]);
 	}
 }

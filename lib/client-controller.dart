@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'client.dart';
 import 'database.dart';
 import 'irc.dart';
@@ -16,9 +18,14 @@ ConnectParams connectParamsFromServerEntry(ServerEntry entry) {
 class ClientController {
 	Map<ServerModel, Client> _clients = Map();
 
+	final DB _db;
 	final BufferListModel _bufferList;
 
-	ClientController(BufferListModel bufferList) : _bufferList = bufferList;
+	UnmodifiableListView<Client> get clients => UnmodifiableListView(_clients.values);
+
+	ClientController(DB db, BufferListModel bufferList) :
+		_db = db,
+		_bufferList = bufferList;
 
 	void add(Client client, ServerModel server) {
 		_clients[server] = client;
@@ -29,10 +36,11 @@ class ClientController {
 				server.network = client.isupport.network;
 				break;
 			case 'JOIN':
+				var channel = msg.params[0];
 				if (msg.prefix?.name != client.nick) {
 					break;
 				}
-				_bufferList.add(BufferModel(name: msg.params[0], server: server));
+				_createBuffer(channel, server);
 				break;
 			case RPL_TOPIC:
 				var channel = msg.params[1];
@@ -54,15 +62,29 @@ class ClientController {
 			case 'PRIVMSG':
 			case 'NOTICE':
 				var target = msg.params[0];
-				var buf = _bufferList.get(target, server);
-				// TODO: put server messages in a buffer, too
-				if (buf == null && target == client.nick) {
-					buf = BufferModel(name: msg.prefix!.name, server: server);
-					_bufferList.add(buf);
+				var bufFuture;
+				if (target == client.nick) {
+					bufFuture = _createBuffer(target, server);
+				} else {
+					bufFuture = _bufferList.get(target, server);
 				}
-				buf?.addMessage(msg);
+				bufFuture.then((buf) => buf?.addMessage(msg));
 				break;
 			}
+		});
+	}
+
+	Future<BufferModel> _createBuffer(String name, ServerModel server) {
+		var buffer = _bufferList.get(name, server);
+		if (buffer != null) {
+			return Future.value(buffer);
+		}
+
+		var entry = BufferEntry(name: name, server: server.entry.id!);
+		return _db.storeBuffer(entry).then((_) {
+			var buffer = BufferModel(entry: entry, server: server);
+			_bufferList.add(buffer);
+			return buffer;
 		});
 	}
 

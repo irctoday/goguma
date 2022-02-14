@@ -16,7 +16,7 @@ void main() {
 		runApp(MultiProvider(
 			providers: [
 				Provider<DB>.value(value: db),
-				Provider<ClientController>.value(value: ClientController(bufferList)),
+				Provider<ClientController>.value(value: ClientController(db, bufferList)),
 				ChangeNotifierProvider<ServerListModel>.value(value: serverList),
 				ChangeNotifierProvider<BufferListModel>.value(value: bufferList),
 			],
@@ -51,26 +51,36 @@ class GogumaState extends State<Goguma> {
 	void initState() {
 		super.initState();
 
-		context.read<DB>().listServers().then((entries) {
-			if (entries.length == 0) {
-				return null;
-			}
+		var db = context.read<DB>();
+		var serverList = context.read<ServerListModel>();
+		var bufferList = context.read<BufferListModel>();
+		var clientController = context.read<ClientController>();
 
-			var serverList = context.read<ServerListModel>();
-			var clientController = context.read<ClientController>();
+		db.listServers().then((entries) {
 			entries.forEach((entry) {
 				var server = ServerModel(entry);
 				serverList.add(server);
 
 				var client = Client(params: connectParamsFromServerEntry(entry));
 				clientController.add(client, server);
-
-				client.connect();
 			});
 
-			return Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-				return BufferListPage();
-			}));
+			return db.listBuffers();
+		}).then((entries) {
+			entries.forEach((entry) {
+				var server = serverList.servers.firstWhere((server) => server.entry.id! == entry.server);
+				bufferList.add(BufferModel(entry: entry, server: server));
+			});
+
+			clientController.clients.forEach((client) => client.connect());
+
+			if (serverList.servers.length > 0) {
+				return Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+					return BufferListPage();
+				}));
+			} else {
+				return null;
+			}
 		}).whenComplete(() {
 			setState(() {
 				initing = false;
