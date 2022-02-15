@@ -84,6 +84,28 @@ class BufferListPageState extends State<BufferListPage> {
 		});
 	}
 
+	void markAllBuffersRead(BuildContext context) {
+		var bufferList = context.read<BufferListModel>();
+		var clientProvider = context.read<ClientProvider>();
+		var db = context.read<DB>();
+
+		for (var buffer in bufferList.buffers) {
+			if (buffer.unreadCount == 0 || buffer.lastDeliveredTime == null) {
+				continue;
+			}
+
+			buffer.unreadCount = 0;
+			buffer.entry.lastReadTime = buffer.lastDeliveredTime!;
+			db.storeBuffer(buffer.entry);
+
+			var client = clientProvider.get(buffer.network);
+			client.setRead(buffer.name, buffer.lastDeliveredTime!);
+		}
+
+		// Re-compute hasUnreadBuffer
+		setState(() {});
+	}
+
 	void logout(BuildContext context) {
 		var db = context.read<DB>();
 		var networkList = context.read<NetworkListModel>();
@@ -114,6 +136,13 @@ class BufferListPageState extends State<BufferListPage> {
 			buffers = filtered;
 		}
 
+		var hasUnreadBuffer = false;
+		buffers.forEach((buffer) {
+			if (buffer.unreadCount > 0) {
+				hasUnreadBuffer = true;
+			}
+		});
+
 		// TODO: aggregate all client errors
 		var network = context.watch<NetworkListModel>().networks.first;
 		var client = context.read<ClientProvider>().get(network);
@@ -133,6 +162,9 @@ class BufferListPageState extends State<BufferListPage> {
 							case 'join':
 								showJoinDialog(context);
 								break;
+							case 'mark-all-read':
+								markAllBuffersRead(context);
+								break;
 							case 'logout':
 								logout(context);
 								break;
@@ -141,6 +173,7 @@ class BufferListPageState extends State<BufferListPage> {
 						itemBuilder: (context) {
 							return [
 								PopupMenuItem(child: Text('Join'), value: 'join'),
+								if (hasUnreadBuffer) PopupMenuItem(child: Text('Mark all as read'), value: 'mark-all-read'),
 								PopupMenuItem(child: Text('Settings'), value: 'settings'),
 								PopupMenuItem(child: Text('Logout'), value: 'logout'),
 							];
