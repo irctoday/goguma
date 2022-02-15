@@ -94,6 +94,9 @@ class ClientController {
 						return;
 					}
 					buf.addMessage(MessageModel(entry: entry, buffer: buf));
+					if (msg.prefix!.name != client.nick) {
+						buf.unreadCount++;
+					}
 				});
 			});
 		}

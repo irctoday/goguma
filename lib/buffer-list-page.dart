@@ -169,10 +169,24 @@ class BufferItem extends StatelessWidget {
 		return Consumer<BufferModel>(builder: (context, buf, child) {
 			return ListTile(
 				leading: CircleAvatar(child: Text(initials(buf.name))),
+				trailing: (buf.unreadCount == 0) ? null : Container(
+					padding: EdgeInsets.all(3),
+					decoration: new BoxDecoration(
+						color: Colors.red,
+						borderRadius: BorderRadius.circular(20),
+					),
+					constraints: BoxConstraints(minWidth: 20, minHeight: 20),
+					child: Text(
+						'${buf.unreadCount}',
+						style: TextStyle(color: Colors.white, fontSize: 12),
+						textAlign: TextAlign.center,
+					),
+				),
 				title: Text(buf.name, overflow: TextOverflow.ellipsis),
 				subtitle: buf.subtitle != null ? Text(buf.subtitle!, overflow: TextOverflow.ellipsis) : null,
 				onTap: () {
 					var client = context.read<ClientController>().get(buf.server);
+					buf.unreadCount = 0;
 					Navigator.push(context, MaterialPageRoute(builder: (context) {
 						return MultiProvider(
 							providers: [

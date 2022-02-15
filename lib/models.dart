@@ -102,6 +102,7 @@ class BufferModel extends ChangeNotifier {
 	final BufferEntry entry;
 	final ServerModel server;
 	String? _subtitle;
+	int _unreadCount = 0;
 	bool _messageHistoryLoaded = false;
 
 	List<MessageModel> _messages = [];
@@ -115,10 +116,16 @@ class BufferModel extends ChangeNotifier {
 	int get id => entry.id!;
 	String get name => entry.name;
 	String? get subtitle => _subtitle;
+	int get unreadCount => _unreadCount;
 	bool get messageHistoryLoaded => _messageHistoryLoaded;
 
 	set subtitle(String? subtitle) {
 		_subtitle = subtitle;
+		notifyListeners();
+	}
+
+	set unreadCount(int n) {
+		_unreadCount = n;
 		notifyListeners();
 	}
 
