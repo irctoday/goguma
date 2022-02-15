@@ -219,24 +219,30 @@ class IRCCapRegistry {
 }
 
 const _DEFAULT_CHANTYPES = '#';
+final _defaultCaseMapping = _caseMappingByName('rfc1459')!;
 
 class IRCIsupportRegistry {
 	String? _network;
-	String _chanTypes = _DEFAULT_CHANTYPES;
+	String? _chanTypes;
+	CaseMapping? _caseMapping;
 
 	String? get network => _network;
-	String get chanTypes => _chanTypes;
+	String get chanTypes => _chanTypes ?? _DEFAULT_CHANTYPES;
+	CaseMapping get caseMapping => _caseMapping ?? _defaultCaseMapping;
 
 	void parse(List<String> tokens) {
 		tokens.forEach((tok) {
 			if (tok.startsWith('-')) {
 				var k = tok.substring(1).toUpperCase();
 				switch (k) {
-				case "NETWORK":
+				case 'NETWORK':
 					_network = null;
 					break;
-				case "CHANTYPES":
-					_chanTypes = _DEFAULT_CHANTYPES;
+				case 'CASEMAPPING':
+					_caseMapping = null;
+					break;
+				case 'CHANTYPES':
+					_chanTypes = null;
 					break;
 				}
 				return;
@@ -251,10 +257,13 @@ class IRCIsupportRegistry {
 			}
 
 			switch (k.toUpperCase()) {
-			case "NETWORK":
+			case 'NETWORK':
 				_network = v;
 				break;
-			case "CHANTYPES":
+			case 'CASEMAPPING':
+				_caseMapping = _caseMappingByName(v ?? '');
+				break;
+			case 'CHANTYPES':
 				_chanTypes = v ?? '';
 				break;
 			}
@@ -264,4 +273,51 @@ class IRCIsupportRegistry {
 	void clear() {
 		_network = null;
 	}
+}
+
+typedef String CaseMapping(String s);
+
+CaseMapping? _caseMappingByName(String s) {
+	var caseMapChar;
+	switch (s) {
+	case 'ascii':
+		caseMapChar = _caseMapCharAscii;
+		break;
+	case 'rfc1459':
+		caseMapChar = _caseMapCharRfc1459;
+		break;
+	case 'rfc1459-strict':
+		caseMapChar = _caseMapCharRfc1459Strict;
+		break;
+	default:
+		return null;
+	}
+	return (s) => s.split('').map(caseMapChar).join('');
+}
+
+String _caseMapCharRfc1459(String ch) {
+	if (ch == '~') {
+		return '^';
+	}
+	return _caseMapCharRfc1459Strict(ch);
+}
+
+String _caseMapCharRfc1459Strict(String ch) {
+	switch (ch) {
+	case '{':
+		return '[';
+	case '}':
+		return ']';
+	case '\\':
+		return '|';
+	default:
+		return _caseMapCharAscii(ch);
+	}
+}
+
+String _caseMapCharAscii(String ch) {
+	if ('A'.codeUnits.first <= ch.codeUnits.first && ch.codeUnits.first <= 'Z'.codeUnits.first) {
+		return ch.toLowerCase();
+	}
+	return ch;
 }
