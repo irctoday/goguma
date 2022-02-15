@@ -56,8 +56,17 @@ class GogumaState extends State<Goguma> {
 		var bufferList = context.read<BufferListModel>();
 		var clientController = context.read<ClientController>();
 
-		db.listServers().then((entries) {
-			entries.forEach((entry) {
+		List<ServerEntry> serverEntries = [];
+		List<BufferEntry> bufferEntries = [];
+		Map<int, int> unreadCounts = Map();
+		Map<int, String> lastDeliveredTimes = Map();
+		Future.wait([
+			db.listServers().then((entries) => serverEntries = entries),
+			db.listBuffers().then((entries) => bufferEntries = entries),
+			db.fetchBuffersUnreadCount().then((m) => unreadCounts = m),
+			db.fetchBuffersLastDeliveredTime().then((m) => lastDeliveredTimes = m),
+		]).then((_) {
+			serverEntries.forEach((entry) {
 				var server = ServerModel(entry);
 				serverList.add(server);
 
@@ -65,27 +74,17 @@ class GogumaState extends State<Goguma> {
 				clientController.add(client, server);
 			});
 
-			return db.listBuffers();
-		}).then((entries) {
-			entries.forEach((entry) {
+			bufferEntries.forEach((entry) {
 				var server = serverList.servers.firstWhere((server) => server.id == entry.server);
-				bufferList.add(BufferModel(entry: entry, server: server));
-			});
+				var buffer = BufferModel(entry: entry, server: server);
+				bufferList.add(buffer);
 
-			return db.fetchBuffersUnreadCount();
-		}).then((unreadCounts) {
-			bufferList.buffers.forEach((buffer) {
 				buffer.unreadCount = unreadCounts[buffer.id] ?? 0;
-			});
-
-			return db.fetchBuffersLastDeliveredTime();
-		}).then((lastDeliveredTimes) {
-			bufferList.buffers.forEach((buffer) {
 				if (lastDeliveredTimes[buffer.id] != null) {
 					bufferList.bumpLastDeliveredTime(buffer, lastDeliveredTimes[buffer.id]!);
 				}
 			});
-		}).then((_) {
+
 			clientController.clients.forEach((client) => client.connect());
 
 			if (serverList.servers.length > 0) {
