@@ -186,6 +186,17 @@ class DB {
 		return _db.close();
 	}
 
+	Future<int> _updateById(String table, Map<String, Object?> values) {
+		int id = values['id']! as int;
+		values.remove('id');
+		return _db.update(
+			table,
+			values,
+			where: 'id = ?',
+			whereArgs: [id],
+		);
+	}
+
 	Future<List<ServerEntry>> listServers() {
 		return _db.rawQuery('''
 			SELECT id, host, port, tls, nick, pass FROM Server ORDER BY id
@@ -199,7 +210,7 @@ class DB {
 				return entry;
 			});
 		} else {
-			return _db.update('Server', entry.toMap()).then((_) => entry);
+			return _updateById('Server', entry.toMap()).then((_) => entry);
 		}
 	}
 
@@ -220,7 +231,7 @@ class DB {
 				return entry;
 			});
 		} else {
-			return _db.update('Buffer', entry.toMap()).then((_) => entry);
+			return _updateById('Buffer', entry.toMap()).then((_) => entry);
 		}
 	}
 
@@ -260,7 +271,7 @@ class DB {
 				return entry;
 			});
 		} else {
-			return _db.update('Message', entry.toMap()).then((_) => entry);
+			return _updateById('Message', entry.toMap()).then((_) => entry);
 		}
 	}
 }
