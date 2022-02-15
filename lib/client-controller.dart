@@ -54,7 +54,7 @@ class ClientController {
 			break;
 		case 'JOIN':
 			var channel = msg.params[0];
-			if (msg.prefix?.name != client.nick) {
+			if (client.isMyNick(msg.prefix!.name)) {
 				break;
 			}
 			return _createBuffer(channel, server);
@@ -79,7 +79,7 @@ class ClientController {
 		case 'NOTICE':
 			var target = msg.params[0];
 			Future<BufferModel> bufFuture;
-			if (target == client.nick) {
+			if (client.isMyNick(target)) {
 				bufFuture = _createBuffer(msg.prefix!.name, server);
 			} else {
 				var buf = _bufferList.get(target, server);
@@ -93,7 +93,7 @@ class ClientController {
 					if (buf.messageHistoryLoaded) {
 						buf.addMessage(MessageModel(entry: entry, buffer: buf));
 					}
-					if (msg.prefix!.name != client.nick) {
+					if (!client.isMyNick(msg.prefix!.name)) {
 						buf.unreadCount++;
 					}
 					_bufferList.bumpLastDeliveredTime(buf, entry.time);

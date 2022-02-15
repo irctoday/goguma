@@ -145,7 +145,7 @@ class BufferPageState extends State<BufferPage> {
 						var boxColor = colorScheme.primary;
 						var boxAlignment = Alignment.centerLeft;
 						var textStyle = DefaultTextStyle.of(context).style.apply(color: colorScheme.onPrimary);
-						if (sender == client.nick) {
+						if (client.isMyNick(sender)) {
 							boxColor = Colors.grey[200]!;
 							boxAlignment = Alignment.centerRight;
 							textStyle = DefaultTextStyle.of(context).style;
