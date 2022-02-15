@@ -77,6 +77,14 @@ class GogumaState extends State<Goguma> {
 			bufferList.buffers.forEach((buffer) {
 				buffer.unreadCount = unreadCounts[buffer.id] ?? 0;
 			});
+
+			return db.fetchBuffersLastDeliveredTime();
+		}).then((lastDeliveredTimes) {
+			bufferList.buffers.forEach((buffer) {
+				if (lastDeliveredTimes[buffer.id] != null) {
+					bufferList.bumpLastDeliveredTime(buffer, lastDeliveredTimes[buffer.id]!);
+				}
+			});
 		}).then((_) {
 			clientController.clients.forEach((client) => client.connect());
 

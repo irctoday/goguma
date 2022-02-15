@@ -69,8 +69,9 @@ class BufferKey {
 
 class BufferListModel extends ChangeNotifier {
 	Map<BufferKey, BufferModel> _buffers = Map();
+	List<BufferModel> _sorted = [];
 
-	UnmodifiableListView<BufferModel> get buffers => UnmodifiableListView(_buffers.values);
+	UnmodifiableListView<BufferModel> get buffers => UnmodifiableListView(_sorted);
 
 	@override
 	void dispose() {
@@ -80,21 +81,48 @@ class BufferListModel extends ChangeNotifier {
 
 	void add(BufferModel buf) {
 		_buffers[BufferKey(buf.name, buf.server)] = buf;
+		_rebuildSorted();
 		notifyListeners();
 	}
 
 	void remove(BufferModel buf) {
 		_buffers.remove(BufferKey(buf.name, buf.server));
+		_rebuildSorted();
 		notifyListeners();
 	}
 
 	void clear() {
 		_buffers.clear();
+		_sorted.clear();
 		notifyListeners();
 	}
 
 	BufferModel? get(String name, ServerModel server) {
 		return _buffers[BufferKey(name, server)];
+	}
+
+	void bumpLastDeliveredTime(BufferModel buf, String t) {
+		if (buf._bumpLastDeliveredTime(t)) {
+			_rebuildSorted();
+			notifyListeners();
+		}
+	}
+
+	void _rebuildSorted() {
+		var l = [..._buffers.values];
+		l.sort((a, b) {
+			if (a.lastDeliveredTime != b.lastDeliveredTime) {
+				if (a.lastDeliveredTime == null) {
+					return 1;
+				}
+				if (b.lastDeliveredTime == null) {
+					return -1;
+				}
+				return b.lastDeliveredTime!.compareTo(a.lastDeliveredTime!);
+			}
+			return a.name.compareTo(b.name);
+		});
+		_sorted = l;
 	}
 }
 
@@ -103,6 +131,7 @@ class BufferModel extends ChangeNotifier {
 	final ServerModel server;
 	String? _subtitle;
 	int _unreadCount = 0;
+	String? _lastDeliveredTime;
 	bool _messageHistoryLoaded = false;
 
 	List<MessageModel> _messages = [];
@@ -117,6 +146,7 @@ class BufferModel extends ChangeNotifier {
 	String get name => entry.name;
 	String? get subtitle => _subtitle;
 	int get unreadCount => _unreadCount;
+	String? get lastDeliveredTime => _lastDeliveredTime;
 	bool get messageHistoryLoaded => _messageHistoryLoaded;
 
 	set subtitle(String? subtitle) {
@@ -139,6 +169,15 @@ class BufferModel extends ChangeNotifier {
 		_messages = l + _messages;
 		_messageHistoryLoaded = true;
 		notifyListeners();
+	}
+
+	bool _bumpLastDeliveredTime(String t) {
+		if (_lastDeliveredTime != null && _lastDeliveredTime!.compareTo(t) >= 0) {
+			return false;
+		}
+		_lastDeliveredTime = t;
+		notifyListeners();
+		return true;
 	}
 }
 

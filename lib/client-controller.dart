@@ -96,6 +96,7 @@ class ClientController {
 					if (msg.prefix!.name != client.nick) {
 						buf.unreadCount++;
 					}
+					_bufferList.bumpLastDeliveredTime(buf, entry.time);
 				});
 			});
 		}

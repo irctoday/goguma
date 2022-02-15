@@ -256,6 +256,25 @@ class DB {
 		});
 	}
 
+	Future<Map<int, String>> fetchBuffersLastDeliveredTime() {
+		return _db.rawQuery('''
+			SELECT buffer, time
+			FROM Message t1
+			WHERE id IN (
+				SELECT t2.id
+				FROM Message t2
+				WHERE t1.buffer = t2.buffer
+				ORDER BY t2.time DESC LIMIT 1
+			)
+		''').then((entries) {
+			return Map<int, String>.fromIterable(
+				entries,
+				key: (m) => m['buffer'],
+				value: (m) => m['time'],
+			);
+		});
+	}
+
 	Future<List<MessageEntry>> listMessages(int buffer) {
 		return _db.rawQuery('''
 			SELECT id, time, buffer, raw, flags FROM Message WHERE buffer = ? ORDER BY time

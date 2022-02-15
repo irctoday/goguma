@@ -70,10 +70,10 @@ class BufferPageState extends State<BufferPage> {
 
 			msg = IRCMessage(msg.cmd, params: msg.params, prefix: IRCPrefix(client.nick));
 			context.read<DB>().storeMessage(MessageEntry(msg, buffer.id)).then((entry) {
-				if (!buffer.messageHistoryLoaded) {
-					return;
+				if (buffer.messageHistoryLoaded) {
+					buffer.addMessage(MessageModel(entry: entry, buffer: buffer));
 				}
-				buffer.addMessage(MessageModel(entry: entry, buffer: buffer));
+				context.read<BufferListModel>().bumpLastDeliveredTime(buffer, entry.time);
 			});
 		}
 		composerFormKey.currentState!.reset();
