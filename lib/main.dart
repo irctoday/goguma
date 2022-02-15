@@ -6,7 +6,6 @@ import 'client.dart';
 import 'client-controller.dart';
 import 'connect-page.dart';
 import 'database.dart';
-import 'irc.dart';
 import 'models.dart';
 
 void main() {
