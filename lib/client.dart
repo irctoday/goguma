@@ -157,7 +157,7 @@ class Client {
 			isupport.parse(msg.params.sublist(1, msg.params.length - 1));
 			break;
 		case 'NICK':
-			if (msg.prefix?.name == nick) {
+			if (isMyNick(msg.prefix!.name)) {
 				nick = msg.params[0];
 			}
 			break;
@@ -189,6 +189,7 @@ class Client {
 	}
 
 	bool isMyNick(String name) {
-		return name == nick;
+		var cm = isupport.caseMapping;
+		return cm(name) == cm(nick);
 	}
 }
