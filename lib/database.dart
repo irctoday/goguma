@@ -42,12 +42,14 @@ class BufferEntry {
 	int? id;
 	final String name;
 	final int server;
+	String? lastReadTime;
 
 	Map<String, Object?> toMap() {
 		return <String, Object?>{
 			'id': id,
 			'name': name,
 			'server': server,
+			'last_read_time': lastReadTime,
 		};
 	}
 
@@ -56,7 +58,8 @@ class BufferEntry {
 	BufferEntry.fromMap(Map<String, dynamic> m) :
 		id = m['id'],
 		name = m['name'],
-		server = m['server'];
+		server = m['server'],
+		lastReadTime = m['lastReadTime'];
 }
 
 class MessageEntry {
@@ -117,6 +120,8 @@ class DB {
 					return db.execute('PRAGMA foreign_keys = ON');
 				},
 				onCreate: (db, version) {
+					print('Initializing database version $version');
+
 					var batch = db.batch();
 					batch.execute('''
 						CREATE TABLE Server (
@@ -126,16 +131,17 @@ class DB {
 							tls INTEGER NOT NULL DEFAULT 1,
 							nick TEXT,
 							pass TEXT
-						);
+						)
 					''');
 					batch.execute('''
 						CREATE TABLE Buffer (
 							id INTEGER PRIMARY KEY,
 							name TEXT NOT NULL,
 							server INTEGER NOT NULL,
+							last_read_time TEXT,
 							FOREIGN KEY (server) REFERENCES Server(id) ON DELETE CASCADE,
 							UNIQUE(name, server)
-						);
+						)
 					''');
 					batch.execute('''
 						CREATE TABLE Message (
@@ -145,14 +151,22 @@ class DB {
 							raw TEXT NOT NULL,
 							flags INTEGER NOT NULL DEFAULT 0,
 							FOREIGN KEY (buffer) REFERENCES Buffer(id) ON DELETE CASCADE
-						);
+						)
 					''');
 					return batch.commit();
 				},
 				onUpgrade: (db, prevVersion, newVersion) {
-					return Future.value();
+					print('Upgrading database from version $prevVersion to version $newVersion');
+
+					var batch = db.batch();
+					if (prevVersion == 1) {
+						batch.execute('''
+							ALTER TABLE Buffer ADD COLUMN last_read_time TEXT
+						''');
+					}
+					return batch.commit();
 				},
-				version: 1,
+				version: 2,
 			);
 		}).then((db) {
 			return DB._(db);
@@ -212,6 +226,23 @@ class DB {
 
 	Future<void> deleteBuffer(int id) {
 		return _db.rawDelete('DELETE FROM Buffer WHERE id = ?', [id]);
+	}
+
+	Future<Map<int, int>> fetchBuffersUnreadCount() {
+		return _db.rawQuery('''
+			SELECT
+				Message.buffer, COUNT(Message.id) AS unread_count
+			FROM Message
+			LEFT JOIN Buffer ON Message.buffer = Buffer.id
+			WHERE Message.time > Buffer.last_read_time
+			GROUP BY Message.buffer
+		''').then((entries) {
+			return Map<int, int>.fromIterable(
+				entries,
+				key: (m) => m['buffer'],
+				value: (m) => m['unread_count'],
+			);
+		});
 	}
 
 	Future<List<MessageEntry>> listMessages(int buffer) {

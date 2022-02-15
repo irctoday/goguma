@@ -186,7 +186,6 @@ class BufferItem extends StatelessWidget {
 				subtitle: buf.subtitle != null ? Text(buf.subtitle!, overflow: TextOverflow.ellipsis) : null,
 				onTap: () {
 					var client = context.read<ClientController>().get(buf.server);
-					buf.unreadCount = 0;
 					Navigator.push(context, MaterialPageRoute(builder: (context) {
 						return MultiProvider(
 							providers: [

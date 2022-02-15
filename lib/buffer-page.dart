@@ -41,15 +41,22 @@ class BufferPageState extends State<BufferPage> {
 		super.initState();
 
 		var buffer = context.read<BufferModel>();
-		if (buffer.messageHistoryLoaded) {
-			return;
+		var future = Future.value();
+		if (!buffer.messageHistoryLoaded) {
+			// TODO: only load a partial view of the messages
+			future = context.read<DB>().listMessages(buffer.id).then((entries) {
+				buffer.populateMessageHistory(entries.map((entry) {
+					return MessageModel(entry: entry, buffer: buffer);
+				}).toList());
+			});
 		}
 
-		// TODO: only load a partial view of the messages
-		context.read<DB>().listMessages(buffer.id).then((entries) {
-			buffer.populateMessageHistory(entries.map((entry) {
-				return MessageModel(entry: entry, buffer: buffer);
-			}).toList());
+		future.then((_) {
+			if (buffer.unreadCount > 0 && buffer.messages.length > 0) {
+				buffer.entry.lastReadTime = buffer.messages.last.entry.time;
+				context.read<DB>().storeBuffer(buffer.entry);
+			}
+			buffer.unreadCount = 0;
 		});
 	}
 

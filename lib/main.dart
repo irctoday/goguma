@@ -72,6 +72,12 @@ class GogumaState extends State<Goguma> {
 				bufferList.add(BufferModel(entry: entry, server: server));
 			});
 
+			return db.fetchBuffersUnreadCount();
+		}).then((unreadCounts) {
+			bufferList.buffers.forEach((buffer) {
+				buffer.unreadCount = unreadCounts[buffer.id] ?? 0;
+			});
+		}).then((_) {
 			clientController.clients.forEach((client) => client.connect());
 
 			if (serverList.servers.length > 0) {

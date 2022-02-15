@@ -90,10 +90,9 @@ class ClientController {
 			}
 			return bufFuture.then((buf) {
 				return _db.storeMessage(MessageEntry(msg, buf.id)).then((entry) {
-					if (!buf.messageHistoryLoaded) {
-						return;
+					if (buf.messageHistoryLoaded) {
+						buf.addMessage(MessageModel(entry: entry, buffer: buf));
 					}
-					buf.addMessage(MessageModel(entry: entry, buffer: buf));
 					if (msg.prefix!.name != client.nick) {
 						buf.unreadCount++;
 					}
