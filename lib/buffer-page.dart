@@ -107,7 +107,7 @@ class BufferPageState extends State<BufferPage> {
 					crossAxisAlignment: CrossAxisAlignment.start,
 					children: [
 						Text(buffer.name),
-						Text(buffer.subtitle ?? "", style: TextStyle(fontSize: 12.0)),
+						if (buffer.subtitle != null) Text(buffer.subtitle!, style: TextStyle(fontSize: 12.0)),
 					],
 				),
 				actions: [
