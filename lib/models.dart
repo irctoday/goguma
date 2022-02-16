@@ -37,11 +37,17 @@ class ServerModel extends ChangeNotifier {
 	ClientState get state => _state;
 
 	set network(String? network) {
+		if (network == _network) {
+			return;
+		}
 		_network = network;
 		notifyListeners();
 	}
 
 	set state(ClientState state) {
+		if (state == _state) {
+			return;
+		}
 		_state = state;
 		notifyListeners();
 	}
