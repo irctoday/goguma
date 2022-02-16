@@ -175,8 +175,10 @@ class IRCException implements Exception {
 
 class IRCCapRegistry {
 	Map<String, String?> _available = Map();
+	Set<String> _enabled = Set();
 
 	UnmodifiableMapView get available => UnmodifiableMapView(_available);
+	UnmodifiableSetView get enabled => UnmodifiableSetView(_enabled);
 
 	void parse(IRCMessage msg) {
 		assert(msg.cmd == 'CAP');
@@ -192,9 +194,23 @@ class IRCCapRegistry {
 			break;
 		case 'DEL':
 			for (var cap in params[0].split(' ')) {
-				_available.remove(cap.toLowerCase());
+				cap = cap.toLowerCase();
+				_available.remove(cap);
+				_enabled.remove(cap);
 			}
 			break;
+		case 'ACK':
+			for (var cap in params[0].split(' ')) {
+				cap = cap.toLowerCase();
+				if (cap.startsWith('-')) {
+					_enabled.remove(cap.substring(1));
+				} else {
+					_enabled.add(cap);
+				}
+			}
+			break;
+		case 'NAK':
+			break; // nothing to do
 		default:
 			throw FormatException('Unknown CAP subcommand: ' + subcommand);
 		}
