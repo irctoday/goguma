@@ -83,7 +83,7 @@ class BufferEntry {
 		id = m['id'],
 		name = m['name'],
 		network = m['network'],
-		lastReadTime = m['lastReadTime'];
+		lastReadTime = m['last_read_time'];
 }
 
 class MessageEntry {
@@ -277,7 +277,7 @@ class DB {
 
 	Future<List<BufferEntry>> listBuffers() {
 		return _db.rawQuery('''
-			SELECT id, name, network FROM Buffer ORDER BY id
+			SELECT id, name, network, last_read_time FROM Buffer ORDER BY id
 		''').then((entries) => entries.map((m) => BufferEntry.fromMap(m)).toList());
 	}
 
