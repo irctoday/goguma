@@ -44,19 +44,22 @@ class ServerEntry {
 class NetworkEntry {
 	int? id;
 	final int server;
+	String? bouncerId;
 
 	Map<String, Object?> toMap() {
 		return <String, Object?>{
 			'id': id,
 			'server': server,
+			'bouncer_id': bouncerId,
 		};
 	}
 
-	NetworkEntry({ required this.server });
+	NetworkEntry({ required this.server, this.bouncerId });
 
 	NetworkEntry.fromMap(Map<String, dynamic> m) :
 		id = m['id'],
-		server = m['server'];
+		server = m['server'],
+		bouncerId = m['bouncer_id'];
 }
 
 class BufferEntry {
@@ -159,7 +162,9 @@ class DB {
 						CREATE TABLE Network (
 							id INTEGER PRIMARY KEY,
 							server INTEGER NOT NULL,
-							FOREIGN KEY (server) REFERENCES Server(id) ON DELETE CASCADE
+							bouncer_id TEXT,
+							FOREIGN KEY (server) REFERENCES Server(id) ON DELETE CASCADE,
+							UNIQUE(server, bouncer_id)
 						)
 					''');
 					batch.execute('''
@@ -247,7 +252,7 @@ class DB {
 
 	Future<List<NetworkEntry>> listNetworks() {
 		return _db.rawQuery('''
-			SELECT id, server FROM Network ORDER BY id
+			SELECT id, server, bouncer_id FROM Network ORDER BY id
 		''').then((entries) => entries.map((m) => NetworkEntry.fromMap(m)).toList());
 	}
 
@@ -263,6 +268,7 @@ class DB {
 	}
 
 	Future<void> deleteNetwork(int id) {
+		// TODO: garbage collect orphan servers
 		return _db.rawDelete('DELETE FROM Network WHERE id = ?', [id]);
 	}
 

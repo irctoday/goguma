@@ -58,7 +58,7 @@ class IRCMessage {
 			if (i < 0) {
 				throw FormatException('Expected a space after tags');
 			}
-			tags = _parseTags(s.substring(1, i));
+			tags = parseIRCTags(s.substring(1, i));
 			s = s.substring(i + 1);
 		} else {
 			tags = const {};
@@ -106,7 +106,7 @@ class IRCMessage {
 	String toString() {
 		var s = '';
 		if (tags.length > 0) {
-			s += '@' + _formatTags(tags) + ' ';
+			s += '@' + formatIRCTags(tags) + ' ';
 		}
 		if (prefix != null) {
 			s += ':' + prefix!.toString() + ' ';
@@ -138,7 +138,7 @@ class IRCMessage {
 	}
 }
 
-Map<String, String?> _parseTags(String s) {
+Map<String, String?> parseIRCTags(String s) {
 	return Map.fromEntries(s.split(';').map((s) {
 		if (s.length == 0) {
 			throw FormatException('Empty tag entries are invalid');
@@ -156,7 +156,7 @@ Map<String, String?> _parseTags(String s) {
 	}));
 }
 
-String _formatTags(Map<String, String?> tags) {
+String formatIRCTags(Map<String, String?> tags) {
 	return tags.entries.map((entry) {
 		if (entry.value == null) {
 			return entry.key;
@@ -326,16 +326,21 @@ class IRCIsupportRegistry {
 	String? _network;
 	String? _chanTypes;
 	CaseMapping? _caseMapping;
+	String? _bouncerNetId;
 
 	String? get network => _network;
 	String get chanTypes => _chanTypes ?? _DEFAULT_CHANTYPES;
 	CaseMapping get caseMapping => _caseMapping ?? defaultCaseMapping;
+	String? get bouncerNetId => _bouncerNetId;
 
 	void parse(List<String> tokens) {
 		tokens.forEach((tok) {
 			if (tok.startsWith('-')) {
 				var k = tok.substring(1).toUpperCase();
 				switch (k) {
+				case 'BOUNCER_NETID':
+					_bouncerNetId = null;
+					break;
 				case 'NETWORK':
 					_network = null;
 					break;
@@ -358,6 +363,9 @@ class IRCIsupportRegistry {
 			}
 
 			switch (k.toUpperCase()) {
+			case 'BOUNCER_NETID':
+				_bouncerNetId = v;
+				break;
 			case 'NETWORK':
 				_network = v;
 				break;

@@ -18,8 +18,13 @@ class ConnectParams {
 	final String nick;
 	final String? pass;
 	final SaslPlainCredentials? saslPlain;
+	final String? bouncerNetId;
 
-	ConnectParams({ required this.host, this.port = 6697, this.tls = true, required this.nick, this.pass, this.saslPlain });
+	ConnectParams({ required this.host, this.port = 6697, this.tls = true, required this.nick, this.pass, this.saslPlain, this.bouncerNetId });
+
+	ConnectParams replaceBouncerNetId(String? bouncerNetId) {
+		return ConnectParams(host: host, port: port, tls: tls, nick: nick, pass: pass, saslPlain: saslPlain, bouncerNetId: bouncerNetId);
+	}
 }
 
 enum ClientState { disconnected, connecting, registering, registered }
@@ -29,6 +34,8 @@ const _permanentCaps = [
 	'message-tags',
 	'sasl',
 	'server-time',
+
+	'soju.im/bouncer-networks',
 ];
 
 class Client {
@@ -126,8 +133,13 @@ class Client {
 		nick = params.nick;
 		_setState(ClientState.registering);
 
+		var caps = [..._permanentCaps];
+		if (params.bouncerNetId == null) {
+			caps.add('soju.im/bouncer-networks-notify');
+		}
+
 		send(IRCMessage('CAP', params: ['LS', '302']));
-		for (var cap in _permanentCaps) {
+		for (var cap in caps) {
 			send(IRCMessage('CAP', params: ['REQ', cap]));
 		}
 		if (params.pass != null) {
@@ -136,6 +148,9 @@ class Client {
 		send(IRCMessage('NICK', params: [params.nick]));
 		send(IRCMessage('USER', params: [params.nick, '0', '*', params.nick]));
 		_authenticate();
+		if (params.bouncerNetId != null) {
+			send(IRCMessage('BOUNCER', params: ['BIND', params.bouncerNetId!]));
+		}
 		send(IRCMessage('CAP', params: ['END']));
 
 		var saslSuccess = false;

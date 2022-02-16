@@ -12,12 +12,14 @@ void main() {
 	DB.open().then((db) {
 		var serverList = ServerListModel();
 		var bufferList = BufferListModel();
+		var bouncerNetworkList = BouncerNetworkListModel();
 		runApp(MultiProvider(
 			providers: [
 				Provider<DB>.value(value: db),
-				Provider<ClientController>.value(value: ClientController(db, bufferList)),
+				Provider<ClientController>.value(value: ClientController(db, serverList, bufferList, bouncerNetworkList)),
 				ChangeNotifierProvider<ServerListModel>.value(value: serverList),
 				ChangeNotifierProvider<BufferListModel>.value(value: bufferList),
+				ChangeNotifierProvider<BouncerNetworkListModel>.value(value: bouncerNetworkList),
 			],
 			child: GogumaApp(),
 		));
@@ -77,7 +79,11 @@ class GogumaState extends State<Goguma> {
 				var server = ServerModel(serverEntry, networkEntry);
 				serverList.add(server);
 
-				var client = Client(connectParamsFromServerEntry(serverEntry));
+				var clientParams = connectParamsFromServerEntry(serverEntry);
+				if (networkEntry.bouncerId != null) {
+					clientParams = clientParams.replaceBouncerNetId(networkEntry.bouncerId);
+				}
+				var client = Client(clientParams);
 				clientController.add(client, server);
 			});
 

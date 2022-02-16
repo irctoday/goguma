@@ -25,13 +25,17 @@ class ClientController {
 	Map<ServerModel, Client> _clients = Map();
 
 	final DB _db;
+	final ServerListModel _serverList;
 	final BufferListModel _bufferList;
+	final BouncerNetworkListModel _bouncerNetworkList;
 
 	UnmodifiableListView<Client> get clients => UnmodifiableListView(_clients.values);
 
-	ClientController(DB db, BufferListModel bufferList) :
+	ClientController(DB db, ServerListModel serverList, BufferListModel bufferList, BouncerNetworkListModel bouncerNetworkList) :
 		_db = db,
-		_bufferList = bufferList;
+		_serverList = serverList,
+		_bufferList = bufferList,
+		_bouncerNetworkList = bouncerNetworkList;
 
 	void add(Client client, ServerModel server) {
 		_clients[server] = client;
@@ -57,6 +61,11 @@ class ClientController {
 		switch (msg.cmd) {
 		case RPL_ISUPPORT:
 			server.network = client.isupport.network;
+			if (client.isupport.bouncerNetId != null) {
+				server.bouncerNetwork = _bouncerNetworkList.networks[client.isupport.bouncerNetId!];
+			} else {
+				server.bouncerNetwork = null;
+			}
 			_bufferList.setCaseMapping(client.isupport.caseMapping);
 			break;
 		case 'JOIN':
@@ -105,6 +114,62 @@ class ClientController {
 					}
 					_bufferList.bumpLastDeliveredTime(buf, entry.time);
 				});
+			});
+		case 'BOUNCER':
+			if (msg.params[0] != 'NETWORK') {
+				break;
+			}
+			if (client.isupport.bouncerNetId != null) {
+				break;
+			}
+
+			var bouncerNetId = msg.params[1];
+			var attrs = msg.params[2] == '*' ? null : parseIRCTags(msg.params[2]);
+
+			var bouncerNetwork = _bouncerNetworkList.networks[bouncerNetId];
+			var serverMatches = _serverList.servers.where((server) {
+				return server.networkEntry.bouncerId == bouncerNetId;
+			});
+			ServerModel? childServer = serverMatches.isEmpty ? null : serverMatches.first;
+
+			if (attrs == null) {
+				// The bouncer network has been removed
+
+				_bouncerNetworkList.remove(bouncerNetId);
+
+				if (childServer == null) {
+					break;
+				}
+
+				var childClient = get(childServer);
+				childClient.disconnect();
+
+				_serverList.remove(childServer);
+				return _db.deleteNetwork(childServer.networkId);
+			}
+
+			if (bouncerNetwork != null) {
+				// The bouncer network has been updated
+				bouncerNetwork.setAttrs(attrs);
+				break;
+			}
+
+			// The bouncer network has been added
+
+			bouncerNetwork = BouncerNetwork(bouncerNetId, attrs);
+			_bouncerNetworkList.add(bouncerNetwork);
+
+			if (childServer != null) {
+				break;
+			}
+
+			var networkEntry = NetworkEntry(server: server.id, bouncerId: bouncerNetId);
+			return _db.storeNetwork(networkEntry).then((networkEntry) {
+				var childClient = Client(client.params.replaceBouncerNetId(bouncerNetId));
+				var childServer = ServerModel(server.entry, networkEntry);
+				_serverList.add(childServer);
+				add(childClient, childServer);
+				childClient.connect();
 			});
 		}
 		return null;

@@ -15,18 +15,25 @@ class ServerListModel extends ChangeNotifier {
 		notifyListeners();
 	}
 
+	void remove(ServerModel server) {
+		_servers.remove(server);
+		notifyListeners();
+	}
+
 	void clear() {
 		_servers.clear();
 		notifyListeners();
 	}
 }
 
+// TODO: renmame to NetworkModel
 class ServerModel extends ChangeNotifier {
 	final ServerEntry entry;
 	final NetworkEntry networkEntry;
 
 	ClientState _state = ClientState.disconnected;
 	String? _network;
+	BouncerNetwork? _bouncerNetwork;
 
 	ServerModel(this.entry, this.networkEntry) {
 		assert(entry.id != null);
@@ -36,8 +43,17 @@ class ServerModel extends ChangeNotifier {
 	int get id => entry.id!;
 	int get networkId => networkEntry.id!;
 
-	String? get network => _network;
 	ClientState get state => _state;
+	String? get network => _network;
+	BouncerNetwork? get bouncerNetwork => _bouncerNetwork;
+
+	set state(ClientState state) {
+		if (state == _state) {
+			return;
+		}
+		_state = state;
+		notifyListeners();
+	}
 
 	set network(String? network) {
 		if (network == _network) {
@@ -47,11 +63,71 @@ class ServerModel extends ChangeNotifier {
 		notifyListeners();
 	}
 
-	set state(ClientState state) {
-		if (state == _state) {
-			return;
+	set bouncerNetwork(BouncerNetwork? network) {
+		_bouncerNetwork = network;
+		notifyListeners();
+	}
+}
+
+class BouncerNetworkListModel extends ChangeNotifier {
+	Map<String, BouncerNetwork> _networks = Map();
+
+	UnmodifiableMapView get networks => UnmodifiableMapView(_networks);
+
+	void add(BouncerNetwork network) {
+		_networks[network.id] = network;
+		notifyListeners();
+	}
+
+	void remove(String netId) {
+		_networks.remove(netId);
+		notifyListeners();
+	}
+
+	void clear() {
+		_networks.clear();
+		notifyListeners();
+	}
+}
+
+enum BouncerNetworkState { connected, connecting, disconnected }
+
+BouncerNetworkState _parseBouncerNetworkState(String s) {
+	switch (s) {
+	case 'connected':
+		return BouncerNetworkState.connected;
+	case 'connecting':
+		return BouncerNetworkState.connecting;
+	case 'disconnected':
+		return BouncerNetworkState.disconnected;
+	default:
+		throw FormatException('Unknown bouncer network state: ' + s);
+	}
+}
+
+class BouncerNetwork extends ChangeNotifier {
+	final String id;
+	String? _name;
+	BouncerNetworkState _state = BouncerNetworkState.disconnected;
+
+	BouncerNetwork(this.id, Map<String, String?> attrs) {
+		setAttrs(attrs);
+	}
+
+	String? get name => _name;
+	BouncerNetworkState get state => _state;
+
+	void setAttrs(Map<String, String?> attrs) {
+		for (var kv in attrs.entries) {
+			switch (kv.key) {
+			case 'name':
+				_name = kv.value;
+				break;
+			case 'state':
+				_state = _parseBouncerNetworkState(kv.value!);
+				break;
+			}
 		}
-		_state = state;
 		notifyListeners();
 	}
 }
