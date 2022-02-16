@@ -5,11 +5,11 @@ import 'dart:io';
 import 'irc.dart';
 
 class ConnectParams {
-	String host;
-	int port;
-	bool tls;
-	String nick;
-	String? pass;
+	final String host;
+	final int port;
+	final bool tls;
+	final String nick;
+	final String? pass;
 
 	ConnectParams({ required this.host, this.port = 6697, this.tls = true, required this.nick, this.pass });
 }
