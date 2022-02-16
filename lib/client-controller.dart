@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 
 import 'client.dart';
@@ -21,43 +22,74 @@ ConnectParams connectParamsFromServerEntry(ServerEntry entry) {
 	);
 }
 
-class ClientController {
-	Map<ServerModel, Client> _clients = Map();
+class ClientProvider {
+	Map<ServerModel, ClientController> _controllers = Map();
 
 	final DB _db;
 	final ServerListModel _serverList;
 	final BufferListModel _bufferList;
 	final BouncerNetworkListModel _bouncerNetworkList;
 
-	UnmodifiableListView<Client> get clients => UnmodifiableListView(_clients.values);
+	UnmodifiableListView<Client> get clients => UnmodifiableListView(_controllers.values.map((cc) => cc.client));
 
-	ClientController(DB db, ServerListModel serverList, BufferListModel bufferList, BouncerNetworkListModel bouncerNetworkList) :
+	ClientProvider(DB db, ServerListModel serverList, BufferListModel bufferList, BouncerNetworkListModel bouncerNetworkList) :
 		_db = db,
 		_serverList = serverList,
 		_bufferList = bufferList,
 		_bouncerNetworkList = bouncerNetworkList;
 
 	void add(Client client, ServerModel server) {
-		_clients[server] = client;
+		_controllers[server] = ClientController(this, client, server);
+	}
 
+	Client get(ServerModel server) {
+		return _controllers[server]!.client;
+	}
+
+	void disconnectAll() {
+		for (var cc in _controllers.values) {
+			cc.client.disconnect();
+		}
+		_controllers.clear();
+		_bufferList.clear();
+	}
+}
+
+class ClientController {
+	final ClientProvider _provider;
+
+	final Client _client;
+	final ServerModel _server;
+
+	Client get client => _client;
+	ServerModel get server => _server;
+
+	DB get _db => _provider._db;
+	ServerListModel get _serverList => _provider._serverList;
+	BufferListModel get _bufferList => _provider._bufferList;
+	BouncerNetworkListModel get _bouncerNetworkList => _provider._bouncerNetworkList;
+
+	ClientController(ClientProvider provider, Client client, ServerModel server) :
+			_provider = provider,
+			_client = client,
+			_server = server {
 		server.state = client.state;
-		server.network = client.isupport.network;
 
 		client.states.listen((state) {
 			server.state = state;
 		});
 
-		var messagesSubscription;
-		messagesSubscription = client.messages.listen((msg) {
-			var future = _handleMessage(client, server, msg);
+		var messagesSub;
+		messagesSub = client.messages.listen((msg) {
+			var future = _handleMessage(msg);
 			if (future != null) {
-				messagesSubscription.pause();
-				future.whenComplete(() => messagesSubscription.resume());
+				messagesSub.pause();
+				future.whenComplete(() => messagesSub.resume());
 			}
 		});
 	}
 
-	Future<void>? _handleMessage(Client client, ServerModel server, IRCMessage msg) {
+	Future<void>? _handleMessage(IRCMessage msg) {
 		switch (msg.cmd) {
 		case RPL_ISUPPORT:
 			server.network = client.isupport.network;
@@ -71,14 +103,14 @@ class ClientController {
 		case RPL_ENDOFMOTD:
 		case ERR_NOMOTD:
 			// These messages are used to indicate the end of the ISUPPORT list
-			_fetchBacklog(client, server);
+			_fetchBacklog();
 			break;
 		case 'JOIN':
 			var channel = msg.params[0];
 			if (!client.isMyNick(msg.prefix!.name)) {
 				break;
 			}
-			return _createBuffer(channel, server);
+			return _createBuffer(channel);
 		case RPL_TOPIC:
 			var channel = msg.params[1];
 			var topic = msg.params[2];
@@ -101,7 +133,7 @@ class ClientController {
 			var target = msg.params[0];
 			Future<BufferModel> bufFuture;
 			if (client.isMyNick(target)) {
-				bufFuture = _createBuffer(msg.prefix!.name, server);
+				bufFuture = _createBuffer(msg.prefix!.name);
 			} else {
 				var buf = _bufferList.get(target, server);
 				if (buf == null) {
@@ -146,7 +178,7 @@ class ClientController {
 					break;
 				}
 
-				var childClient = get(childServer);
+				var childClient = _provider.get(childServer);
 				childClient.disconnect();
 
 				_serverList.remove(childServer);
@@ -173,14 +205,14 @@ class ClientController {
 				var childClient = Client(client.params.replaceBouncerNetId(bouncerNetId));
 				var childServer = ServerModel(server.entry, networkEntry);
 				_serverList.add(childServer);
-				add(childClient, childServer);
+				_provider.add(childClient, childServer);
 				childClient.connect();
 			});
 		}
 		return null;
 	}
 
-	Future<BufferModel> _createBuffer(String name, ServerModel server) {
+	Future<BufferModel> _createBuffer(String name) {
 		var buffer = _bufferList.get(name, server);
 		if (buffer != null) {
 			return Future.value(buffer);
@@ -194,16 +226,7 @@ class ClientController {
 		});
 	}
 
-	Client get(ServerModel server) {
-		return _clients[server]!;
-	}
-
-	void disconnectAll() {
-		_clients.values.forEach((client) => client.disconnect());
-		_bufferList.clear();
-	}
-
-	void _fetchBacklog(Client client, ServerModel server) {
+	void _fetchBacklog() {
 		if (!client.caps.enabled.contains('draft/chathistory')) {
 			return;
 		}

@@ -72,7 +72,7 @@ class BufferListPageState extends State<BufferListPage> {
 			return JoinDialog(onSubmit: (name) {
 				// TODO: ask the user which server to use
 				var server = context.read<ServerListModel>().servers[0];
-				var client = context.read<ClientController>().get(server);
+				var client = context.read<ClientProvider>().get(server);
 				if (client.isChannel(name)) {
 					client.send(IRCMessage('JOIN', params: [name]));
 				} else {
@@ -95,7 +95,7 @@ class BufferListPageState extends State<BufferListPage> {
 			db.deleteServer(server.id);
 		});
 		serverList.clear();
-		context.read<ClientController>().disconnectAll();
+		context.read<ClientProvider>().disconnectAll();
 
 		Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
 			return Goguma();
@@ -118,7 +118,7 @@ class BufferListPageState extends State<BufferListPage> {
 
 		// TODO: aggregate all client errors
 		var server = context.watch<ServerListModel>().servers[0];
-		var client = context.read<ClientController>().get(server);
+		var client = context.read<ClientProvider>().get(server);
 		return Scaffold(
 			appBar: AppBar(
 				leading: searchQuery != null ? CloseButton() : null,
@@ -186,7 +186,7 @@ class BufferItem extends StatelessWidget {
 				title: Text(buf.name, overflow: TextOverflow.ellipsis),
 				subtitle: buf.subtitle != null ? Text(buf.subtitle!, overflow: TextOverflow.ellipsis) : null,
 				onTap: () {
-					var client = context.read<ClientController>().get(buf.server);
+					var client = context.read<ClientProvider>().get(buf.server);
 					Navigator.push(context, MaterialPageRoute(builder: (context) {
 						return MultiProvider(
 							providers: [

@@ -16,7 +16,7 @@ void main() {
 		runApp(MultiProvider(
 			providers: [
 				Provider<DB>.value(value: db),
-				Provider<ClientController>.value(value: ClientController(db, serverList, bufferList, bouncerNetworkList)),
+				Provider<ClientProvider>.value(value: ClientProvider(db, serverList, bufferList, bouncerNetworkList)),
 				ChangeNotifierProvider<ServerListModel>.value(value: serverList),
 				ChangeNotifierProvider<BufferListModel>.value(value: bufferList),
 				ChangeNotifierProvider<BouncerNetworkListModel>.value(value: bouncerNetworkList),
@@ -55,7 +55,7 @@ class GogumaState extends State<Goguma> {
 		var db = context.read<DB>();
 		var serverList = context.read<ServerListModel>();
 		var bufferList = context.read<BufferListModel>();
-		var clientController = context.read<ClientController>();
+		var clientProvider = context.read<ClientProvider>();
 
 		List<ServerEntry> serverEntries = [];
 		List<NetworkEntry> networkEntries = [];
@@ -84,7 +84,7 @@ class GogumaState extends State<Goguma> {
 					clientParams = clientParams.replaceBouncerNetId(networkEntry.bouncerId);
 				}
 				var client = Client(clientParams);
-				clientController.add(client, server);
+				clientProvider.add(client, server);
 			});
 
 			bufferEntries.forEach((entry) {
@@ -98,7 +98,7 @@ class GogumaState extends State<Goguma> {
 				}
 			});
 
-			clientController.clients.forEach((client) => client.connect());
+			clientProvider.clients.forEach((client) => client.connect());
 
 			if (serverList.servers.length > 0) {
 				return Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
@@ -140,7 +140,7 @@ class GogumaState extends State<Goguma> {
 				var client = Client(clientParams);
 				var server = ServerModel(serverEntry, networkEntry);
 				context.read<ServerListModel>().add(server);
-				context.read<ClientController>().add(client, server);
+				context.read<ClientProvider>().add(client, server);
 				client.connect();
 
 				return Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
