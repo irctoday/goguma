@@ -54,7 +54,7 @@ class ClientController {
 			break;
 		case 'JOIN':
 			var channel = msg.params[0];
-			if (client.isMyNick(msg.prefix!.name)) {
+			if (!client.isMyNick(msg.prefix!.name)) {
 				break;
 			}
 			return _createBuffer(channel, server);
