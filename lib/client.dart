@@ -112,6 +112,7 @@ class Client {
 		_setState(ClientState.registering);
 
 		send(IRCMessage('CAP', params: ['LS', '302']));
+		send(IRCMessage('CAP', params: ['REQ', 'message-tags']));
 		if (params.pass != null) {
 			send(IRCMessage('PASS', params: [params.pass!]));
 		}
