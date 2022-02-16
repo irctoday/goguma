@@ -16,6 +16,10 @@ class ConnectParams {
 
 enum ClientState { disconnected, connecting, registering, registered }
 
+const _permanentCaps = [
+	'message-tags',
+];
+
 class Client {
 	final ConnectParams params;
 	String nick;
@@ -112,7 +116,9 @@ class Client {
 		_setState(ClientState.registering);
 
 		send(IRCMessage('CAP', params: ['LS', '302']));
-		send(IRCMessage('CAP', params: ['REQ', 'message-tags']));
+		for (var cap in _permanentCaps) {
+			send(IRCMessage('CAP', params: ['REQ', cap]));
+		}
 		if (params.pass != null) {
 			send(IRCMessage('PASS', params: [params.pass!]));
 		}
@@ -147,6 +153,16 @@ class Client {
 		switch (msg.cmd) {
 		case 'CAP':
 			caps.parse(msg);
+
+			if (msg.params[1].toUpperCase() != 'NEW') {
+				break;
+			}
+
+			for (var cap in _permanentCaps) {
+				if (caps.available.containsKey(cap) && !caps.enabled.contains(cap)) {
+					send(IRCMessage('CAP', params: ['REQ', cap]));
+				}
+			}
 			break;
 		case RPL_WELCOME:
 			print('Registration complete');
