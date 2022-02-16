@@ -197,6 +197,9 @@ class DB {
 					// if (prevVersion <= 1) /* upgrade to v2 */
 					return batch.commit();
 				},
+				onDowngrade: (_, prevVersion, newVersion) {
+					throw Exception('Attempted to downgrade database from version $prevVersion to version $newVersion');
+				},
 				version: 1,
 			);
 		}).then((db) {
