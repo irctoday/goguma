@@ -17,6 +17,7 @@ class ConnectParams {
 enum ClientState { disconnected, connecting, registering, registered }
 
 const _permanentCaps = [
+	'echo-message',
 	'message-tags',
 	'server-time',
 ];

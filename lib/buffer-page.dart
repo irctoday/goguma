@@ -68,13 +68,15 @@ class BufferPageState extends State<BufferPage> {
 			var msg = IRCMessage('PRIVMSG', params: [buffer.name, composerController.text]);
 			client.send(msg);
 
-			msg = IRCMessage(msg.cmd, params: msg.params, prefix: IRCPrefix(client.nick));
-			context.read<DB>().storeMessage(MessageEntry(msg, buffer.id)).then((entry) {
-				if (buffer.messageHistoryLoaded) {
-					buffer.addMessage(MessageModel(entry: entry, buffer: buffer));
-				}
-				context.read<BufferListModel>().bumpLastDeliveredTime(buffer, entry.time);
-			});
+			if (!client.caps.enabled.contains('echo-message')) {
+				msg = IRCMessage(msg.cmd, params: msg.params, prefix: IRCPrefix(client.nick));
+				context.read<DB>().storeMessage(MessageEntry(msg, buffer.id)).then((entry) {
+					if (buffer.messageHistoryLoaded) {
+						buffer.addMessage(MessageModel(entry: entry, buffer: buffer));
+					}
+					context.read<BufferListModel>().bumpLastDeliveredTime(buffer, entry.time);
+				});
+			}
 		}
 		composerFormKey.currentState!.reset();
 		composerFocusNode.requestFocus();
