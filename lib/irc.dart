@@ -40,14 +40,27 @@ String formatIRCTime(DateTime dt) {
 }
 
 class IRCMessage {
+	final Map<String, String?> tags;
 	final IRCPrefix? prefix;
 	final String cmd;
 	final List<String> params;
 
-	IRCMessage(this.cmd, { this.params = const [], this.prefix });
+	IRCMessage(this.cmd, { this.tags = const {}, this.params = const [], this.prefix });
 
 	static IRCMessage parse(String s) {
 		s = s.trim();
+
+		Map<String, String?> tags;
+		if (s.startsWith('@')) {
+			var i = s.indexOf(' ');
+			if (i < 0) {
+				throw FormatException('Expected a space after tags');
+			}
+			tags = _parseTags(s.substring(1, i));
+			s = s.substring(i + 1);
+		} else {
+			tags = const {};
+		}
 
 		IRCPrefix? prefix = null;
 		if (s.startsWith(':')) {
@@ -85,11 +98,14 @@ class IRCMessage {
 			}
 		}
 
-		return IRCMessage(cmd.toUpperCase(), params: params, prefix: prefix);
+		return IRCMessage(cmd.toUpperCase(), tags: tags, params: params, prefix: prefix);
 	}
 
 	String toString() {
 		var s = '';
+		if (tags.length > 0) {
+			s += '@' + _formatTags(tags) + ' ';
+		}
 		if (prefix != null) {
 			s += ':' + prefix!.toString() + ' ';
 		}
@@ -118,6 +134,73 @@ class IRCMessage {
 			return cmd.compareTo('400') >= 0 && cmd.compareTo('568') <= 0;
 		}
 	}
+}
+
+Map<String, String?> _parseTags(String s) {
+	return Map.fromEntries(s.split(';').map((s) {
+		if (s.length == 0) {
+			throw FormatException('Empty tag entries are invalid');
+		}
+
+		String k = s;
+		String? v;
+		var i = s.indexOf('=');
+		if (i >= 0) {
+			k = s.substring(0, i);
+			v = _unescapeTag(s.substring(i + 1));
+		}
+
+		return MapEntry(k, v);
+	}));
+}
+
+String _formatTags(Map<String, String?> tags) {
+	return tags.entries.map((entry) {
+		if (entry.value == null) {
+			return entry.key;
+		}
+		return entry.key + '=' + _escapeTag(entry.value!);
+	}).join(';');
+}
+
+String _escapeTag(String s) {
+	return s.split('').map((ch) {
+		switch (ch) {
+		case ';':
+			return '\\:';
+		case ' ':
+			return '\\s';
+		case '\\':
+			return '\\\\';
+		case '\r':
+			return '\\r';
+		case '\n':
+			return '\\n';
+		default:
+			return ch;
+		}
+	}).join('');
+}
+
+final _unescapeTagRegExp = RegExp(r'\\.');
+
+String _unescapeTag(String s) {
+	return s.replaceAllMapped(_unescapeTagRegExp, (match) {
+		switch (match.input) {
+		case '\\:':
+			return ';';
+		case '\\s':
+			return ' ';
+		case '\\\\':
+			return '\\';
+		case '\\r':
+			return '\r';
+		case '\\n':
+			return '\\n';
+		default:
+			return match.input[1];
+		}
+	});
 }
 
 class IRCPrefix {
