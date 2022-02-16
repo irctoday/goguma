@@ -56,25 +56,33 @@ class GogumaState extends State<Goguma> {
 		var clientController = context.read<ClientController>();
 
 		List<ServerEntry> serverEntries = [];
+		List<NetworkEntry> networkEntries = [];
 		List<BufferEntry> bufferEntries = [];
 		Map<int, int> unreadCounts = Map();
 		Map<int, String> lastDeliveredTimes = Map();
 		Future.wait([
 			db.listServers().then((entries) => serverEntries = entries),
+			db.listNetworks().then((entries) => networkEntries = entries),
 			db.listBuffers().then((entries) => bufferEntries = entries),
 			db.fetchBuffersUnreadCount().then((m) => unreadCounts = m),
 			db.fetchBuffersLastDeliveredTime().then((m) => lastDeliveredTimes = m),
 		]).then((_) {
-			serverEntries.forEach((entry) {
-				var server = ServerModel(entry);
+			Map<int, ServerEntry> serverMap = Map.fromEntries(serverEntries.map((entry) {
+				return MapEntry(entry.id!, entry);
+			}));
+
+			networkEntries.forEach((networkEntry) {
+				var serverEntry = serverMap[networkEntry.server]!;
+
+				var server = ServerModel(serverEntry, networkEntry);
 				serverList.add(server);
 
-				var client = Client(connectParamsFromServerEntry(entry));
+				var client = Client(connectParamsFromServerEntry(serverEntry));
 				clientController.add(client, server);
 			});
 
 			bufferEntries.forEach((entry) {
-				var server = serverList.servers.firstWhere((server) => server.id == entry.server);
+				var server = serverList.servers.firstWhere((server) => server.networkId == entry.network);
 				var buffer = BufferModel(entry: entry, server: server);
 				bufferList.add(buffer);
 
@@ -106,16 +114,20 @@ class GogumaState extends State<Goguma> {
 			return Container();
 		}
 
-		return ConnectPage(loading: loading, error: error, onSubmit: (entry) {
+		return ConnectPage(loading: loading, error: error, onSubmit: (serverEntry) {
 			setState(() {
 				loading = true;
 			});
 
-			var client = Client(connectParamsFromServerEntry(entry));
+			var db = context.read<DB>();
+
+			var client = Client(connectParamsFromServerEntry(serverEntry));
 			client.connect().then((_) {
-				return context.read<DB>().storeServer(entry);
-			}).then((_) {
-				var server = ServerModel(entry);
+				return db.storeServer(serverEntry);
+			}).then((serverEntry) {
+				return db.storeNetwork(NetworkEntry(server: serverEntry.id!));
+			}).then((networkEntry) {
+				var server = ServerModel(serverEntry, networkEntry);
 				context.read<ServerListModel>().add(server);
 				context.read<ClientController>().add(client, server);
 

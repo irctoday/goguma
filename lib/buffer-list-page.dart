@@ -77,7 +77,7 @@ class BufferListPageState extends State<BufferListPage> {
 					client.send(IRCMessage('JOIN', params: [name]));
 				} else {
 					var db = context.read<DB>();
-					db.storeBuffer(BufferEntry(name: name, server: server.id)).then((entry) {
+					db.storeBuffer(BufferEntry(name: name, network: server.networkId)).then((entry) {
 						var buffer = BufferModel(entry: entry, server: server);
 						context.read<BufferListModel>().add(buffer);
 					});
@@ -91,6 +91,7 @@ class BufferListPageState extends State<BufferListPage> {
 		var serverList = context.read<ServerListModel>();
 
 		serverList.servers.forEach((server) {
+			db.deleteNetwork(server.networkId);
 			db.deleteServer(server.id);
 		});
 		serverList.clear();

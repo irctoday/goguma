@@ -41,27 +41,45 @@ class ServerEntry {
 		saslPlainPassword = m['sasl_plain_password'];
 }
 
+class NetworkEntry {
+	int? id;
+	final int server;
+
+	Map<String, Object?> toMap() {
+		return <String, Object?>{
+			'id': id,
+			'server': server,
+		};
+	}
+
+	NetworkEntry({ required this.server });
+
+	NetworkEntry.fromMap(Map<String, dynamic> m) :
+		id = m['id'],
+		server = m['server'];
+}
+
 class BufferEntry {
 	int? id;
 	final String name;
-	final int server;
+	final int network;
 	String? lastReadTime;
 
 	Map<String, Object?> toMap() {
 		return <String, Object?>{
 			'id': id,
 			'name': name,
-			'server': server,
+			'network': network,
 			'last_read_time': lastReadTime,
 		};
 	}
 
-	BufferEntry({ required this.name, required this.server });
+	BufferEntry({ required this.name, required this.network });
 
 	BufferEntry.fromMap(Map<String, dynamic> m) :
 		id = m['id'],
 		name = m['name'],
-		server = m['server'],
+		network = m['network'],
 		lastReadTime = m['lastReadTime'];
 }
 
@@ -138,13 +156,20 @@ class DB {
 						)
 					''');
 					batch.execute('''
+						CREATE TABLE Network (
+							id INTEGER PRIMARY KEY,
+							server INTEGER NOT NULL,
+							FOREIGN KEY (server) REFERENCES Server(id) ON DELETE CASCADE
+						)
+					''');
+					batch.execute('''
 						CREATE TABLE Buffer (
 							id INTEGER PRIMARY KEY,
 							name TEXT NOT NULL,
-							server INTEGER NOT NULL,
+							network INTEGER NOT NULL,
 							last_read_time TEXT,
-							FOREIGN KEY (server) REFERENCES Server(id) ON DELETE CASCADE,
-							UNIQUE(name, server)
+							FOREIGN KEY (network) REFERENCES Network(id) ON DELETE CASCADE,
+							UNIQUE(name, network)
 						)
 					''');
 					batch.execute('''
@@ -163,19 +188,11 @@ class DB {
 					print('Upgrading database from version $prevVersion to version $newVersion');
 
 					var batch = db.batch();
-					if (prevVersion <= 1) {
-						batch.execute('''
-							ALTER TABLE Buffer ADD COLUMN last_read_time TEXT
-						''');
-					}
-					if (prevVersion <= 2) {
-						batch.execute('''
-							ALTER TABLE Server ADD COLUMN sasl_plain_password TEXT
-						''');
-					}
+					// TODO: add upgrades here
+					// if (prevVersion <= 1) /* upgrade to v2 */
 					return batch.commit();
 				},
-				version: 3,
+				version: 1,
 			);
 		}).then((db) {
 			return DB._(db);
@@ -228,9 +245,30 @@ class DB {
 		return _db.rawDelete('DELETE FROM Server WHERE id = ?', [id]);
 	}
 
+	Future<List<NetworkEntry>> listNetworks() {
+		return _db.rawQuery('''
+			SELECT id, server FROM Network ORDER BY id
+		''').then((entries) => entries.map((m) => NetworkEntry.fromMap(m)).toList());
+	}
+
+	Future<NetworkEntry> storeNetwork(NetworkEntry entry) {
+		if (entry.id == null) {
+			return _db.insert('Network', entry.toMap()).then((id) {
+				entry.id = id;
+				return entry;
+			});
+		} else {
+			return _updateById('Network', entry.toMap()).then((_) => entry);
+		}
+	}
+
+	Future<void> deleteNetwork(int id) {
+		return _db.rawDelete('DELETE FROM Network WHERE id = ?', [id]);
+	}
+
 	Future<List<BufferEntry>> listBuffers() {
 		return _db.rawQuery('''
-			SELECT id, name, server FROM Buffer ORDER BY id
+			SELECT id, name, network FROM Buffer ORDER BY id
 		''').then((entries) => entries.map((m) => BufferEntry.fromMap(m)).toList());
 	}
 

@@ -23,15 +23,18 @@ class ServerListModel extends ChangeNotifier {
 
 class ServerModel extends ChangeNotifier {
 	final ServerEntry entry;
+	final NetworkEntry networkEntry;
 
 	ClientState _state = ClientState.disconnected;
 	String? _network;
 
-	ServerModel(this.entry) {
+	ServerModel(this.entry, this.networkEntry) {
 		assert(entry.id != null);
+		assert(networkEntry.id != null);
 	}
 
 	int get id => entry.id!;
+	int get networkId => networkEntry.id!;
 
 	String? get network => _network;
 	ClientState get state => _state;
