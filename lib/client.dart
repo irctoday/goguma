@@ -117,8 +117,12 @@ class Client {
 		if (this.state == state) {
 			return;
 		}
+
 		this.state = state;
-		_statesController.add(state);
+
+		if (!_statesController.isClosed) {
+			_statesController.add(state);
+		}
 
 		if (state == ClientState.disconnected && _autoReconnect) {
 			_reconnectTimer?.cancel();
@@ -223,12 +227,14 @@ class Client {
 			break;
 		}
 
-		_messagesController.add(msg);
+		if (!_messagesController.isClosed) {
+			_messagesController.add(msg);
+		}
 	}
 
 	disconnect() {
 		_autoReconnect = false;
-		_socket?.close();
+		_socket!.close();
 		_messagesController.close();
 		_statesController.close();
 	}
