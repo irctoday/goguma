@@ -127,15 +127,21 @@ class GogumaState extends State<Goguma> {
 
 			var db = context.read<DB>();
 
-			var client = Client(connectParamsFromServerEntry(serverEntry));
+			// TODO: only connect once (but be careful not to loose messages
+			// sent immediately after RPL_WELCOME)
+			var clientParams = connectParamsFromServerEntry(serverEntry);
+			var client = Client(clientParams);
 			client.connect().then((_) {
+				client.disconnect();
 				return db.storeServer(serverEntry);
 			}).then((serverEntry) {
 				return db.storeNetwork(NetworkEntry(server: serverEntry.id!));
 			}).then((networkEntry) {
+				var client = Client(clientParams);
 				var server = ServerModel(serverEntry, networkEntry);
 				context.read<ServerListModel>().add(server);
 				context.read<ClientController>().add(client, server);
+				client.connect();
 
 				return Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
 					return BufferListPage();
