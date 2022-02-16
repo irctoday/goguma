@@ -1,0 +1,26 @@
+image: archlinux
+packages:
+  - android-platform
+  - android-sdk
+  - android-sdk-build-tools
+  - android-sdk-cmdline-tools-latest
+  - android-sdk-platform-tools
+  - flutter
+  - jdk11-openjdk
+sources:
+  - https://git.sr.ht/~emersion/goguma
+artifacts:
+  - goguma/build/app/outputs/flutter-apk/app-release.apk
+tasks:
+  - setup-tools: |
+      sudo chown -R $USER /opt/flutter /opt/android-sdk
+      source /etc/profile
+      flutter precache --linux
+      yes | flutter doctor --android-licenses >/dev/null
+      flutter doctor -v
+  - configure: |
+      cd goguma
+      flutter create --org fr.emersion --project-name goguma --platforms android --no-overwrite .
+  - build: |
+      cd goguma
+      flutter build apk
