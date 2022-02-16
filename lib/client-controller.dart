@@ -258,16 +258,13 @@ class ClientController {
 			max = 1000;
 		}
 
-		// TODO: use CHATHISTORY TARGETS
-		for (var buffer in _bufferList.buffers) {
-			if (buffer.server != server) {
-				continue;
+		client.fetchChatHistoryTargets(from, to).then((targets) {
+			for (var target in targets) {
+				client.send(IRCMessage(
+					'CHATHISTORY',
+					params: ['BETWEEN', target.name, 'timestamp=' + from, 'timestamp=' + to, max.toString()],
+				));
 			}
-
-			client.send(IRCMessage(
-				'CHATHISTORY',
-				params: ['BETWEEN', buffer.name, 'timestamp=' + from, 'timestamp=' + to, max.toString()],
-			));
-		}
+		});
 	}
 }

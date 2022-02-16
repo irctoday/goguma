@@ -316,6 +316,26 @@ class Client {
 		var payload = [0, ...utf8.encode(creds.username), 0, ...utf8.encode(creds.password)];
 		send(IRCMessage('AUTHENTICATE', params: [base64.encode(payload)]));
 	}
+
+	Future<List<ChatHistoryTarget>> fetchChatHistoryTargets(String t1, String t2) {
+		// TODO: paging
+		send(IRCMessage(
+			'CHATHISTORY',
+			params: ['TARGETS', 'timestamp=' + t1, 'timestamp=' + t2, '100'],
+		));
+
+		// TODO: error handling
+		return batches.firstWhere((batch) {
+			return batch.type == 'draft/chathistory-targets';
+		}).then((batch) {
+			return batch.messages.map((msg) {
+				if (msg.cmd != 'CHATHISTORY' || msg.params[0] != 'TARGETS') {
+					throw FormatException('Expected CHATHISTORY TARGET message, got: ${msg}');
+				}
+				return ChatHistoryTarget(msg.params[1], msg.params[2]);
+			}).toList();
+		});
+	}
 }
 
 class ClientBatch {
@@ -328,4 +348,11 @@ class ClientBatch {
 	UnmodifiableListView<IRCMessage> get messages => UnmodifiableListView(_messages);
 
 	ClientBatch(this.type, List<String> params, this.parent) : this.params = UnmodifiableListView(params);
+}
+
+class ChatHistoryTarget {
+	final String name;
+	final String time;
+
+	ChatHistoryTarget(this.name, this.time);
 }
