@@ -69,7 +69,7 @@ class GogumaState extends State<Goguma> {
 				var server = ServerModel(entry);
 				serverList.add(server);
 
-				var client = Client(params: connectParamsFromServerEntry(entry));
+				var client = Client(connectParamsFromServerEntry(entry));
 				clientController.add(client, server);
 			});
 
@@ -111,7 +111,7 @@ class GogumaState extends State<Goguma> {
 				loading = true;
 			});
 
-			var client = Client(params: connectParamsFromServerEntry(entry));
+			var client = Client(connectParamsFromServerEntry(entry));
 			client.connect().then((_) {
 				return context.read<DB>().storeServer(entry);
 			}).then((_) {

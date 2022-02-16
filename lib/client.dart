@@ -39,7 +39,7 @@ class Client {
 	Stream<IRCMessage> get messages => _messagesController.stream;
 	Stream<ClientState> get states => _statesController.stream;
 
-	Client({ required this.params }) : nick = params.nick {}
+	Client(this.params) : nick = params.nick;
 
 	Future<void> connect() {
 		_setState(ClientState.connecting);
