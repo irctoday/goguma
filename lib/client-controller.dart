@@ -6,12 +6,18 @@ import 'irc.dart';
 import 'models.dart';
 
 ConnectParams connectParamsFromServerEntry(ServerEntry entry) {
+	SaslPlainCredentials? saslPlain = null;
+	if (entry.saslPlainPassword != null) {
+		saslPlain = SaslPlainCredentials(entry.nick!, entry.saslPlainPassword!);
+	}
+
 	return ConnectParams(
 		host: entry.host,
 		port: entry.port ?? (entry.tls ? 6697 : 6667),
 		tls: entry.tls,
 		nick: entry.nick!, // TODO: add a fallback
 		pass: entry.pass,
+		saslPlain: saslPlain,
 	);
 }
 

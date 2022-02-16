@@ -52,8 +52,8 @@ class ConnectPageState extends State<ConnectPage> {
 			host: uri.host,
 			port: uri.hasPort ? uri.port : null,
 			nick: usernameController.text,
-			pass: passwordController.text.isNotEmpty ? passwordController.text : null,
 			tls: uri.scheme != 'irc+insecure',
+			saslPlainPassword: passwordController.text.isNotEmpty ? passwordController.text : null,
 		));
 	}
 
@@ -72,6 +72,9 @@ class ConnectPageState extends State<ConnectPage> {
 			final ircErr = widget.error as IRCException;
 			switch (ircErr.msg.cmd) {
 			case ERR_PASSWDMISMATCH:
+			case ERR_SASLFAIL:
+			case ERR_SASLTOOLONG:
+			case ERR_SASLABORTED:
 				passwordErr = ircErr.toString();
 				break;
 			case ERR_NICKLOCKED:

@@ -4,14 +4,22 @@ import 'dart:io';
 
 import 'irc.dart';
 
+class SaslPlainCredentials {
+	final String username;
+	final String password;
+
+	SaslPlainCredentials(this.username, this.password);
+}
+
 class ConnectParams {
 	final String host;
 	final int port;
 	final bool tls;
 	final String nick;
 	final String? pass;
+	final SaslPlainCredentials? saslPlain;
 
-	ConnectParams({ required this.host, this.port = 6697, this.tls = true, required this.nick, this.pass });
+	ConnectParams({ required this.host, this.port = 6697, this.tls = true, required this.nick, this.pass, this.saslPlain });
 }
 
 enum ClientState { disconnected, connecting, registering, registered }
@@ -19,6 +27,7 @@ enum ClientState { disconnected, connecting, registering, registered }
 const _permanentCaps = [
 	'echo-message',
 	'message-tags',
+	'sasl',
 	'server-time',
 ];
 
@@ -126,11 +135,16 @@ class Client {
 		}
 		send(IRCMessage('NICK', params: [params.nick]));
 		send(IRCMessage('USER', params: [params.nick, '0', '*', params.nick]));
+		_authenticate();
 		send(IRCMessage('CAP', params: ['END']));
 
 		return messages.firstWhere((msg) {
 			switch (msg.cmd) {
 			case RPL_WELCOME:
+				if (params.saslPlain != null && !caps.available.containsKey('sasl')) {
+					_socket?.close();
+					throw Exception('Server doesn\'t support SASL authentication');
+				}
 				return true;
 			case ERR_NICKLOCKED:
 			case ERR_PASSWDMISMATCH:
@@ -140,6 +154,9 @@ class Client {
 			case ERR_UNAVAILRESOURCE:
 			case ERR_NOPERMFORHOST:
 			case ERR_YOUREBANNEDCREEP:
+			case ERR_SASLFAIL:
+			case ERR_SASLTOOLONG:
+			case ERR_SASLABORTED:
 				_socket?.close();
 				throw IRCException(msg);
 			}
@@ -210,5 +227,18 @@ class Client {
 	bool isMyNick(String name) {
 		var cm = isupport.caseMapping;
 		return cm(name) == cm(nick);
+	}
+
+	void _authenticate() {
+		if (params.saslPlain == null) {
+			return;
+		}
+
+		print('Starting SASL PLAIN authentication');
+		send(IRCMessage('AUTHENTICATE', params: ['PLAIN']));
+
+		var creds = params.saslPlain!;
+		var payload = [0, ...utf8.encode(creds.username), 0, ...utf8.encode(creds.password)];
+		send(IRCMessage('AUTHENTICATE', params: [base64.encode(payload)]));
 	}
 }

@@ -15,6 +15,7 @@ class ServerEntry {
 	bool tls;
 	String? nick;
 	String? pass;
+	String? saslPlainPassword;
 
 	Map<String, Object?> toMap() {
 		return <String, Object?>{
@@ -24,10 +25,11 @@ class ServerEntry {
 			'tls': tls ? 1 : 0,
 			'nick': nick,
 			'pass': pass,
+			'sasl_plain_password': saslPlainPassword,
 		};
 	}
 
-	ServerEntry({ required this.host, this.port, this.tls = true, this.nick, this.pass });
+	ServerEntry({ required this.host, this.port, this.tls = true, this.nick, this.pass, this.saslPlainPassword });
 
 	ServerEntry.fromMap(Map<String, dynamic> m) :
 		id = m['id'],
@@ -35,7 +37,8 @@ class ServerEntry {
 		port = m['port'],
 		tls = m['tls'] != 0,
 		nick = m['nick'],
-		pass = m['pass'];
+		pass = m['pass'],
+		saslPlainPassword = m['sasl_plain_password'];
 }
 
 class BufferEntry {
@@ -130,7 +133,8 @@ class DB {
 							port INTEGER,
 							tls INTEGER NOT NULL DEFAULT 1,
 							nick TEXT,
-							pass TEXT
+							pass TEXT,
+							sasl_plain_password TEXT
 						)
 					''');
 					batch.execute('''
@@ -159,14 +163,19 @@ class DB {
 					print('Upgrading database from version $prevVersion to version $newVersion');
 
 					var batch = db.batch();
-					if (prevVersion == 1) {
+					if (prevVersion <= 1) {
 						batch.execute('''
 							ALTER TABLE Buffer ADD COLUMN last_read_time TEXT
 						''');
 					}
+					if (prevVersion <= 2) {
+						batch.execute('''
+							ALTER TABLE Server ADD COLUMN sasl_plain_password TEXT
+						''');
+					}
 					return batch.commit();
 				},
-				version: 2,
+				version: 3,
 			);
 		}).then((db) {
 			return DB._(db);
@@ -199,7 +208,8 @@ class DB {
 
 	Future<List<ServerEntry>> listServers() {
 		return _db.rawQuery('''
-			SELECT id, host, port, tls, nick, pass FROM Server ORDER BY id
+			SELECT id, host, port, tls, nick, pass, sasl_plain_password
+			FROM Server ORDER BY id
 		''').then((entries) => entries.map((m) => ServerEntry.fromMap(m)).toList());
 	}
 
