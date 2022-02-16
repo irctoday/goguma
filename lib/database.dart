@@ -91,7 +91,6 @@ class MessageEntry {
 	final String time;
 	final int buffer;
 	final String raw;
-	int flags;
 
 	IRCMessage? _msg;
 
@@ -101,22 +100,19 @@ class MessageEntry {
 			'time': time,
 			'buffer': buffer,
 			'raw': raw,
-			'flags': flags,
 		};
 	}
 
 	MessageEntry(IRCMessage msg, this.buffer) :
 		time = msg.tags['time'] ?? formatIRCTime(DateTime.now()),
 		raw = msg.toString(),
-		flags = 0,
 		_msg = msg;
 
 	MessageEntry.fromMap(Map<String, dynamic> m) :
 		id = m['id'],
 		time = m['time'],
 		buffer = m['buffer'],
-		raw = m['raw'],
-		flags = m['flags'];
+		raw = m['raw'];
 
 	IRCMessage get msg {
 		return _msg ?? IRCMessage.parse(raw);
@@ -183,7 +179,6 @@ class DB {
 							time TEXT NOT NULL,
 							buffer INTEGER NOT NULL,
 							raw TEXT NOT NULL,
-							flags INTEGER NOT NULL DEFAULT 0,
 							FOREIGN KEY (buffer) REFERENCES Buffer(id) ON DELETE CASCADE
 						)
 					''');
@@ -334,7 +329,10 @@ class DB {
 
 	Future<List<MessageEntry>> listMessages(int buffer) {
 		return _db.rawQuery('''
-			SELECT id, time, buffer, raw, flags FROM Message WHERE buffer = ? ORDER BY time
+			SELECT id, time, buffer, raw
+			FROM Message
+			WHERE buffer = ?
+			ORDER BY time
 		''', [buffer]).then((entries) {
 			return entries.map((m) => MessageEntry.fromMap(m)).toList();
 		});
