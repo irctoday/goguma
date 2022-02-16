@@ -46,7 +46,7 @@ class BufferPageState extends State<BufferPage> {
 			// TODO: only load a partial view of the messages
 			future = context.read<DB>().listMessages(buffer.id).then((entries) {
 				buffer.populateMessageHistory(entries.map((entry) {
-					return MessageModel(entry: entry, buffer: buffer);
+					return MessageModel(entry: entry);
 				}).toList());
 			});
 		}
@@ -72,7 +72,7 @@ class BufferPageState extends State<BufferPage> {
 				msg = IRCMessage(msg.cmd, params: msg.params, prefix: IRCPrefix(client.nick));
 				context.read<DB>().storeMessage(MessageEntry(msg, buffer.id)).then((entry) {
 					if (buffer.messageHistoryLoaded) {
-						buffer.addMessage(MessageModel(entry: entry, buffer: buffer));
+						buffer.addMessage(MessageModel(entry: entry));
 					}
 					context.read<BufferListModel>().bumpLastDeliveredTime(buffer, entry.time);
 				});

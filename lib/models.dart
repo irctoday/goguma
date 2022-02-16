@@ -285,9 +285,8 @@ class BufferModel extends ChangeNotifier {
 
 class MessageModel {
 	final MessageEntry entry;
-	final BufferModel buffer;
 
-	MessageModel({ required this.entry, required this.buffer }) {
+	MessageModel({ required this.entry }) {
 		assert(entry.id != null);
 	}
 
