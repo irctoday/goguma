@@ -18,6 +18,7 @@ enum ClientState { disconnected, connecting, registering, registered }
 
 const _permanentCaps = [
 	'message-tags',
+	'server-time',
 ];
 
 class Client {

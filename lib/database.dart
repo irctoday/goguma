@@ -82,7 +82,7 @@ class MessageEntry {
 	}
 
 	MessageEntry(IRCMessage msg, this.buffer) :
-		time = formatIRCTime(DateTime.now()),
+		time = msg.tags['time'] ?? formatIRCTime(DateTime.now()),
 		raw = msg.toString(),
 		flags = 0,
 		_msg = msg;
