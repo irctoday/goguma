@@ -101,6 +101,9 @@ class Client {
 				_log('Connection closed');
 			}).catchError((err) {
 				_log('Connection error: ' + err.toString());
+				_messagesController.addError(err);
+				_statesController.addError(err);
+				_batchesController.addError(err);
 			}).whenComplete(() {
 				_socket = null;
 				caps.clear();
