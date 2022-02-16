@@ -40,12 +40,14 @@ String formatIRCTime(DateTime dt) {
 }
 
 class IRCMessage {
-	final Map<String, String?> tags;
+	final UnmodifiableMapView<String, String?> tags;
 	final IRCPrefix? prefix;
 	final String cmd;
-	final List<String> params;
+	final UnmodifiableListView<String> params;
 
-	IRCMessage(this.cmd, { this.tags = const {}, this.params = const [], this.prefix });
+	IRCMessage(this.cmd, { Map<String, String?> tags = const {}, List<String> params = const [], this.prefix }) :
+		this.tags = UnmodifiableMapView(tags),
+		this.params = UnmodifiableListView(params);
 
 	static IRCMessage parse(String s) {
 		s = s.trim();
