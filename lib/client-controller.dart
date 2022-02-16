@@ -123,6 +123,15 @@ class ClientController {
 		case ERR_NOMOTD:
 			// These messages are used to indicate the end of the ISUPPORT list
 
+			// Query latest READ status for user targets
+			if (client.caps.enabled.contains('soju.im/read')) {
+				for (var buffer in _bufferList.buffers) {
+					if (buffer.server == server && !client.isChannel(buffer.name)) {
+						client.send(IRCMessage('READ', params: [buffer.name]));
+					}
+				}
+			}
+
 			if (_prevLastDeliveredTime != null) {
 				_fetchBacklog(_prevLastDeliveredTime!, msg.tags['time'] ?? formatIRCTime(DateTime.now()));
 			}
@@ -230,6 +239,31 @@ class ClientController {
 				_provider.add(childClient, childServer);
 				childClient.connect();
 			});
+		case 'READ':
+			var target = msg.params[0];
+			var bound = msg.params[1];
+
+			if (bound == '*') {
+				break;
+			}
+			if (!bound.startsWith('timestamp=')) {
+				throw FormatException('Invalid READ bound: ${msg}');
+			}
+			var time = bound.replaceFirst('timestamp=', '');
+
+			var buffer = _bufferList.get(target, server);
+			if (buffer == null) {
+				break;
+			}
+
+			if (buffer.entry.lastReadTime != null && time.compareTo(buffer.entry.lastReadTime!) <= 0) {
+				break;
+			}
+
+			buffer.entry.lastReadTime = time;
+			// TODO: recompute unread count from messages
+			buffer.unreadCount = 0;
+			return _db.storeBuffer(buffer.entry);
 		}
 		return null;
 	}

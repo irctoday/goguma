@@ -40,6 +40,7 @@ const _permanentCaps = [
 	'draft/chathistory',
 
 	'soju.im/bouncer-networks',
+	'soju.im/read',
 ];
 
 var _nextClientId = 0;

@@ -55,6 +55,11 @@ class BufferPageState extends State<BufferPage> {
 			if (buffer.unreadCount > 0 && buffer.messages.length > 0) {
 				buffer.entry.lastReadTime = buffer.messages.last.entry.time;
 				context.read<DB>().storeBuffer(buffer.entry);
+
+				var client = context.read<Client>();
+				if (buffer.entry.lastReadTime != null && client.caps.enabled.containsAll(['server-time', 'soju.im/read'])) {
+					client.send(IRCMessage('READ', params: [buffer.name, 'timestamp=' + buffer.entry.lastReadTime!]));
+				}
 			}
 			buffer.unreadCount = 0;
 		});
