@@ -35,6 +35,8 @@ const _permanentCaps = [
 	'sasl',
 	'server-time',
 
+	'draft/chathistory',
+
 	'soju.im/bouncer-networks',
 ];
 

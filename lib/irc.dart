@@ -14,6 +14,7 @@ const RPL_TOPICWHOTIME = '333';
 const RPL_WHOREPLY = '352';
 const RPL_NAMREPLY = '353';
 const RPL_ENDOFNAMES = '366';
+const RPL_ENDOFMOTD = '376';
 const ERR_NOMOTD = '422';
 const ERR_ERRONEUSNICKNAME = '432';
 const ERR_NICKNAMEINUSE = '433';
@@ -317,6 +318,14 @@ class IRCCapRegistry {
 	void clear() {
 		_available.clear();
 	}
+
+	int? get chatHistory {
+		if (!available.containsKey('draft/chathistory')) {
+			return null;
+		}
+		var v = available['draft/chathistory'] ?? '0';
+		return int.parse(v);
+	}
 }
 
 const _DEFAULT_CHANTYPES = '#';
@@ -324,8 +333,8 @@ final defaultCaseMapping = _caseMappingByName('rfc1459')!;
 
 class IRCIsupportRegistry {
 	String? _network;
-	String? _chanTypes;
 	CaseMapping? _caseMapping;
+	String? _chanTypes;
 	String? _bouncerNetId;
 
 	String? get network => _network;

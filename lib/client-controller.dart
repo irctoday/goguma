@@ -68,6 +68,11 @@ class ClientController {
 			}
 			_bufferList.setCaseMapping(client.isupport.caseMapping);
 			break;
+		case RPL_ENDOFMOTD:
+		case ERR_NOMOTD:
+			// These messages are used to indicate the end of the ISUPPORT list
+			_fetchBacklog(client, server);
+			break;
 		case 'JOIN':
 			var channel = msg.params[0];
 			if (!client.isMyNick(msg.prefix!.name)) {
@@ -196,5 +201,32 @@ class ClientController {
 	void disconnectAll() {
 		_clients.values.forEach((client) => client.disconnect());
 		_bufferList.clear();
+	}
+
+	void _fetchBacklog(Client client, ServerModel server) {
+		if (!client.caps.enabled.contains('draft/chathistory')) {
+			return;
+		}
+
+		var max = client.caps.chatHistory!;
+		if (max == 0) {
+			max = 1000;
+		}
+
+		// TODO: use CHATHISTORY TARGETS
+		for (var buffer in _bufferList.buffers) {
+			if (buffer.server != server) {
+				continue;
+			}
+
+			var lastDelivered = buffer.lastDeliveredTime;
+			if (lastDelivered == null) {
+				continue;
+			}
+
+			var t1 = 'timestamp=' + lastDelivered;
+			var t2 = 'timestamp=' + formatIRCTime(DateTime.now());
+			client.send(IRCMessage('CHATHISTORY', params: ['BETWEEN', buffer.name, t1, t2, max.toString()]));
+		}
 	}
 }
