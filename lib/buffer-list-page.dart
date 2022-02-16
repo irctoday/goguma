@@ -184,7 +184,7 @@ class BufferItem extends StatelessWidget {
 					),
 				),
 				title: Text(buf.name, overflow: TextOverflow.ellipsis),
-				subtitle: buf.subtitle != null ? Text(buf.subtitle!, overflow: TextOverflow.ellipsis) : null,
+				subtitle: buf.subtitle != null ? Text(buf.subtitle!, overflow: TextOverflow.fade, softWrap: false) : null,
 				onTap: () {
 					var client = context.read<ClientProvider>().get(buf.server);
 					Navigator.push(context, MaterialPageRoute(builder: (context) {
