@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 
@@ -30,6 +31,7 @@ class ConnectParams {
 enum ClientState { disconnected, connecting, registering, registered }
 
 const _permanentCaps = [
+	'batch',
 	'echo-message',
 	'message-tags',
 	'sasl',
@@ -54,11 +56,14 @@ class Client {
 	Socket? _socket;
 	StreamController<IRCMessage> _messagesController = StreamController.broadcast();
 	StreamController<ClientState> _statesController = StreamController.broadcast();
+	StreamController<ClientBatch> _batchesController = StreamController.broadcast();
 	Timer? _reconnectTimer;
 	bool _autoReconnect = true;
+	Map<String, ClientBatch> _batches = Map();
 
 	Stream<IRCMessage> get messages => _messagesController.stream;
 	Stream<ClientState> get states => _statesController.stream;
+	Stream<ClientBatch> get batches => _batchesController.stream;
 
 	Client(this.params) : _id = _nextClientId++, nick = params.nick;
 
@@ -100,6 +105,7 @@ class Client {
 				_socket = null;
 				caps.clear();
 				isupport.clear();
+				_batches.clear();
 
 				_setState(ClientState.disconnected);
 			});
@@ -201,6 +207,12 @@ class Client {
 	_handleMessage(IRCMessage msg) {
 		_log('<- ' + msg.toString());
 
+		ClientBatch? msgBatch = null;
+		if (msg.tags.containsKey('batch')) {
+			msgBatch = _batches[msg.tags['batch']];
+		}
+		msgBatch?._messages.add(msg);
+
 		switch (msg.cmd) {
 		case 'CAP':
 			caps.parse(msg);
@@ -232,6 +244,34 @@ class Client {
 		case 'PING':
 			send(IRCMessage('PONG', params: msg.params));
 			break;
+		case 'BATCH':
+			var kind = msg.params[0][0];
+			var ref = msg.params[0].substring(1);
+
+			switch (kind) {
+			case '+':
+				var type = msg.params[1];
+				var params = msg.params.sublist(2);
+				if (_batches.containsKey(ref)) {
+					throw new FormatException('Duplicate BATCH reference: ${ref}');
+				}
+				var batch = ClientBatch(type, params, msgBatch);
+				_batches[ref] = batch;
+				break;
+			case '-':
+				var batch = _batches[ref];
+				if (batch == null) {
+					throw new FormatException('Unknown BATCH reference: ${ref}');
+				}
+				_batches.remove(ref);
+				if (!_batchesController.isClosed) {
+					_batchesController.add(batch);
+				}
+				break;
+			default:
+				throw FormatException('Invalid BATCH message: ${msg}');
+			}
+			break;
 		}
 
 		if (!_messagesController.isClosed) {
@@ -244,6 +284,7 @@ class Client {
 		_socket!.close();
 		_messagesController.close();
 		_statesController.close();
+		_batchesController.close();
 	}
 
 	send(IRCMessage msg) {
@@ -275,4 +316,16 @@ class Client {
 		var payload = [0, ...utf8.encode(creds.username), 0, ...utf8.encode(creds.password)];
 		send(IRCMessage('AUTHENTICATE', params: [base64.encode(payload)]));
 	}
+}
+
+class ClientBatch {
+	final String type;
+	final UnmodifiableListView<String> params;
+	final ClientBatch? parent;
+
+	final List<IRCMessage> _messages = [];
+
+	UnmodifiableListView<IRCMessage> get messages => UnmodifiableListView(_messages);
+
+	ClientBatch(this.type, List<String> params, this.parent) : this.params = UnmodifiableListView(params);
 }
