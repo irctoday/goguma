@@ -51,7 +51,12 @@ class BufferKey {
 	final String name;
 	final ServerModel server;
 
-	BufferKey(this.name, this.server);
+	BufferKey(String name, this.server, CaseMapping cm) :
+		this.name = cm(name);
+
+	BufferKey.fromBuffer(BufferModel buffer, CaseMapping cm) :
+		this.name = cm(buffer.name),
+		this.server = buffer.server;
 
 	@override
 	bool operator ==(Object other) {
@@ -70,6 +75,7 @@ class BufferKey {
 class BufferListModel extends ChangeNotifier {
 	Map<BufferKey, BufferModel> _buffers = Map();
 	List<BufferModel> _sorted = [];
+	CaseMapping _cm = defaultCaseMapping;
 
 	UnmodifiableListView<BufferModel> get buffers => UnmodifiableListView(_sorted);
 
@@ -80,13 +86,13 @@ class BufferListModel extends ChangeNotifier {
 	}
 
 	void add(BufferModel buf) {
-		_buffers[BufferKey(buf.name, buf.server)] = buf;
+		_buffers[BufferKey.fromBuffer(buf, _cm)] = buf;
 		_rebuildSorted();
 		notifyListeners();
 	}
 
 	void remove(BufferModel buf) {
-		_buffers.remove(BufferKey(buf.name, buf.server));
+		_buffers.remove(BufferKey.fromBuffer(buf, _cm));
 		_rebuildSorted();
 		notifyListeners();
 	}
@@ -98,7 +104,7 @@ class BufferListModel extends ChangeNotifier {
 	}
 
 	BufferModel? get(String name, ServerModel server) {
-		return _buffers[BufferKey(name, server)];
+		return _buffers[BufferKey(name, server, _cm)];
 	}
 
 	void bumpLastDeliveredTime(BufferModel buf, String t) {
@@ -123,6 +129,17 @@ class BufferListModel extends ChangeNotifier {
 			return a.name.compareTo(b.name);
 		});
 		_sorted = l;
+	}
+
+	void setCaseMapping(CaseMapping cm) {
+		if (cm == _cm) {
+			return;
+		}
+		_cm = cm;
+		_buffers = Map.fromIterables(
+			_buffers.values.map((buffer) => BufferKey.fromBuffer(buffer, cm)),
+			_buffers.values,
+		);
 	}
 }
 

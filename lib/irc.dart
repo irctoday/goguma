@@ -219,7 +219,7 @@ class IRCCapRegistry {
 }
 
 const _DEFAULT_CHANTYPES = '#';
-final _defaultCaseMapping = _caseMappingByName('rfc1459')!;
+final defaultCaseMapping = _caseMappingByName('rfc1459')!;
 
 class IRCIsupportRegistry {
 	String? _network;
@@ -228,7 +228,7 @@ class IRCIsupportRegistry {
 
 	String? get network => _network;
 	String get chanTypes => _chanTypes ?? _DEFAULT_CHANTYPES;
-	CaseMapping get caseMapping => _caseMapping ?? _defaultCaseMapping;
+	CaseMapping get caseMapping => _caseMapping ?? defaultCaseMapping;
 
 	void parse(List<String> tokens) {
 		tokens.forEach((tok) {
@@ -320,4 +320,43 @@ String _caseMapCharAscii(String ch) {
 		return ch.toLowerCase();
 	}
 	return ch;
+}
+
+class IRCNameMap<V> extends MapBase<String, V> {
+	CaseMapping _cm;
+	Map<String, _IRCNameMapEntry<V>> _m = Map();
+
+	IRCNameMap(CaseMapping cm) : _cm = cm;
+
+	V? operator [](Object? key) {
+		return _m[_cm(key as String)]?.value;
+	}
+
+	void operator []=(String key, V value) {
+		_m[_cm(key)] = _IRCNameMapEntry(key, value);
+	}
+
+	void clear() {
+		_m.clear();
+	}
+
+	Iterable<String> get keys {
+		return _m.values.map((entry) => entry.name);
+	}
+
+	V? remove(Object? key) {
+		return _m.remove(_cm(key as String))?.value;
+	}
+
+	void setCaseMapping(CaseMapping cm) {
+		_m = Map.fromIterables(_m.values.map((entry) => cm(entry.name)), _m.values);
+		_cm = cm;
+	}
+}
+
+class _IRCNameMapEntry<V> {
+	final String name;
+	final V value;
+
+	_IRCNameMapEntry(this.name, this.value);
 }

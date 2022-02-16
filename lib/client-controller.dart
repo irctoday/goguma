@@ -51,6 +51,7 @@ class ClientController {
 		switch (msg.cmd) {
 		case RPL_ISUPPORT:
 			server.network = client.isupport.network;
+			_bufferList.setCaseMapping(client.isupport.caseMapping);
 			break;
 		case 'JOIN':
 			var channel = msg.params[0];
