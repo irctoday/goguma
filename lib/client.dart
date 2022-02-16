@@ -40,6 +40,8 @@ const _permanentCaps = [
 	'soju.im/bouncer-networks',
 ];
 
+var _nextClientId = 0;
+
 class Client {
 	final ConnectParams params;
 	String nick;
@@ -48,6 +50,7 @@ class Client {
 	final IRCCapRegistry caps = IRCCapRegistry();
 	final IRCIsupportRegistry isupport = IRCIsupportRegistry();
 
+	final int _id;
 	Socket? _socket;
 	StreamController<IRCMessage> _messagesController = StreamController.broadcast();
 	StreamController<ClientState> _statesController = StreamController.broadcast();
@@ -57,12 +60,12 @@ class Client {
 	Stream<IRCMessage> get messages => _messagesController.stream;
 	Stream<ClientState> get states => _statesController.stream;
 
-	Client(this.params) : nick = params.nick;
+	Client(this.params) : _id = _nextClientId++, nick = params.nick;
 
 	Future<void> connect() {
 		_setState(ClientState.connecting);
 
-		print('Connecting to ' + params.host + '...');
+		_log('Connecting to ${params.host}...');
 
 		final connectTimeout = Duration(seconds: 15);
 		Future<Socket> socketFuture;
@@ -82,17 +85,17 @@ class Client {
 		}
 
 		return socketFuture.catchError((err) {
-			print('Connection failed: ' + err.toString());
+			_log('Connection failed: ' + err.toString());
 			_setState(ClientState.disconnected);
 			throw err;
 		}).then((socket) {
-			print('Connection opened');
+			_log('Connection opened');
 			_socket = socket;
 
 			socket.done.then((_) {
-				print('Connection closed');
+				_log('Connection closed');
 			}).catchError((err) {
-				print('Connection error: ' + err.toString());
+				_log('Connection error: ' + err.toString());
 			}).whenComplete(() {
 				_socket = null;
 				caps.clear();
@@ -113,6 +116,10 @@ class Client {
 		});
 	}
 
+	_log(String s) {
+		print('[${_id}] ${s}');
+	}
+
 	_setState(ClientState state) {
 		if (this.state == state) {
 			return;
@@ -127,7 +134,7 @@ class Client {
 		if (state == ClientState.disconnected && _autoReconnect) {
 			_reconnectTimer?.cancel();
 
-			print('Reconnecting in 10s');
+			_log('Reconnecting in 10s');
 			_reconnectTimer = Timer(Duration(seconds: 10), () {
 				_reconnectTimer = null;
 				connect();
@@ -192,7 +199,7 @@ class Client {
 	}
 
 	_handleMessage(IRCMessage msg) {
-		print('Received: ' + msg.toString());
+		_log('<- ' + msg.toString());
 
 		switch (msg.cmd) {
 		case 'CAP':
@@ -209,7 +216,7 @@ class Client {
 			}
 			break;
 		case RPL_WELCOME:
-			print('Registration complete');
+			_log('Registration complete');
 			_setState(ClientState.registered);
 			serverPrefix = msg.prefix;
 			nick = msg.params[0];
@@ -243,7 +250,7 @@ class Client {
 		if (_socket == null) {
 			return Future.error(SocketException.closed());
 		}
-		print('Sent: ' + msg.toString());
+		_log('-> ' + msg.toString());
 		return _socket!.write(msg.toString() + '\r\n');
 	}
 
@@ -261,7 +268,7 @@ class Client {
 			return;
 		}
 
-		print('Starting SASL PLAIN authentication');
+		_log('Starting SASL PLAIN authentication');
 		send(IRCMessage('AUTHENTICATE', params: ['PLAIN']));
 
 		var creds = params.saslPlain!;
