@@ -138,10 +138,11 @@ class Client {
 		_authenticate();
 		send(IRCMessage('CAP', params: ['END']));
 
+		var saslSuccess = false;
 		return messages.firstWhere((msg) {
 			switch (msg.cmd) {
 			case RPL_WELCOME:
-				if (params.saslPlain != null && !caps.available.containsKey('sasl')) {
+				if (params.saslPlain != null && !saslSuccess) {
 					_socket?.close();
 					throw Exception('Server doesn\'t support SASL authentication');
 				}
@@ -159,6 +160,9 @@ class Client {
 			case ERR_SASLABORTED:
 				_socket?.close();
 				throw IRCException(msg);
+			case RPL_SASLSUCCESS:
+				saslSuccess = true;
+				break;
 			}
 			return false;
 		}).timeout(Duration(seconds: 15), onTimeout: () {
