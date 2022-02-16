@@ -61,6 +61,8 @@ class ClientController {
 	final Client _client;
 	final ServerModel _server;
 
+	String? _prevLastDeliveredTime;
+
 	Client get client => _client;
 	ServerModel get server => _server;
 
@@ -77,6 +79,10 @@ class ClientController {
 
 		client.states.listen((state) {
 			server.state = state;
+
+			if (state == ClientState.connecting) {
+				_prevLastDeliveredTime = _getLastDeliveredTime();
+			}
 		});
 
 		var messagesSub;
@@ -87,6 +93,19 @@ class ClientController {
 				future.whenComplete(() => messagesSub.resume());
 			}
 		});
+	}
+
+	String? _getLastDeliveredTime() {
+		var last = null;
+		for (var buffer in _bufferList.buffers) {
+			if (buffer.server != server || buffer.lastDeliveredTime == null) {
+				continue;
+			}
+			if (last == null || last!.compareTo(buffer.lastDeliveredTime!) < 0) {
+				last = buffer.lastDeliveredTime;
+			}
+		}
+		return last;
 	}
 
 	Future<void>? _handleMessage(IRCMessage msg) {
@@ -103,7 +122,10 @@ class ClientController {
 		case RPL_ENDOFMOTD:
 		case ERR_NOMOTD:
 			// These messages are used to indicate the end of the ISUPPORT list
-			_fetchBacklog();
+
+			if (_prevLastDeliveredTime != null) {
+				_fetchBacklog(_prevLastDeliveredTime!, msg.tags['time'] ?? formatIRCTime(DateTime.now()));
+			}
 			break;
 		case 'JOIN':
 			var channel = msg.params[0];
@@ -226,7 +248,7 @@ class ClientController {
 		});
 	}
 
-	void _fetchBacklog() {
+	void _fetchBacklog(String from, String to) {
 		if (!client.caps.enabled.contains('draft/chathistory')) {
 			return;
 		}
@@ -242,14 +264,10 @@ class ClientController {
 				continue;
 			}
 
-			var lastDelivered = buffer.lastDeliveredTime;
-			if (lastDelivered == null) {
-				continue;
-			}
-
-			var t1 = 'timestamp=' + lastDelivered;
-			var t2 = 'timestamp=' + formatIRCTime(DateTime.now());
-			client.send(IRCMessage('CHATHISTORY', params: ['BETWEEN', buffer.name, t1, t2, max.toString()]));
+			client.send(IRCMessage(
+				'CHATHISTORY',
+				params: ['BETWEEN', buffer.name, 'timestamp=' + from, 'timestamp=' + to, max.toString()],
+			));
 		}
 	}
 }
