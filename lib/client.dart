@@ -162,14 +162,14 @@ class Client {
 		}
 
 		send(IRCMessage('CAP', params: ['LS', '302']));
-		for (var cap in caps) {
-			send(IRCMessage('CAP', params: ['REQ', cap]));
-		}
 		if (params.pass != null) {
 			send(IRCMessage('PASS', params: [params.pass!]));
 		}
 		send(IRCMessage('NICK', params: [params.nick]));
 		send(IRCMessage('USER', params: [params.nick, '0', '*', params.nick]));
+		for (var cap in caps) {
+			send(IRCMessage('CAP', params: ['REQ', cap]));
+		}
 		_authenticate();
 		if (params.bouncerNetId != null) {
 			send(IRCMessage('BOUNCER', params: ['BIND', params.bouncerNetId!]));
