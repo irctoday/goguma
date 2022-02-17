@@ -13,7 +13,7 @@ Goals:
   save battery power.
 - Cross-platform: the main target platforms are Linux and Android.
 
-<img src="https://l.sr.ht/4ZD5.png" style="width: 350px;">
+<img src="https://l.sr.ht/4ZD5.png" width="350">
 
 ## Compiling
 
