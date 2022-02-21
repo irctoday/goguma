@@ -1,4 +1,4 @@
-# goguma
+# [goguma]
 
 An IRC client for mobile devices.
 
@@ -12,6 +12,9 @@ Goals:
 - Lightweight: go easy on resource usage to run smoothly on older phones and
   save battery power.
 - Cross-platform: the main target platforms are Linux and Android.
+
+If you want to try out goguma on Android, our CI provides
+[nightly builds][android-ci] (check out build artifacts).
 
 <img src="https://l.sr.ht/4ZD5.png" width="350">
 
@@ -48,3 +51,6 @@ The built APK is in `build/app/outputs/flutter-apk/app-release.apk`.
 AGPLv3, see LICENSE.
 
 Copyright (C) 2021 The goguma Contributors
+
+[goguma]: https://sr.ht/~emersion/goguma/
+[android-ci]: https://builds.sr.ht/~emersion/goguma/commits/android
