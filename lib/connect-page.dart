@@ -39,7 +39,7 @@ Uri _parseServerUri(String rawUri) {
 class ConnectPageState extends State<ConnectPage> {
 	final formKey = GlobalKey<FormState>();
 	final serverController = TextEditingController();
-	final usernameController = TextEditingController();
+	final nicknameController = TextEditingController();
 	final passwordController = TextEditingController();
 
 	void submit() {
@@ -51,7 +51,7 @@ class ConnectPageState extends State<ConnectPage> {
 		widget.onSubmit?.call(ServerEntry(
 			host: uri.host,
 			port: uri.hasPort ? uri.port : null,
-			nick: usernameController.text,
+			nick: nicknameController.text,
 			tls: uri.scheme != 'irc+insecure',
 			saslPlainPassword: passwordController.text.isNotEmpty ? passwordController.text : null,
 		));
@@ -60,14 +60,14 @@ class ConnectPageState extends State<ConnectPage> {
 	@override
 	void dispose() {
 		serverController.dispose();
-		usernameController.dispose();
+		nicknameController.dispose();
 		passwordController.dispose();
 		super.dispose();
 	}
 
 	@override
 	Widget build(BuildContext context) {
-		String? serverErr = null, usernameErr = null, passwordErr = null;
+		String? serverErr = null, nicknameErr = null, passwordErr = null;
 		if (widget.error is IRCException) {
 			final ircErr = widget.error as IRCException;
 			switch (ircErr.msg.cmd) {
@@ -82,7 +82,7 @@ class ConnectPageState extends State<ConnectPage> {
 			case ERR_NICKNAMEINUSE:
 			case ERR_NICKCOLLISION:
 			case ERR_YOUREBANNEDCREEP:
-				usernameErr = ircErr.toString();
+				nicknameErr = ircErr.toString();
 				break;
 			default:
 				serverErr = ircErr.toString();
@@ -123,10 +123,10 @@ class ConnectPageState extends State<ConnectPage> {
 					),
 					TextFormField(
 						decoration: InputDecoration(
-							labelText: 'Username',
-							errorText: usernameErr,
+							labelText: 'Nickname',
+							errorText: nicknameErr,
 						),
-						controller: usernameController,
+						controller: nicknameController,
 						onEditingComplete: () => focusNode.nextFocus(),
 						validator: (value) {
 							return (value!.isEmpty) ? 'Required' : null;
