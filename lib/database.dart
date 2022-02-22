@@ -274,8 +274,28 @@ class DB {
 	}
 
 	Future<void> deleteNetwork(int id) {
-		// TODO: garbage collect orphan servers
-		return _db.rawDelete('DELETE FROM Network WHERE id = ?', [id]);
+		return _db.transaction((txn) {
+			return txn.rawQuery('''
+				SELECT server, COUNT(id) AS n
+				FROM Network
+				WHERE server IN (
+					SELECT server FROM Network WHERE id = ?
+				)
+			''', [id]).then((entries) {
+				assert(entries.length == 1);
+				var serverId = entries.first['server'] as int;
+				var n = entries.first['n'] as int;
+				assert(n > 0);
+
+				if (n == 1) {
+					// This is the last network using that server, we can
+					// delete the server
+					return txn.rawDelete('DELETE FROM Server WHERE id = ?', [serverId]);
+				} else {
+					return txn.rawDelete('DELETE FROM Network WHERE id = ?', [id]);
+				}
+			});
+		});
 	}
 
 	Future<List<BufferEntry>> listBuffers() {
