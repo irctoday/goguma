@@ -93,6 +93,15 @@ class ClientController {
 				future.whenComplete(() => messagesSub.resume());
 			}
 		});
+
+		var batchesSub;
+		batchesSub = client.batches.listen((batch) {
+			var future = _handleBatch(batch);
+			if (future != null) {
+				batchesSub.pause();
+				future.whenComplete(() => batchesSub.resume());
+			}
+		});
 	}
 
 	String? _getLastDeliveredTime() {
@@ -108,7 +117,7 @@ class ClientController {
 		return last;
 	}
 
-	Future<void>? _handleMessage(IRCMessage msg) {
+	Future<void>? _handleMessage(ClientMessage msg) {
 		switch (msg.cmd) {
 		case RPL_ISUPPORT:
 			network.network = client.isupport.network;
@@ -162,35 +171,13 @@ class ClientController {
 		case 'PRIVMSG':
 		case 'NOTICE':
 			var target = msg.params[0];
-			Future<BufferModel> bufFuture;
-			if (client.isMyNick(target)) {
-				bufFuture = _createBuffer(msg.prefix!.name);
-			} else {
-				var buf = _bufferList.get(target, network);
-				if (buf == null) {
-					break;
-				}
-				bufFuture = Future.value(buf);
+			if (msg.batch?.type == 'chathistory') {
+				break;
 			}
-			return bufFuture.then((buf) {
-				var entry = MessageEntry(msg, buf.id);
-				return _db.storeMessages([entry]).then((_) {
-					if (buf.messageHistoryLoaded) {
-						buf.addMessage(MessageModel(entry: entry));
-					}
-					if (buf.focused) {
-						if (buf.entry.lastReadTime == null || buf.entry.lastReadTime!.compareTo(entry.time) < 0) {
-							buf.entry.lastReadTime = entry.time;
-							_db.storeBuffer(buf.entry);
-
-							client.setRead(buf.name, buf.entry.lastReadTime!);
-						}
-					} else if (!client.isMyNick(msg.prefix!.name)) {
-						buf.unreadCount++;
-					}
-					_bufferList.bumpLastDeliveredTime(buf, entry.time);
-				});
-			});
+			if (client.isMyNick(target)) {
+				target = msg.prefix!.name;
+			}
+			return _handleChatMessages(target, [msg]);
 		case 'BOUNCER':
 			if (msg.params[0] != 'NETWORK') {
 				break;
@@ -274,6 +261,64 @@ class ClientController {
 			return _db.storeBuffer(buffer.entry);
 		}
 		return null;
+	}
+
+	Future<void>? _handleBatch(ClientBatch batch) {
+		switch (batch.type) {
+		case 'chathistory':
+			var target = batch.params[0];
+			return _handleChatMessages(target, batch.messages);
+		}
+	}
+
+	Future<void>? _handleChatMessages(String target, List<IRCMessage> messages) {
+		if (messages.length == 0) {
+			return null;
+		}
+
+		Future<BufferModel> bufFuture;
+		if (!client.isChannel(target)) {
+			bufFuture = _createBuffer(target);
+		} else {
+			var buf = _bufferList.get(target, network);
+			if (buf == null) {
+				return null;
+			}
+			bufFuture = Future.value(buf);
+		}
+
+		return bufFuture.then((buf) {
+			var entries = messages.map((msg) => MessageEntry(msg, buf.id)).toList();
+			return _db.storeMessages(entries).then((_) {
+				String t = entries.first.time;
+				int unread = 0;
+				for (var entry in entries) {
+					if (buf.messageHistoryLoaded) {
+						buf.addMessage(MessageModel(entry: entry));
+					}
+
+					if (entry.time.compareTo(t) > 0) {
+						t = entry.time;
+					}
+
+					if (!client.isMyNick(entry.msg.prefix!.name)) {
+						unread++;
+					}
+				}
+
+				if (buf.focused) {
+					if (buf.entry.lastReadTime == null || buf.entry.lastReadTime!.compareTo(t) < 0) {
+						buf.entry.lastReadTime = t;
+						_db.storeBuffer(buf.entry);
+						client.setRead(buf.name, buf.entry.lastReadTime!);
+					}
+				} else {
+					buf.unreadCount += unread;
+				}
+
+				_bufferList.bumpLastDeliveredTime(buf, t);
+			});
+		});
 	}
 
 	Future<BufferModel> _createBuffer(String name) {
