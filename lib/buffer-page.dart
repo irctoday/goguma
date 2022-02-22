@@ -145,6 +145,8 @@ class BufferPageState extends State<BufferPage> {
 
 						var prevMsg = msgIndex > 0 ? messages[msgIndex - 1].msg : null;
 
+						var ctcp = CtcpMessage.parse(msg);
+
 						var sender = msg.prefix!.name;
 						var body = msg.params[1];
 
@@ -169,6 +171,34 @@ class BufferPageState extends State<BufferPage> {
 							marginBottom = 0.0;
 						}
 
+						var senderTextSpan = TextSpan(
+							text: sender,
+							style: TextStyle(fontWeight: FontWeight.bold),
+						);
+
+						List<InlineSpan> content;
+						if (ctcp != null && ctcp.cmd == 'ACTION') {
+							textStyle = textStyle.apply(fontStyle: FontStyle.italic);
+
+							String actionText;
+							if (ctcp.cmd == 'ACTION') {
+								actionText = ctcp.param ?? '';
+							} else {
+								actionText = 'has sent a CTCP "${ctcp.cmd}" command';
+							}
+
+							content = [
+								senderTextSpan,
+								TextSpan(text: ' ' + actionText),
+							];
+						} else {
+							content = [
+								if (showSender) senderTextSpan,
+								if (showSender) TextSpan(text: '\n'),
+								_linkify(context, body, textStyle),
+							];
+						}
+
 						return Align(
 							alignment: boxAlignment,
 							child: Container(
@@ -179,13 +209,7 @@ class BufferPageState extends State<BufferPage> {
 								padding: EdgeInsets.all(10),
 								margin: EdgeInsets.only(left: margin, right: margin, top: margin, bottom: marginBottom),
 								child: RichText(text: TextSpan(
-									children: [
-										if (showSender) TextSpan(
-											text: sender + '\n',
-											style: TextStyle(fontWeight: FontWeight.bold),
-										),
-										_linkify(context, body, textStyle),
-									],
+									children: content,
 									style: textStyle,
 								)),
 							),
