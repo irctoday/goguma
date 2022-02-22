@@ -10,14 +10,14 @@ import 'models.dart';
 
 void main() {
 	DB.open().then((db) {
-		var serverList = ServerListModel();
+		var networkList = NetworkListModel();
 		var bufferList = BufferListModel();
 		var bouncerNetworkList = BouncerNetworkListModel();
 		runApp(MultiProvider(
 			providers: [
 				Provider<DB>.value(value: db),
-				Provider<ClientProvider>.value(value: ClientProvider(db, serverList, bufferList, bouncerNetworkList)),
-				ChangeNotifierProvider<ServerListModel>.value(value: serverList),
+				Provider<ClientProvider>.value(value: ClientProvider(db, networkList, bufferList, bouncerNetworkList)),
+				ChangeNotifierProvider<NetworkListModel>.value(value: networkList),
 				ChangeNotifierProvider<BufferListModel>.value(value: bufferList),
 				ChangeNotifierProvider<BouncerNetworkListModel>.value(value: bouncerNetworkList),
 			],
@@ -53,7 +53,7 @@ class GogumaState extends State<Goguma> {
 		super.initState();
 
 		var db = context.read<DB>();
-		var serverList = context.read<ServerListModel>();
+		var networkList = context.read<NetworkListModel>();
 		var bufferList = context.read<BufferListModel>();
 		var clientProvider = context.read<ClientProvider>();
 
@@ -76,20 +76,20 @@ class GogumaState extends State<Goguma> {
 			networkEntries.forEach((networkEntry) {
 				var serverEntry = serverMap[networkEntry.server]!;
 
-				var server = ServerModel(serverEntry, networkEntry);
-				serverList.add(server);
+				var network = NetworkModel(serverEntry, networkEntry);
+				networkList.add(network);
 
 				var clientParams = connectParamsFromServerEntry(serverEntry);
 				if (networkEntry.bouncerId != null) {
 					clientParams = clientParams.replaceBouncerNetId(networkEntry.bouncerId);
 				}
 				var client = Client(clientParams);
-				clientProvider.add(client, server);
+				clientProvider.add(client, network);
 			});
 
 			bufferEntries.forEach((entry) {
-				var server = serverList.servers.firstWhere((server) => server.networkId == entry.network);
-				var buffer = BufferModel(entry: entry, server: server);
+				var network = networkList.networks.firstWhere((network) => network.networkId == entry.network);
+				var buffer = BufferModel(entry: entry, network: network);
 				bufferList.add(buffer);
 
 				buffer.unreadCount = unreadCounts[buffer.id] ?? 0;
@@ -100,7 +100,7 @@ class GogumaState extends State<Goguma> {
 
 			clientProvider.clients.forEach((client) => client.connect());
 
-			if (serverList.servers.length > 0) {
+			if (networkList.networks.length > 0) {
 				return Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
 					return BufferListPage();
 				}));
@@ -138,9 +138,9 @@ class GogumaState extends State<Goguma> {
 				return db.storeNetwork(NetworkEntry(server: serverEntry.id!));
 			}).then((networkEntry) {
 				var client = Client(clientParams);
-				var server = ServerModel(serverEntry, networkEntry);
-				context.read<ServerListModel>().add(server);
-				context.read<ClientProvider>().add(client, server);
+				var network = NetworkModel(serverEntry, networkEntry);
+				context.read<NetworkListModel>().add(network);
+				context.read<ClientProvider>().add(client, network);
 				client.connect();
 
 				return Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {

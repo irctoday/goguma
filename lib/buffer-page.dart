@@ -97,8 +97,8 @@ class BufferPageState extends State<BufferPage> {
 	Widget build(BuildContext context) {
 		var client = context.read<Client>();
 		var buffer = context.watch<BufferModel>();
-		var server = context.watch<ServerModel>();
-		var connected = server.state == ClientState.registered;
+		var network = context.watch<NetworkModel>();
+		var connected = network.state == ClientState.registered;
 		var messages = buffer.messages;
 		return Scaffold(
 			appBar: AppBar(

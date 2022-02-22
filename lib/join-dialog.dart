@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'models.dart';
 
-typedef JoinDialogCallback(String, ServerModel);
+typedef JoinDialogCallback(String, NetworkModel);
 
 class JoinDialog extends StatefulWidget {
 	final JoinDialogCallback? onSubmit;
@@ -16,16 +16,16 @@ class JoinDialog extends StatefulWidget {
 
 class JoinDialogState extends State<JoinDialog> {
 	TextEditingController nameController = TextEditingController(text: '#');
-	ServerModel? server;
+	NetworkModel? network;
 
 	@override
 	void initState() {
 		super.initState();
-		server = context.read<ServerListModel>().servers.first;
+		network = context.read<NetworkListModel>().networks.first;
 	}
 
 	void submit(BuildContext context) {
-		widget.onSubmit?.call(nameController.text, server!);
+		widget.onSubmit?.call(nameController.text, network!);
 		Navigator.pop(context);
 	}
 
@@ -37,7 +37,7 @@ class JoinDialogState extends State<JoinDialog> {
 
 	@override
 	Widget build(BuildContext context) {
-		var servers = context.watch<ServerListModel>().servers;
+		var networks = context.watch<NetworkListModel>().networks;
 		return AlertDialog(
 			title: Text('Join channel'),
 			content: Row(children: [
@@ -50,16 +50,16 @@ class JoinDialogState extends State<JoinDialog> {
 					},
 				)),
 				SizedBox(width: 10),
-				Flexible(child: DropdownButtonFormField<ServerModel>(
-					value: server,
-					onChanged: (ServerModel? value) {
+				Flexible(child: DropdownButtonFormField<NetworkModel>(
+					value: network,
+					onChanged: (NetworkModel? value) {
 						setState(() {
-							server = value;
+							network = value;
 						});
 					},
-					items: servers.map((server) => DropdownMenuItem(
-						value: server,
-						child: Text(server.network ?? server.bouncerNetwork?.name ?? server.entry.host),
+					items: networks.map((network) => DropdownMenuItem(
+						value: network,
+						child: Text(network.network ?? network.bouncerNetwork?.name ?? network.serverEntry.host),
 					)).toList(),
 				)),
 			]),

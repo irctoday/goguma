@@ -69,14 +69,14 @@ class BufferListPageState extends State<BufferListPage> {
 
 	void showJoinDialog(BuildContext context) {
 		showDialog(context: context, builder: (dialogContext) {
-			return JoinDialog(onSubmit: (name, server) {
-				var client = context.read<ClientProvider>().get(server);
+			return JoinDialog(onSubmit: (name, network) {
+				var client = context.read<ClientProvider>().get(network);
 				if (client.isChannel(name)) {
 					client.send(IRCMessage('JOIN', params: [name]));
 				} else {
 					var db = context.read<DB>();
-					db.storeBuffer(BufferEntry(name: name, network: server.networkId)).then((entry) {
-						var buffer = BufferModel(entry: entry, server: server);
+					db.storeBuffer(BufferEntry(name: name, network: network.networkId)).then((entry) {
+						var buffer = BufferModel(entry: entry, network: network);
 						context.read<BufferListModel>().add(buffer);
 					});
 				}
@@ -86,13 +86,13 @@ class BufferListPageState extends State<BufferListPage> {
 
 	void logout(BuildContext context) {
 		var db = context.read<DB>();
-		var serverList = context.read<ServerListModel>();
+		var networkList = context.read<NetworkListModel>();
 
-		serverList.servers.forEach((server) {
-			db.deleteNetwork(server.networkId);
-			db.deleteServer(server.id);
+		networkList.networks.forEach((network) {
+			db.deleteNetwork(network.networkId);
+			db.deleteServer(network.serverId);
 		});
-		serverList.clear();
+		networkList.clear();
 		context.read<ClientProvider>().disconnectAll();
 
 		Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
@@ -115,8 +115,8 @@ class BufferListPageState extends State<BufferListPage> {
 		}
 
 		// TODO: aggregate all client errors
-		var server = context.watch<ServerListModel>().servers[0];
-		var client = context.read<ClientProvider>().get(server);
+		var network = context.watch<NetworkListModel>().networks.first;
+		var client = context.read<ClientProvider>().get(network);
 		return Scaffold(
 			appBar: AppBar(
 				leading: searchQuery != null ? CloseButton() : null,
@@ -184,12 +184,12 @@ class BufferItem extends StatelessWidget {
 				title: Text(buf.name, overflow: TextOverflow.ellipsis),
 				subtitle: buf.subtitle != null ? Text(buf.subtitle!, overflow: TextOverflow.fade, softWrap: false) : null,
 				onTap: () {
-					var client = context.read<ClientProvider>().get(buf.server);
+					var client = context.read<ClientProvider>().get(buf.network);
 					Navigator.push(context, MaterialPageRoute(builder: (context) {
 						return MultiProvider(
 							providers: [
 								ChangeNotifierProvider<BufferModel>.value(value: buf),
-								ChangeNotifierProvider<ServerModel>.value(value: buf.server),
+								ChangeNotifierProvider<NetworkModel>.value(value: buf.network),
 								Provider<Client>.value(value: client),
 							],
 							child: BufferPage(),

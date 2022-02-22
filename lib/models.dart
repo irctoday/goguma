@@ -5,42 +5,41 @@ import 'client.dart';
 import 'database.dart';
 import 'irc.dart';
 
-class ServerListModel extends ChangeNotifier {
-	List<ServerModel> _servers = [];
+class NetworkListModel extends ChangeNotifier {
+	List<NetworkModel> _networks = [];
 
-	UnmodifiableListView<ServerModel> get servers => UnmodifiableListView(_servers);
+	UnmodifiableListView<NetworkModel> get networks => UnmodifiableListView(_networks);
 
-	void add(ServerModel server) {
-		_servers.add(server);
+	void add(NetworkModel network) {
+		_networks.add(network);
 		notifyListeners();
 	}
 
-	void remove(ServerModel server) {
-		_servers.remove(server);
+	void remove(NetworkModel network) {
+		_networks.remove(network);
 		notifyListeners();
 	}
 
 	void clear() {
-		_servers.clear();
+		_networks.clear();
 		notifyListeners();
 	}
 }
 
-// TODO: renmame to NetworkModel
-class ServerModel extends ChangeNotifier {
-	final ServerEntry entry;
+class NetworkModel extends ChangeNotifier {
+	final ServerEntry serverEntry;
 	final NetworkEntry networkEntry;
 
 	ClientState _state = ClientState.disconnected;
 	String? _network;
 	BouncerNetwork? _bouncerNetwork;
 
-	ServerModel(this.entry, this.networkEntry) {
-		assert(entry.id != null);
+	NetworkModel(this.serverEntry, this.networkEntry) {
+		assert(serverEntry.id != null);
 		assert(networkEntry.id != null);
 	}
 
-	int get id => entry.id!;
+	int get serverId => serverEntry.id!;
 	int get networkId => networkEntry.id!;
 
 	ClientState get state => _state;
@@ -134,26 +133,26 @@ class BouncerNetwork extends ChangeNotifier {
 
 class BufferKey {
 	final String name;
-	final ServerModel server;
+	final NetworkModel network;
 
-	BufferKey(String name, this.server, CaseMapping cm) :
+	BufferKey(String name, this.network, CaseMapping cm) :
 		this.name = cm(name);
 
 	BufferKey.fromBuffer(BufferModel buffer, CaseMapping cm) :
 		this.name = cm(buffer.name),
-		this.server = buffer.server;
+		this.network = buffer.network;
 
 	@override
 	bool operator ==(Object other) {
 		if (identical(this, other)) {
 			return true;
 		}
-		return other is BufferKey && name == other.name && server == other.server;
+		return other is BufferKey && name == other.name && network == other.network;
 	}
 
 	@override
 	int get hashCode {
-		return hashValues(name, server);
+		return hashValues(name, network);
 	}
 }
 
@@ -188,8 +187,8 @@ class BufferListModel extends ChangeNotifier {
 		notifyListeners();
 	}
 
-	BufferModel? get(String name, ServerModel server) {
-		return _buffers[BufferKey(name, server, _cm)];
+	BufferModel? get(String name, NetworkModel network) {
+		return _buffers[BufferKey(name, network, _cm)];
 	}
 
 	void bumpLastDeliveredTime(BufferModel buf, String t) {
@@ -230,7 +229,7 @@ class BufferListModel extends ChangeNotifier {
 
 class BufferModel extends ChangeNotifier {
 	final BufferEntry entry;
-	final ServerModel server;
+	final NetworkModel network;
 	String? _subtitle;
 	int _unreadCount = 0;
 	String? _lastDeliveredTime;
@@ -240,7 +239,7 @@ class BufferModel extends ChangeNotifier {
 
 	UnmodifiableListView<MessageModel> get messages => UnmodifiableListView(_messages);
 
-	BufferModel({ required this.entry, required this.server, String? subtitle }) : _subtitle = subtitle {
+	BufferModel({ required this.entry, required this.network, String? subtitle }) : _subtitle = subtitle {
 		assert(entry.id != null);
 	}
 

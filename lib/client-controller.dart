@@ -23,27 +23,27 @@ ConnectParams connectParamsFromServerEntry(ServerEntry entry) {
 }
 
 class ClientProvider {
-	Map<ServerModel, ClientController> _controllers = Map();
+	Map<NetworkModel, ClientController> _controllers = Map();
 
 	final DB _db;
-	final ServerListModel _serverList;
+	final NetworkListModel _networkList;
 	final BufferListModel _bufferList;
 	final BouncerNetworkListModel _bouncerNetworkList;
 
 	UnmodifiableListView<Client> get clients => UnmodifiableListView(_controllers.values.map((cc) => cc.client));
 
-	ClientProvider(DB db, ServerListModel serverList, BufferListModel bufferList, BouncerNetworkListModel bouncerNetworkList) :
+	ClientProvider(DB db, NetworkListModel networkList, BufferListModel bufferList, BouncerNetworkListModel bouncerNetworkList) :
 		_db = db,
-		_serverList = serverList,
+		_networkList = networkList,
 		_bufferList = bufferList,
 		_bouncerNetworkList = bouncerNetworkList;
 
-	void add(Client client, ServerModel server) {
-		_controllers[server] = ClientController(this, client, server);
+	void add(Client client, NetworkModel network) {
+		_controllers[network] = ClientController(this, client, network);
 	}
 
-	Client get(ServerModel server) {
-		return _controllers[server]!.client;
+	Client get(NetworkModel network) {
+		return _controllers[network]!.client;
 	}
 
 	void disconnectAll() {
@@ -59,26 +59,26 @@ class ClientController {
 	final ClientProvider _provider;
 
 	final Client _client;
-	final ServerModel _server;
+	final NetworkModel _network;
 
 	String? _prevLastDeliveredTime;
 
 	Client get client => _client;
-	ServerModel get server => _server;
+	NetworkModel get network => _network;
 
 	DB get _db => _provider._db;
-	ServerListModel get _serverList => _provider._serverList;
+	NetworkListModel get _networkList => _provider._networkList;
 	BufferListModel get _bufferList => _provider._bufferList;
 	BouncerNetworkListModel get _bouncerNetworkList => _provider._bouncerNetworkList;
 
-	ClientController(ClientProvider provider, Client client, ServerModel server) :
+	ClientController(ClientProvider provider, Client client, NetworkModel network) :
 			_provider = provider,
 			_client = client,
-			_server = server {
-		server.state = client.state;
+			_network = network {
+		network.state = client.state;
 
 		client.states.listen((state) {
-			server.state = state;
+			network.state = state;
 
 			if (state == ClientState.connecting) {
 				_prevLastDeliveredTime = _getLastDeliveredTime();
@@ -98,7 +98,7 @@ class ClientController {
 	String? _getLastDeliveredTime() {
 		var last = null;
 		for (var buffer in _bufferList.buffers) {
-			if (buffer.server != server || buffer.lastDeliveredTime == null) {
+			if (buffer.network != network || buffer.lastDeliveredTime == null) {
 				continue;
 			}
 			if (last == null || last!.compareTo(buffer.lastDeliveredTime!) < 0) {
@@ -111,11 +111,11 @@ class ClientController {
 	Future<void>? _handleMessage(IRCMessage msg) {
 		switch (msg.cmd) {
 		case RPL_ISUPPORT:
-			server.network = client.isupport.network;
+			network.network = client.isupport.network;
 			if (client.isupport.bouncerNetId != null) {
-				server.bouncerNetwork = _bouncerNetworkList.networks[client.isupport.bouncerNetId!];
+				network.bouncerNetwork = _bouncerNetworkList.networks[client.isupport.bouncerNetId!];
 			} else {
-				server.bouncerNetwork = null;
+				network.bouncerNetwork = null;
 			}
 			_bufferList.setCaseMapping(client.isupport.caseMapping);
 			break;
@@ -126,7 +126,7 @@ class ClientController {
 			// Query latest READ status for user targets
 			if (client.caps.enabled.contains('soju.im/read')) {
 				for (var buffer in _bufferList.buffers) {
-					if (buffer.server == server && !client.isChannel(buffer.name)) {
+					if (buffer.network == network && !client.isChannel(buffer.name)) {
 						client.send(IRCMessage('READ', params: [buffer.name]));
 					}
 				}
@@ -145,11 +145,11 @@ class ClientController {
 		case RPL_TOPIC:
 			var channel = msg.params[1];
 			var topic = msg.params[2];
-			_bufferList.get(channel, server)?.subtitle = topic;
+			_bufferList.get(channel, network)?.subtitle = topic;
 			break;
 		case RPL_NOTOPIC:
 			var channel = msg.params[1];
-			_bufferList.get(channel, server)?.subtitle = null;
+			_bufferList.get(channel, network)?.subtitle = null;
 			break;
 		case 'TOPIC':
 			var channel = msg.params[0];
@@ -157,7 +157,7 @@ class ClientController {
 			if (msg.params.length > 1) {
 				topic = msg.params[1];
 			}
-			_bufferList.get(channel, server)?.subtitle = topic;
+			_bufferList.get(channel, network)?.subtitle = topic;
 			break;
 		case 'PRIVMSG':
 		case 'NOTICE':
@@ -166,7 +166,7 @@ class ClientController {
 			if (client.isMyNick(target)) {
 				bufFuture = _createBuffer(msg.prefix!.name);
 			} else {
-				var buf = _bufferList.get(target, server);
+				var buf = _bufferList.get(target, network);
 				if (buf == null) {
 					break;
 				}
@@ -195,25 +195,25 @@ class ClientController {
 			var attrs = msg.params[2] == '*' ? null : parseIRCTags(msg.params[2]);
 
 			var bouncerNetwork = _bouncerNetworkList.networks[bouncerNetId];
-			var serverMatches = _serverList.servers.where((server) {
-				return server.networkEntry.bouncerId == bouncerNetId;
+			var networkMatches = _networkList.networks.where((network) {
+				return network.networkEntry.bouncerId == bouncerNetId;
 			});
-			ServerModel? childServer = serverMatches.isEmpty ? null : serverMatches.first;
+			NetworkModel? childNetwork = networkMatches.isEmpty ? null : networkMatches.first;
 
 			if (attrs == null) {
 				// The bouncer network has been removed
 
 				_bouncerNetworkList.remove(bouncerNetId);
 
-				if (childServer == null) {
+				if (childNetwork == null) {
 					break;
 				}
 
-				var childClient = _provider.get(childServer);
+				var childClient = _provider.get(childNetwork);
 				childClient.disconnect();
 
-				_serverList.remove(childServer);
-				return _db.deleteNetwork(childServer.networkId);
+				_networkList.remove(childNetwork);
+				return _db.deleteNetwork(childNetwork.networkId);
 			}
 
 			if (bouncerNetwork != null) {
@@ -227,16 +227,16 @@ class ClientController {
 			bouncerNetwork = BouncerNetwork(bouncerNetId, attrs);
 			_bouncerNetworkList.add(bouncerNetwork);
 
-			if (childServer != null) {
+			if (childNetwork != null) {
 				break;
 			}
 
-			var networkEntry = NetworkEntry(server: server.id, bouncerId: bouncerNetId);
+			var networkEntry = NetworkEntry(server: network.serverId, bouncerId: bouncerNetId);
 			return _db.storeNetwork(networkEntry).then((networkEntry) {
 				var childClient = Client(client.params.replaceBouncerNetId(bouncerNetId));
-				var childServer = ServerModel(server.entry, networkEntry);
-				_serverList.add(childServer);
-				_provider.add(childClient, childServer);
+				var childNetwork = NetworkModel(network.serverEntry, networkEntry);
+				_networkList.add(childNetwork);
+				_provider.add(childClient, childNetwork);
 				childClient.connect();
 			});
 		case 'READ':
@@ -251,7 +251,7 @@ class ClientController {
 			}
 			var time = bound.replaceFirst('timestamp=', '');
 
-			var buffer = _bufferList.get(target, server);
+			var buffer = _bufferList.get(target, network);
 			if (buffer == null) {
 				break;
 			}
@@ -269,14 +269,14 @@ class ClientController {
 	}
 
 	Future<BufferModel> _createBuffer(String name) {
-		var buffer = _bufferList.get(name, server);
+		var buffer = _bufferList.get(name, network);
 		if (buffer != null) {
 			return Future.value(buffer);
 		}
 
-		var entry = BufferEntry(name: name, network: server.networkId);
+		var entry = BufferEntry(name: name, network: network.networkId);
 		return _db.storeBuffer(entry).then((_) {
-			var buffer = BufferModel(entry: entry, server: server);
+			var buffer = BufferModel(entry: entry, network: network);
 			_bufferList.add(buffer);
 			return buffer;
 		});
