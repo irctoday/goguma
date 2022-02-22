@@ -106,8 +106,12 @@ class BufferPageState extends State<BufferPage> {
 					mainAxisAlignment: MainAxisAlignment.center,
 					crossAxisAlignment: CrossAxisAlignment.start,
 					children: [
-						Text(buffer.name),
-						if (buffer.subtitle != null) Text(buffer.subtitle!, style: TextStyle(fontSize: 12.0)),
+						Text(buffer.name, overflow: TextOverflow.fade),
+						if (buffer.subtitle != null) Text(
+							buffer.subtitle!,
+							style: TextStyle(fontSize: 12.0),
+							overflow: TextOverflow.fade,
+						),
 					],
 				),
 				actions: [
