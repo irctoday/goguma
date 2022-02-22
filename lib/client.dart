@@ -70,6 +70,7 @@ class Client {
 	Client(this.params) : _id = _nextClientId++, nick = params.nick;
 
 	Future<void> connect() {
+		_reconnectTimer?.cancel();
 		_setState(ClientState.connecting);
 
 		_log('Connecting to ${params.host}...');
@@ -147,7 +148,6 @@ class Client {
 
 			_log('Reconnecting in 10s');
 			_reconnectTimer = Timer(Duration(seconds: 10), () {
-				_reconnectTimer = null;
 				connect();
 			});
 		}
@@ -286,6 +286,7 @@ class Client {
 
 	disconnect() {
 		_autoReconnect = false;
+		_reconnectTimer?.cancel();
 		_socket!.close();
 		_messagesController.close();
 		_statesController.close();
