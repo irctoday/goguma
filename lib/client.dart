@@ -58,7 +58,7 @@ class Client {
 	String _nick;
 	IRCPrefix? _serverPrefix;
 	ClientState _state = ClientState.disconnected;
-	StreamController<IRCMessage> _messagesController = StreamController.broadcast();
+	StreamController<ClientMessage> _messagesController = StreamController.broadcast();
 	StreamController<ClientState> _statesController = StreamController.broadcast();
 	StreamController<ClientBatch> _batchesController = StreamController.broadcast();
 	Timer? _reconnectTimer;
@@ -69,7 +69,7 @@ class Client {
 	String get nick => _nick;
 	IRCPrefix? get serverPrefix => _serverPrefix;
 	ClientState get state => _state;
-	Stream<IRCMessage> get messages => _messagesController.stream;
+	Stream<ClientMessage> get messages => _messagesController.stream;
 	Stream<ClientState> get states => _statesController.stream;
 	Stream<ClientBatch> get batches => _batchesController.stream;
 
@@ -230,7 +230,8 @@ class Client {
 		if (msg.tags.containsKey('batch')) {
 			msgBatch = _batches[msg.tags['batch']];
 		}
-		msgBatch?._messages.add(msg);
+		var clientMsg = ClientMessage(msg, batch: msgBatch);
+		msgBatch?._messages.add(clientMsg);
 
 		switch (msg.cmd) {
 		case 'CAP':
@@ -294,7 +295,7 @@ class Client {
 		}
 
 		if (!_messagesController.isClosed) {
-			_messagesController.add(msg);
+			_messagesController.add(clientMsg);
 		}
 	}
 
@@ -378,14 +379,21 @@ class Client {
 	}
 }
 
+class ClientMessage extends IRCMessage {
+	final ClientBatch? batch;
+
+	ClientMessage(IRCMessage msg, { this.batch }) :
+		super(msg.cmd, params: msg.params, tags: msg.tags, prefix: msg.prefix);
+}
+
 class ClientBatch {
 	final String type;
 	final UnmodifiableListView<String> params;
 	final ClientBatch? parent;
 
-	final List<IRCMessage> _messages = [];
+	final List<ClientMessage> _messages = [];
 
-	UnmodifiableListView<IRCMessage> get messages => UnmodifiableListView(_messages);
+	UnmodifiableListView<ClientMessage> get messages => UnmodifiableListView(_messages);
 
 	ClientBatch(this.type, List<String> params, this.parent) : this.params = UnmodifiableListView(params);
 }
