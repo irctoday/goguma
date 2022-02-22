@@ -30,6 +30,8 @@ class ConnectParams {
 
 enum ClientState { disconnected, connecting, registering, registered }
 
+const _autoReconnectDelay = const Duration(seconds: 10);
+
 const _permanentCaps = [
 	'batch',
 	'echo-message',
@@ -61,6 +63,7 @@ class Client {
 	StreamController<ClientBatch> _batchesController = StreamController.broadcast();
 	Timer? _reconnectTimer;
 	bool _autoReconnect = true;
+	DateTime? _lastConnectTime;
 	Map<String, ClientBatch> _batches = Map();
 
 	Stream<IRCMessage> get messages => _messagesController.stream;
@@ -72,6 +75,7 @@ class Client {
 	Future<void> connect() {
 		_reconnectTimer?.cancel();
 		_setState(ClientState.connecting);
+		_lastConnectTime = DateTime.now();
 
 		_log('Connecting to ${params.host}...');
 
@@ -146,8 +150,14 @@ class Client {
 		if (state == ClientState.disconnected && _autoReconnect) {
 			_reconnectTimer?.cancel();
 
-			_log('Reconnecting in 10s');
-			_reconnectTimer = Timer(Duration(seconds: 10), () {
+			if (DateTime.now().difference(_lastConnectTime!) > _autoReconnectDelay) {
+				_log('Reconnecting immediately');
+				connect().ignore();
+				return;
+			}
+
+			_log('Reconnecting in ${_autoReconnectDelay}');
+			_reconnectTimer = Timer(_autoReconnectDelay, () {
 				connect().ignore();
 			});
 		}
