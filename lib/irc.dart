@@ -114,11 +114,15 @@ class IRCMessage {
 		}
 		s += cmd;
 		if (params.length > 0) {
-			var last = params[params.length - 1];
 			if (params.length > 1) {
 				s += ' ' + params.getRange(0, params.length - 1).join(' ');
 			}
-			s += ' :' + last;
+
+			if (params.last.length == 0 || params.last.startsWith(':') || params.last.indexOf(' ') >= 0) {
+				s += ' :' + params.last;
+			} else {
+				s += ' ' + params.last;
+			}
 		}
 		return s;
 	}
