@@ -295,7 +295,7 @@ class Client {
 
 	send(IRCMessage msg) {
 		if (_socket == null) {
-			return Future.error(SocketException.closed());
+			return;
 		}
 		_log('-> ' + msg.toString());
 		return _socket!.write(msg.toString() + '\r\n');
