@@ -384,6 +384,16 @@ class ClientMessage extends IRCMessage {
 
 	ClientMessage(IRCMessage msg, { this.batch }) :
 		super(msg.cmd, params: msg.params, tags: msg.tags, prefix: msg.prefix);
+
+	ClientBatch? batchByType(String type) {
+		ClientBatch? batch = this.batch;
+		while (batch != null) {
+			if (batch.type == type) {
+				return batch;
+			}
+		}
+		return null;
+	}
 }
 
 class ClientBatch {
