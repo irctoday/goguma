@@ -171,7 +171,7 @@ class ClientController {
 		case 'PRIVMSG':
 		case 'NOTICE':
 			var target = msg.params[0];
-			if (msg.batch?.type == 'chathistory') {
+			if (msg.batchByType('chathistory') != null) {
 				break;
 			}
 			if (client.isMyNick(target)) {
