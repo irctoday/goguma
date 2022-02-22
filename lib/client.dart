@@ -44,6 +44,7 @@ const _permanentCaps = [
 ];
 
 var _nextClientId = 0;
+var _nextPingSerial = 0;
 
 class Client {
 	final ConnectParams params;
@@ -338,6 +339,19 @@ class Client {
 				}
 				return ChatHistoryTarget(msg.params[1], msg.params[2]);
 			}).toList();
+		});
+	}
+
+	Future<void> ping() {
+		var token = 'goguma-${_nextPingSerial}';
+		send(IRCMessage('PING', params: [token]));
+		_nextPingSerial++;
+
+		return messages.firstWhere((msg) {
+			return msg.cmd == 'PONG' && msg.params[1] == token;
+		}).timeout(Duration(seconds: 15), onTimeout: () {
+			_socket?.close();
+			throw TimeoutException('Ping timed out');
 		});
 	}
 }

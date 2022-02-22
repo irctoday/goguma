@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -26,7 +28,58 @@ void main() {
 	});
 }
 
-class GogumaApp extends StatelessWidget {
+class GogumaApp extends StatefulWidget {
+	@override
+	GogumaAppState createState() => GogumaAppState();
+}
+
+class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
+	Timer? _pingTimer;
+
+	@override
+	void initState() {
+		super.initState();
+		WidgetsBinding.instance!.addObserver(this);
+
+		var state = WidgetsBinding.instance!.lifecycleState;
+		if (state == AppLifecycleState.resumed || state == null) {
+			_enablePingTimer();
+		}
+	}
+
+	@override
+	void dispose() {
+		WidgetsBinding.instance!.removeObserver(this);
+		_pingTimer?.cancel();
+		super.dispose();
+	}
+
+	@override
+	void didChangeAppLifecycleState(AppLifecycleState state) {
+		super.didChangeAppLifecycleState(state);
+
+		if (state == AppLifecycleState.resumed) {
+			// Send PINGs to make sure the connections are healthy
+			_pingAll();
+			_enablePingTimer();
+		} else {
+			_pingTimer?.cancel();
+			_pingTimer = null;
+		}
+	}
+
+	void _enablePingTimer() {
+		_pingTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+			_pingAll();
+		});
+	}
+
+	void _pingAll() {
+		context.read<ClientProvider>().clients.forEach((client) {
+			client.ping();
+		});
+	}
+
 	@override
 	Widget build(BuildContext context) {
 		return MaterialApp(
