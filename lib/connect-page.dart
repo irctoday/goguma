@@ -71,6 +71,14 @@ class ConnectPageState extends State<ConnectPage> {
 		if (widget.error is IRCException) {
 			final ircErr = widget.error as IRCException;
 			switch (ircErr.msg.cmd) {
+			case 'FAIL':
+				var code = ircErr.msg.params[1];
+				if (code == 'ACCOUNT_REQUIRED') {
+					passwordErr = ircErr.toString();
+				} else {
+					serverErr = ircErr.toString();
+				}
+				break;
 			case ERR_PASSWDMISMATCH:
 			case ERR_SASLFAIL:
 			case ERR_SASLTOOLONG:
