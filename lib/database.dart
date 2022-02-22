@@ -182,6 +182,10 @@ class DB {
 							FOREIGN KEY (buffer) REFERENCES Buffer(id) ON DELETE CASCADE
 						)
 					''');
+					batch.execute('''
+						CREATE INDEX index_message_buffer_time
+						ON Message(buffer, time);
+					''');
 					return batch.commit();
 				},
 				onUpgrade: (db, prevVersion, newVersion) {
@@ -189,13 +193,18 @@ class DB {
 
 					var batch = db.batch();
 					// TODO: add upgrades here
-					// if (prevVersion <= 1) /* upgrade to v2 */
+					if (prevVersion < 2) {
+						batch.execute('''
+							CREATE INDEX index_message_buffer_time
+							ON Message(buffer, time);
+						''');
+					}
 					return batch.commit();
 				},
 				onDowngrade: (_, prevVersion, newVersion) {
 					throw Exception('Attempted to downgrade database from version $prevVersion to version $newVersion');
 				},
-				version: 1,
+				version: 2,
 			);
 		}).then((db) {
 			return DB._(db);
