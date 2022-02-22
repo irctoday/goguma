@@ -69,9 +69,7 @@ class BufferListPageState extends State<BufferListPage> {
 
 	void showJoinDialog(BuildContext context) {
 		showDialog(context: context, builder: (dialogContext) {
-			return JoinDialog(onSubmit: (name) {
-				// TODO: ask the user which server to use
-				var server = context.read<ServerListModel>().servers[0];
+			return JoinDialog(onSubmit: (name, server) {
 				var client = context.read<ClientProvider>().get(server);
 				if (client.isChannel(name)) {
 					client.send(IRCMessage('JOIN', params: [name]));
