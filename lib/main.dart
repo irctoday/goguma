@@ -77,7 +77,10 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 	void _pingAll() {
 		context.read<ClientProvider>().clients.forEach((client) {
 			if (client.state == ClientState.registered) {
-				client.ping();
+				client.ping().catchError((err) {
+					print('PING failed: ${err}');
+					return null;
+				});
 			}
 		});
 	}
@@ -153,7 +156,9 @@ class GogumaState extends State<Goguma> {
 				}
 			});
 
-			clientProvider.clients.forEach((client) => client.connect());
+			clientProvider.clients.forEach((client) {
+				client.connect().ignore();
+			});
 
 			if (networkList.networks.length > 0) {
 				return Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {

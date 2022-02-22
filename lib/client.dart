@@ -148,7 +148,7 @@ class Client {
 
 			_log('Reconnecting in 10s');
 			_reconnectTimer = Timer(Duration(seconds: 10), () {
-				connect();
+				connect().ignore();
 			});
 		}
 	}
