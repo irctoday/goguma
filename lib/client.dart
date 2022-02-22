@@ -104,9 +104,7 @@ class Client {
 			_log('Connection opened');
 			_socket = socket;
 
-			socket.done.then((_) {
-				_log('Connection closed');
-			}).catchError((err) {
+			socket.done.catchError((err) {
 				_log('Connection error: ' + err.toString());
 				_messagesController.addError(err);
 				_statesController.addError(err);
@@ -126,6 +124,9 @@ class Client {
 			lines.listen((l) {
 				var msg = IRCMessage.parse(l);
 				_handleMessage(msg);
+			}, onDone: () {
+				_log('Connection closed');
+				_socket?.close();
 			});
 
 			return _register();
