@@ -366,6 +366,13 @@ class Client {
 			throw TimeoutException('Ping timed out');
 		});
 	}
+
+	void setRead(String target, String t) {
+		if (!caps.enabled.containsAll(['server-time', 'soju.im/read'])) {
+			return;
+		}
+		send(IRCMessage('READ', params: [target, 'timestamp=' + t]));
+	}
 }
 
 class ClientBatch {

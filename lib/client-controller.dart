@@ -177,7 +177,14 @@ class ClientController {
 					if (buf.messageHistoryLoaded) {
 						buf.addMessage(MessageModel(entry: entry));
 					}
-					if (!client.isMyNick(msg.prefix!.name)) {
+					if (buf.focused) {
+						if (buf.entry.lastReadTime == null || buf.entry.lastReadTime!.compareTo(entry.time) < 0) {
+							buf.entry.lastReadTime = entry.time;
+							_db.storeBuffer(buf.entry);
+
+							client.setRead(buf.name, buf.entry.lastReadTime!);
+						}
+					} else if (!client.isMyNick(msg.prefix!.name)) {
 						buf.unreadCount++;
 					}
 					_bufferList.bumpLastDeliveredTime(buf, entry.time);

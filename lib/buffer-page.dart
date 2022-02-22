@@ -57,12 +57,14 @@ class BufferPageState extends State<BufferPage> {
 				context.read<DB>().storeBuffer(buffer.entry);
 
 				var client = context.read<Client>();
-				if (buffer.entry.lastReadTime != null && client.caps.enabled.containsAll(['server-time', 'soju.im/read'])) {
-					client.send(IRCMessage('READ', params: [buffer.name, 'timestamp=' + buffer.entry.lastReadTime!]));
+				if (buffer.entry.lastReadTime != null) {
+					client.setRead(buffer.name, buffer.entry.lastReadTime!);
 				}
 			}
 			buffer.unreadCount = 0;
 		});
+
+		buffer.focused = true;
 	}
 
 	void submitComposer() {
@@ -91,6 +93,18 @@ class BufferPageState extends State<BufferPage> {
 	void dispose() {
 		composerController.dispose();
 		super.dispose();
+	}
+
+	@override
+	void deactivate() {
+		context.read<BufferModel>().focused = false;
+		super.deactivate();
+	}
+
+	@override
+	void activate() {
+		context.read<BufferModel>().focused = true;
+		super.activate();
 	}
 
 	@override

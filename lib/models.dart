@@ -234,8 +234,10 @@ class BufferModel extends ChangeNotifier {
 	int _unreadCount = 0;
 	String? _lastDeliveredTime;
 	bool _messageHistoryLoaded = false;
-
 	List<MessageModel> _messages = [];
+
+	// Kept in sync by BufferPageState
+	bool focused = false;
 
 	UnmodifiableListView<MessageModel> get messages => UnmodifiableListView(_messages);
 
