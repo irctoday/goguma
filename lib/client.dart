@@ -50,14 +50,14 @@ var _nextPingSerial = 0;
 
 class Client {
 	final ConnectParams params;
-	String nick;
-	IRCPrefix? serverPrefix;
-	ClientState state = ClientState.disconnected;
 	final IRCCapRegistry caps = IRCCapRegistry();
 	final IRCIsupportRegistry isupport = IRCIsupportRegistry();
 
 	final int _id;
 	Socket? _socket;
+	String _nick;
+	IRCPrefix? _serverPrefix;
+	ClientState _state = ClientState.disconnected;
 	StreamController<IRCMessage> _messagesController = StreamController.broadcast();
 	StreamController<ClientState> _statesController = StreamController.broadcast();
 	StreamController<ClientBatch> _batchesController = StreamController.broadcast();
@@ -66,11 +66,14 @@ class Client {
 	DateTime? _lastConnectTime;
 	Map<String, ClientBatch> _batches = Map();
 
+	String get nick => _nick;
+	IRCPrefix? get serverPrefix => _serverPrefix;
+	ClientState get state => _state;
 	Stream<IRCMessage> get messages => _messagesController.stream;
 	Stream<ClientState> get states => _statesController.stream;
 	Stream<ClientBatch> get batches => _batchesController.stream;
 
-	Client(this.params) : _id = _nextClientId++, nick = params.nick;
+	Client(this.params) : _id = _nextClientId++, _nick = params.nick;
 
 	Future<void> connect() {
 		_reconnectTimer?.cancel();
@@ -138,11 +141,11 @@ class Client {
 	}
 
 	_setState(ClientState state) {
-		if (this.state == state) {
+		if (_state == state) {
 			return;
 		}
 
-		this.state = state;
+		_state = state;
 
 		if (!_statesController.isClosed) {
 			_statesController.add(state);
@@ -165,7 +168,7 @@ class Client {
 	}
 
 	Future<void> _register() {
-		nick = params.nick;
+		_nick = params.nick;
 		_setState(ClientState.registering);
 
 		var caps = [..._permanentCaps];
@@ -246,15 +249,15 @@ class Client {
 		case RPL_WELCOME:
 			_log('Registration complete');
 			_setState(ClientState.registered);
-			serverPrefix = msg.prefix;
-			nick = msg.params[0];
+			_serverPrefix = msg.prefix;
+			_nick = msg.params[0];
 			break;
 		case RPL_ISUPPORT:
 			isupport.parse(msg.params.sublist(1, msg.params.length - 1));
 			break;
 		case 'NICK':
 			if (isMyNick(msg.prefix!.name)) {
-				nick = msg.params[0];
+				_nick = msg.params[0];
 			}
 			break;
 		case 'PING':
