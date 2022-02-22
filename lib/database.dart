@@ -192,7 +192,6 @@ class DB {
 					print('Upgrading database from version $prevVersion to version $newVersion');
 
 					var batch = db.batch();
-					// TODO: add upgrades here
 					if (prevVersion < 2) {
 						batch.execute('''
 							CREATE INDEX index_message_buffer_time
