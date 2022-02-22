@@ -189,7 +189,8 @@ class BufferPageState extends State<BufferPage> {
 
 							content = [
 								senderTextSpan,
-								TextSpan(text: ' ' + actionText),
+								TextSpan(text: ' '),
+								_linkify(context, actionText, textStyle),
 							];
 						} else {
 							content = [
