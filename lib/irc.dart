@@ -514,3 +514,47 @@ class CtcpMessage {
 		}
 	}
 }
+
+/// Strip ANSI formatting as defined in:
+/// https://modern.ircdocs.horse/formatting.html
+String stripAnsiFormatting(String s) {
+	var out = '';
+	for (var i = 0; i < s.length; i++) {
+		var ch = s[i];
+		switch (ch) {
+		case '\x02': // bold
+		case '\x1D': // italic
+		case '\x1F': // underline
+		case '\x1E': // strike-through
+		case '\x11': // monospace
+		case '\x16': // reverse color
+		case '\x0F': // reset
+			break; // skip
+		case '\x03': // color
+			if (i + 1 >= s.length || !_isDigit(s[i + 1])) {
+				break;
+			}
+			i++;
+			if (i + 1 < s.length && _isDigit(s[i + 1])) {
+				i++;
+			}
+			if (i + 2 < s.length && s[i + 1] == ',' && _isDigit(s[i + 2])) {
+				i += 2;
+				if (i + 1 < s.length && _isDigit(s[i + 1])) {
+					i++;
+				}
+			}
+			break;
+		case '\x04': // hex color
+			i += 6;
+			break;
+		default:
+			out += ch;
+		}
+	}
+	return out;
+}
+
+bool _isDigit(String ch) {
+	return '0'.codeUnits.first <= ch.codeUnits.first && ch.codeUnits.first <= '9'.codeUnits.first;
+}
