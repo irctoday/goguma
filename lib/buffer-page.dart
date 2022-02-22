@@ -148,7 +148,6 @@ class BufferPageState extends State<BufferPage> {
 						var ctcp = CtcpMessage.parse(msg);
 
 						var sender = msg.prefix!.name;
-						var body = msg.params[1];
 
 						var showSender = prevMsg == null || msg.prefix!.name != prevMsg.prefix!.name;
 
@@ -182,7 +181,7 @@ class BufferPageState extends State<BufferPage> {
 
 							String actionText;
 							if (ctcp.cmd == 'ACTION') {
-								actionText = ctcp.param ?? '';
+								actionText = stripAnsiFormatting(ctcp.param ?? '');
 							} else {
 								actionText = 'has sent a CTCP "${ctcp.cmd}" command';
 							}
@@ -193,6 +192,7 @@ class BufferPageState extends State<BufferPage> {
 								_linkify(context, actionText, textStyle),
 							];
 						} else {
+							var body = stripAnsiFormatting(msg.params[1]);
 							content = [
 								if (showSender) senderTextSpan,
 								if (showSender) TextSpan(text: '\n'),
