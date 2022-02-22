@@ -139,11 +139,16 @@ class BufferPageState extends State<BufferPage> {
 					reverse: true,
 					itemCount: messages.length,
 					itemBuilder: (context, index) {
-						var msg = messages[messages.length - index - 1].msg;
+						var msgIndex = messages.length - index - 1;
+						var msg = messages[msgIndex].msg;
 						assert(msg.cmd == 'PRIVMSG' || msg.cmd == 'NOTICE');
+
+						var prevMsg = msgIndex > 0 ? messages[msgIndex - 1].msg : null;
 
 						var sender = msg.prefix!.name;
 						var body = msg.params[1];
+
+						var showSender = prevMsg == null || msg.prefix!.name != prevMsg.prefix!.name;
 
 						var colorSwatch = Colors.primaries[sender.hashCode % Colors.primaries.length];
 						var colorScheme = ColorScheme.fromSwatch(primarySwatch: colorSwatch);
@@ -175,7 +180,10 @@ class BufferPageState extends State<BufferPage> {
 								margin: EdgeInsets.only(left: margin, right: margin, top: margin, bottom: marginBottom),
 								child: RichText(text: TextSpan(
 									children: [
-										TextSpan(text: sender + '\n', style: TextStyle(fontWeight: FontWeight.bold)),
+										if (showSender) TextSpan(
+											text: sender + '\n',
+											style: TextStyle(fontWeight: FontWeight.bold),
+										),
 										_linkify(context, body, textStyle),
 									],
 									style: textStyle,
