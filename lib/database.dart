@@ -310,14 +310,9 @@ class DB {
 
 	Future<Map<int, String>> fetchBuffersLastDeliveredTime() {
 		return _db.rawQuery('''
-			SELECT buffer, time
-			FROM Message t1
-			WHERE id IN (
-				SELECT t2.id
-				FROM Message t2
-				WHERE t1.buffer = t2.buffer
-				ORDER BY t2.time DESC LIMIT 1
-			)
+			SELECT buffer, MAX(time) AS time
+			FROM Message
+			GROUP BY buffer
 		''').then((entries) {
 			return Map<int, String>.fromIterable(
 				entries,
