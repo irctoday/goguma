@@ -173,7 +173,8 @@ class ClientController {
 				bufFuture = Future.value(buf);
 			}
 			return bufFuture.then((buf) {
-				return _db.storeMessage(MessageEntry(msg, buf.id)).then((entry) {
+				var entry = MessageEntry(msg, buf.id);
+				return _db.storeMessages([entry]).then((_) {
 					if (buf.messageHistoryLoaded) {
 						buf.addMessage(MessageModel(entry: entry));
 					}

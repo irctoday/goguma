@@ -77,7 +77,8 @@ class BufferPageState extends State<BufferPage> {
 
 			if (!client.caps.enabled.contains('echo-message')) {
 				msg = IRCMessage(msg.cmd, params: msg.params, prefix: IRCPrefix(client.nick));
-				context.read<DB>().storeMessage(MessageEntry(msg, buffer.id)).then((entry) {
+				var entry = MessageEntry(msg, buffer.id);
+				context.read<DB>().storeMessages([entry]).then((_) {
 					if (buffer.messageHistoryLoaded) {
 						buffer.addMessage(MessageModel(entry: entry));
 					}

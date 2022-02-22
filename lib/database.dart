@@ -223,10 +223,10 @@ class DB {
 		return _db.close();
 	}
 
-	Future<int> _updateById(String table, Map<String, Object?> values) {
+	Future<int> _updateById(String table, Map<String, Object?> values, { DatabaseExecutor? executor }) {
 		int id = values['id']! as int;
 		values.remove('id');
-		return _db.update(
+		return (executor ?? _db).update(
 			table,
 			values,
 			where: 'id = ?',
@@ -341,14 +341,18 @@ class DB {
 		});
 	}
 
-	Future<MessageEntry> storeMessage(MessageEntry entry) {
-		if (entry.id == null) {
-			return _db.insert('Message', entry.toMap()).then((id) {
-				entry.id = id;
-				return entry;
-			});
-		} else {
-			return _updateById('Message', entry.toMap()).then((_) => entry);
-		}
+	Future<void> storeMessages(List<MessageEntry> entries) {
+		return _db.transaction((txn) {
+			return Future.wait(entries.map((entry) {
+				if (entry.id == null) {
+					return txn.insert('Message', entry.toMap()).then((id) {
+						entry.id = id;
+						return entry;
+					});
+				} else {
+					return _updateById('Message', entry.toMap(), executor: txn).then((_) => entry);
+				}
+			}));
+		});
 	}
 }
