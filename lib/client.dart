@@ -384,6 +384,15 @@ class Client {
 		});
 	}
 
+	Future<void> fetchRead(String target) {
+		send(IRCMessage('READ', params: [target]));
+
+		var cm = isupport.caseMapping;
+		return messages.firstWhere((msg) {
+			return msg.cmd == 'READ' && isMyNick(msg.prefix!.name) && cm(msg.params[0]) == cm(target);
+		}).timeout(Duration(seconds: 15));
+	}
+
 	void setRead(String target, String t) {
 		if (!caps.enabled.containsAll(['server-time', 'soju.im/read'])) {
 			return;

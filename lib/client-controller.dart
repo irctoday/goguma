@@ -136,7 +136,7 @@ class ClientController {
 			if (client.caps.enabled.contains('soju.im/read')) {
 				for (var buffer in _bufferList.buffers) {
 					if (buffer.network == network && !client.isChannel(buffer.name)) {
-						client.send(IRCMessage('READ', params: [buffer.name]));
+						client.fetchRead(buffer.name).ignore();
 					}
 				}
 			}
