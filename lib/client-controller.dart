@@ -142,7 +142,8 @@ class ClientController {
 			}
 
 			if (_prevLastDeliveredTime != null) {
-				_fetchBacklog(_prevLastDeliveredTime!, msg.tags['time'] ?? formatIRCTime(DateTime.now()));
+				var to = msg.tags['time'] ?? formatIRCTime(DateTime.now());
+				_fetchBacklog(_prevLastDeliveredTime!, to).ignore();
 			}
 			break;
 		case 'JOIN':
@@ -335,9 +336,9 @@ class ClientController {
 		});
 	}
 
-	void _fetchBacklog(String from, String to) {
+	Future<void> _fetchBacklog(String from, String to) {
 		if (!client.caps.enabled.contains('draft/chathistory')) {
-			return;
+			return Future.value(null);
 		}
 
 		var max = client.caps.chatHistory!;
@@ -345,13 +346,10 @@ class ClientController {
 			max = 1000;
 		}
 
-		client.fetchChatHistoryTargets(from, to).then((targets) {
-			for (var target in targets) {
-				client.send(IRCMessage(
-					'CHATHISTORY',
-					params: ['BETWEEN', target.name, 'timestamp=' + from, 'timestamp=' + to, max.toString()],
-				));
-			}
+		return client.fetchChatHistoryTargets(from, to).then((targets) {
+			return Future.wait(targets.map((target) {
+				return client.fetchChatHistoryBetween(target.name, from, to, max);
+			}));
 		});
 	}
 }

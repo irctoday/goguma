@@ -359,6 +359,18 @@ class Client {
 		});
 	}
 
+	Future<ClientBatch> fetchChatHistoryBetween(String target, String t1, String t2, int limit) {
+		send(IRCMessage(
+			'CHATHISTORY',
+			params: ['BETWEEN', target, 'timestamp=' + t1, 'timestamp=' + t2, '$limit'],
+		));
+
+		var cm = isupport.caseMapping;
+		return batches.firstWhere((batch) {
+			return batch.type == 'chathistory' && cm(batch.params[0]) == cm(target);
+		});
+	}
+
 	Future<void> ping() {
 		var token = 'goguma-${_nextPingSerial}';
 		send(IRCMessage('PING', params: [token]));
