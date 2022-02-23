@@ -174,7 +174,9 @@ class ClientController {
 			if (msg.batchByType('chathistory') != null) {
 				break;
 			}
-			if (client.isMyNick(target)) {
+			// target can be my own nick for direct messages, "*" for server
+			// messages, "$xxx" for server-wide broadcasts
+			if (!client.isChannel(target)) {
 				target = msg.prefix!.name;
 			}
 			return _handleChatMessages(target, [msg]);
