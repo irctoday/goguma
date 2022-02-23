@@ -69,6 +69,7 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 	}
 
 	void _enablePingTimer() {
+		_pingTimer?.cancel();
 		_pingTimer = Timer.periodic(const Duration(seconds: 30), (_) {
 			_pingAll();
 		});
