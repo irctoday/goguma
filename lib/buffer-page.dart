@@ -27,6 +27,10 @@ TextSpan _linkify(BuildContext context, String text, TextStyle textStyle) {
 }
 
 class BufferPage extends StatefulWidget {
+	final String? unreadMarkerTime;
+
+	BufferPage({ Key? key, this.unreadMarkerTime }) : super(key: key);
+
 	@override
 	BufferPageState createState() => BufferPageState();
 }
@@ -160,15 +164,18 @@ class BufferPageState extends State<BufferPage> {
 					itemBuilder: (context, index) {
 						var msgIndex = messages.length - index - 1;
 						var msg = messages[msgIndex].msg;
+						var entry = messages[msgIndex].entry;
 						assert(msg.cmd == 'PRIVMSG' || msg.cmd == 'NOTICE');
 
 						var prevMsg = msgIndex > 0 ? messages[msgIndex - 1].msg : null;
+						var prevEntry = prevMsg != null ? messages[msgIndex - 1].entry : null;
 
 						var ctcp = CtcpMessage.parse(msg);
-
 						var sender = msg.prefix!.name;
+						var showUnreadMarker = prevEntry != null && widget.unreadMarkerTime != null && widget.unreadMarkerTime!.compareTo(entry.time) < 0 && widget.unreadMarkerTime!.compareTo(prevEntry.time) >= 0;
+						var showSender = showUnreadMarker || prevMsg == null || msg.prefix!.name != prevMsg.prefix!.name;
 
-						var showSender = prevMsg == null || msg.prefix!.name != prevMsg.prefix!.name;
+						var unreadMarkerColor = Theme.of(context).accentColor;
 
 						var colorSwatch = Colors.primaries[sender.hashCode % Colors.primaries.length];
 						var colorScheme = ColorScheme.fromSwatch(primarySwatch: colorSwatch);
@@ -223,21 +230,33 @@ class BufferPageState extends State<BufferPage> {
 							];
 						}
 
-						return Align(
-							alignment: boxAlignment,
-							child: Container(
-								decoration: BoxDecoration(
-									borderRadius: BorderRadius.circular(10),
-									color: boxColor,
-								),
-								padding: EdgeInsets.all(10),
-								margin: EdgeInsets.only(left: margin, right: margin, top: marginTop, bottom: marginBottom),
-								child: RichText(text: TextSpan(
-									children: content,
-									style: textStyle,
-								)),
+						return Column(children: [
+							if (showUnreadMarker) Container(
+								margin: EdgeInsets.only(top: margin),
+								child: Row(children: [
+									Expanded(child: Divider(color: unreadMarkerColor)),
+									SizedBox(width: 10),
+									Text('Unread messages', style: TextStyle(color: unreadMarkerColor)),
+									SizedBox(width: 10),
+									Expanded(child: Divider(color: unreadMarkerColor)),
+								]),
 							),
-						);
+							Align(
+								alignment: boxAlignment,
+								child: Container(
+									decoration: BoxDecoration(
+										borderRadius: BorderRadius.circular(10),
+										color: boxColor,
+									),
+									padding: EdgeInsets.all(10),
+									margin: EdgeInsets.only(left: margin, right: margin, top: marginTop, bottom: marginBottom),
+									child: RichText(text: TextSpan(
+										children: content,
+										style: textStyle,
+									)),
+								),
+							),
+						]);
 					},
 				)),
 				if (connected) Material(elevation: 15, child: Container(

@@ -192,7 +192,7 @@ class BufferItem extends StatelessWidget {
 								ChangeNotifierProvider<NetworkModel>.value(value: buf.network),
 								Provider<Client>.value(value: client),
 							],
-							child: BufferPage(),
+							child: BufferPage(unreadMarkerTime: buf.entry.lastReadTime),
 						);
 					}));
 				},
