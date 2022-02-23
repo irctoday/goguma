@@ -188,6 +188,10 @@ class BufferPageState extends State<BufferPage> {
 						if (index > 0) {
 							marginBottom = 0.0;
 						}
+						var marginTop = margin;
+						if (!showSender) {
+							marginTop = margin / 4;
+						}
 
 						var senderTextSpan = TextSpan(
 							text: sender,
@@ -227,7 +231,7 @@ class BufferPageState extends State<BufferPage> {
 									color: boxColor,
 								),
 								padding: EdgeInsets.all(10),
-								margin: EdgeInsets.only(left: margin, right: margin, top: margin, bottom: marginBottom),
+								margin: EdgeInsets.only(left: margin, right: margin, top: marginTop, bottom: marginBottom),
 								child: RichText(text: TextSpan(
 									children: content,
 									style: textStyle,
