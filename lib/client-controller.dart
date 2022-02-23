@@ -303,7 +303,7 @@ class ClientController {
 						t = entry.time;
 					}
 
-					if (!client.isMyNick(entry.msg.prefix!.name)) {
+					if (!client.isMyNick(entry.msg.prefix!.name) && (buf.entry.lastReadTime == null || buf.entry.lastReadTime!.compareTo(entry.time) < 0)) {
 						unread++;
 					}
 				}
