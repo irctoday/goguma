@@ -77,7 +77,7 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 
 	void _pingAll() {
 		context.read<ClientProvider>().clients.forEach((client) {
-			if (client.state == ClientState.registered) {
+			if (client.state == ClientState.connected) {
 				client.ping().catchError((err) {
 					print('PING failed: ${err}');
 					return null;

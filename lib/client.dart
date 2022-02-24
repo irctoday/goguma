@@ -28,7 +28,7 @@ class ConnectParams {
 	}
 }
 
-enum ClientState { disconnected, connecting, registering, registered }
+enum ClientState { disconnected, connecting, connected }
 
 const _autoReconnectDelay = const Duration(seconds: 10);
 
@@ -132,6 +132,7 @@ class Client {
 				_socket?.close();
 			});
 
+			_setState(ClientState.connected);
 			return _register();
 		});
 	}
@@ -169,7 +170,6 @@ class Client {
 
 	Future<void> _register() {
 		_nick = params.nick;
-		_setState(ClientState.registering);
 
 		var caps = [..._permanentCaps];
 		if (params.bouncerNetId == null) {
@@ -250,7 +250,6 @@ class Client {
 			break;
 		case RPL_WELCOME:
 			_log('Registration complete');
-			_setState(ClientState.registered);
 			_serverPrefix = msg.prefix;
 			_nick = msg.params[0];
 			break;

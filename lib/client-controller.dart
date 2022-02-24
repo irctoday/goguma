@@ -86,11 +86,8 @@ class ClientController {
 				_prevLastDeliveredTime = _getLastDeliveredTime();
 				network.state = NetworkState.connecting;
 				break;
-			case ClientState.registering:
+			case ClientState.connected:
 				network.state = NetworkState.registering;
-				break;
-			case ClientState.registered:
-				network.state = NetworkState.synchronizing;
 				break;
 			}
 		});
@@ -158,6 +155,7 @@ class ClientController {
 				syncFutures.add(_fetchBacklog(_prevLastDeliveredTime!, to));
 			}
 
+			network.state = NetworkState.synchronizing;
 			Future.wait(syncFutures).whenComplete(() {
 				network.state = NetworkState.online;
 			}).ignore();
