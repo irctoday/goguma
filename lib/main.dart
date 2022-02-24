@@ -286,7 +286,7 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 		if (networkList.networks.length > 0) {
 			home = BufferListPage();
 		} else {
-			home = GogumaApp();
+			home = Goguma();
 		}
 
 		return MaterialApp(
