@@ -1,5 +1,8 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:io';
+
+import 'package:workmanager/workmanager.dart';
 
 import 'client.dart';
 import 'database.dart';
@@ -30,6 +33,8 @@ class ClientProvider {
 	final BufferListModel _bufferList;
 	final BouncerNetworkListModel _bouncerNetworkList;
 
+	bool _workManagerSyncEnabled = false;
+
 	UnmodifiableListView<Client> get clients => UnmodifiableListView(_controllers.values.map((cc) => cc.client));
 
 	ClientProvider(DB db, NetworkListModel networkList, BufferListModel bufferList, BouncerNetworkListModel bouncerNetworkList) :
@@ -52,6 +57,36 @@ class ClientProvider {
 		}
 		_controllers.clear();
 		_bufferList.clear();
+	}
+
+	void _setupWorkManagerSync() {
+		if (!Platform.isAndroid) {
+			return;
+		}
+
+		var enable = clients.every((client) => client.caps.enabled.contains('draft/chathistory'));
+		if (enable == _workManagerSyncEnabled) {
+			return;
+		}
+		_workManagerSyncEnabled = enable;
+
+		if (!enable) {
+			print('Disabling sync work manager');
+			Workmanager().cancelByUniqueName('sync');
+			return;
+		}
+
+		print('Enabling sync work manager');
+		Workmanager().registerPeriodicTask('sync', 'sync',
+			frequency: Duration(minutes: 15),
+			tag: 'sync',
+			existingWorkPolicy: ExistingWorkPolicy.keep,
+			initialDelay: Duration(minutes: 15),
+			constraints: Constraints(
+				networkType: NetworkType.connected,
+				// TODO: maybe requiresDeviceIdle?
+			),
+		);
 	}
 }
 
@@ -126,6 +161,9 @@ class ClientController {
 
 	Future<void>? _handleMessage(ClientMessage msg) {
 		switch (msg.cmd) {
+		case RPL_WELCOME:
+			_provider._setupWorkManagerSync();
+			break;
 		case RPL_ISUPPORT:
 			network.network = client.isupport.network;
 			if (client.isupport.bouncerNetId != null) {
