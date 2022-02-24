@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 
 import 'client.dart';
 import 'irc.dart';
+import 'models.dart';
 
 class ClientSnackbar extends StatefulWidget {
 	final Widget child;
 	final Client client;
+	final NetworkModel network;
 
-	ClientSnackbar({ Key? key, required this.child, required this.client }) : super(key: key);
+	ClientSnackbar({ Key? key, required this.child, required this.client, required this.network }) : super(key: key);
 
 	@override
 	ClientSnackbarState createState() => ClientSnackbarState();
@@ -16,44 +18,13 @@ class ClientSnackbar extends StatefulWidget {
 
 class ClientSnackbarState extends State<ClientSnackbar> {
 	StreamSubscription? messagesSubscription;
-	StreamSubscription? statesSubscription;
+	NetworkState? _prevNetworkState;
 
 	@override
 	void initState() {
 		super.initState();
 
-		statesSubscription = widget.client.states.listen((state) {
-			String text;
-			bool persistent = true;
-			switch (state) {
-			case ClientState.disconnected:
-				text = 'Disconnected from server';
-				break;
-			case ClientState.connecting:
-				text = 'Connecting to server…';
-				break;
-			case ClientState.registering:
-				text = 'Logging in…';
-				break;
-			case ClientState.registered:
-				text = 'Connected to server';
-				persistent = false;
-				break;
-			}
-			var snackbar;
-			if (persistent) {
-				snackbar = SnackBar(
-					content: Text(text),
-					dismissDirection: DismissDirection.none,
-					// Apparently there is no way to disable this...
-					duration: Duration(days: 365),
-				);
-			} else {
-				snackbar = SnackBar(content: Text(text));
-			}
-			ScaffoldMessenger.of(context).clearSnackBars();
-			ScaffoldMessenger.of(context).showSnackBar(snackbar);
-		});
+		widget.network.addListener(_handleNetworkChange);
 
 		messagesSubscription = widget.client.messages.listen((msg) {
 			if (msg.isError()) {
@@ -65,9 +36,50 @@ class ClientSnackbarState extends State<ClientSnackbar> {
 
 	@override
 	void dispose() {
+		widget.network.removeListener(_handleNetworkChange);
 		messagesSubscription?.cancel();
-		statesSubscription?.cancel();
 		super.dispose();
+	}
+
+	void _handleNetworkChange() {
+		if (_prevNetworkState == widget.network.state) {
+			return;
+		}
+		_prevNetworkState = widget.network.state;
+
+		String text;
+		bool persistent = true;
+		switch (widget.network.state) {
+		case NetworkState.offline:
+			text = 'Disconnected from server';
+			break;
+		case NetworkState.connecting:
+			text = 'Connecting to server…';
+			break;
+		case NetworkState.registering:
+			text = 'Logging in…';
+			break;
+		case NetworkState.synchronizing:
+			text = 'Synchronizing…';
+			break;
+		case NetworkState.online:
+			text = 'Connected to server';
+			persistent = false;
+			break;
+		}
+		var snackbar;
+		if (persistent) {
+			snackbar = SnackBar(
+				content: Text(text),
+				dismissDirection: DismissDirection.none,
+				// Apparently there is no way to disable this...
+				duration: Duration(days: 365),
+			);
+		} else {
+			snackbar = SnackBar(content: Text(text));
+		}
+		ScaffoldMessenger.of(context).clearSnackBars();
+		ScaffoldMessenger.of(context).showSnackBar(snackbar);
 	}
 
 	@override

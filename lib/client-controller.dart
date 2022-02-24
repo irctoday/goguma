@@ -75,13 +75,23 @@ class ClientController {
 			_provider = provider,
 			_client = client,
 			_network = network {
-		network.state = client.state;
+		assert(client.state == ClientState.disconnected);
 
 		client.states.listen((state) {
-			network.state = state;
-
-			if (state == ClientState.connecting) {
+			switch (state) {
+			case ClientState.disconnected:
+				network.state = NetworkState.offline;
+				break;
+			case ClientState.connecting:
 				_prevLastDeliveredTime = _getLastDeliveredTime();
+				network.state = NetworkState.connecting;
+				break;
+			case ClientState.registering:
+				network.state = NetworkState.registering;
+				break;
+			case ClientState.registered:
+				network.state = NetworkState.synchronizing;
+				break;
 			}
 		});
 
@@ -132,19 +142,25 @@ class ClientController {
 		case ERR_NOMOTD:
 			// These messages are used to indicate the end of the ISUPPORT list
 
+			List<Future> syncFutures = [];
+
 			// Query latest READ status for user targets
 			if (client.caps.enabled.contains('soju.im/read')) {
 				for (var buffer in _bufferList.buffers) {
 					if (buffer.network == network && !client.isChannel(buffer.name)) {
-						client.fetchRead(buffer.name).ignore();
+						syncFutures.add(client.fetchRead(buffer.name));
 					}
 				}
 			}
 
 			if (_prevLastDeliveredTime != null) {
 				var to = msg.tags['time'] ?? formatIRCTime(DateTime.now());
-				_fetchBacklog(_prevLastDeliveredTime!, to).ignore();
+				syncFutures.add(_fetchBacklog(_prevLastDeliveredTime!, to));
 			}
+
+			Future.wait(syncFutures).whenComplete(() {
+				network.state = NetworkState.online;
+			}).ignore();
 			break;
 		case 'JOIN':
 			var channel = msg.params[0];

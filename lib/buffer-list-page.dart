@@ -181,7 +181,7 @@ class BufferListPageState extends State<BufferListPage> {
 					),
 				],
 			),
-			body: ClientSnackbar(client: client, child: ListView.builder(
+			body: ClientSnackbar(client: client, network: network, child: ListView.builder(
 				itemCount: buffers.length,
 				itemBuilder: (context, index) {
 					var buf = buffers[index];

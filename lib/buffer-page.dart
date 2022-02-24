@@ -117,7 +117,7 @@ class BufferPageState extends State<BufferPage> {
 		var client = context.read<Client>();
 		var buffer = context.watch<BufferModel>();
 		var network = context.watch<NetworkModel>();
-		var connected = network.state == ClientState.registered;
+		var connected = network.state == NetworkState.synchronizing || network.state == NetworkState.online;
 		var messages = buffer.messages;
 		return Scaffold(
 			appBar: AppBar(
@@ -157,7 +157,7 @@ class BufferPageState extends State<BufferPage> {
 					),
 				],
 			),
-			body: ClientSnackbar(client: client, child: Column(children: [
+			body: ClientSnackbar(client: client, network: network, child: Column(children: [
 				Expanded(child: ListView.builder(
 					reverse: true,
 					itemCount: messages.length,

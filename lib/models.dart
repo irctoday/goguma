@@ -1,7 +1,6 @@
 import 'dart:collection';
 import 'package:flutter/material.dart';
 
-import 'client.dart';
 import 'database.dart';
 import 'irc.dart';
 
@@ -26,11 +25,13 @@ class NetworkListModel extends ChangeNotifier {
 	}
 }
 
+enum NetworkState { offline, connecting, registering, synchronizing, online }
+
 class NetworkModel extends ChangeNotifier {
 	final ServerEntry serverEntry;
 	final NetworkEntry networkEntry;
 
-	ClientState _state = ClientState.disconnected;
+	NetworkState _state = NetworkState.offline;
 	String? _network;
 	BouncerNetwork? _bouncerNetwork;
 
@@ -42,11 +43,11 @@ class NetworkModel extends ChangeNotifier {
 	int get serverId => serverEntry.id!;
 	int get networkId => networkEntry.id!;
 
-	ClientState get state => _state;
+	NetworkState get state => _state;
 	String? get network => _network;
 	BouncerNetwork? get bouncerNetwork => _bouncerNetwork;
 
-	set state(ClientState state) {
+	set state(NetworkState state) {
 		if (state == _state) {
 			return;
 		}
