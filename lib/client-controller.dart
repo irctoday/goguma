@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'dart:io';
 
 import 'package:workmanager/workmanager.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'client.dart';
 import 'database.dart';
@@ -32,16 +33,18 @@ class ClientProvider {
 	final NetworkListModel _networkList;
 	final BufferListModel _bufferList;
 	final BouncerNetworkListModel _bouncerNetworkList;
+	final FlutterLocalNotificationsPlugin _notifsPlugin;
 
 	bool _workManagerSyncEnabled = false;
 
 	UnmodifiableListView<Client> get clients => UnmodifiableListView(_controllers.values.map((cc) => cc.client));
 
-	ClientProvider(DB db, NetworkListModel networkList, BufferListModel bufferList, BouncerNetworkListModel bouncerNetworkList) :
+	ClientProvider({ required DB db, required NetworkListModel networkList, required BufferListModel bufferList, required BouncerNetworkListModel bouncerNetworkList, required FlutterLocalNotificationsPlugin notifsPlugin }) :
 		_db = db,
 		_networkList = networkList,
 		_bufferList = bufferList,
-		_bouncerNetworkList = bouncerNetworkList;
+		_bouncerNetworkList = bouncerNetworkList,
+		_notifsPlugin = notifsPlugin;
 
 	void add(Client client, NetworkModel network) {
 		_controllers[network] = ClientController(this, client, network);
@@ -105,6 +108,7 @@ class ClientController {
 	NetworkListModel get _networkList => _provider._networkList;
 	BufferListModel get _bufferList => _provider._bufferList;
 	BouncerNetworkListModel get _bouncerNetworkList => _provider._bouncerNetworkList;
+	FlutterLocalNotificationsPlugin get _notifsPlugin => _provider._notifsPlugin;
 
 	ClientController(ClientProvider provider, Client client, NetworkModel network) :
 			_provider = provider,
@@ -346,7 +350,7 @@ class ClientController {
 			var entries = messages.map((msg) => MessageEntry(msg, buf.id)).toList();
 			return _db.storeMessages(entries).then((_) {
 				String t = entries.first.time;
-				int unread = 0;
+				List<MessageEntry> unread = [];
 				for (var entry in entries) {
 					if (buf.messageHistoryLoaded) {
 						buf.addMessage(MessageModel(entry: entry));
@@ -357,12 +361,13 @@ class ClientController {
 					}
 
 					if (!client.isMyNick(entry.msg.prefix!.name) && (buf.entry.lastReadTime == null || buf.entry.lastReadTime!.compareTo(entry.time) < 0)) {
-						unread++;
+						unread.add(entry);
 					}
 				}
 
 				if (!buf.focused) {
-					buf.unreadCount += unread;
+					buf.unreadCount += unread.length;
+					_openNotifications(buf, unread);
 				} else if (buf.entry.lastReadTime == null || buf.entry.lastReadTime!.compareTo(t) < 0) {
 					buf.entry.lastReadTime = t;
 					_db.storeBuffer(buf.entry);
@@ -372,6 +377,37 @@ class ClientController {
 				_bufferList.bumpLastDeliveredTime(buf, t);
 			});
 		});
+	}
+
+	void _openNotifications(BufferModel buffer, List<MessageEntry> entries) {
+		for (var entry in entries) {
+			if (entry.msg.cmd != 'PRIVMSG' && entry.msg.cmd != 'NOTICE') {
+				continue;
+			}
+			if (client.isMyNick(entry.msg.prefix!.name)) {
+				continue;
+			}
+			if (buffer.lastDeliveredTime != null && buffer.lastDeliveredTime!.compareTo(entry.time) >= 0) {
+				continue;
+			}
+			// TODO: detect highlights
+			if (!client.isMyNick(entry.msg.params[0])) {
+				continue;
+			}
+			var title = 'New message from ${entry.msg.prefix!.name}';
+			var body = stripAnsiFormatting(entry.msg.params[1]);
+			_notifsPlugin.show(entry.id!, title, body, NotificationDetails(
+				linux: LinuxNotificationDetails(
+					category: LinuxNotificationCategory.imReceived(),
+				),
+				android: AndroidNotificationDetails('privmsg', 'Private messages',
+					channelDescription: 'Private messages sent directly to you',
+					importance: Importance.high,
+					priority: Priority.high,
+					groupKey: 'fr.emersion.goguma.buffer.${entry.buffer}',
+				),
+			), payload: 'buffer:${entry.buffer}');
+		}
 	}
 
 	Future<BufferModel> _createBuffer(String name) {

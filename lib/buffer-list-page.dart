@@ -217,16 +217,8 @@ class BufferItem extends StatelessWidget {
 				title: Text(buf.name, overflow: TextOverflow.ellipsis),
 				subtitle: buf.subtitle != null ? Text(buf.subtitle!, overflow: TextOverflow.fade, softWrap: false) : null,
 				onTap: () {
-					var client = context.read<ClientProvider>().get(buf.network);
 					Navigator.push(context, MaterialPageRoute(builder: (context) {
-						return MultiProvider(
-							providers: [
-								ChangeNotifierProvider<BufferModel>.value(value: buf),
-								ChangeNotifierProvider<NetworkModel>.value(value: buf.network),
-								Provider<Client>.value(value: client),
-							],
-							child: BufferPage(unreadMarkerTime: buf.entry.lastReadTime),
-						);
+						return buildBufferPage(context, buf);
 					}));
 				},
 			);

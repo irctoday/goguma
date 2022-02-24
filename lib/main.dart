@@ -4,10 +4,12 @@ import 'dart:isolate';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
 import 'package:workmanager/workmanager.dart';
 
 import 'buffer-list-page.dart';
+import 'buffer-page.dart';
 import 'client.dart';
 import 'client-controller.dart';
 import 'connect-page.dart';
@@ -24,6 +26,8 @@ void main() {
 
 	WidgetsFlutterBinding.ensureInitialized();
 	_initWorkManager();
+
+	var notifsPlugin = FlutterLocalNotificationsPlugin();
 
 	List<ServerEntry> serverEntries = [];
 	List<NetworkEntry> networkEntries = [];
@@ -42,7 +46,13 @@ void main() {
 		var networkList = NetworkListModel();
 		var bufferList = BufferListModel();
 		var bouncerNetworkList = BouncerNetworkListModel();
-		var clientProvider = ClientProvider(db, networkList, bufferList, bouncerNetworkList);
+		var clientProvider = ClientProvider(
+			db: db,
+			networkList: networkList,
+			bufferList: bufferList,
+			bouncerNetworkList: bouncerNetworkList,
+			notifsPlugin: notifsPlugin,
+		);
 
 		Map<int, ServerEntry> serverMap = Map.fromEntries(serverEntries.map((entry) {
 			return MapEntry(entry.id!, entry);
@@ -107,6 +117,7 @@ void main() {
 			providers: [
 				Provider<DB>.value(value: db),
 				Provider<ClientProvider>.value(value: clientProvider),
+				Provider<FlutterLocalNotificationsPlugin>.value(value: notifsPlugin),
 				ChangeNotifierProvider<NetworkListModel>.value(value: networkList),
 				ChangeNotifierProvider<BufferListModel>.value(value: bufferList),
 				ChangeNotifierProvider<BouncerNetworkListModel>.value(value: bouncerNetworkList),
@@ -178,6 +189,7 @@ class GogumaApp extends StatefulWidget {
 
 class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 	Timer? _pingTimer;
+	final GlobalKey<NavigatorState> _navigatorKey = GlobalKey(debugLabel: 'main-navigator');
 
 	@override
 	void initState() {
@@ -188,6 +200,23 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 		if (state == AppLifecycleState.resumed || state == null) {
 			_enablePingTimer();
 		}
+
+		var notifsPlugin = context.read<FlutterLocalNotificationsPlugin>();
+		notifsPlugin.initialize(InitializationSettings(
+			linux: LinuxInitializationSettings(defaultActionName: 'Open'),
+			android: AndroidInitializationSettings('ic_launcher'),
+		), onSelectNotification: _handleSelectNotification).then((_) {
+			if (Platform.isAndroid) {
+				return notifsPlugin.getNotificationAppLaunchDetails();
+			} else {
+				return Future.value(null);
+			}
+		}).then((NotificationAppLaunchDetails? details) {
+			if (details == null || !details.didNotificationLaunchApp) {
+				return;
+			}
+			_handleSelectNotification(details.payload);
+		});
 	}
 
 	@override
@@ -229,10 +258,30 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 		});
 	}
 
+	void _handleSelectNotification(String? payload) {
+		if (payload == null) {
+			return;
+		}
+		if (!payload.startsWith('buffer:')) {
+			throw FormatException('Invalid payload: $payload');
+		}
+		var bufferId = int.parse(payload.replaceFirst('buffer:', ''));
+		var bufferList = context.read<BufferListModel>();
+		var buffer = bufferList.byId(bufferId);
+		if (buffer == null) {
+			return; // maybe closed by the user in-between
+		}
+		_navigatorKey.currentState!.push(MaterialPageRoute(builder: (context) {
+			return buildBufferPage(context, buffer);
+		}));
+	}
+
 	@override
 	Widget build(BuildContext context) {
 		var networkList = context.read<NetworkListModel>();
 
+		// TODO: use notifsPlugin.getNotificationAppLaunchDetails() to figure
+		// out if we should open a buffer page
 		Widget home;
 		if (networkList.networks.length > 0) {
 			home = BufferListPage();
@@ -244,6 +293,7 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 			title: 'Goguma',
 			theme: ThemeData(primarySwatch: Colors.indigo),
 			home: home,
+			navigatorKey: _navigatorKey,
 			debugShowCheckedModeBanner: false,
 		);
 	}

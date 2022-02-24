@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'client.dart';
+import 'client-controller.dart';
 import 'client-snackbar.dart';
 import 'database.dart';
 import 'irc.dart';
@@ -23,6 +24,18 @@ TextSpan _linkify(BuildContext context, String text, TextStyle textStyle) {
 		},
 		style: textStyle,
 		linkStyle: linkStyle,
+	);
+}
+
+Widget buildBufferPage(BuildContext context, BufferModel buf) {
+	var client = context.read<ClientProvider>().get(buf.network);
+	return MultiProvider(
+		providers: [
+			ChangeNotifierProvider<BufferModel>.value(value: buf),
+			ChangeNotifierProvider<NetworkModel>.value(value: buf.network),
+			Provider<Client>.value(value: client),
+		],
+		child: BufferPage(unreadMarkerTime: buf.entry.lastReadTime),
 	);
 }
 

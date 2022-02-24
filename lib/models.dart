@@ -188,6 +188,15 @@ class BufferListModel extends ChangeNotifier {
 		notifyListeners();
 	}
 
+	BufferModel? byId(int id) {
+		for (var buffer in buffers) {
+			if (buffer.id == id) {
+				return buffer;
+			}
+		}
+		return null;
+	}
+
 	BufferModel? get(String name, NetworkModel network) {
 		return _buffers[BufferKey(name, network, _cm)];
 	}
