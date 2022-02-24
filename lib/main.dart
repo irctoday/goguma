@@ -338,8 +338,6 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 	Widget build(BuildContext context) {
 		var networkList = context.read<NetworkListModel>();
 
-		// TODO: use notifsPlugin.getNotificationAppLaunchDetails() to figure
-		// out if we should open a buffer page
 		Widget home;
 		if (networkList.networks.length > 0) {
 			home = BufferListPage();
