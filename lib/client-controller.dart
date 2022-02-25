@@ -275,17 +275,31 @@ class ClientController {
 			break;
 		case 'JOIN':
 			var channel = msg.params[0];
-			if (!client.isMyNick(msg.prefix!.name)) {
+			if (client.isMyNick(msg.prefix!.name)) {
+				return _createBuffer(channel).then((buffer) {
+					buffer.joined = true;
+				});
+			} else {
+				_bufferList.get(channel, network)?.members?.set(msg.prefix!.name, '');
 				break;
 			}
-			return _createBuffer(channel).then((buffer) {
-				buffer.joined = true;
-			});
 		case 'PART':
 			var channel = msg.params[0];
+			var buffer = _bufferList.get(channel, network);
 			if (client.isMyNick(msg.prefix!.name)) {
-				_bufferList.get(channel, network)?.joined = false;
+				buffer?.joined = false;
 			}
+			buffer?.members?.remove(msg.prefix!.name);
+			break;
+		case 'QUIT':
+			for (var buffer in _bufferList.buffers) {
+				if (buffer.network == network) {
+					buffer.members?.remove(msg.prefix!.name);
+				}
+			}
+			break;
+		case 'MODE':
+			// TODO: update memberships
 			break;
 		case RPL_TOPIC:
 			var channel = msg.params[1];
@@ -303,6 +317,27 @@ class ClientController {
 				topic = msg.params[1];
 			}
 			_bufferList.get(channel, network)?.topic = topic;
+			break;
+		case RPL_ENDOFNAMES:
+			var channel = msg.params[1];
+			var endOfNames = msg as ClientEndOfNames;
+			var members = MemberListModel(client.isupport.caseMapping);
+			var allPrefixes = client.isupport.memberships.map((m) => m.prefix).join('');
+			for (var namreply in endOfNames.names) {
+				for (var raw in namreply.params[3].split(' ')) {
+					if (raw == '') {
+						continue;
+					}
+					var i = 0;
+					while (i < raw.length && allPrefixes.contains(raw[i])) {
+						i++;
+					}
+					var prefix = raw.substring(0, i);
+					var nick = raw.substring(i);
+					members.set(nick, prefix);
+				}
+			}
+			_bufferList.get(channel, network)?.members = members;
 			break;
 		case 'PRIVMSG':
 		case 'NOTICE':

@@ -250,6 +250,7 @@ class BufferModel extends ChangeNotifier {
 	String? _lastDeliveredTime;
 	bool _messageHistoryLoaded = false;
 	List<MessageModel> _messages = [];
+	MemberListModel? _members;
 
 	// Kept in sync by BufferPageState
 	bool focused = false;
@@ -267,6 +268,7 @@ class BufferModel extends ChangeNotifier {
 	int get unreadCount => _unreadCount;
 	String? get lastDeliveredTime => _lastDeliveredTime;
 	bool get messageHistoryLoaded => _messageHistoryLoaded;
+	MemberListModel? get members => _members;
 
 	set topic(String? topic) {
 		_topic = topic;
@@ -280,6 +282,11 @@ class BufferModel extends ChangeNotifier {
 
 	set unreadCount(int n) {
 		_unreadCount = n;
+		notifyListeners();
+	}
+
+	set members(MemberListModel? members) {
+		_members = members;
 		notifyListeners();
 	}
 
@@ -314,4 +321,22 @@ class MessageModel {
 
 	int get id => entry.id!;
 	IRCMessage get msg => entry.msg;
+}
+
+class MemberListModel extends ChangeNotifier {
+	final IRCNameMap<String> _members;
+
+	MemberListModel(CaseMapping cm) : _members = IRCNameMap(cm);
+
+	UnmodifiableMapView<String, String> get members => UnmodifiableMapView(_members);
+
+	void set(String nick, String prefix) {
+		_members[nick] = prefix;
+		notifyListeners();
+	}
+
+	void remove(String nick) {
+		_members.remove(nick);
+		notifyListeners();
+	}
 }
