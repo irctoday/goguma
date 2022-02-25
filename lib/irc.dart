@@ -341,11 +341,13 @@ class IRCIsupportRegistry {
 	CaseMapping? _caseMapping;
 	String? _chanTypes;
 	String? _bouncerNetId;
+	final List<IRCIsupportMembership> _memberships = [];
 
 	String? get network => _network;
 	String get chanTypes => _chanTypes ?? _DEFAULT_CHANTYPES;
 	CaseMapping get caseMapping => _caseMapping ?? defaultCaseMapping;
 	String? get bouncerNetId => _bouncerNetId;
+	UnmodifiableListView<IRCIsupportMembership> get memberships => UnmodifiableListView(_memberships);
 
 	void parse(List<String> tokens) {
 		tokens.forEach((tok) {
@@ -363,6 +365,9 @@ class IRCIsupportRegistry {
 					break;
 				case 'CHANTYPES':
 					_chanTypes = null;
+					break;
+				case 'PREFIX':
+					_memberships.clear();
 					break;
 				}
 				return;
@@ -389,6 +394,24 @@ class IRCIsupportRegistry {
 			case 'CHANTYPES':
 				_chanTypes = v ?? '';
 				break;
+			case 'PREFIX':
+				_memberships.clear();
+				if (v == null || v == '') {
+					break;
+				}
+				var i = v.indexOf(')');
+				if (!v.startsWith('(') || i < 0) {
+					throw FormatException('Malformed ISUPPORT PREFIX value (expected parentheses): $v');
+				}
+				var modes = v.substring(1, i);
+				var prefixes = v.substring(i + 1);
+				if (modes.length != prefixes.length) {
+					throw FormatException('Malformed ISUPPORT PREFIX value (modes and prefixes count mismatch): $v');
+				}
+				for (var i = 0; i < modes.length; i++) {
+					_memberships.add(IRCIsupportMembership(modes[i], prefixes[i]));
+				}
+				break;
 			}
 		});
 	}
@@ -398,7 +421,15 @@ class IRCIsupportRegistry {
 		_caseMapping = null;
 		_chanTypes = null;
 		_bouncerNetId = null;
+		_memberships.clear();
 	}
+}
+
+class IRCIsupportMembership {
+	final String mode;
+	final String prefix;
+
+	IRCIsupportMembership(this.mode, this.prefix);
 }
 
 typedef String CaseMapping(String s);
