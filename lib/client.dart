@@ -302,7 +302,7 @@ class Client {
 	disconnect() {
 		_autoReconnect = false;
 		_reconnectTimer?.cancel();
-		_socket!.close();
+		_socket?.close();
 		_messagesController.close();
 		_statesController.close();
 		_batchesController.close();
