@@ -16,7 +16,7 @@ TextSpan _linkify(BuildContext context, String text, TextStyle textStyle) {
 		humanize: false,
 		defaultToHttps: true,
 	));
-	var linkStyle = DefaultTextStyle.of(context).style.apply(color: Colors.blue);
+	var linkStyle = textStyle.apply(decoration: TextDecoration.underline);
 	return buildTextSpan(
 		elements,
 		onOpen: (link) {
