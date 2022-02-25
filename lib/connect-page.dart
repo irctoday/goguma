@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import 'buffer-list-page.dart';
+import 'client.dart';
+import 'client-controller.dart';
 import 'database.dart';
 import 'irc.dart';
+import 'models.dart';
 
 typedef ConnectParamsCallback(ServerEntry);
 
 class ConnectPage extends StatefulWidget {
-	final ConnectParamsCallback? onSubmit;
-	final bool loading;
-	final Exception? error;
-
-	ConnectPage({ Key? key, this.onSubmit, this.loading = false, this.error = null }) : super(key: key);
-
 	@override
 	ConnectPageState createState() => ConnectPageState();
 }
@@ -37,24 +36,63 @@ Uri _parseServerUri(String rawUri) {
 }
 
 class ConnectPageState extends State<ConnectPage> {
+	bool _loading = false;
+	Exception? _error;
+
 	final formKey = GlobalKey<FormState>();
 	final serverController = TextEditingController();
 	final nicknameController = TextEditingController();
 	final passwordController = TextEditingController();
 
 	void submit() {
-		if (!formKey.currentState!.validate() || widget.loading) {
+		if (!formKey.currentState!.validate() || _loading) {
 			return;
 		}
 
 		Uri uri = _parseServerUri(serverController.text);
-		widget.onSubmit?.call(ServerEntry(
+		var serverEntry = ServerEntry(
 			host: uri.host,
 			port: uri.hasPort ? uri.port : null,
 			nick: nicknameController.text,
 			tls: uri.scheme != 'irc+insecure',
 			saslPlainPassword: passwordController.text.isNotEmpty ? passwordController.text : null,
-		));
+		);
+
+		setState(() {
+			_loading = true;
+		});
+
+		var db = context.read<DB>();
+
+		// TODO: only connect once (but be careful not to loose messages
+		// sent immediately after RPL_WELCOME)
+		var clientParams = connectParamsFromServerEntry(serverEntry);
+		var client = Client(clientParams);
+		client.connect().then((_) {
+			client.disconnect();
+			return db.storeServer(serverEntry);
+		}).then((serverEntry) {
+			return db.storeNetwork(NetworkEntry(server: serverEntry.id!));
+		}).then((networkEntry) {
+			var client = Client(clientParams);
+			var network = NetworkModel(serverEntry, networkEntry);
+			context.read<NetworkListModel>().add(network);
+			context.read<ClientProvider>().add(client, network);
+			client.connect();
+
+			return Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+				return BufferListPage();
+			}));
+		}).catchError((err) {
+			client.disconnect();
+			setState(() {
+				_error = err;
+			});
+		}, test: (err) => err is Exception).whenComplete(() {
+			setState(() {
+				_loading = false;
+			});
+		});
 	}
 
 	@override
@@ -68,8 +106,8 @@ class ConnectPageState extends State<ConnectPage> {
 	@override
 	Widget build(BuildContext context) {
 		String? serverErr = null, nicknameErr = null, passwordErr = null;
-		if (widget.error is IRCException) {
-			final ircErr = widget.error as IRCException;
+		if (_error is IRCException) {
+			final ircErr = _error as IRCException;
 			switch (ircErr.msg.cmd) {
 			case 'FAIL':
 				var code = ircErr.msg.params[1];
@@ -97,7 +135,7 @@ class ConnectPageState extends State<ConnectPage> {
 				break;
 			}
 		} else {
-			serverErr = widget.error?.toString();
+			serverErr = _error?.toString();
 		}
 
 		final focusNode = FocusScope.of(context);
@@ -153,7 +191,7 @@ class ConnectPageState extends State<ConnectPage> {
 						},
 					),
 					SizedBox(height: 20),
-					widget.loading
+					_loading
 						? CircularProgressIndicator()
 						: FloatingActionButton.extended(
 							onPressed: submit,

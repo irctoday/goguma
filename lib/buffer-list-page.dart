@@ -5,11 +5,11 @@ import 'buffer-page.dart';
 import 'client.dart';
 import 'client-controller.dart';
 import 'client-snackbar.dart';
+import 'connect-page.dart';
 import 'database.dart';
 import 'irc.dart';
 import 'join-dialog.dart';
 import 'models.dart';
-import 'main.dart';
 
 class BufferListPage extends StatefulWidget {
 	@override
@@ -118,7 +118,7 @@ class BufferListPageState extends State<BufferListPage> {
 		context.read<ClientProvider>().disconnectAll();
 
 		Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-			return Goguma();
+			return ConnectPage();
 		}));
 	}
 

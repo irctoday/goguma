@@ -286,7 +286,7 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 		if (networkList.networks.length > 0) {
 			home = BufferListPage();
 		} else {
-			home = Goguma();
+			home = ConnectPage();
 		}
 
 		return MaterialApp(
@@ -296,56 +296,5 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 			navigatorKey: _navigatorKey,
 			debugShowCheckedModeBanner: false,
 		);
-	}
-}
-
-class Goguma extends StatefulWidget {
-	@override
-	GogumaState createState() => GogumaState();
-}
-
-class GogumaState extends State<Goguma> {
-	bool loading = false;
-	Exception? error = null;
-
-	@override
-	Widget build(BuildContext context) {
-		return ConnectPage(loading: loading, error: error, onSubmit: (serverEntry) {
-			setState(() {
-				loading = true;
-			});
-
-			var db = context.read<DB>();
-
-			// TODO: only connect once (but be careful not to loose messages
-			// sent immediately after RPL_WELCOME)
-			var clientParams = connectParamsFromServerEntry(serverEntry);
-			var client = Client(clientParams);
-			client.connect().then((_) {
-				client.disconnect();
-				return db.storeServer(serverEntry);
-			}).then((serverEntry) {
-				return db.storeNetwork(NetworkEntry(server: serverEntry.id!));
-			}).then((networkEntry) {
-				var client = Client(clientParams);
-				var network = NetworkModel(serverEntry, networkEntry);
-				context.read<NetworkListModel>().add(network);
-				context.read<ClientProvider>().add(client, network);
-				client.connect();
-
-				return Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-					return BufferListPage();
-				}));
-			}).catchError((err) {
-				client.disconnect();
-				setState(() {
-					error = err;
-				});
-			}, test: (err) => err is Exception).whenComplete(() {
-				setState(() {
-					loading = false;
-				});
-			});
-		});
 	}
 }
