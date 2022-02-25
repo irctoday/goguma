@@ -28,6 +28,8 @@ ConnectParams connectParamsFromServerEntry(ServerEntry entry) {
 
 class ClientProvider {
 	Map<NetworkModel, ClientController> _controllers = Map();
+	StreamController<IRCException> _errorsController = StreamController.broadcast();
+	StreamController<NetworkModel> _networkStatesController = StreamController.broadcast();
 
 	final DB _db;
 	final NetworkListModel _networkList;
@@ -38,6 +40,8 @@ class ClientProvider {
 	bool _workManagerSyncEnabled = false;
 
 	UnmodifiableListView<Client> get clients => UnmodifiableListView(_controllers.values.map((cc) => cc.client));
+	Stream<IRCException> get errors => _errorsController.stream;
+	Stream<NetworkModel> get networkStates => _networkStatesController.stream;
 
 	ClientProvider({ required DB db, required NetworkListModel networkList, required BufferListModel bufferList, required BouncerNetworkListModel bouncerNetworkList, required FlutterLocalNotificationsPlugin notifsPlugin }) :
 		_db = db,
@@ -164,6 +168,10 @@ class ClientController {
 	}
 
 	Future<void>? _handleMessage(ClientMessage msg) {
+		if (msg.isError()) {
+			_provider._errorsController.add(IRCException(msg));
+		}
+
 		switch (msg.cmd) {
 		case RPL_WELCOME:
 			_provider._setupWorkManagerSync();

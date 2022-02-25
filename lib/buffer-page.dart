@@ -6,7 +6,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'client.dart';
 import 'client-controller.dart';
-import 'client-snackbar.dart';
 import 'database.dart';
 import 'irc.dart';
 import 'models.dart';
@@ -170,7 +169,7 @@ class BufferPageState extends State<BufferPage> {
 					),
 				],
 			),
-			body: ClientSnackbar(client: client, network: network, child: Column(children: [
+			body: Column(children: [
 				Expanded(child: ListView.builder(
 					reverse: true,
 					itemCount: messages.length,
@@ -297,7 +296,7 @@ class BufferPageState extends State<BufferPage> {
 						),
 					])),
 				)),
-			])),
+			]),
 		);
 	}
 }

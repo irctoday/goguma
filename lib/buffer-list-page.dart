@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'buffer-page.dart';
 import 'client.dart';
 import 'client-controller.dart';
-import 'client-snackbar.dart';
 import 'connect-page.dart';
 import 'database.dart';
 import 'irc.dart';
@@ -143,9 +142,6 @@ class BufferListPageState extends State<BufferListPage> {
 			}
 		});
 
-		// TODO: aggregate all client errors
-		var network = context.watch<NetworkListModel>().networks.first;
-		var client = context.read<ClientProvider>().get(network);
 		return Scaffold(
 			appBar: AppBar(
 				leading: searchQuery != null ? CloseButton() : null,
@@ -181,7 +177,7 @@ class BufferListPageState extends State<BufferListPage> {
 					),
 				],
 			),
-			body: ClientSnackbar(client: client, network: network, child: ListView.builder(
+			body: ListView.builder(
 				itemCount: buffers.length,
 				itemBuilder: (context, index) {
 					var buf = buffers[index];
@@ -190,7 +186,7 @@ class BufferListPageState extends State<BufferListPage> {
 						child: BufferItem(),
 					);
 				},
-			)),
+			),
 		);
 	}
 }

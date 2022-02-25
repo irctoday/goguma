@@ -16,6 +16,8 @@ import 'connect-page.dart';
 import 'database.dart';
 import 'models.dart';
 
+import 'network-state-aggregator.dart';
+
 // Debugging knobs for work manager.
 const _debugWorkManager = false;
 const _resetWorkManager = false;
@@ -190,6 +192,9 @@ class GogumaApp extends StatefulWidget {
 class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 	Timer? _pingTimer;
 	final GlobalKey<NavigatorState> _navigatorKey = GlobalKey(debugLabel: 'main-navigator');
+	final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey(debugLabel: 'main-scaffold-messenger');
+	StreamSubscription? _clientErrorSub;
+	NetworkStateAggregator? _networkStateAggregator;
 
 	@override
 	void initState() {
@@ -217,12 +222,25 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 			}
 			_handleSelectNotification(details.payload);
 		});
+
+		var clientProvider = context.read<ClientProvider>();
+		_clientErrorSub = clientProvider.errors.listen((err) {
+			var snackBar = SnackBar(content: Text(err.toString()));
+			_scaffoldMessengerKey.currentState?.showSnackBar(snackBar);
+		});
+
+		var networkList = context.read<NetworkListModel>();
+		_networkStateAggregator = NetworkStateAggregator(networkList);
+		_networkStateAggregator!.addListener(_handleNetworkStateChange);
 	}
 
 	@override
 	void dispose() {
 		WidgetsBinding.instance!.removeObserver(this);
 		_pingTimer?.cancel();
+		_clientErrorSub?.cancel();
+		_networkStateAggregator?.removeListener(_handleNetworkStateChange);
+		_networkStateAggregator?.dispose();
 		super.dispose();
 	}
 
@@ -276,6 +294,44 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 		}));
 	}
 
+	void _handleNetworkStateChange() {
+		var state = _networkStateAggregator!.state;
+
+		String text;
+		bool persistent = true;
+		switch (state) {
+		case NetworkState.offline:
+			text = 'Disconnected from server';
+			break;
+		case NetworkState.connecting:
+			text = 'Connecting to server…';
+			break;
+		case NetworkState.registering:
+			text = 'Logging in…';
+			break;
+		case NetworkState.synchronizing:
+			text = 'Synchronizing…';
+			break;
+		case NetworkState.online:
+			text = 'Connected to server';
+			persistent = false;
+			break;
+		}
+		var snackBar;
+		if (persistent) {
+			snackBar = SnackBar(
+				content: Text(text),
+				dismissDirection: DismissDirection.none,
+				// Apparently there is no way to disable this...
+				duration: Duration(days: 365),
+			);
+		} else {
+			snackBar = SnackBar(content: Text(text));
+		}
+		_scaffoldMessengerKey.currentState?.clearSnackBars();
+		_scaffoldMessengerKey.currentState?.showSnackBar(snackBar);
+	}
+
 	@override
 	Widget build(BuildContext context) {
 		var networkList = context.read<NetworkListModel>();
@@ -294,6 +350,7 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 			theme: ThemeData(primarySwatch: Colors.indigo),
 			home: home,
 			navigatorKey: _navigatorKey,
+			scaffoldMessengerKey: _scaffoldMessengerKey,
 			debugShowCheckedModeBanner: false,
 		);
 	}
