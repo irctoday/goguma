@@ -395,6 +395,9 @@ class IRCIsupportRegistry {
 
 	void clear() {
 		_network = null;
+		_caseMapping = null;
+		_chanTypes = null;
+		_bouncerNetId = null;
 	}
 }
 
