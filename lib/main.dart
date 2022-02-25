@@ -341,7 +341,7 @@ class GogumaState extends State<Goguma> {
 				setState(() {
 					error = err;
 				});
-			}).whenComplete(() {
+			}, test: (err) => err is Exception).whenComplete(() {
 				setState(() {
 					loading = false;
 				});
