@@ -296,24 +296,26 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 
 	void _handleNetworkStateChange() {
 		var state = _networkStateAggregator!.state;
+		var faultyNetwork = _networkStateAggregator!.faultyNetwork;
+		var faultyNetworkName = faultyNetwork?.displayName ?? "server";
 
 		String text;
 		bool persistent = true;
 		switch (state) {
 		case NetworkState.offline:
-			text = 'Disconnected from server';
+			text = 'Disconnected from $faultyNetworkName';
 			break;
 		case NetworkState.connecting:
-			text = 'Connecting to server…';
+			text = 'Connecting to $faultyNetworkName…';
 			break;
 		case NetworkState.registering:
-			text = 'Logging in…';
+			text = 'Logging in to $faultyNetworkName…';
 			break;
 		case NetworkState.synchronizing:
-			text = 'Synchronizing…';
+			text = 'Synchronizing $faultyNetworkName…';
 			break;
 		case NetworkState.online:
-			text = 'Connected to server';
+			text = 'Connected';
 			persistent = false;
 			break;
 		}
@@ -326,7 +328,7 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 				duration: Duration(days: 365),
 			);
 		} else {
-			snackBar = SnackBar(content: Text(text));
+			snackBar = SnackBar(content: Text(text), duration: Duration(seconds: 3));
 		}
 		_scaffoldMessengerKey.currentState?.clearSnackBars();
 		_scaffoldMessengerKey.currentState?.showSnackBar(snackBar);
