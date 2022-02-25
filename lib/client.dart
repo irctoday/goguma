@@ -65,6 +65,7 @@ class Client {
 	bool _autoReconnect = true;
 	DateTime? _lastConnectTime;
 	Map<String, ClientBatch> _batches = Map();
+	Map<String, List<ClientMessage>> _pendingNames = Map();
 
 	String get nick => _nick;
 	IRCPrefix? get serverPrefix => _serverPrefix;
@@ -117,6 +118,7 @@ class Client {
 				caps.clear();
 				isupport.clear();
 				_batches.clear();
+				_pendingNames.clear();
 
 				_setState(ClientState.disconnected);
 			});
@@ -239,7 +241,18 @@ class Client {
 		if (msg.tags.containsKey('batch')) {
 			msgBatch = _batches[msg.tags['batch']];
 		}
-		var clientMsg = ClientMessage(msg, batch: msgBatch);
+
+		ClientMessage clientMsg;
+		switch (msg.cmd) {
+		case RPL_ENDOFNAMES:
+			var channel = msg.params[1];
+			var names = _pendingNames.remove(channel)!;
+			clientMsg = ClientEndOfNames(msg, names, batch: msgBatch);
+			break;
+		default:
+			clientMsg = ClientMessage(msg, batch: msgBatch);
+		}
+
 		msgBatch?._messages.add(clientMsg);
 
 		switch (msg.cmd) {
@@ -299,6 +312,10 @@ class Client {
 			default:
 				throw FormatException('Invalid BATCH message: ${msg}');
 			}
+			break;
+		case RPL_NAMREPLY:
+			var channel = msg.params[2];
+			_pendingNames.putIfAbsent(channel, () => []).add(clientMsg);
 			break;
 		}
 
@@ -423,6 +440,14 @@ class ClientMessage extends IRCMessage {
 		}
 		return null;
 	}
+}
+
+class ClientEndOfNames extends ClientMessage {
+	final UnmodifiableListView<ClientMessage> names;
+
+	ClientEndOfNames(IRCMessage msg, List<ClientMessage> names, { ClientBatch? batch }) :
+		this.names = UnmodifiableListView(names),
+		super(msg, batch: batch);
 }
 
 class ClientBatch {
