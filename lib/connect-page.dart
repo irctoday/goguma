@@ -8,8 +8,6 @@ import 'database.dart';
 import 'irc.dart';
 import 'models.dart';
 
-typedef ConnectParamsCallback(ServerEntry);
-
 class ConnectPage extends StatefulWidget {
 	@override
 	ConnectPageState createState() => ConnectPageState();
