@@ -333,7 +333,6 @@ class IRCCapRegistry {
 	}
 }
 
-const _DEFAULT_CHANTYPES = '#';
 final defaultCaseMapping = _caseMappingByName('rfc1459')!;
 
 class IRCIsupportRegistry {
@@ -344,7 +343,7 @@ class IRCIsupportRegistry {
 	final List<IRCIsupportMembership> _memberships = [];
 
 	String? get network => _network;
-	String get chanTypes => _chanTypes ?? _DEFAULT_CHANTYPES;
+	String get chanTypes => _chanTypes ?? '';
 	CaseMapping get caseMapping => _caseMapping ?? defaultCaseMapping;
 	String? get bouncerNetId => _bouncerNetId;
 	UnmodifiableListView<IRCIsupportMembership> get memberships => UnmodifiableListView(_memberships);
