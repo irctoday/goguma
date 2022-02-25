@@ -59,7 +59,7 @@ class JoinDialogState extends State<JoinDialog> {
 					},
 					items: networks.map((network) => DropdownMenuItem(
 						value: network,
-						child: Text(network.network ?? network.bouncerNetwork?.name ?? network.serverEntry.host),
+						child: Text(network.displayName),
 					)).toList(),
 				)),
 			]),

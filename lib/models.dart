@@ -32,7 +32,7 @@ class NetworkModel extends ChangeNotifier {
 	final NetworkEntry networkEntry;
 
 	NetworkState _state = NetworkState.offline;
-	String? _network;
+	String? _upstreamName;
 	BouncerNetwork? _bouncerNetwork;
 
 	NetworkModel(this.serverEntry, this.networkEntry) {
@@ -44,8 +44,12 @@ class NetworkModel extends ChangeNotifier {
 	int get networkId => networkEntry.id!;
 
 	NetworkState get state => _state;
-	String? get network => _network;
+	String? get upstreamName => _upstreamName;
 	BouncerNetwork? get bouncerNetwork => _bouncerNetwork;
+
+	String get displayName {
+		return _upstreamName ?? bouncerNetwork?.name ?? serverEntry.host;
+	}
 
 	set state(NetworkState state) {
 		if (state == _state) {
@@ -55,11 +59,11 @@ class NetworkModel extends ChangeNotifier {
 		notifyListeners();
 	}
 
-	set network(String? network) {
-		if (network == _network) {
+	set upstreamName(String? name) {
+		if (name == _upstreamName) {
 			return;
 		}
-		_network = network;
+		_upstreamName = name;
 		notifyListeners();
 	}
 

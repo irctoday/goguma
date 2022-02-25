@@ -177,7 +177,7 @@ class ClientController {
 			_provider._setupWorkManagerSync();
 			break;
 		case RPL_ISUPPORT:
-			network.network = client.isupport.network;
+			network.upstreamName = client.isupport.network;
 			if (client.isupport.bouncerNetId != null) {
 				network.bouncerNetwork = _bouncerNetworkList.networks[client.isupport.bouncerNetId!];
 			} else {
