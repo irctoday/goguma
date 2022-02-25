@@ -559,3 +559,43 @@ String stripAnsiFormatting(String s) {
 bool _isDigit(String ch) {
 	return '0'.codeUnits.first <= ch.codeUnits.first && ch.codeUnits.first <= '9'.codeUnits.first;
 }
+
+final _alphaNumRegExp = RegExp(r'^[\p{L}0-9]$', unicode: true);
+
+bool _isWordBoundary(String ch) {
+	switch (ch) {
+	case '-':
+	case '_':
+	case '|':
+		return false;
+	default:
+		return !_alphaNumRegExp.hasMatch(ch);
+	}
+}
+
+bool findTextHighlight(String text, String nick) {
+	nick = nick.toLowerCase();
+	text = text.toLowerCase();
+
+	while (true) {
+		var i = text.indexOf(nick);
+		if (i < 0) {
+			return false;
+		}
+
+		// TODO: proper unicode handling
+		var left = '\x00';
+		var right = '\x00';
+		if (i > 0) {
+			left = text[i - 1];
+		}
+		if (i + nick.length < text.length) {
+			right = text[i + nick.length];
+		}
+		if (_isWordBoundary(left) && _isWordBoundary(right)) {
+			return true;
+		}
+
+		text = text.substring(i + nick.length);
+	}
+}

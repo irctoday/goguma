@@ -390,11 +390,14 @@ class ClientController {
 			if (buffer.lastDeliveredTime != null && buffer.lastDeliveredTime!.compareTo(entry.time) >= 0) {
 				continue;
 			}
-			// TODO: detect highlights
-			if (!client.isMyNick(entry.msg.params[0])) {
+			String title;
+			if (client.isMyNick(entry.msg.params[0])) {
+				title = 'New message from ${entry.msg.prefix!.name}';
+			} else if (findTextHighlight(entry.msg.params[1], client.nick)) {
+				title = '${entry.msg.prefix!.name} mentionned you in ${buffer.name}';
+			} else {
 				continue;
 			}
-			var title = 'New message from ${entry.msg.prefix!.name}';
 			var body = stripAnsiFormatting(entry.msg.params[1]);
 			_notifsPlugin.show(entry.id!, title, body, NotificationDetails(
 				linux: LinuxNotificationDetails(
