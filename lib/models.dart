@@ -244,7 +244,7 @@ class BufferListModel extends ChangeNotifier {
 class BufferModel extends ChangeNotifier {
 	final BufferEntry entry;
 	final NetworkModel network;
-	String? _subtitle;
+	String? _topic;
 	int _unreadCount = 0;
 	String? _lastDeliveredTime;
 	bool _messageHistoryLoaded = false;
@@ -255,19 +255,19 @@ class BufferModel extends ChangeNotifier {
 
 	UnmodifiableListView<MessageModel> get messages => UnmodifiableListView(_messages);
 
-	BufferModel({ required this.entry, required this.network, String? subtitle }) : _subtitle = subtitle {
+	BufferModel({ required this.entry, required this.network }) {
 		assert(entry.id != null);
 	}
 
 	int get id => entry.id!;
 	String get name => entry.name;
-	String? get subtitle => _subtitle;
+	String? get topic => _topic;
 	int get unreadCount => _unreadCount;
 	String? get lastDeliveredTime => _lastDeliveredTime;
 	bool get messageHistoryLoaded => _messageHistoryLoaded;
 
-	set subtitle(String? subtitle) {
-		_subtitle = subtitle;
+	set topic(String? topic) {
+		_topic = topic;
 		notifyListeners();
 	}
 

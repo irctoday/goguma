@@ -128,7 +128,7 @@ class BufferListPageState extends State<BufferListPage> {
 			var query = searchQuery!;
 			List<BufferModel> filtered = [];
 			for (var buf in buffers) {
-				if (buf.name.toLowerCase().contains(query) || (buf.subtitle ?? '').toLowerCase().contains(query)) {
+				if (buf.name.toLowerCase().contains(query) || (buf.topic ?? '').toLowerCase().contains(query)) {
 					filtered.add(buf);
 				}
 			}
@@ -211,7 +211,7 @@ class BufferItem extends StatelessWidget {
 					),
 				),
 				title: Text(buf.name, overflow: TextOverflow.ellipsis),
-				subtitle: buf.subtitle != null ? Text(buf.subtitle!, overflow: TextOverflow.fade, softWrap: false) : null,
+				subtitle: buf.topic != null ? Text(buf.topic!, overflow: TextOverflow.fade, softWrap: false) : null,
 				onTap: () {
 					Navigator.push(context, MaterialPageRoute(builder: (context) {
 						return buildBufferPage(context, buf);

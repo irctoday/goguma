@@ -138,8 +138,8 @@ class BufferPageState extends State<BufferPage> {
 					crossAxisAlignment: CrossAxisAlignment.start,
 					children: [
 						Text(buffer.name, overflow: TextOverflow.fade),
-						if (buffer.subtitle != null) Text(
-							buffer.subtitle!,
+						if (buffer.topic != null) Text(
+							buffer.topic!,
 							style: TextStyle(fontSize: 12.0),
 							overflow: TextOverflow.fade,
 						),

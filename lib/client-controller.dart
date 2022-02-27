@@ -219,11 +219,11 @@ class ClientController {
 		case RPL_TOPIC:
 			var channel = msg.params[1];
 			var topic = msg.params[2];
-			_bufferList.get(channel, network)?.subtitle = topic;
+			_bufferList.get(channel, network)?.topic = topic;
 			break;
 		case RPL_NOTOPIC:
 			var channel = msg.params[1];
-			_bufferList.get(channel, network)?.subtitle = null;
+			_bufferList.get(channel, network)?.topic = null;
 			break;
 		case 'TOPIC':
 			var channel = msg.params[0];
@@ -231,7 +231,7 @@ class ClientController {
 			if (msg.params.length > 1) {
 				topic = msg.params[1];
 			}
-			_bufferList.get(channel, network)?.subtitle = topic;
+			_bufferList.get(channel, network)?.topic = topic;
 			break;
 		case 'PRIVMSG':
 		case 'NOTICE':
