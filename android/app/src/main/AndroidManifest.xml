@@ -2,8 +2,9 @@
     package="fr.emersion.goguma">
    <uses-permission android:name="android.permission.INTERNET" />
    <application
-        android:label="goguma"
+        android:label="Goguma"
         android:name="${applicationName}"
+        android:appCategory="social"
         android:icon="@drawable/ic_launcher">
         <activity
             android:name=".MainActivity"
