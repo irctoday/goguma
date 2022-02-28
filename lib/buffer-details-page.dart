@@ -26,6 +26,7 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 	@override
 	Widget build(BuildContext context) {
 		var buffer = context.watch<BufferModel>();
+		var network = context.watch<NetworkModel>();
 		return Scaffold(
 			body: CustomScrollView(
 				slivers: [
@@ -40,12 +41,19 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 						),
 					),
 					SliverList(delegate: SliverChildListDelegate([
-						if (buffer.topic != null) Container(
-							margin: const EdgeInsets.all(15),
-							child: Builder(builder: (context) => Text(buffer.topic!,
-								textAlign: TextAlign.center,
-								style: DefaultTextStyle.of(context).style.apply(fontSizeFactor: 1.2),
-							)),
+						if (buffer.topic != null) Column(children: [
+							Container(
+								margin: const EdgeInsets.all(15),
+								child: Builder(builder: (context) => Text(buffer.topic!,
+									textAlign: TextAlign.center,
+									style: DefaultTextStyle.of(context).style.apply(fontSizeFactor: 1.2),
+								)),
+							),
+							Divider(),
+						]),
+						ListTile(
+							title: Text(network.displayName),
+							leading: Icon(Icons.hub),
 						),
 					])),
 				],
