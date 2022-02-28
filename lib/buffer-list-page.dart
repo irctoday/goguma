@@ -9,6 +9,7 @@ import 'database.dart';
 import 'irc.dart';
 import 'join-dialog.dart';
 import 'models.dart';
+import 'network-indicator.dart';
 
 class BufferListPage extends StatefulWidget {
 	@override
@@ -142,6 +143,8 @@ class BufferListPageState extends State<BufferListPage> {
 			}
 		});
 
+		var networkList = context.read<NetworkListModel>();
+
 		return Scaffold(
 			appBar: AppBar(
 				leading: searchQuery != null ? CloseButton() : null,
@@ -177,7 +180,7 @@ class BufferListPageState extends State<BufferListPage> {
 					),
 				],
 			),
-			body: ListView.builder(
+			body: NetworkListIndicator(networkList: networkList, child: ListView.builder(
 				itemCount: buffers.length,
 				itemBuilder: (context, index) {
 					var buf = buffers[index];
@@ -186,7 +189,7 @@ class BufferListPageState extends State<BufferListPage> {
 						child: BufferItem(),
 					);
 				},
-			),
+			)),
 		);
 	}
 }

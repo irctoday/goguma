@@ -15,7 +15,6 @@ import 'client-controller.dart';
 import 'connect-page.dart';
 import 'database.dart';
 import 'models.dart';
-
 import 'network-state-aggregator.dart';
 
 // Debugging knobs for work manager.
@@ -299,39 +298,19 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 		var faultyNetwork = _networkStateAggregator!.faultyNetwork;
 		var faultyNetworkName = faultyNetwork?.displayName ?? 'server';
 
+		_scaffoldMessengerKey.currentState?.clearSnackBars();
+
 		String text;
 		bool persistent = true;
-		switch (state) {
-		case NetworkState.offline:
-			text = 'Disconnected from $faultyNetworkName';
-			break;
-		case NetworkState.connecting:
-			text = 'Connecting to $faultyNetworkName…';
-			break;
-		case NetworkState.registering:
-			text = 'Logging in to $faultyNetworkName…';
-			break;
-		case NetworkState.synchronizing:
-			text = 'Synchronizing $faultyNetworkName…';
-			break;
-		case NetworkState.online:
-			text = 'Connected';
-			persistent = false;
-			break;
-		}
-		var snackBar;
-		if (persistent) {
-			snackBar = SnackBar(
-				content: Text(text),
+		if (state == NetworkState.offline) {
+			var snackBar = SnackBar(
+				content: Text('Disconnected from $faultyNetworkName'),
 				dismissDirection: DismissDirection.none,
 				// Apparently there is no way to disable this...
 				duration: Duration(days: 365),
 			);
-		} else {
-			snackBar = SnackBar(content: Text(text), duration: Duration(seconds: 3));
+			_scaffoldMessengerKey.currentState?.showSnackBar(snackBar);
 		}
-		_scaffoldMessengerKey.currentState?.clearSnackBars();
-		_scaffoldMessengerKey.currentState?.showSnackBar(snackBar);
 	}
 
 	@override
