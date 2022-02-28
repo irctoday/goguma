@@ -302,15 +302,27 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 
 		String text;
 		bool persistent = true;
-		if (state == NetworkState.offline) {
-			var snackBar = SnackBar(
-				content: Text('Disconnected from $faultyNetworkName'),
-				dismissDirection: DismissDirection.none,
-				// Apparently there is no way to disable this...
-				duration: Duration(days: 365),
-			);
-			_scaffoldMessengerKey.currentState?.showSnackBar(snackBar);
+		if (state != NetworkState.offline) {
+			_scaffoldMessengerKey.currentState?.hideCurrentMaterialBanner();
+			return;
 		}
+
+		_scaffoldMessengerKey.currentState?.showMaterialBanner(MaterialBanner(
+			content: Text('Disconnected from $faultyNetworkName'),
+			actions: [
+				FlatButton(
+					child: Text('RECONNECT'),
+					onPressed: () {
+						var clientProvider = context.read<ClientProvider>();
+						for (var client in clientProvider.clients) {
+							if (client.state == ClientState.disconnected) {
+								client.connect().ignore();
+							}
+						}
+					},
+				),
+			],
+		));
 	}
 
 	@override
