@@ -297,7 +297,7 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 	void _handleNetworkStateChange() {
 		var state = _networkStateAggregator!.state;
 		var faultyNetwork = _networkStateAggregator!.faultyNetwork;
-		var faultyNetworkName = faultyNetwork?.displayName ?? "server";
+		var faultyNetworkName = faultyNetwork?.displayName ?? 'server';
 
 		String text;
 		bool persistent = true;

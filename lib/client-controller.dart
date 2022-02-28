@@ -425,7 +425,7 @@ class ClientController {
 					channelDescription: channelDescription,
 					importance: Importance.high,
 					priority: Priority.high,
-					category: "msg",
+					category: 'msg',
 					groupKey: 'fr.emersion.goguma.buffer.${entry.buffer}',
 					subText: subText,
 				),
