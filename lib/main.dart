@@ -209,7 +209,7 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 		var notifsPlugin = context.read<FlutterLocalNotificationsPlugin>();
 		notifsPlugin.initialize(InitializationSettings(
 			linux: LinuxInitializationSettings(defaultActionName: 'Open'),
-			android: AndroidInitializationSettings('ic_launcher'),
+			android: AndroidInitializationSettings('ic_stat_name'),
 		), onSelectNotification: _handleSelectNotification).then((_) {
 			if (Platform.isAndroid) {
 				return notifsPlugin.getNotificationAppLaunchDetails();
