@@ -413,6 +413,10 @@ class ClientController {
 				continue;
 			}
 			var body = stripAnsiFormatting(entry.msg.params[1]);
+			String? subText;
+			if (_networkList.networks.length > 1) {
+				subText = buffer.network.displayName;
+			}
 			_notifsPlugin.show(entry.id!, title, body, NotificationDetails(
 				linux: LinuxNotificationDetails(
 					category: LinuxNotificationCategory.imReceived(),
@@ -423,6 +427,7 @@ class ClientController {
 					priority: Priority.high,
 					category: "msg",
 					groupKey: 'fr.emersion.goguma.buffer.${entry.buffer}',
+					subText: subText,
 				),
 			), payload: 'buffer:${entry.buffer}');
 		}
