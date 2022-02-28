@@ -398,11 +398,17 @@ class ClientController {
 			if (buffer.lastDeliveredTime != null && buffer.lastDeliveredTime!.compareTo(entry.time) >= 0) {
 				continue;
 			}
-			String title;
+			String title, channelId, channelName, channelDescription;
 			if (client.isMyNick(entry.msg.params[0])) {
 				title = 'New message from ${entry.msg.prefix!.name}';
+				channelId = 'privmsg';
+				channelName = 'Private messages';
+				channelDescription = 'Private messages sent directly to you';
 			} else if (findTextHighlight(entry.msg.params[1], client.nick)) {
 				title = '${entry.msg.prefix!.name} mentionned you in ${buffer.name}';
+				channelId = 'highlight';
+				channelName = 'Mentions';
+				channelDescription = 'Messages mentionning your nickname in a channel';
 			} else {
 				continue;
 			}
@@ -411,8 +417,8 @@ class ClientController {
 				linux: LinuxNotificationDetails(
 					category: LinuxNotificationCategory.imReceived(),
 				),
-				android: AndroidNotificationDetails('privmsg', 'Private messages',
-					channelDescription: 'Private messages sent directly to you',
+				android: AndroidNotificationDetails(channelId, channelName,
+					channelDescription: channelDescription,
 					importance: Importance.high,
 					priority: Priority.high,
 					category: "msg",
