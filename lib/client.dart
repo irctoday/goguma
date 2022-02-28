@@ -3,8 +3,6 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:connectivity_plus/connectivity_plus.dart';
-
 import 'irc.dart';
 
 class SaslPlainCredentials {
@@ -166,28 +164,15 @@ class Client {
 			return;
 		}
 
-		Connectivity().checkConnectivity().catchError((err) {
-			print('Warning: failed to check connectivity status: $err');
-			return ConnectivityResult.ethernet;
-		}).then((result) {
-			if (result == ConnectivityResult.none) {
-				_log('Waiting for network connectivity before reconnecting');
-				return Connectivity().onConnectivityChanged.firstWhere((result) {
-					return result != ConnectivityResult.none;
-				});
-			}
-			return Future.value(result);
-		}).then((_) {
-			if (DateTime.now().difference(_lastConnectTime!) > _autoReconnectDelay) {
-				_log('Reconnecting immediately');
-				connect().ignore();
-				return;
-			}
+		if (DateTime.now().difference(_lastConnectTime!) > _autoReconnectDelay) {
+			_log('Reconnecting immediately');
+			connect().ignore();
+			return;
+		}
 
-			_log('Reconnecting in ${_autoReconnectDelay}');
-			_reconnectTimer = Timer(_autoReconnectDelay, () {
-				connect().ignore();
-			});
+		_log('Reconnecting in ${_autoReconnectDelay}');
+		_reconnectTimer = Timer(_autoReconnectDelay, () {
+			connect().ignore();
 		});
 	}
 

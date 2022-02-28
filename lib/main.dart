@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
@@ -193,6 +194,7 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 	final GlobalKey<NavigatorState> _navigatorKey = GlobalKey(debugLabel: 'main-navigator');
 	final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey(debugLabel: 'main-scaffold-messenger');
 	late StreamSubscription _clientErrorSub;
+	late StreamSubscription _connectivitySub;
 	late NetworkStateAggregator _networkStateAggregator;
 
 	@override
@@ -228,6 +230,12 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 			_scaffoldMessengerKey.currentState?.showSnackBar(snackBar);
 		});
 
+		_connectivitySub = Connectivity().onConnectivityChanged.listen((result) {
+			if (result != ConnectivityResult.none) {
+				_pingAll();
+			}
+		});
+
 		var networkList = context.read<NetworkListModel>();
 		_networkStateAggregator = NetworkStateAggregator(networkList);
 		_networkStateAggregator.addListener(_handleNetworkStateChange);
@@ -238,6 +246,7 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 		WidgetsBinding.instance!.removeObserver(this);
 		_pingTimer?.cancel();
 		_clientErrorSub.cancel();
+		_connectivitySub.cancel();
 		_networkStateAggregator.removeListener(_handleNetworkStateChange);
 		_networkStateAggregator.dispose();
 		super.dispose();
@@ -266,11 +275,16 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 
 	void _pingAll() {
 		context.read<ClientProvider>().clients.forEach((client) {
-			if (client.state == ClientState.connected) {
+			switch (client.state) {
+			case ClientState.connected:
 				client.ping().catchError((err) {
 					print('PING failed: ${err}');
 					return null;
 				});
+				break;
+			case ClientState.disconnected:
+				client.connect().ignore();
+				break;
 			}
 		});
 	}
