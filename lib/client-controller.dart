@@ -79,7 +79,9 @@ class ClientProvider {
 			return;
 		}
 
-		var useWorkManager = clients.every((client) => client.caps.enabled.contains('draft/chathistory'));
+		var useWorkManager = clients.every((client) {
+			return client.caps.enabled.contains('draft/chathistory') || client.state != ClientState.connected;
+		});
 		_setupWorkManagerSync(useWorkManager);
 		_setupBackgroundServiceSync(!useWorkManager);
 	}
