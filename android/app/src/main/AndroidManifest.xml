@@ -1,7 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="fr.emersion.goguma">
-   <uses-permission android:name="android.permission.INTERNET" />
-   <application
+
+    <!-- To connect to IRC servers -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- To keep running in the background (flutter_background package) -->
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
+
+    <application
         android:label="Goguma"
         android:name="${applicationName}"
         android:appCategory="social"

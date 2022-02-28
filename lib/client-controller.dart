@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
 
-import 'package:workmanager/workmanager.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:workmanager/workmanager.dart';
 
 import 'client.dart';
 import 'database.dart';
@@ -37,6 +39,8 @@ class ClientProvider {
 	final BouncerNetworkListModel _bouncerNetworkList;
 	final FlutterLocalNotificationsPlugin _notifsPlugin;
 
+	final ValueNotifier<bool> needBackgroundServicePermissions = ValueNotifier(false);
+
 	bool _workManagerSyncEnabled = false;
 
 	UnmodifiableListView<Client> get clients => UnmodifiableListView(_controllers.values.map((cc) => cc.client));
@@ -66,12 +70,21 @@ class ClientProvider {
 		_bufferList.clear();
 	}
 
-	void _setupWorkManagerSync() {
+	void _setupSync() {
 		if (!Platform.isAndroid) {
 			return;
 		}
 
-		var enable = clients.every((client) => client.caps.enabled.contains('draft/chathistory'));
+		if (clients.where((client) => client.state == ClientState.connected).isEmpty) {
+			return;
+		}
+
+		var useWorkManager = clients.every((client) => client.caps.enabled.contains('draft/chathistory'));
+		_setupWorkManagerSync(useWorkManager);
+		_setupBackgroundServiceSync(!useWorkManager);
+	}
+
+	void _setupWorkManagerSync(bool enable) {
 		if (enable == _workManagerSyncEnabled) {
 			return;
 		}
@@ -94,6 +107,49 @@ class ClientProvider {
 				// TODO: maybe requiresDeviceIdle?
 			),
 		);
+	}
+
+	void _setupBackgroundServiceSync(bool enable) {
+		if (enable == FlutterBackground.isBackgroundExecutionEnabled) {
+			return;
+		}
+
+		if (!enable) {
+			print('Disabling sync background service');
+			needBackgroundServicePermissions.value = false;
+			FlutterBackground.disableBackgroundExecution();
+			return;
+		}
+
+		FlutterBackground.hasPermissions.then((hasPermissions) {
+			needBackgroundServicePermissions.value = !hasPermissions;
+			if (hasPermissions) {
+				askBackgroundServicePermissions();
+			}
+		});
+	}
+
+	void askBackgroundServicePermissions() {
+		print('Enabling sync background service');
+		FlutterBackground.initialize(androidConfig: FlutterBackgroundAndroidConfig(
+			notificationTitle: 'Goguma connection',
+			notificationText: 'Goguma is running in the background',
+			notificationIcon: AndroidResource(name: 'ic_stat_name'),
+			enableWifiLock: true,
+		)).then<bool>((success) {
+			needBackgroundServicePermissions.value = !success;
+			if (!success) {
+				print('Failed to obtain permissions for background service');
+				return false;
+			}
+			return FlutterBackground.enableBackgroundExecution();
+		}).then((success) {
+			if (success) {
+				print('Enabled sync background service');
+			} else {
+				print('Failed to enable sync background service');
+			}
+		});
 	}
 }
 
@@ -179,7 +235,7 @@ class ClientController {
 
 		switch (msg.cmd) {
 		case RPL_WELCOME:
-			_provider._setupWorkManagerSync();
+			_provider._setupSync();
 			break;
 		case RPL_ISUPPORT:
 			network.upstreamName = client.isupport.network;
