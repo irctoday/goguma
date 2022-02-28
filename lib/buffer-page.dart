@@ -137,17 +137,24 @@ class BufferPageState extends State<BufferPage> {
 		var messages = buffer.messages;
 		return Scaffold(
 			appBar: AppBar(
-				title: Column(
-					mainAxisAlignment: MainAxisAlignment.center,
-					crossAxisAlignment: CrossAxisAlignment.start,
-					children: [
-						Text(buffer.name, overflow: TextOverflow.fade),
-						if (buffer.topic != null) Text(
-							buffer.topic!,
-							style: TextStyle(fontSize: 12.0),
-							overflow: TextOverflow.fade,
-						),
-					],
+				title: InkResponse(
+					child: Column(
+						mainAxisAlignment: MainAxisAlignment.center,
+						crossAxisAlignment: CrossAxisAlignment.start,
+						children: [
+							Text(buffer.name, overflow: TextOverflow.fade),
+							if (buffer.topic != null) Text(
+								buffer.topic!,
+								style: TextStyle(fontSize: 12.0),
+								overflow: TextOverflow.fade,
+							),
+						],
+					),
+					onTap: () {
+						Navigator.push(context, MaterialPageRoute(builder: (context) {
+							return buildBufferDetailsPage(context, buffer);
+						}));
+					},
 				),
 				actions: [
 					PopupMenuButton<String>(
