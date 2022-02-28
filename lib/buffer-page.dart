@@ -4,6 +4,7 @@ import 'package:linkify/linkify.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'buffer-details-page.dart';
 import 'client.dart';
 import 'client-controller.dart';
 import 'database.dart';
@@ -149,6 +150,11 @@ class BufferPageState extends State<BufferPage> {
 					PopupMenuButton<String>(
 						onSelected: (key) {
 							switch (key) {
+							case 'details':
+								Navigator.push(context, MaterialPageRoute(builder: (context) {
+									return buildBufferDetailsPage(context, buffer);
+								}));
+								break;
 							case 'part':
 								var client = context.read<Client>();
 								if (client.isChannel(buffer.name)) {
