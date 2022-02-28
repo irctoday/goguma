@@ -192,8 +192,8 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 	Timer? _pingTimer;
 	final GlobalKey<NavigatorState> _navigatorKey = GlobalKey(debugLabel: 'main-navigator');
 	final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey(debugLabel: 'main-scaffold-messenger');
-	StreamSubscription? _clientErrorSub;
-	NetworkStateAggregator? _networkStateAggregator;
+	late StreamSubscription _clientErrorSub;
+	late NetworkStateAggregator _networkStateAggregator;
 
 	@override
 	void initState() {
@@ -230,16 +230,16 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 
 		var networkList = context.read<NetworkListModel>();
 		_networkStateAggregator = NetworkStateAggregator(networkList);
-		_networkStateAggregator!.addListener(_handleNetworkStateChange);
+		_networkStateAggregator.addListener(_handleNetworkStateChange);
 	}
 
 	@override
 	void dispose() {
 		WidgetsBinding.instance!.removeObserver(this);
 		_pingTimer?.cancel();
-		_clientErrorSub?.cancel();
-		_networkStateAggregator?.removeListener(_handleNetworkStateChange);
-		_networkStateAggregator?.dispose();
+		_clientErrorSub.cancel();
+		_networkStateAggregator.removeListener(_handleNetworkStateChange);
+		_networkStateAggregator.dispose();
 		super.dispose();
 	}
 
@@ -294,8 +294,8 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 	}
 
 	void _handleNetworkStateChange() {
-		var state = _networkStateAggregator!.state;
-		var faultyNetwork = _networkStateAggregator!.faultyNetwork;
+		var state = _networkStateAggregator.state;
+		var faultyNetwork = _networkStateAggregator.faultyNetwork;
 		var faultyNetworkName = faultyNetwork?.displayName ?? 'server';
 
 		_scaffoldMessengerKey.currentState?.clearSnackBars();
