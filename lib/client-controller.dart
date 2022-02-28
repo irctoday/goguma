@@ -124,6 +124,11 @@ class ClientController {
 			switch (state) {
 			case ClientState.disconnected:
 				network.state = NetworkState.offline;
+				for (var buffer in _bufferList.buffers) {
+					if (buffer.network == network && client.isChannel(buffer.name)) {
+						buffer.joined = false;
+					}
+				}
 				break;
 			case ClientState.connecting:
 				_prevLastDeliveredTime = _getLastDeliveredTime();
@@ -215,7 +220,15 @@ class ClientController {
 			if (!client.isMyNick(msg.prefix!.name)) {
 				break;
 			}
-			return _createBuffer(channel);
+			return _createBuffer(channel).then((buffer) {
+				buffer.joined = true;
+			});
+		case 'PART':
+			var channel = msg.params[0];
+			if (client.isMyNick(msg.prefix!.name)) {
+				_bufferList.get(channel, network)?.joined = false;
+			}
+			break;
 		case RPL_TOPIC:
 			var channel = msg.params[1];
 			var topic = msg.params[2];

@@ -130,7 +130,10 @@ class BufferPageState extends State<BufferPage> {
 		var client = context.read<Client>();
 		var buffer = context.watch<BufferModel>();
 		var network = context.watch<NetworkModel>();
-		var connected = network.state == NetworkState.synchronizing || network.state == NetworkState.online;
+		var canSendMessage = network.state == NetworkState.synchronizing || network.state == NetworkState.online;
+		if (client.isChannel(buffer.name)) {
+			canSendMessage = canSendMessage && buffer.joined;
+		}
 		var messages = buffer.messages;
 		return Scaffold(
 			appBar: AppBar(
@@ -277,7 +280,7 @@ class BufferPageState extends State<BufferPage> {
 						]);
 					},
 				)),
-				if (connected) Material(elevation: 15, child: Container(
+				if (canSendMessage) Material(elevation: 15, child: Container(
 					padding: EdgeInsets.all(10),
 					child: Form(key: composerFormKey, child: Row(children: [
 						Expanded(child: TextFormField(

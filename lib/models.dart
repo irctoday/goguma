@@ -245,6 +245,7 @@ class BufferModel extends ChangeNotifier {
 	final BufferEntry entry;
 	final NetworkModel network;
 	String? _topic;
+	bool _joined = false;
 	int _unreadCount = 0;
 	String? _lastDeliveredTime;
 	bool _messageHistoryLoaded = false;
@@ -262,12 +263,18 @@ class BufferModel extends ChangeNotifier {
 	int get id => entry.id!;
 	String get name => entry.name;
 	String? get topic => _topic;
+	bool get joined => _joined;
 	int get unreadCount => _unreadCount;
 	String? get lastDeliveredTime => _lastDeliveredTime;
 	bool get messageHistoryLoaded => _messageHistoryLoaded;
 
 	set topic(String? topic) {
 		_topic = topic;
+		notifyListeners();
+	}
+
+	set joined(bool joined) {
+		_joined = joined;
 		notifyListeners();
 	}
 
