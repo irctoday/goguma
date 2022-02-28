@@ -415,6 +415,7 @@ class ClientController {
 					channelDescription: 'Private messages sent directly to you',
 					importance: Importance.high,
 					priority: Priority.high,
+					category: "msg",
 					groupKey: 'fr.emersion.goguma.buffer.${entry.buffer}',
 				),
 			), payload: 'buffer:${entry.buffer}');
