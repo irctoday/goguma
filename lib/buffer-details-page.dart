@@ -31,20 +31,36 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 
 		Widget? topic;
 		if (buffer.topic != null) {
-			topic = Column(children: [
-				Container(
-					margin: const EdgeInsets.all(15),
-					child: Builder(builder: (context) {
-						var textStyle = DefaultTextStyle.of(context).style.apply(fontSizeFactor: 1.2);
-						var linkStyle = textStyle.apply(color: Colors.blue, decoration: TextDecoration.underline);
-						return RichText(
-							textAlign: TextAlign.center,
-							text: linkify(buffer.topic!, textStyle: textStyle, linkStyle: linkStyle),
-						);
-					}),
-				),
-				Divider(),
-			]);
+			topic = Container(
+				margin: const EdgeInsets.all(15),
+				child: Builder(builder: (context) {
+					var textStyle = DefaultTextStyle.of(context).style.apply(fontSizeFactor: 1.2);
+					var linkStyle = textStyle.apply(color: Colors.blue, decoration: TextDecoration.underline);
+					return RichText(
+						textAlign: TextAlign.center,
+						text: linkify(buffer.topic!, textStyle: textStyle, linkStyle: linkStyle),
+					);
+				}),
+			);
+		}
+
+		SliverList? members;
+		int? membersCount;
+		if (buffer.members != null) {
+			// TODO: sort by nickname/membership
+			var map = buffer.members!.members;
+			members = SliverList(delegate: SliverChildBuilderDelegate(
+				(context, index) {
+					var kv = map.entries.elementAt(index);
+					var nickname = kv.key;
+					return ListTile(
+						leading: CircleAvatar(child: Text(nickname[0].toUpperCase())),
+						title: Text(nickname),
+					);
+				},
+				childCount: map.length,
+			));
+			membersCount = map.length;
 		}
 
 		return Scaffold(
@@ -62,12 +78,18 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 					),
 					SliverList(delegate: SliverChildListDelegate([
 						if (topic != null) topic,
+						if (topic != null) Divider(),
 						ListTile(
 							title: Text(network.displayName),
 							leading: Icon(Icons.hub),
 						),
-						// TODO: list of channel members, user details, etc
+						if (members != null) Divider(),
+						if (members != null) Container(
+							margin: const EdgeInsets.all(15),
+							child: Text('${membersCount!} members', style: TextStyle(fontWeight: FontWeight.bold)),
+						),
 					])),
+					if (members != null) members,
 				],
 			),
 		);
