@@ -53,9 +53,11 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 				(context, index) {
 					var kv = map.entries.elementAt(index);
 					var nickname = kv.key;
+					var membership = membershipDescription(kv.value);
 					return ListTile(
 						leading: CircleAvatar(child: Text(nickname[0].toUpperCase())),
 						title: Text(nickname),
+						trailing: membership == null ? null : Text(membership),
 					);
 				},
 				childCount: map.length,
@@ -94,4 +96,26 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 			),
 		);
 	}
+}
+
+String? membershipDescription(String membership) {
+	if (membership == '') {
+		return null;
+	}
+	return membership.split('').map((prefix) {
+		switch (prefix) {
+		case '~':
+			return 'founder';
+		case '&':
+			return 'protected';
+		case '@':
+			return 'operator';
+		case '%':
+			return 'halfop';
+		case '+':
+			return 'voice';
+		default:
+			return prefix;
+		}
+	}).join(', ');
 }
