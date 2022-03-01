@@ -174,7 +174,6 @@ class BufferListPageState extends State<BufferListPage> {
 							return [
 								PopupMenuItem(child: Text('Join'), value: 'join'),
 								if (hasUnreadBuffer) PopupMenuItem(child: Text('Mark all as read'), value: 'mark-all-read'),
-								PopupMenuItem(child: Text('Settings'), value: 'settings'),
 								PopupMenuItem(child: Text('Logout'), value: 'logout'),
 							];
 						},
