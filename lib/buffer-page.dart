@@ -191,6 +191,7 @@ class BufferPageState extends State<BufferPage> {
 						}
 
 						return _MessageItem(
+							key: ValueKey(msg.id),
 							msg: msg,
 							prevMsg: prevMsg,
 							nextMsg: nextMsg,
