@@ -238,6 +238,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 							},
 							focusNode: composerFocusNode,
 							controller: composerController,
+							textInputAction: TextInputAction.send,
 						)),
 						FloatingActionButton(
 							onPressed: () {
