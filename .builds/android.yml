@@ -9,6 +9,9 @@ packages:
   - jdk11-openjdk
 sources:
   - https://git.sr.ht/~emersion/goguma
+secrets:
+  - 6d21b97d-cd64-4490-b325-acf8b05a542f # keystore.jks
+  - 431b0b53-2af2-441b-b879-86c5913bab4d # keystore.properties
 artifacts:
   - goguma/build/app/outputs/flutter-apk/app-release.apk
 tasks:
@@ -21,6 +24,8 @@ tasks:
   - configure: |
       cd goguma
       flutter create --org fr.emersion --project-name goguma --platforms android --no-overwrite .
+      ln -s ~/keystore.properties android/keystore.properties
+      ln -s ~/keystore.jks android/keystore.jks
   - build: |
       cd goguma
       flutter build apk
