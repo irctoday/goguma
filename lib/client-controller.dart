@@ -288,8 +288,10 @@ class ClientController {
 			var buffer = _bufferList.get(channel, network);
 			if (client.isMyNick(msg.prefix!.name)) {
 				buffer?.joined = false;
+				buffer?.members = null;
+			} else {
+				buffer?.members?.remove(msg.prefix!.name);
 			}
-			buffer?.members?.remove(msg.prefix!.name);
 			break;
 		case 'QUIT':
 			for (var buffer in _bufferList.buffers) {
