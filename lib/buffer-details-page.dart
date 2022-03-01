@@ -34,7 +34,6 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 			topic = Column(children: [
 				Container(
 					margin: const EdgeInsets.all(15),
-					// TODO: linkify
 					child: Builder(builder: (context) {
 						var textStyle = DefaultTextStyle.of(context).style.apply(fontSizeFactor: 1.2);
 						var linkStyle = textStyle.apply(color: Colors.blue, decoration: TextDecoration.underline);
