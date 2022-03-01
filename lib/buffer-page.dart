@@ -8,6 +8,7 @@ import 'database.dart';
 import 'irc.dart';
 import 'linkify.dart';
 import 'models.dart';
+import 'swipe-action.dart';
 
 Widget buildBufferPage(BuildContext context, BufferModel buf) {
 	var client = context.read<ClientProvider>().get(buf.network);
@@ -89,6 +90,12 @@ class BufferPageState extends State<BufferPage> {
 		composerFocusNode.requestFocus();
 	}
 
+	void _handleMessageSwipe(MessageModel msg) {
+		composerController.text = '${msg.msg.prefix!.name}: ';
+		composerController.selection = TextSelection.collapsed(offset: composerController.text.length);
+		composerFocusNode.requestFocus();
+	}
+
 	@override
 	void dispose() {
 		composerController.dispose();
@@ -113,7 +120,8 @@ class BufferPageState extends State<BufferPage> {
 		var buffer = context.watch<BufferModel>();
 		var network = context.watch<NetworkModel>();
 		var canSendMessage = network.state == NetworkState.synchronizing || network.state == NetworkState.online;
-		if (client.isChannel(buffer.name)) {
+		var isChannel = client.isChannel(buffer.name);
+		if (isChannel) {
 			canSendMessage = canSendMessage && buffer.joined;
 		}
 		var messages = buffer.messages;
@@ -177,7 +185,18 @@ class BufferPageState extends State<BufferPage> {
 						var prevMsg = msgIndex > 0 ? messages[msgIndex - 1] : null;
 						var nextMsg = msgIndex + 1 < messages.length ? messages[msgIndex + 1] : null;
 
-						return _MessageItem(msg: msg, prevMsg: prevMsg, nextMsg: nextMsg, unreadMarkerTime: widget.unreadMarkerTime);
+						VoidCallback? onSwipe;
+						if (isChannel) {
+							onSwipe = () => _handleMessageSwipe(msg);
+						}
+
+						return _MessageItem(
+							msg: msg,
+							prevMsg: prevMsg,
+							nextMsg: nextMsg,
+							unreadMarkerTime: widget.unreadMarkerTime,
+							onSwipe: onSwipe,
+						);
 					},
 				)),
 				if (canSendMessage) Material(elevation: 15, child: Container(
@@ -214,8 +233,9 @@ class _MessageItem extends StatelessWidget {
 	final MessageModel msg;
 	final MessageModel? prevMsg, nextMsg;
 	final String? unreadMarkerTime;
+	final VoidCallback? onSwipe;
 
-	_MessageItem({ Key? key, required this.msg, this.prevMsg, this.nextMsg, this.unreadMarkerTime }) : super(key: key);
+	_MessageItem({ Key? key, required this.msg, this.prevMsg, this.nextMsg, this.unreadMarkerTime, this.onSwipe }) : super(key: key);
 
 	@override
 	Widget build(BuildContext context) {
@@ -290,6 +310,34 @@ class _MessageItem extends StatelessWidget {
 			];
 		}
 
+		Widget bubble = Align(
+			alignment: boxAlignment,
+			child: Container(
+				decoration: BoxDecoration(
+					borderRadius: BorderRadius.circular(10),
+					color: boxColor,
+				),
+				padding: EdgeInsets.all(10),
+				child: RichText(text: TextSpan(
+					children: content,
+					style: textStyle,
+				)),
+			),
+		);
+		if (!client.isMyNick(sender)) {
+			bubble = SwipeAction(
+				child: bubble,
+				background: Align(
+					alignment: Alignment.centerLeft,
+					child: Opacity(
+						opacity: 0.6,
+						child: Icon(Icons.reply),
+					),
+				),
+				onSwipe: onSwipe,
+			);
+		}
+
 		return Column(children: [
 			if (showUnreadMarker) Container(
 				margin: EdgeInsets.only(top: margin),
@@ -301,20 +349,9 @@ class _MessageItem extends StatelessWidget {
 					Expanded(child: Divider(color: unreadMarkerColor)),
 				]),
 			),
-			Align(
-				alignment: boxAlignment,
-				child: Container(
-					decoration: BoxDecoration(
-						borderRadius: BorderRadius.circular(10),
-						color: boxColor,
-					),
-					padding: EdgeInsets.all(10),
-					margin: EdgeInsets.only(left: margin, right: margin, top: marginTop, bottom: marginBottom),
-					child: RichText(text: TextSpan(
-						children: content,
-						style: textStyle,
-					)),
-				),
+			Container(
+				margin: EdgeInsets.only(left: margin, right: margin, top: marginTop, bottom: marginBottom),
+				child: bubble,
 			),
 		]);
 	}
