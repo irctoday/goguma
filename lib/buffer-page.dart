@@ -1,31 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_linkify/flutter_linkify.dart';
-import 'package:linkify/linkify.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'buffer-details-page.dart';
 import 'client.dart';
 import 'client-controller.dart';
 import 'database.dart';
 import 'irc.dart';
+import 'linkify.dart';
 import 'models.dart';
-
-TextSpan _linkify(BuildContext context, String text, TextStyle textStyle) {
-	var elements = linkify(text, options: LinkifyOptions(
-		humanize: false,
-		defaultToHttps: true,
-	));
-	var linkStyle = textStyle.apply(decoration: TextDecoration.underline);
-	return buildTextSpan(
-		elements,
-		onOpen: (link) {
-			launch(link.url);
-		},
-		style: textStyle,
-		linkStyle: linkStyle,
-	);
-}
 
 Widget buildBufferPage(BuildContext context, BufferModel buf) {
 	var client = context.read<ClientProvider>().get(buf.network);
@@ -233,6 +215,8 @@ class BufferPageState extends State<BufferPage> {
 							style: TextStyle(fontWeight: FontWeight.bold),
 						);
 
+						var linkStyle = textStyle.apply(decoration: TextDecoration.underline);
+
 						List<InlineSpan> content;
 						if (ctcp != null && ctcp.cmd == 'ACTION') {
 							textStyle = textStyle.apply(fontStyle: FontStyle.italic);
@@ -247,14 +231,14 @@ class BufferPageState extends State<BufferPage> {
 							content = [
 								senderTextSpan,
 								TextSpan(text: ' '),
-								_linkify(context, actionText, textStyle),
+								linkify(actionText, textStyle: textStyle, linkStyle: linkStyle),
 							];
 						} else {
 							var body = stripAnsiFormatting(msg.params[1]);
 							content = [
 								if (showSender) senderTextSpan,
 								if (showSender) TextSpan(text: '\n'),
-								_linkify(context, body, textStyle),
+								linkify(body, textStyle: textStyle, linkStyle: linkStyle),
 							];
 						}
 
