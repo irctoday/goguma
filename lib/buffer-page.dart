@@ -173,102 +173,11 @@ class BufferPageState extends State<BufferPage> {
 					itemCount: messages.length,
 					itemBuilder: (context, index) {
 						var msgIndex = messages.length - index - 1;
-						var msg = messages[msgIndex].msg;
-						var entry = messages[msgIndex].entry;
-						assert(msg.cmd == 'PRIVMSG' || msg.cmd == 'NOTICE');
+						var msg = messages[msgIndex];
+						var prevMsg = msgIndex > 0 ? messages[msgIndex - 1] : null;
+						var nextMsg = msgIndex + 1 < messages.length ? messages[msgIndex + 1] : null;
 
-						var prevMsg = msgIndex > 0 ? messages[msgIndex - 1].msg : null;
-						var prevEntry = prevMsg != null ? messages[msgIndex - 1].entry : null;
-
-						var ctcp = CtcpMessage.parse(msg);
-						var sender = msg.prefix!.name;
-						var showUnreadMarker = prevEntry != null && widget.unreadMarkerTime != null && widget.unreadMarkerTime!.compareTo(entry.time) < 0 && widget.unreadMarkerTime!.compareTo(prevEntry.time) >= 0;
-						var showSender = showUnreadMarker || prevMsg == null || msg.prefix!.name != prevMsg.prefix!.name;
-
-						var unreadMarkerColor = Theme.of(context).accentColor;
-
-						var colorSwatch = Colors.primaries[sender.hashCode % Colors.primaries.length];
-						var colorScheme = ColorScheme.fromSwatch(primarySwatch: colorSwatch);
-
-						//var boxColor = Theme.of(context).accentColor;
-						var boxColor = colorScheme.primary;
-						var boxAlignment = Alignment.centerLeft;
-						var textStyle = DefaultTextStyle.of(context).style.apply(color: colorScheme.onPrimary);
-						if (client.isMyNick(sender)) {
-							boxColor = Colors.grey[200]!;
-							boxAlignment = Alignment.centerRight;
-							textStyle = DefaultTextStyle.of(context).style;
-						}
-
-						const margin = 16.0;
-						var marginBottom = margin;
-						if (index > 0) {
-							marginBottom = 0.0;
-						}
-						var marginTop = margin;
-						if (!showSender) {
-							marginTop = margin / 4;
-						}
-
-						var senderTextSpan = TextSpan(
-							text: sender,
-							style: TextStyle(fontWeight: FontWeight.bold),
-						);
-
-						var linkStyle = textStyle.apply(decoration: TextDecoration.underline);
-
-						List<InlineSpan> content;
-						if (ctcp != null && ctcp.cmd == 'ACTION') {
-							textStyle = textStyle.apply(fontStyle: FontStyle.italic);
-
-							String actionText;
-							if (ctcp.cmd == 'ACTION') {
-								actionText = stripAnsiFormatting(ctcp.param ?? '');
-							} else {
-								actionText = 'has sent a CTCP "${ctcp.cmd}" command';
-							}
-
-							content = [
-								senderTextSpan,
-								TextSpan(text: ' '),
-								linkify(actionText, textStyle: textStyle, linkStyle: linkStyle),
-							];
-						} else {
-							var body = stripAnsiFormatting(msg.params[1]);
-							content = [
-								if (showSender) senderTextSpan,
-								if (showSender) TextSpan(text: '\n'),
-								linkify(body, textStyle: textStyle, linkStyle: linkStyle),
-							];
-						}
-
-						return Column(children: [
-							if (showUnreadMarker) Container(
-								margin: EdgeInsets.only(top: margin),
-								child: Row(children: [
-									Expanded(child: Divider(color: unreadMarkerColor)),
-									SizedBox(width: 10),
-									Text('Unread messages', style: TextStyle(color: unreadMarkerColor)),
-									SizedBox(width: 10),
-									Expanded(child: Divider(color: unreadMarkerColor)),
-								]),
-							),
-							Align(
-								alignment: boxAlignment,
-								child: Container(
-									decoration: BoxDecoration(
-										borderRadius: BorderRadius.circular(10),
-										color: boxColor,
-									),
-									padding: EdgeInsets.all(10),
-									margin: EdgeInsets.only(left: margin, right: margin, top: marginTop, bottom: marginBottom),
-									child: RichText(text: TextSpan(
-										children: content,
-										style: textStyle,
-									)),
-								),
-							),
-						]);
+						return _MessageItem(msg: msg, prevMsg: prevMsg, nextMsg: nextMsg, unreadMarkerTime: widget.unreadMarkerTime);
 					},
 				)),
 				if (canSendMessage) Material(elevation: 15, child: Container(
@@ -298,5 +207,115 @@ class BufferPageState extends State<BufferPage> {
 				)),
 			]),
 		);
+	}
+}
+
+class _MessageItem extends StatelessWidget {
+	final MessageModel msg;
+	final MessageModel? prevMsg, nextMsg;
+	final String? unreadMarkerTime;
+
+	_MessageItem({ Key? key, required this.msg, this.prevMsg, this.nextMsg, this.unreadMarkerTime }) : super(key: key);
+
+	@override
+	Widget build(BuildContext context) {
+		var client = context.read<Client>();
+
+		var ircMsg = msg.msg;
+		var entry = msg.entry;
+		assert(ircMsg.cmd == 'PRIVMSG' || ircMsg.cmd == 'NOTICE');
+
+		var prevIrcMsg = prevMsg?.msg;
+		var prevEntry = prevMsg?.entry;
+
+		var ctcp = CtcpMessage.parse(ircMsg);
+		var sender = ircMsg.prefix!.name;
+		var showUnreadMarker = prevEntry != null && unreadMarkerTime != null && unreadMarkerTime!.compareTo(entry.time) < 0 && unreadMarkerTime!.compareTo(prevEntry.time) >= 0;
+		var showSender = showUnreadMarker || prevIrcMsg == null || ircMsg.prefix!.name != prevIrcMsg.prefix!.name;
+
+		var unreadMarkerColor = Theme.of(context).accentColor;
+
+		var colorSwatch = Colors.primaries[sender.hashCode % Colors.primaries.length];
+		var colorScheme = ColorScheme.fromSwatch(primarySwatch: colorSwatch);
+
+		//var boxColor = Theme.of(context).accentColor;
+		var boxColor = colorScheme.primary;
+		var boxAlignment = Alignment.centerLeft;
+		var textStyle = DefaultTextStyle.of(context).style.apply(color: colorScheme.onPrimary);
+		if (client.isMyNick(sender)) {
+			boxColor = Colors.grey[200]!;
+			boxAlignment = Alignment.centerRight;
+			textStyle = DefaultTextStyle.of(context).style;
+		}
+
+		const margin = 16.0;
+		var marginBottom = margin;
+		if (nextMsg != null) {
+			marginBottom = 0.0;
+		}
+		var marginTop = margin;
+		if (!showSender) {
+			marginTop = margin / 4;
+		}
+
+		var senderTextSpan = TextSpan(
+			text: sender,
+			style: TextStyle(fontWeight: FontWeight.bold),
+		);
+
+		var linkStyle = textStyle.apply(decoration: TextDecoration.underline);
+
+		List<InlineSpan> content;
+		if (ctcp != null && ctcp.cmd == 'ACTION') {
+			textStyle = textStyle.apply(fontStyle: FontStyle.italic);
+
+			String actionText;
+			if (ctcp.cmd == 'ACTION') {
+				actionText = stripAnsiFormatting(ctcp.param ?? '');
+			} else {
+				actionText = 'has sent a CTCP "${ctcp.cmd}" command';
+			}
+
+			content = [
+				senderTextSpan,
+				TextSpan(text: ' '),
+				linkify(actionText, textStyle: textStyle, linkStyle: linkStyle),
+			];
+		} else {
+			var body = stripAnsiFormatting(ircMsg.params[1]);
+			content = [
+				if (showSender) senderTextSpan,
+				if (showSender) TextSpan(text: '\n'),
+				linkify(body, textStyle: textStyle, linkStyle: linkStyle),
+			];
+		}
+
+		return Column(children: [
+			if (showUnreadMarker) Container(
+				margin: EdgeInsets.only(top: margin),
+				child: Row(children: [
+					Expanded(child: Divider(color: unreadMarkerColor)),
+					SizedBox(width: 10),
+					Text('Unread messages', style: TextStyle(color: unreadMarkerColor)),
+					SizedBox(width: 10),
+					Expanded(child: Divider(color: unreadMarkerColor)),
+				]),
+			),
+			Align(
+				alignment: boxAlignment,
+				child: Container(
+					decoration: BoxDecoration(
+						borderRadius: BorderRadius.circular(10),
+						color: boxColor,
+					),
+					padding: EdgeInsets.all(10),
+					margin: EdgeInsets.only(left: margin, right: margin, top: marginTop, bottom: marginBottom),
+					child: RichText(text: TextSpan(
+						children: content,
+						style: textStyle,
+					)),
+				),
+			),
+		]);
 	}
 }
