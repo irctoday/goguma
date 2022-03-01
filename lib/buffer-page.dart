@@ -31,14 +31,18 @@ class BufferPage extends StatefulWidget {
 	BufferPageState createState() => BufferPageState();
 }
 
-class BufferPageState extends State<BufferPage> {
+class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 	final composerFocusNode = FocusNode();
 	final composerFormKey = GlobalKey<FormState>();
 	final composerController = TextEditingController();
 
+	bool _activated = true;
+
 	@override
 	void initState() {
 		super.initState();
+
+		WidgetsBinding.instance!.addObserver(this);
 
 		var buffer = context.read<BufferModel>();
 		var future = Future.value();
@@ -52,19 +56,8 @@ class BufferPageState extends State<BufferPage> {
 		}
 
 		future.then((_) {
-			if (buffer.unreadCount > 0 && buffer.messages.length > 0) {
-				buffer.entry.lastReadTime = buffer.messages.last.entry.time;
-				context.read<DB>().storeBuffer(buffer.entry);
-
-				var client = context.read<Client>();
-				if (buffer.entry.lastReadTime != null) {
-					client.setRead(buffer.name, buffer.entry.lastReadTime!);
-				}
-			}
-			buffer.unreadCount = 0;
+			_updateBufferFocus();
 		});
-
-		buffer.focused = true;
 	}
 
 	void submitComposer() {
@@ -99,19 +92,51 @@ class BufferPageState extends State<BufferPage> {
 	@override
 	void dispose() {
 		composerController.dispose();
+		WidgetsBinding.instance!.removeObserver(this);
 		super.dispose();
 	}
 
 	@override
 	void deactivate() {
-		context.read<BufferModel>().focused = false;
+		_activated = false;
+		_updateBufferFocus();
 		super.deactivate();
 	}
 
 	@override
 	void activate() {
-		context.read<BufferModel>().focused = true;
 		super.activate();
+		_activated = true;
+		_updateBufferFocus();
+	}
+
+	@override
+	void didChangeAppLifecycleState(AppLifecycleState state) {
+		super.didChangeAppLifecycleState(state);
+		_updateBufferFocus();
+	}
+
+	void _updateBufferFocus() {
+		var buffer = context.read<BufferModel>();
+		var state = WidgetsBinding.instance!.lifecycleState ?? AppLifecycleState.resumed;
+		buffer.focused = state == AppLifecycleState.resumed && _activated;
+		if (buffer.focused) {
+			_markRead();
+		}
+	}
+
+	void _markRead() {
+		var buffer = context.read<BufferModel>();
+		if (buffer.unreadCount > 0 && buffer.messages.length > 0) {
+			buffer.entry.lastReadTime = buffer.messages.last.entry.time;
+			context.read<DB>().storeBuffer(buffer.entry);
+
+			var client = context.read<Client>();
+			if (buffer.entry.lastReadTime != null) {
+				client.setRead(buffer.name, buffer.entry.lastReadTime!);
+			}
+		}
+		buffer.unreadCount = 0;
 	}
 
 	@override
