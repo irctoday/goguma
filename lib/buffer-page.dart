@@ -86,7 +86,7 @@ class BufferPageState extends State<BufferPage> {
 				});
 			}
 		}
-		composerFormKey.currentState!.reset();
+		composerController.text = '';
 		composerFocusNode.requestFocus();
 	}
 
