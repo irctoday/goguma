@@ -36,6 +36,7 @@ const _permanentCaps = [
 	'batch',
 	'echo-message',
 	'message-tags',
+	'multi-prefix',
 	'sasl',
 	'server-time',
 
