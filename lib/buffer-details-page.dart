@@ -47,11 +47,19 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 		SliverList? members;
 		int? membersCount;
 		if (buffer.members != null) {
-			// TODO: sort by nickname/membership
-			var map = buffer.members!.members;
+			// TODO: don't sort on each build() call
+			var l = buffer.members!.members.entries.toList();
+			l.sort((a, b) {
+				var aLevel = _membershipLevel(a.value);
+				var bLevel = _membershipLevel(b.value);
+				if (aLevel != bLevel) {
+					return bLevel - aLevel;
+				}
+				return a.key.toLowerCase().compareTo(b.key.toLowerCase());
+			});
 			members = SliverList(delegate: SliverChildBuilderDelegate(
 				(context, index) {
-					var kv = map.entries.elementAt(index);
+					var kv = l.elementAt(index);
 					var nickname = kv.key;
 					var membership = membershipDescription(kv.value);
 					return ListTile(
@@ -60,9 +68,9 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 						trailing: membership == null ? null : Text(membership),
 					);
 				},
-				childCount: map.length,
+				childCount: l.length,
 			));
-			membersCount = map.length;
+			membersCount = l.length;
 		}
 
 		return Scaffold(
@@ -118,4 +126,24 @@ String? membershipDescription(String membership) {
 			return prefix;
 		}
 	}).join(', ');
+}
+
+int _membershipLevel(String membership) {
+	if (membership == '') {
+		return 0;
+	}
+	switch (membership[0]) {
+	case '~':
+		return 5;
+	case '&':
+		return 4;
+	case '@':
+		return 3;
+	case '%':
+		return 2;
+	case '+':
+		return 1;
+	default:
+		return 0;
+	}
 }
