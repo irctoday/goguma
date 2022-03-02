@@ -72,7 +72,7 @@ class BufferListPageState extends State<BufferListPage> {
 			return JoinDialog(onSubmit: (name, network) {
 				var client = context.read<ClientProvider>().get(network);
 				if (client.isChannel(name)) {
-					client.send(IRCMessage('JOIN', params: [name]));
+					client.send(IrcMessage('JOIN', params: [name]));
 				} else {
 					var db = context.read<DB>();
 					db.storeBuffer(BufferEntry(name: name, network: network.networkId)).then((entry) {

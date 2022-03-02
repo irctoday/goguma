@@ -51,13 +51,13 @@ var _nextPingSerial = 0;
 
 class Client {
 	final ConnectParams params;
-	final IRCCapRegistry caps = IRCCapRegistry();
-	final IRCIsupportRegistry isupport = IRCIsupportRegistry();
+	final IrcCapRegistry caps = IrcCapRegistry();
+	final IrcIsupportRegistry isupport = IrcIsupportRegistry();
 
 	final int _id;
 	Socket? _socket;
 	String _nick;
-	IRCPrefix? _serverPrefix;
+	IrcPrefix? _serverPrefix;
 	ClientState _state = ClientState.disconnected;
 	StreamController<ClientMessage> _messagesController = StreamController.broadcast();
 	StreamController<ClientState> _statesController = StreamController.broadcast();
@@ -69,7 +69,7 @@ class Client {
 	Map<String, List<ClientMessage>> _pendingNames = Map();
 
 	String get nick => _nick;
-	IRCPrefix? get serverPrefix => _serverPrefix;
+	IrcPrefix? get serverPrefix => _serverPrefix;
 	ClientState get state => _state;
 	Stream<ClientMessage> get messages => _messagesController.stream;
 	Stream<ClientState> get states => _statesController.stream;
@@ -224,7 +224,7 @@ class Client {
 			case ERR_SASLTOOLONG:
 			case ERR_SASLABORTED:
 				_socket?.close();
-				throw IRCException(msg);
+				throw IrcException(msg);
 			case RPL_SASLSUCCESS:
 				saslSuccess = true;
 				break;

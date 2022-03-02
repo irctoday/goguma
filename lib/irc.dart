@@ -34,7 +34,7 @@ const ERR_SASLTOOLONG = '905';
 const ERR_SASLABORTED = '906';
 const ERR_SASLALREADY = '907';
 
-String formatIRCTime(DateTime dt) {
+String formatIrcTime(DateTime dt) {
 	dt = dt.toUtc();
 	// toIso8601String omits the microseconds if zero
 	return DateTime.utc(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.millisecond).toIso8601String();
@@ -42,7 +42,7 @@ String formatIRCTime(DateTime dt) {
 
 class IrcMessage {
 	final UnmodifiableMapView<String, String?> tags;
-	final IRCPrefix? prefix;
+	final IrcPrefix? prefix;
 	final String cmd;
 	final UnmodifiableListView<String> params;
 
@@ -59,19 +59,19 @@ class IrcMessage {
 			if (i < 0) {
 				throw FormatException('Expected a space after tags');
 			}
-			tags = parseIRCTags(s.substring(1, i));
+			tags = parseIrcTags(s.substring(1, i));
 			s = s.substring(i + 1);
 		} else {
 			tags = const {};
 		}
 
-		IRCPrefix? prefix = null;
+		IrcPrefix? prefix = null;
 		if (s.startsWith(':')) {
 			var i = s.indexOf(' ');
 			if (i < 0) {
 				throw FormatException('Expected a space after prefix');
 			}
-			prefix = IRCPrefix.parse(s.substring(1, i));
+			prefix = IrcPrefix.parse(s.substring(1, i));
 			s = s.substring(i + 1);
 		}
 
@@ -107,7 +107,7 @@ class IrcMessage {
 	String toString() {
 		var s = '';
 		if (tags.length > 0) {
-			s += '@' + formatIRCTags(tags) + ' ';
+			s += '@' + formatIrcTags(tags) + ' ';
 		}
 		if (prefix != null) {
 			s += ':' + prefix!.toString() + ' ';
@@ -144,7 +144,7 @@ class IrcMessage {
 	}
 }
 
-Map<String, String?> parseIRCTags(String s) {
+Map<String, String?> parseIrcTags(String s) {
 	return Map.fromEntries(s.split(';').map((s) {
 		if (s.length == 0) {
 			throw FormatException('Empty tag entries are invalid');
@@ -162,7 +162,7 @@ Map<String, String?> parseIRCTags(String s) {
 	}));
 }
 
-String formatIRCTags(Map<String, String?> tags) {
+String formatIrcTags(Map<String, String?> tags) {
 	return tags.entries.map((entry) {
 		if (entry.value == null) {
 			return entry.key;
@@ -211,17 +211,17 @@ String _unescapeTag(String s) {
 	});
 }
 
-class IRCPrefix {
+class IrcPrefix {
 	final String name;
 	final String? user;
 	final String? host;
 
-	IRCPrefix(this.name, { this.user, this.host });
+	IrcPrefix(this.name, { this.user, this.host });
 
-	static IRCPrefix parse(String s) {
+	static IrcPrefix parse(String s) {
 		var i = s.indexOf('@');
 		if (i < 0) {
-			return IRCPrefix(s);
+			return IrcPrefix(s);
 		}
 
 		var host = s.substring(i + 1);
@@ -229,12 +229,12 @@ class IRCPrefix {
 
 		i = s.indexOf('!');
 		if (i < 0) {
-			return IRCPrefix(s, host: host);
+			return IrcPrefix(s, host: host);
 		}
 
 		var name = s.substring(0, i);
 		var user = s.substring(i + 1);
-		return IRCPrefix(name, user: user, host: host);
+		return IrcPrefix(name, user: user, host: host);
 	}
 
 	String toString() {
@@ -248,10 +248,10 @@ class IRCPrefix {
 	}
 }
 
-class IRCException implements Exception {
+class IrcException implements Exception {
 	final IrcMessage msg;
 
-	IRCException(this.msg) {
+	IrcException(this.msg) {
 		assert(msg.isError());
 	}
 
@@ -264,7 +264,7 @@ class IRCException implements Exception {
 	}
 }
 
-class IRCCapRegistry {
+class IrcCapRegistry {
 	Map<String, String?> _available = Map();
 	Set<String> _enabled = Set();
 
@@ -335,18 +335,18 @@ class IRCCapRegistry {
 
 final defaultCaseMapping = _caseMappingByName('rfc1459')!;
 
-class IRCIsupportRegistry {
+class IrcIsupportRegistry {
 	String? _network;
 	CaseMapping? _caseMapping;
 	String? _chanTypes;
 	String? _bouncerNetId;
-	final List<IRCIsupportMembership> _memberships = [];
+	final List<IrcIsupportMembership> _memberships = [];
 
 	String? get network => _network;
 	String get chanTypes => _chanTypes ?? '';
 	CaseMapping get caseMapping => _caseMapping ?? defaultCaseMapping;
 	String? get bouncerNetId => _bouncerNetId;
-	UnmodifiableListView<IRCIsupportMembership> get memberships => UnmodifiableListView(_memberships);
+	UnmodifiableListView<IrcIsupportMembership> get memberships => UnmodifiableListView(_memberships);
 
 	void parse(List<String> tokens) {
 		tokens.forEach((tok) {
@@ -408,7 +408,7 @@ class IRCIsupportRegistry {
 					throw FormatException('Malformed ISUPPORT PREFIX value (modes and prefixes count mismatch): $v');
 				}
 				for (var i = 0; i < modes.length; i++) {
-					_memberships.add(IRCIsupportMembership(modes[i], prefixes[i]));
+					_memberships.add(IrcIsupportMembership(modes[i], prefixes[i]));
 				}
 				break;
 			}
@@ -424,11 +424,11 @@ class IRCIsupportRegistry {
 	}
 }
 
-class IRCIsupportMembership {
+class IrcIsupportMembership {
 	final String mode;
 	final String prefix;
 
-	IRCIsupportMembership(this.mode, this.prefix);
+	IrcIsupportMembership(this.mode, this.prefix);
 }
 
 typedef String CaseMapping(String s);
@@ -478,18 +478,18 @@ String _caseMapCharAscii(String ch) {
 	return ch;
 }
 
-class IRCNameMap<V> extends MapBase<String, V> {
+class IrcNameMap<V> extends MapBase<String, V> {
 	CaseMapping _cm;
-	Map<String, _IRCNameMapEntry<V>> _m = Map();
+	Map<String, _IrcNameMapEntry<V>> _m = Map();
 
-	IRCNameMap(CaseMapping cm) : _cm = cm;
+	IrcNameMap(CaseMapping cm) : _cm = cm;
 
 	V? operator [](Object? key) {
 		return _m[_cm(key as String)]?.value;
 	}
 
 	void operator []=(String key, V value) {
-		_m[_cm(key)] = _IRCNameMapEntry(key, value);
+		_m[_cm(key)] = _IrcNameMapEntry(key, value);
 	}
 
 	void clear() {
@@ -510,11 +510,11 @@ class IRCNameMap<V> extends MapBase<String, V> {
 	}
 }
 
-class _IRCNameMapEntry<V> {
+class _IrcNameMapEntry<V> {
 	final String name;
 	final V value;
 
-	_IRCNameMapEntry(this.name, this.value);
+	_IrcNameMapEntry(this.name, this.value);
 }
 
 /// A CTCP message as defined in:

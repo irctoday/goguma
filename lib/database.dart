@@ -104,7 +104,7 @@ class MessageEntry {
 	}
 
 	MessageEntry(IrcMessage msg, this.buffer) :
-		time = msg.tags['time'] ?? formatIRCTime(DateTime.now()),
+		time = msg.tags['time'] ?? formatIrcTime(DateTime.now()),
 		raw = msg.toString(),
 		_msg = msg;
 

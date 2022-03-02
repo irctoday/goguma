@@ -324,9 +324,9 @@ class MessageModel {
 }
 
 class MemberListModel extends ChangeNotifier {
-	final IRCNameMap<String> _members;
+	final IrcNameMap<String> _members;
 
-	MemberListModel(CaseMapping cm) : _members = IRCNameMap(cm);
+	MemberListModel(CaseMapping cm) : _members = IrcNameMap(cm);
 
 	UnmodifiableMapView<String, String> get members => UnmodifiableMapView(_members);
 

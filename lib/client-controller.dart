@@ -30,7 +30,7 @@ ConnectParams connectParamsFromServerEntry(ServerEntry entry) {
 
 class ClientProvider {
 	Map<NetworkModel, ClientController> _controllers = Map();
-	StreamController<IRCException> _errorsController = StreamController.broadcast();
+	StreamController<IrcException> _errorsController = StreamController.broadcast();
 	StreamController<NetworkModel> _networkStatesController = StreamController.broadcast();
 
 	final DB _db;
@@ -44,7 +44,7 @@ class ClientProvider {
 	bool _workManagerSyncEnabled = false;
 
 	UnmodifiableListView<Client> get clients => UnmodifiableListView(_controllers.values.map((cc) => cc.client));
-	Stream<IRCException> get errors => _errorsController.stream;
+	Stream<IrcException> get errors => _errorsController.stream;
 	Stream<NetworkModel> get networkStates => _networkStatesController.stream;
 
 	ClientProvider({ required DB db, required NetworkListModel networkList, required BufferListModel bufferList, required BouncerNetworkListModel bouncerNetworkList, required FlutterLocalNotificationsPlugin notifsPlugin }) :
@@ -232,7 +232,7 @@ class ClientController {
 
 	Future<void>? _handleMessage(ClientMessage msg) {
 		if (msg.isError()) {
-			_provider._errorsController.add(IRCException(msg));
+			_provider._errorsController.add(IrcException(msg));
 		}
 
 		switch (msg.cmd) {
@@ -264,7 +264,7 @@ class ClientController {
 			}
 
 			if (_prevLastDeliveredTime != null) {
-				var to = msg.tags['time'] ?? formatIRCTime(DateTime.now());
+				var to = msg.tags['time'] ?? formatIrcTime(DateTime.now());
 				syncFutures.add(_fetchBacklog(_prevLastDeliveredTime!, to));
 			}
 
@@ -362,7 +362,7 @@ class ClientController {
 			}
 
 			var bouncerNetId = msg.params[1];
-			var attrs = msg.params[2] == '*' ? null : parseIRCTags(msg.params[2]);
+			var attrs = msg.params[2] == '*' ? null : parseIrcTags(msg.params[2]);
 
 			var bouncerNetwork = _bouncerNetworkList.networks[bouncerNetId];
 			var networkMatches = _networkList.networks.where((network) {

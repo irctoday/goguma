@@ -104,8 +104,8 @@ class ConnectPageState extends State<ConnectPage> {
 	@override
 	Widget build(BuildContext context) {
 		String? serverErr = null, nicknameErr = null, passwordErr = null;
-		if (_error is IRCException) {
-			final ircErr = _error as IRCException;
+		if (_error is IrcException) {
+			final ircErr = _error as IrcException;
 			switch (ircErr.msg.cmd) {
 			case 'FAIL':
 				var code = ircErr.msg.params[1];
