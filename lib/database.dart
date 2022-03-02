@@ -92,7 +92,7 @@ class MessageEntry {
 	final int buffer;
 	final String raw;
 
-	IRCMessage? _msg;
+	IrcMessage? _msg;
 
 	Map<String, Object?> toMap() {
 		return <String, Object?>{
@@ -103,7 +103,7 @@ class MessageEntry {
 		};
 	}
 
-	MessageEntry(IRCMessage msg, this.buffer) :
+	MessageEntry(IrcMessage msg, this.buffer) :
 		time = msg.tags['time'] ?? formatIRCTime(DateTime.now()),
 		raw = msg.toString(),
 		_msg = msg;
@@ -114,8 +114,8 @@ class MessageEntry {
 		buffer = m['buffer'],
 		raw = m['raw'];
 
-	IRCMessage get msg {
-		return _msg ?? IRCMessage.parse(raw);
+	IrcMessage get msg {
+		return _msg ?? IrcMessage.parse(raw);
 	}
 }
 

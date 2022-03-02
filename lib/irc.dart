@@ -40,17 +40,17 @@ String formatIRCTime(DateTime dt) {
 	return DateTime.utc(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.millisecond).toIso8601String();
 }
 
-class IRCMessage {
+class IrcMessage {
 	final UnmodifiableMapView<String, String?> tags;
 	final IRCPrefix? prefix;
 	final String cmd;
 	final UnmodifiableListView<String> params;
 
-	IRCMessage(this.cmd, { Map<String, String?> tags = const {}, List<String> params = const [], this.prefix }) :
+	IrcMessage(this.cmd, { Map<String, String?> tags = const {}, List<String> params = const [], this.prefix }) :
 		this.tags = UnmodifiableMapView(tags),
 		this.params = UnmodifiableListView(params);
 
-	static IRCMessage parse(String s) {
+	static IrcMessage parse(String s) {
 		s = s.trim();
 
 		Map<String, String?> tags;
@@ -101,7 +101,7 @@ class IRCMessage {
 			}
 		}
 
-		return IRCMessage(cmd.toUpperCase(), tags: tags, params: params, prefix: prefix);
+		return IrcMessage(cmd.toUpperCase(), tags: tags, params: params, prefix: prefix);
 	}
 
 	String toString() {
@@ -249,7 +249,7 @@ class IRCPrefix {
 }
 
 class IRCException implements Exception {
-	final IRCMessage msg;
+	final IrcMessage msg;
 
 	IRCException(this.msg) {
 		assert(msg.isError());
@@ -271,7 +271,7 @@ class IRCCapRegistry {
 	UnmodifiableMapView get available => UnmodifiableMapView(_available);
 	UnmodifiableSetView get enabled => UnmodifiableSetView(_enabled);
 
-	void parse(IRCMessage msg) {
+	void parse(IrcMessage msg) {
 		assert(msg.cmd == 'CAP');
 
 		var subcommand = msg.params[1].toUpperCase();
@@ -526,7 +526,7 @@ class CtcpMessage {
 	CtcpMessage(String cmd, [ this.param ]) :
 		this.cmd = cmd.toUpperCase();
 
-	static CtcpMessage? parse(IRCMessage msg) {
+	static CtcpMessage? parse(IrcMessage msg) {
 		if (msg.cmd != 'PRIVMSG' && msg.cmd != 'NOTICE') {
 			return null;
 		}

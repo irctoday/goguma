@@ -446,7 +446,7 @@ class ClientController {
 		}
 	}
 
-	Future<void>? _handleChatMessages(String target, List<IRCMessage> messages) {
+	Future<void>? _handleChatMessages(String target, List<IrcMessage> messages) {
 		if (messages.length == 0) {
 			return null;
 		}

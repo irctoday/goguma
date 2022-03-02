@@ -320,7 +320,7 @@ class MessageModel {
 	}
 
 	int get id => entry.id!;
-	IRCMessage get msg => entry.msg;
+	IrcMessage get msg => entry.msg;
 }
 
 class MemberListModel extends ChangeNotifier {

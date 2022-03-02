@@ -128,7 +128,7 @@ class Client {
 			var lines = text.transform(const LineSplitter());
 
 			lines.listen((l) {
-				var msg = IRCMessage.parse(l);
+				var msg = IrcMessage.parse(l);
 				_handleMessage(msg);
 			}, onDone: () {
 				_log('Connection closed');
@@ -187,20 +187,20 @@ class Client {
 			caps.add('soju.im/bouncer-networks-notify');
 		}
 
-		send(IRCMessage('CAP', params: ['LS', '302']));
+		send(IrcMessage('CAP', params: ['LS', '302']));
 		if (params.pass != null) {
-			send(IRCMessage('PASS', params: [params.pass!]));
+			send(IrcMessage('PASS', params: [params.pass!]));
 		}
-		send(IRCMessage('NICK', params: [params.nick]));
-		send(IRCMessage('USER', params: [params.nick, '0', '*', params.nick]));
+		send(IrcMessage('NICK', params: [params.nick]));
+		send(IrcMessage('USER', params: [params.nick, '0', '*', params.nick]));
 		for (var cap in caps) {
-			send(IRCMessage('CAP', params: ['REQ', cap]));
+			send(IrcMessage('CAP', params: ['REQ', cap]));
 		}
 		_authenticate();
 		if (params.bouncerNetId != null) {
-			send(IRCMessage('BOUNCER', params: ['BIND', params.bouncerNetId!]));
+			send(IrcMessage('BOUNCER', params: ['BIND', params.bouncerNetId!]));
 		}
-		send(IRCMessage('CAP', params: ['END']));
+		send(IrcMessage('CAP', params: ['END']));
 
 		var saslSuccess = false;
 		return messages.firstWhere((msg) {
@@ -235,7 +235,7 @@ class Client {
 		});
 	}
 
-	_handleMessage(IRCMessage msg) {
+	_handleMessage(IrcMessage msg) {
 		_log('<- ' + msg.toString());
 
 		ClientBatch? msgBatch = null;
@@ -266,7 +266,7 @@ class Client {
 
 			for (var cap in _permanentCaps) {
 				if (caps.available.containsKey(cap) && !caps.enabled.contains(cap)) {
-					send(IRCMessage('CAP', params: ['REQ', cap]));
+					send(IrcMessage('CAP', params: ['REQ', cap]));
 				}
 			}
 			break;
@@ -284,7 +284,7 @@ class Client {
 			}
 			break;
 		case 'PING':
-			send(IRCMessage('PONG', params: msg.params));
+			send(IrcMessage('PONG', params: msg.params));
 			break;
 		case 'BATCH':
 			var kind = msg.params[0][0];
@@ -334,7 +334,7 @@ class Client {
 		_batchesController.close();
 	}
 
-	send(IRCMessage msg) {
+	send(IrcMessage msg) {
 		if (_socket == null) {
 			return;
 		}
@@ -357,16 +357,16 @@ class Client {
 		}
 
 		_log('Starting SASL PLAIN authentication');
-		send(IRCMessage('AUTHENTICATE', params: ['PLAIN']));
+		send(IrcMessage('AUTHENTICATE', params: ['PLAIN']));
 
 		var creds = params.saslPlain!;
 		var payload = [0, ...utf8.encode(creds.username), 0, ...utf8.encode(creds.password)];
-		send(IRCMessage('AUTHENTICATE', params: [base64.encode(payload)]));
+		send(IrcMessage('AUTHENTICATE', params: [base64.encode(payload)]));
 	}
 
 	Future<List<ChatHistoryTarget>> fetchChatHistoryTargets(String t1, String t2) {
 		// TODO: paging
-		send(IRCMessage(
+		send(IrcMessage(
 			'CHATHISTORY',
 			params: ['TARGETS', 'timestamp=' + t1, 'timestamp=' + t2, '100'],
 		));
@@ -385,7 +385,7 @@ class Client {
 	}
 
 	Future<ClientBatch> fetchChatHistoryBetween(String target, String t1, String t2, int limit) {
-		send(IRCMessage(
+		send(IrcMessage(
 			'CHATHISTORY',
 			params: ['BETWEEN', target, 'timestamp=' + t1, 'timestamp=' + t2, '$limit'],
 		));
@@ -398,7 +398,7 @@ class Client {
 
 	Future<void> ping() {
 		var token = 'goguma-${_nextPingSerial}';
-		send(IRCMessage('PING', params: [token]));
+		send(IrcMessage('PING', params: [token]));
 		_nextPingSerial++;
 
 		return messages.firstWhere((msg) {
@@ -410,7 +410,7 @@ class Client {
 	}
 
 	Future<void> fetchRead(String target) {
-		send(IRCMessage('READ', params: [target]));
+		send(IrcMessage('READ', params: [target]));
 
 		var cm = isupport.caseMapping;
 		return messages.firstWhere((msg) {
@@ -422,14 +422,14 @@ class Client {
 		if (!caps.enabled.containsAll(['server-time', 'soju.im/read'])) {
 			return;
 		}
-		send(IRCMessage('READ', params: [target, 'timestamp=' + t]));
+		send(IrcMessage('READ', params: [target, 'timestamp=' + t]));
 	}
 }
 
-class ClientMessage extends IRCMessage {
+class ClientMessage extends IrcMessage {
 	final ClientBatch? batch;
 
-	ClientMessage(IRCMessage msg, { this.batch }) :
+	ClientMessage(IrcMessage msg, { this.batch }) :
 		super(msg.cmd, params: msg.params, tags: msg.tags, prefix: msg.prefix);
 
 	ClientBatch? batchByType(String type) {
@@ -446,7 +446,7 @@ class ClientMessage extends IRCMessage {
 class ClientEndOfNames extends ClientMessage {
 	final UnmodifiableListView<ClientMessage> names;
 
-	ClientEndOfNames(IRCMessage msg, List<ClientMessage> names, { ClientBatch? batch }) :
+	ClientEndOfNames(IrcMessage msg, List<ClientMessage> names, { ClientBatch? batch }) :
 		this.names = UnmodifiableListView(names),
 		super(msg, batch: batch);
 }
