@@ -460,8 +460,10 @@ class ClientController {
 			return null;
 		}
 
+		var isNewBuffer = false;
 		Future<BufferModel> bufFuture;
 		if (!client.isChannel(target)) {
+			isNewBuffer = _bufferList.get(target, network) == null;
 			bufFuture = _createBuffer(target);
 		} else {
 			var buf = _bufferList.get(target, network);
@@ -500,6 +502,10 @@ class ClientController {
 				}
 
 				_bufferList.bumpLastDeliveredTime(buf, t);
+
+				if (isNewBuffer && !client.isChannel(buf.name)) {
+					fetchBufferUser(client, buf);
+				}
 			});
 		});
 	}
