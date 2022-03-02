@@ -406,6 +406,7 @@ class ClientController {
 			_bouncerNetworkList.add(bouncerNetwork);
 
 			if (childNetwork != null) {
+				childNetwork.bouncerNetwork = bouncerNetwork;
 				break;
 			}
 
