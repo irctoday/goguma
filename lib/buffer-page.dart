@@ -144,6 +144,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		var client = context.read<Client>();
 		var buffer = context.watch<BufferModel>();
 		var network = context.watch<NetworkModel>();
+		var subtitle = buffer.topic ?? buffer.realname;
 		var canSendMessage = network.state == NetworkState.synchronizing || network.state == NetworkState.online;
 		var isChannel = client.isChannel(buffer.name);
 		if (isChannel) {
@@ -158,8 +159,8 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 						crossAxisAlignment: CrossAxisAlignment.start,
 						children: [
 							Text(buffer.name, overflow: TextOverflow.fade),
-							if (buffer.topic != null) Text(
-								buffer.topic!,
+							if (subtitle != null) Text(
+								subtitle,
 								style: TextStyle(fontSize: 12.0),
 								overflow: TextOverflow.fade,
 							),

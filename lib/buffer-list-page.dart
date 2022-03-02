@@ -78,6 +78,7 @@ class BufferListPageState extends State<BufferListPage> {
 					db.storeBuffer(BufferEntry(name: name, network: network.networkId)).then((entry) {
 						var buffer = BufferModel(entry: entry, network: network);
 						context.read<BufferListModel>().add(buffer);
+						fetchBufferUser(client, buffer);
 					});
 				}
 			});
@@ -226,6 +227,7 @@ class BufferItem extends StatelessWidget {
 	@override
 	Widget build(BuildContext context) {
 		return Consumer<BufferModel>(builder: (context, buf, child) {
+			var subtitle = buf.topic ?? buf.realname;
 			return ListTile(
 				leading: CircleAvatar(child: Text(initials(buf.name))),
 				trailing: (buf.unreadCount == 0) ? null : Container(
@@ -242,7 +244,10 @@ class BufferItem extends StatelessWidget {
 					),
 				),
 				title: Text(buf.name, overflow: TextOverflow.ellipsis),
-				subtitle: buf.topic != null ? Text(buf.topic!, overflow: TextOverflow.fade, softWrap: false) : null,
+				subtitle: subtitle == null ? null : Text(subtitle,
+					overflow: TextOverflow.fade,
+					softWrap: false,
+				),
 				onTap: () {
 					Navigator.push(context, MaterialPageRoute(builder: (context) {
 						return buildBufferPage(context, buf);

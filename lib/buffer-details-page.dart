@@ -44,6 +44,14 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 			);
 		}
 
+		ListTile? realname;
+		if (buffer.realname != null) {
+			realname = ListTile(
+				title: Text(buffer.realname!),
+				leading: Icon(Icons.person),
+			);
+		}
+
 		SliverList? members;
 		int? membersCount;
 		if (buffer.members != null) {
@@ -89,6 +97,7 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 					SliverList(delegate: SliverChildListDelegate([
 						if (topic != null) topic,
 						if (topic != null) Divider(),
+						if (realname != null) realname,
 						ListTile(
 							title: Text(network.displayName),
 							leading: Icon(Icons.hub),

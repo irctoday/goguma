@@ -252,6 +252,14 @@ class ClientController {
 		case ERR_NOMOTD:
 			// These messages are used to indicate the end of the ISUPPORT list
 
+			// Send WHO commands for each user buffer we don't know the real
+			// name of
+			for (var buffer in _bufferList.buffers) {
+				if (buffer.network == network && !client.isChannel(buffer.name) && buffer.realname == null) {
+					fetchBufferUser(client, buffer);
+				}
+			}
+
 			List<Future> syncFutures = [];
 
 			// Query latest READ status for user targets
@@ -571,4 +579,28 @@ class ClientController {
 			}));
 		});
 	}
+}
+
+void fetchBufferUser(Client client, BufferModel buffer) {
+	// Dots usually indicate server names
+	if (buffer.name.contains('.')) {
+		return;
+	}
+	client.who(buffer.name).then((endOfWho) {
+		if (endOfWho.replies.length == 0) {
+			return; // User is offline
+		}
+		if (endOfWho.replies.length != 1) {
+			throw FormatException('Expected a single WHO reply, got ${endOfWho.replies.length}');
+		}
+		var reply = endOfWho.replies[0];
+		var hopCountRealname = reply.params[7];
+		var i = hopCountRealname.indexOf(' ');
+		if (i < 0) {
+			throw FormatException('Malformed WHO reply: no realname');
+		}
+		buffer.realname = hopCountRealname.substring(i + 1);
+	}).catchError((err) {
+		print('Failed to fetch WHO ${buffer.name}: $err');
+	});
 }
