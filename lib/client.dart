@@ -67,6 +67,8 @@ class Client {
 	DateTime? _lastConnectTime;
 	Map<String, ClientBatch> _batches = Map();
 	Map<String, List<ClientMessage>> _pendingNames = Map();
+	Future<void> _lastWhoFuture = Future.value(null);
+	List<ClientMessage> _pendingWhoReplies = [];
 
 	String get nick => _nick;
 	IrcPrefix? get serverPrefix => _serverPrefix;
@@ -318,6 +320,9 @@ class Client {
 			var channel = msg.params[2];
 			_pendingNames.putIfAbsent(channel, () => []).add(clientMsg);
 			break;
+		case RPL_WHOREPLY:
+			_pendingWhoReplies.add(clientMsg);
+			break;
 		}
 
 		if (!_messagesController.isClosed) {
@@ -424,6 +429,22 @@ class Client {
 		}
 		send(IrcMessage('READ', params: [target, 'timestamp=' + t]));
 	}
+
+	Future<ClientEndOfWho> who(String mask) {
+		var cm = isupport.caseMapping;
+		var future = _lastWhoFuture.catchError((_) => null).then((_) {
+			send(IrcMessage('WHO', params: [mask]));
+			return messages.firstWhere((msg) {
+				return msg.cmd == RPL_ENDOFWHO && cm(msg.params[1]) == cm(mask);
+			}).timeout(Duration(seconds: 30));
+		}).then((ClientMessage msg) {
+			var replies = _pendingWhoReplies;
+			_pendingWhoReplies = [];
+			return ClientEndOfWho(msg, replies, batch: msg.batch);
+		});
+		_lastWhoFuture = future;
+		return future;
+	}
 }
 
 class ClientMessage extends IrcMessage {
@@ -448,6 +469,14 @@ class ClientEndOfNames extends ClientMessage {
 
 	ClientEndOfNames(IrcMessage msg, List<ClientMessage> names, { ClientBatch? batch }) :
 		this.names = UnmodifiableListView(names),
+		super(msg, batch: batch);
+}
+
+class ClientEndOfWho extends ClientMessage {
+	final UnmodifiableListView<ClientMessage> replies;
+
+	ClientEndOfWho(IrcMessage msg, List<ClientMessage> replies, { ClientBatch? batch }) :
+		this.replies = UnmodifiableListView(replies),
 		super(msg, batch: batch);
 }
 
