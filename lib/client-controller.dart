@@ -460,17 +460,16 @@ class ClientController {
 			return null;
 		}
 
+		var buf = _bufferList.get(target, network);
 		var isNewBuffer = false;
 		Future<BufferModel> bufFuture;
-		if (!client.isChannel(target)) {
-			isNewBuffer = _bufferList.get(target, network) == null;
+		if (buf != null) {
+			bufFuture = Future.value(buf);
+		} else if (!client.isChannel(target)) {
+			isNewBuffer = true;
 			bufFuture = _createBuffer(target);
 		} else {
-			var buf = _bufferList.get(target, network);
-			if (buf == null) {
-				return null;
-			}
-			bufFuture = Future.value(buf);
+			return null;
 		}
 
 		return bufFuture.then((buf) {
