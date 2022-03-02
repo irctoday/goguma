@@ -48,7 +48,13 @@ class NetworkModel extends ChangeNotifier {
 	BouncerNetwork? get bouncerNetwork => _bouncerNetwork;
 
 	String get displayName {
-		return _upstreamName ?? bouncerNetwork?.name ?? serverEntry.host;
+		// If the user has set a custom bouncer network name, use that
+		var bouncerNetworkName = bouncerNetwork?.name;
+		var bouncerNetworkHost = bouncerNetwork?.host;
+		if (bouncerNetworkName != null && bouncerNetworkName != bouncerNetworkHost) {
+			return bouncerNetworkName;
+		}
+		return _upstreamName ?? bouncerNetwork?.host ?? serverEntry.host;
 	}
 
 	set state(NetworkState state) {
@@ -112,6 +118,7 @@ BouncerNetworkState _parseBouncerNetworkState(String s) {
 class BouncerNetwork extends ChangeNotifier {
 	final String id;
 	String? _name;
+	String? _host;
 	BouncerNetworkState _state = BouncerNetworkState.disconnected;
 
 	BouncerNetwork(this.id, Map<String, String?> attrs) {
@@ -119,6 +126,7 @@ class BouncerNetwork extends ChangeNotifier {
 	}
 
 	String? get name => _name;
+	String? get host => _host;
 	BouncerNetworkState get state => _state;
 
 	void setAttrs(Map<String, String?> attrs) {
@@ -126,6 +134,9 @@ class BouncerNetwork extends ChangeNotifier {
 			switch (kv.key) {
 			case 'name':
 				_name = kv.value;
+				break;
+			case 'host':
+				_host = kv.value;
 				break;
 			case 'state':
 				_state = _parseBouncerNetworkState(kv.value!);
