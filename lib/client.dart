@@ -192,6 +192,12 @@ class Client {
 			caps.add('soju.im/bouncer-networks-notify');
 		}
 
+		// Here we're trying to minimize the number of roundtrips as much as
+		// possible, because (1) we'll reconnect very regularly and (2) mobile
+		// networks can be pretty spotty. So we send in bulk all of the
+		// messages required to register the connection. We blindly request all
+		// caps we support to avoid waiting for the CAP LS reply.
+
 		send(IrcMessage('CAP', params: ['LS', '302']));
 		if (params.pass != null) {
 			send(IrcMessage('PASS', params: [params.pass!]));
