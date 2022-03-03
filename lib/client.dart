@@ -63,7 +63,7 @@ class Client {
 	StreamController<ClientState> _statesController = StreamController.broadcast();
 	StreamController<ClientBatch> _batchesController = StreamController.broadcast();
 	Timer? _reconnectTimer;
-	bool _autoReconnect = true;
+	bool _autoReconnect;
 	DateTime? _lastConnectTime;
 	Map<String, ClientBatch> _batches = Map();
 	Map<String, List<ClientMessage>> _pendingNames = Map();
@@ -77,7 +77,10 @@ class Client {
 	Stream<ClientState> get states => _statesController.stream;
 	Stream<ClientBatch> get batches => _batchesController.stream;
 
-	Client(this.params) : _id = _nextClientId++, _nick = params.nick;
+	Client(this.params, { bool autoReconnect = true }) :
+		_id = _nextClientId++,
+		_nick = params.nick,
+		_autoReconnect = autoReconnect;
 
 	Future<void> connect() {
 		_reconnectTimer?.cancel();

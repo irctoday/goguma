@@ -65,7 +65,7 @@ class ConnectPageState extends State<ConnectPage> {
 		// TODO: only connect once (but be careful not to loose messages
 		// sent immediately after RPL_WELCOME)
 		var clientParams = connectParamsFromServerEntry(serverEntry);
-		var client = Client(clientParams);
+		var client = Client(clientParams, autoReconnect: false);
 		client.connect().then((_) {
 			client.disconnect();
 			return db.storeServer(serverEntry);
