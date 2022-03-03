@@ -46,6 +46,13 @@ Build with:
 
 The built APK is in `build/app/outputs/flutter-apk/app-release.apk`.
 
+## Contributing
+
+Send patches to the [mailing list], report bugs on the [issue tracker].
+
+If you aren't familiar with `git send-email`, you can use the
+[web interface][git-send-email-web] to submit patches.
+
 ## License
 
 AGPLv3, see LICENSE.
@@ -54,3 +61,6 @@ Copyright (C) 2021 The goguma Contributors
 
 [goguma]: https://sr.ht/~emersion/goguma/
 [android-ci]: https://builds.sr.ht/~emersion/goguma/commits/android
+[mailing list]: https://lists.sr.ht/~emersion/public-inbox
+[issue tracker]: https://todo.sr.ht/~emersion/goguma
+[git-send-email-web]: https://man.sr.ht/git.sr.ht/#sending-patches-upstream
