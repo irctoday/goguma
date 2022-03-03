@@ -216,6 +216,7 @@ class Client {
 					throw Exception('Server doesn\'t support SASL authentication');
 				}
 				return true;
+			case 'ERROR':
 			case 'FAIL':
 			case ERR_NICKLOCKED:
 			case ERR_PASSWDMISMATCH:

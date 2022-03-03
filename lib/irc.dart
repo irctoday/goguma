@@ -129,6 +129,7 @@ class IrcMessage {
 
 	bool isError() {
 		switch (cmd) {
+		case 'ERROR':
 		case 'FAIL':
 		case ERR_NICKLOCKED:
 		case ERR_SASLFAIL:
