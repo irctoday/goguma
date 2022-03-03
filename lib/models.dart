@@ -281,7 +281,22 @@ class BufferModel extends ChangeNotifier {
 	String? get lastDeliveredTime => _lastDeliveredTime;
 	bool get messageHistoryLoaded => _messageHistoryLoaded;
 	MemberListModel? get members => _members;
-	String? get realname => _realname;
+
+	String? get realname {
+		if (_realname == null || _realname == name) {
+			return null;
+		}
+
+		// Since the realname is mandatory, many clients set a meaningless one.
+		switch (_realname!.toLowerCase()) {
+		case 'realname':
+		case 'unknown':
+		case 'fullname':
+			return null;
+		}
+
+		return _realname;
+	}
 
 	set topic(String? topic) {
 		_topic = topic;
