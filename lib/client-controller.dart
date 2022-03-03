@@ -550,6 +550,7 @@ class ClientController {
 					category: 'msg',
 					groupKey: 'fr.emersion.goguma.buffer.${entry.buffer}',
 					subText: subText,
+					when: entry.dateTime.millisecondsSinceEpoch,
 				),
 			), payload: 'buffer:${entry.buffer}');
 		}

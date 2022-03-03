@@ -117,6 +117,10 @@ class MessageEntry {
 	IrcMessage get msg {
 		return _msg ?? IrcMessage.parse(raw);
 	}
+
+	DateTime get dateTime {
+		return DateTime.parse(time);
+	}
 }
 
 class DB {
