@@ -399,16 +399,29 @@ class Client {
 		});
 	}
 
-	Future<ClientBatch> fetchChatHistoryBetween(String target, String t1, String t2, int limit) {
-		send(IrcMessage(
-			'CHATHISTORY',
-			params: ['BETWEEN', target, 'timestamp=' + t1, 'timestamp=' + t2, '$limit'],
-		));
+	Future<ClientBatch> _fetchChatHistory(String subcmd, String target, List<String> params) {
+		send(IrcMessage('CHATHISTORY', params: [subcmd, target, ...params]));
 
 		var cm = isupport.caseMapping;
 		return batches.firstWhere((batch) {
 			return batch.type == 'chathistory' && cm(batch.params[0]) == cm(target);
 		});
+	}
+
+	Future<ClientBatch> fetchChatHistoryBetween(String target, String t1, String t2, int limit) {
+		var params = ['timestamp=' + t1, 'timestamp=' + t2, '$limit'];
+		return _fetchChatHistory('BETWEEN', target, params);
+	}
+
+	Future<ClientBatch> fetchChatHistoryBefore(String target, String t, int limit) {
+		var params = ['timestamp=' + t, '$limit'];
+		return _fetchChatHistory('BEFORE', target, params);
+	}
+
+	Future<ClientBatch> fetchChatHistoryLatest(String target, String? t, int limit) {
+		var bound = t == null ? '*' : 'timestamp=' + t;
+		var params = [bound, '$limit'];
+		return _fetchChatHistory('LATEST', target, params);
 	}
 
 	Future<void> ping() {
