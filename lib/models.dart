@@ -324,12 +324,14 @@ class BufferModel extends ChangeNotifier {
 	}
 
 	void addMessage(MessageModel msg) {
+		assert(messageHistoryLoaded);
 		// TODO: insert at correct position
 		_messages.add(msg);
 		notifyListeners();
 	}
 
 	void populateMessageHistory(List<MessageModel> l) {
+		assert(!messageHistoryLoaded);
 		_messages = l + _messages;
 		_messageHistoryLoaded = true;
 		notifyListeners();
