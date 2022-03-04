@@ -475,13 +475,13 @@ class ClientController {
 		return bufFuture.then((buf) {
 			var entries = messages.map((msg) => MessageEntry(msg, buf.id)).toList();
 			return _db.storeMessages(entries).then((_) {
+				if (buf.messageHistoryLoaded) {
+					buf.addMessages(entries.map((entry) => MessageModel(entry: entry)));
+				}
+
 				String t = entries.first.time;
 				List<MessageEntry> unread = [];
 				for (var entry in entries) {
-					if (buf.messageHistoryLoaded) {
-						buf.addMessage(MessageModel(entry: entry));
-					}
-
 					if (entry.time.compareTo(t) > 0) {
 						t = entry.time;
 					}

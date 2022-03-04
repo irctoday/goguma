@@ -73,7 +73,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 				var entry = MessageEntry(msg, buffer.id);
 				context.read<DB>().storeMessages([entry]).then((_) {
 					if (buffer.messageHistoryLoaded) {
-						buffer.addMessage(MessageModel(entry: entry));
+						buffer.addMessages([MessageModel(entry: entry)]);
 					}
 					context.read<BufferListModel>().bumpLastDeliveredTime(buffer, entry.time);
 				});

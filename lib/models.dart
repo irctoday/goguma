@@ -323,10 +323,10 @@ class BufferModel extends ChangeNotifier {
 		notifyListeners();
 	}
 
-	void addMessage(MessageModel msg) {
+	void addMessages(Iterable<MessageModel> msgs) {
 		assert(messageHistoryLoaded);
 		// TODO: insert at correct position
-		_messages.add(msg);
+		_messages.addAll(msgs);
 		notifyListeners();
 	}
 
