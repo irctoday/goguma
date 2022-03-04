@@ -35,14 +35,18 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 	final composerFocusNode = FocusNode();
 	final composerFormKey = GlobalKey<FormState>();
 	final composerController = TextEditingController();
+	final scrollController = ScrollController();
 
 	bool _activated = true;
+	bool _chatHistoryLoading = false;
 
 	@override
 	void initState() {
 		super.initState();
 
 		WidgetsBinding.instance!.addObserver(this);
+
+		scrollController.addListener(_handleScroll);
 
 		var buffer = context.read<BufferModel>();
 		var future = Future.value();
@@ -52,6 +56,10 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 				buffer.populateMessageHistory(entries.map((entry) {
 					return MessageModel(entry: entry);
 				}).toList());
+
+				if (buffer.messages.length < 100) {
+					_fetchChatHistory();
+				}
 			});
 		}
 
@@ -89,9 +97,49 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		composerFocusNode.requestFocus();
 	}
 
+	void _handleScroll() {
+		if (scrollController.position.pixels == scrollController.position.maxScrollExtent) {
+			_fetchChatHistory();
+		}
+	}
+
+	void _fetchChatHistory() {
+		if (_chatHistoryLoading) {
+			return;
+		}
+
+		var buffer = context.read<BufferModel>();
+		var client = context.read<Client>();
+
+		if (!buffer.messageHistoryLoaded) {
+			return;
+		}
+
+		setState(() {
+			_chatHistoryLoading = true;
+		});
+
+		var limit = 100;
+		Future<void> future;
+		if (buffer.messages.length > 0) {
+			var t = buffer.messages.first.entry.time;
+			future = client.fetchChatHistoryBefore(buffer.name, t, limit);
+		} else {
+			future = client.fetchChatHistoryLatest(buffer.name, null, limit);
+		}
+
+		future.whenComplete(() {
+			setState(() {
+				_chatHistoryLoading = false;
+			});
+		}).ignore();
+	}
+
 	@override
 	void dispose() {
 		composerController.dispose();
+		scrollController.removeListener(_handleScroll);
+		scrollController.dispose();
 		WidgetsBinding.instance!.removeObserver(this);
 		super.dispose();
 	}
@@ -204,6 +252,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 			body: Column(children: [
 				Expanded(child: ListView.builder(
 					reverse: true,
+					controller: scrollController,
 					itemCount: messages.length,
 					itemBuilder: (context, index) {
 						var msgIndex = messages.length - index - 1;
