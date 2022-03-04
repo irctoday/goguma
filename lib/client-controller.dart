@@ -455,10 +455,12 @@ class ClientController {
 		}
 	}
 
-	Future<void>? _handleChatMessages(String target, List<IrcMessage> messages) {
+	Future<void>? _handleChatMessages(String target, List<ClientMessage> messages) {
 		if (messages.length == 0) {
 			return null;
 		}
+
+		var isHistory = messages.first.batchByType('chathistory') != null;
 
 		var buf = _bufferList.get(target, network);
 		var isNewBuffer = false;
@@ -476,7 +478,7 @@ class ClientController {
 			var entries = messages.map((msg) => MessageEntry(msg, buf.id)).toList();
 			return _db.storeMessages(entries).then((_) {
 				if (buf.messageHistoryLoaded) {
-					buf.addMessages(entries.map((entry) => MessageModel(entry: entry)));
+					buf.addMessages(entries.map((entry) => MessageModel(entry: entry)), append: !isHistory);
 				}
 
 				String t = entries.first.time;

@@ -323,16 +323,22 @@ class BufferModel extends ChangeNotifier {
 		notifyListeners();
 	}
 
-	void addMessages(Iterable<MessageModel> msgs) {
+	void addMessages(Iterable<MessageModel> msgs, { bool append = false }) {
 		assert(messageHistoryLoaded);
-		// TODO: insert at correct position
-		_messages.addAll(msgs);
+		if (append) {
+			_messages.addAll(msgs);
+		} else {
+			// TODO: optimize this case
+			_messages.addAll(msgs);
+			_messages.sort(_compareMessageModels);
+		}
 		notifyListeners();
 	}
 
 	void populateMessageHistory(List<MessageModel> l) {
 		assert(!messageHistoryLoaded);
 		assert(_messages.isEmpty);
+		// The messages passed here must be already sorted by the caller
 		_messages = l;
 		_messageHistoryLoaded = true;
 		notifyListeners();
@@ -346,6 +352,13 @@ class BufferModel extends ChangeNotifier {
 		notifyListeners();
 		return true;
 	}
+}
+
+int _compareMessageModels(MessageModel a, MessageModel b) {
+	if (a.entry.time != b.entry.time) {
+		return a.entry.time.compareTo(b.entry.time);
+	}
+	return a.id.compareTo(b.id);
 }
 
 class MessageModel {
