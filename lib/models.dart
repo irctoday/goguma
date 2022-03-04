@@ -332,7 +332,8 @@ class BufferModel extends ChangeNotifier {
 
 	void populateMessageHistory(List<MessageModel> l) {
 		assert(!messageHistoryLoaded);
-		_messages = l + _messages;
+		assert(_messages.isEmpty);
+		_messages = l;
 		_messageHistoryLoaded = true;
 		notifyListeners();
 	}
