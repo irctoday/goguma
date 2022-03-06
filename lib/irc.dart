@@ -46,7 +46,7 @@ class IrcMessage {
 	final String cmd;
 	final UnmodifiableListView<String> params;
 
-	IrcMessage(this.cmd, { Map<String, String?> tags = const {}, List<String> params = const [], this.source }) :
+	IrcMessage(this.cmd, List<String> params, { Map<String, String?> tags = const {}, this.source }) :
 		this.tags = UnmodifiableMapView(tags),
 		this.params = UnmodifiableListView(params);
 
@@ -101,7 +101,7 @@ class IrcMessage {
 			}
 		}
 
-		return IrcMessage(cmd.toUpperCase(), tags: tags, params: params, source: source);
+		return IrcMessage(cmd.toUpperCase(), params, tags: tags, source: source);
 	}
 
 	String toString() {

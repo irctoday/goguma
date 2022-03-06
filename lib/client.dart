@@ -198,20 +198,20 @@ class Client {
 		// messages required to register the connection. We blindly request all
 		// caps we support to avoid waiting for the CAP LS reply.
 
-		send(IrcMessage('CAP', params: ['LS', '302']));
+		send(IrcMessage('CAP', ['LS', '302']));
 		if (params.pass != null) {
-			send(IrcMessage('PASS', params: [params.pass!]));
+			send(IrcMessage('PASS', [params.pass!]));
 		}
-		send(IrcMessage('NICK', params: [params.nick]));
-		send(IrcMessage('USER', params: [params.nick, '0', '*', params.nick]));
+		send(IrcMessage('NICK', [params.nick]));
+		send(IrcMessage('USER', [params.nick, '0', '*', params.nick]));
 		for (var cap in caps) {
-			send(IrcMessage('CAP', params: ['REQ', cap]));
+			send(IrcMessage('CAP', ['REQ', cap]));
 		}
 		_authenticate();
 		if (params.bouncerNetId != null) {
-			send(IrcMessage('BOUNCER', params: ['BIND', params.bouncerNetId!]));
+			send(IrcMessage('BOUNCER', ['BIND', params.bouncerNetId!]));
 		}
-		send(IrcMessage('CAP', params: ['END']));
+		send(IrcMessage('CAP', ['END']));
 
 		var saslSuccess = false;
 		return messages.firstWhere((msg) {
@@ -278,7 +278,7 @@ class Client {
 
 			for (var cap in _permanentCaps) {
 				if (caps.available.containsKey(cap) && !caps.enabled.contains(cap)) {
-					send(IrcMessage('CAP', params: ['REQ', cap]));
+					send(IrcMessage('CAP', ['REQ', cap]));
 				}
 			}
 			break;
@@ -296,7 +296,7 @@ class Client {
 			}
 			break;
 		case 'PING':
-			send(IrcMessage('PONG', params: msg.params));
+			send(IrcMessage('PONG', msg.params));
 			break;
 		case 'BATCH':
 			var kind = msg.params[0][0];
@@ -372,18 +372,18 @@ class Client {
 		}
 
 		_log('Starting SASL PLAIN authentication');
-		send(IrcMessage('AUTHENTICATE', params: ['PLAIN']));
+		send(IrcMessage('AUTHENTICATE', ['PLAIN']));
 
 		var creds = params.saslPlain!;
 		var payload = [0, ...utf8.encode(creds.username), 0, ...utf8.encode(creds.password)];
-		send(IrcMessage('AUTHENTICATE', params: [base64.encode(payload)]));
+		send(IrcMessage('AUTHENTICATE', [base64.encode(payload)]));
 	}
 
 	Future<List<ChatHistoryTarget>> fetchChatHistoryTargets(String t1, String t2) {
 		// TODO: paging
 		send(IrcMessage(
 			'CHATHISTORY',
-			params: ['TARGETS', 'timestamp=' + t1, 'timestamp=' + t2, '100'],
+			['TARGETS', 'timestamp=' + t1, 'timestamp=' + t2, '100'],
 		));
 
 		// TODO: error handling
@@ -400,7 +400,7 @@ class Client {
 	}
 
 	Future<ClientBatch> _fetchChatHistory(String subcmd, String target, List<String> params) {
-		send(IrcMessage('CHATHISTORY', params: [subcmd, target, ...params]));
+		send(IrcMessage('CHATHISTORY', [subcmd, target, ...params]));
 
 		var cm = isupport.caseMapping;
 		return batches.firstWhere((batch) {
@@ -426,7 +426,7 @@ class Client {
 
 	Future<void> ping() {
 		var token = 'goguma-${_nextPingSerial}';
-		send(IrcMessage('PING', params: [token]));
+		send(IrcMessage('PING', [token]));
 		_nextPingSerial++;
 
 		return messages.firstWhere((msg) {
@@ -438,7 +438,7 @@ class Client {
 	}
 
 	Future<void> fetchRead(String target) {
-		send(IrcMessage('READ', params: [target]));
+		send(IrcMessage('READ', [target]));
 
 		var cm = isupport.caseMapping;
 		return messages.firstWhere((msg) {
@@ -450,13 +450,13 @@ class Client {
 		if (!caps.enabled.containsAll(['server-time', 'soju.im/read'])) {
 			return;
 		}
-		send(IrcMessage('READ', params: [target, 'timestamp=' + t]));
+		send(IrcMessage('READ', [target, 'timestamp=' + t]));
 	}
 
 	Future<ClientEndOfWho> who(String mask) {
 		var cm = isupport.caseMapping;
 		var future = _lastWhoFuture.catchError((_) => null).then((_) {
-			send(IrcMessage('WHO', params: [mask]));
+			send(IrcMessage('WHO', [mask]));
 			return messages.firstWhere((msg) {
 				return msg.cmd == RPL_ENDOFWHO && cm(msg.params[1]) == cm(mask);
 			}).timeout(Duration(seconds: 30));
@@ -474,7 +474,7 @@ class ClientMessage extends IrcMessage {
 	final ClientBatch? batch;
 
 	ClientMessage(IrcMessage msg, { this.batch }) :
-		super(msg.cmd, params: msg.params, tags: msg.tags, source: msg.source);
+		super(msg.cmd, msg.params, tags: msg.tags, source: msg.source);
 
 	ClientBatch? batchByType(String type) {
 		ClientBatch? batch = this.batch;

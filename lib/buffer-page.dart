@@ -73,11 +73,11 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 			var buffer = context.read<BufferModel>();
 			var client = context.read<Client>();
 
-			var msg = IrcMessage('PRIVMSG', params: [buffer.name, composerController.text]);
+			var msg = IrcMessage('PRIVMSG', [buffer.name, composerController.text]);
 			client.send(msg);
 
 			if (!client.caps.enabled.contains('echo-message')) {
-				msg = IrcMessage(msg.cmd, params: msg.params, source: IrcSource(client.nick));
+				msg = IrcMessage(msg.cmd, msg.params, source: IrcSource(client.nick));
 				var entry = MessageEntry(msg, buffer.id);
 				context.read<DB>().storeMessages([entry]).then((_) {
 					if (buffer.messageHistoryLoaded) {
@@ -232,7 +232,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 							case 'part':
 								var client = context.read<Client>();
 								if (client.isChannel(buffer.name)) {
-									client.send(IrcMessage('PART', params: [buffer.name]));
+									client.send(IrcMessage('PART', [buffer.name]));
 								}
 								context.read<BufferListModel>().remove(buffer);
 								context.read<DB>().deleteBuffer(buffer.entry.id!);
