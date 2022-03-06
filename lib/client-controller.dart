@@ -283,28 +283,28 @@ class ClientController {
 			break;
 		case 'JOIN':
 			var channel = msg.params[0];
-			if (client.isMyNick(msg.prefix!.name)) {
+			if (client.isMyNick(msg.source!.name)) {
 				return _createBuffer(channel).then((buffer) {
 					buffer.joined = true;
 				});
 			} else {
-				_bufferList.get(channel, network)?.members?.set(msg.prefix!.name, '');
+				_bufferList.get(channel, network)?.members?.set(msg.source!.name, '');
 				break;
 			}
 		case 'PART':
 			var channel = msg.params[0];
 			var buffer = _bufferList.get(channel, network);
-			if (client.isMyNick(msg.prefix!.name)) {
+			if (client.isMyNick(msg.source!.name)) {
 				buffer?.joined = false;
 				buffer?.members = null;
 			} else {
-				buffer?.members?.remove(msg.prefix!.name);
+				buffer?.members?.remove(msg.source!.name);
 			}
 			break;
 		case 'QUIT':
 			for (var buffer in _bufferList.buffers) {
 				if (buffer.network == network) {
-					buffer.members?.remove(msg.prefix!.name);
+					buffer.members?.remove(msg.source!.name);
 				}
 			}
 			break;
@@ -357,8 +357,8 @@ class ClientController {
 			}
 			// target can be my own nick for direct messages, "*" for server
 			// messages, "$xxx" for server-wide broadcasts
-			if (!client.isChannel(target) && !client.isMyNick(msg.prefix!.name)) {
-				target = msg.prefix!.name;
+			if (!client.isChannel(target) && !client.isMyNick(msg.source!.name)) {
+				target = msg.source!.name;
 			}
 			return _handleChatMessages(target, [msg]);
 		case 'BOUNCER':
@@ -488,7 +488,7 @@ class ClientController {
 						t = entry.time;
 					}
 
-					if (!client.isMyNick(entry.msg.prefix!.name) && (buf.entry.lastReadTime == null || buf.entry.lastReadTime!.compareTo(entry.time) < 0)) {
+					if (!client.isMyNick(entry.msg.source!.name) && (buf.entry.lastReadTime == null || buf.entry.lastReadTime!.compareTo(entry.time) < 0)) {
 						unread.add(entry);
 					}
 				}
@@ -516,7 +516,7 @@ class ClientController {
 			if (entry.msg.cmd != 'PRIVMSG' && entry.msg.cmd != 'NOTICE') {
 				continue;
 			}
-			if (client.isMyNick(entry.msg.prefix!.name)) {
+			if (client.isMyNick(entry.msg.source!.name)) {
 				continue;
 			}
 			if (buffer.lastDeliveredTime != null && buffer.lastDeliveredTime!.compareTo(entry.time) >= 0) {
@@ -524,12 +524,12 @@ class ClientController {
 			}
 			String title, channelId, channelName, channelDescription;
 			if (client.isMyNick(entry.msg.params[0])) {
-				title = 'New message from ${entry.msg.prefix!.name}';
+				title = 'New message from ${entry.msg.source!.name}';
 				channelId = 'privmsg';
 				channelName = 'Private messages';
 				channelDescription = 'Private messages sent directly to you';
 			} else if (findTextHighlight(entry.msg.params[1], client.nick)) {
-				title = '${entry.msg.prefix!.name} mentionned you in ${buffer.name}';
+				title = '${entry.msg.source!.name} mentionned you in ${buffer.name}';
 				channelId = 'highlight';
 				channelName = 'Mentions';
 				channelDescription = 'Messages mentionning your nickname in a channel';

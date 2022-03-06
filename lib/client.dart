@@ -57,7 +57,7 @@ class Client {
 	final int _id;
 	Socket? _socket;
 	String _nick;
-	IrcPrefix? _serverPrefix;
+	IrcSource? _serverSource;
 	ClientState _state = ClientState.disconnected;
 	StreamController<ClientMessage> _messagesController = StreamController.broadcast();
 	StreamController<ClientState> _statesController = StreamController.broadcast();
@@ -71,7 +71,7 @@ class Client {
 	List<ClientMessage> _pendingWhoReplies = [];
 
 	String get nick => _nick;
-	IrcPrefix? get serverPrefix => _serverPrefix;
+	IrcSource? get serverSource => _serverSource;
 	ClientState get state => _state;
 	Stream<ClientMessage> get messages => _messagesController.stream;
 	Stream<ClientState> get states => _statesController.stream;
@@ -284,14 +284,14 @@ class Client {
 			break;
 		case RPL_WELCOME:
 			_log('Registration complete');
-			_serverPrefix = msg.prefix;
+			_serverSource = msg.source;
 			_nick = msg.params[0];
 			break;
 		case RPL_ISUPPORT:
 			isupport.parse(msg.params.sublist(1, msg.params.length - 1));
 			break;
 		case 'NICK':
-			if (isMyNick(msg.prefix!.name)) {
+			if (isMyNick(msg.source!.name)) {
 				_nick = msg.params[0];
 			}
 			break;
@@ -442,7 +442,7 @@ class Client {
 
 		var cm = isupport.caseMapping;
 		return messages.firstWhere((msg) {
-			return msg.cmd == 'READ' && isMyNick(msg.prefix!.name) && cm(msg.params[0]) == cm(target);
+			return msg.cmd == 'READ' && isMyNick(msg.source!.name) && cm(msg.params[0]) == cm(target);
 		}).timeout(Duration(seconds: 15));
 	}
 
@@ -474,7 +474,7 @@ class ClientMessage extends IrcMessage {
 	final ClientBatch? batch;
 
 	ClientMessage(IrcMessage msg, { this.batch }) :
-		super(msg.cmd, params: msg.params, tags: msg.tags, prefix: msg.prefix);
+		super(msg.cmd, params: msg.params, tags: msg.tags, source: msg.source);
 
 	ClientBatch? batchByType(String type) {
 		ClientBatch? batch = this.batch;

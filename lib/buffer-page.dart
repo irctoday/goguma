@@ -77,7 +77,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 			client.send(msg);
 
 			if (!client.caps.enabled.contains('echo-message')) {
-				msg = IrcMessage(msg.cmd, params: msg.params, prefix: IrcPrefix(client.nick));
+				msg = IrcMessage(msg.cmd, params: msg.params, source: IrcSource(client.nick));
 				var entry = MessageEntry(msg, buffer.id);
 				context.read<DB>().storeMessages([entry]).then((_) {
 					if (buffer.messageHistoryLoaded) {
@@ -92,7 +92,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 	}
 
 	void _handleMessageSwipe(MessageModel msg) {
-		composerController.text = '${msg.msg.prefix!.name}: ';
+		composerController.text = '${msg.msg.source!.name}: ';
 		composerController.selection = TextSelection.collapsed(offset: composerController.text.length);
 		composerFocusNode.requestFocus();
 	}
@@ -326,9 +326,9 @@ class _MessageItem extends StatelessWidget {
 		var prevEntry = prevMsg?.entry;
 
 		var ctcp = CtcpMessage.parse(ircMsg);
-		var sender = ircMsg.prefix!.name;
+		var sender = ircMsg.source!.name;
 		var showUnreadMarker = prevEntry != null && unreadMarkerTime != null && unreadMarkerTime!.compareTo(entry.time) < 0 && unreadMarkerTime!.compareTo(prevEntry.time) >= 0;
-		var showSender = showUnreadMarker || prevIrcMsg == null || ircMsg.prefix!.name != prevIrcMsg.prefix!.name;
+		var showSender = showUnreadMarker || prevIrcMsg == null || ircMsg.source!.name != prevIrcMsg.source!.name;
 
 		var unreadMarkerColor = Theme.of(context).accentColor;
 

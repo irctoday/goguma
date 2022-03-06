@@ -42,11 +42,11 @@ String formatIrcTime(DateTime dt) {
 
 class IrcMessage {
 	final UnmodifiableMapView<String, String?> tags;
-	final IrcPrefix? prefix;
+	final IrcSource? source;
 	final String cmd;
 	final UnmodifiableListView<String> params;
 
-	IrcMessage(this.cmd, { Map<String, String?> tags = const {}, List<String> params = const [], this.prefix }) :
+	IrcMessage(this.cmd, { Map<String, String?> tags = const {}, List<String> params = const [], this.source }) :
 		this.tags = UnmodifiableMapView(tags),
 		this.params = UnmodifiableListView(params);
 
@@ -65,13 +65,13 @@ class IrcMessage {
 			tags = const {};
 		}
 
-		IrcPrefix? prefix = null;
+		IrcSource? source = null;
 		if (s.startsWith(':')) {
 			var i = s.indexOf(' ');
 			if (i < 0) {
-				throw FormatException('Expected a space after prefix');
+				throw FormatException('Expected a space after source');
 			}
-			prefix = IrcPrefix.parse(s.substring(1, i));
+			source = IrcSource.parse(s.substring(1, i));
 			s = s.substring(i + 1);
 		}
 
@@ -101,7 +101,7 @@ class IrcMessage {
 			}
 		}
 
-		return IrcMessage(cmd.toUpperCase(), tags: tags, params: params, prefix: prefix);
+		return IrcMessage(cmd.toUpperCase(), tags: tags, params: params, source: source);
 	}
 
 	String toString() {
@@ -109,8 +109,8 @@ class IrcMessage {
 		if (tags.length > 0) {
 			s += '@' + formatIrcTags(tags) + ' ';
 		}
-		if (prefix != null) {
-			s += ':' + prefix!.toString() + ' ';
+		if (source != null) {
+			s += ':' + source!.toString() + ' ';
 		}
 		s += cmd;
 		if (params.length > 0) {
@@ -212,17 +212,17 @@ String _unescapeTag(String s) {
 	});
 }
 
-class IrcPrefix {
+class IrcSource {
 	final String name;
 	final String? user;
 	final String? host;
 
-	IrcPrefix(this.name, { this.user, this.host });
+	IrcSource(this.name, { this.user, this.host });
 
-	static IrcPrefix parse(String s) {
+	static IrcSource parse(String s) {
 		var i = s.indexOf('@');
 		if (i < 0) {
-			return IrcPrefix(s);
+			return IrcSource(s);
 		}
 
 		var host = s.substring(i + 1);
@@ -230,12 +230,12 @@ class IrcPrefix {
 
 		i = s.indexOf('!');
 		if (i < 0) {
-			return IrcPrefix(s, host: host);
+			return IrcSource(s, host: host);
 		}
 
 		var name = s.substring(0, i);
 		var user = s.substring(i + 1);
-		return IrcPrefix(name, user: user, host: host);
+		return IrcSource(name, user: user, host: host);
 	}
 
 	String toString() {
