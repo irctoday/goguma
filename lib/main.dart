@@ -13,6 +13,7 @@ import 'app.dart';
 import 'client.dart';
 import 'client_controller.dart';
 import 'database.dart';
+import 'firebase.dart';
 import 'models.dart';
 import 'notification_controller.dart';
 import 'prefs.dart';
@@ -38,6 +39,7 @@ void _main() async {
 
 	WidgetsFlutterBinding.ensureInitialized();
 	await _initWorkManager();
+	await initFirebaseMessaging();
 
 	if (Platform.isAndroid) {
 		trustIsrgRootX1();

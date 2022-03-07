@@ -2,16 +2,19 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_background/flutter_background.dart';
 import 'package:workmanager/workmanager.dart';
 
 import 'client.dart';
 import 'database.dart';
+import 'firebase.dart';
 import 'irc.dart';
 import 'models.dart';
 import 'notification_controller.dart';
 import 'prefs.dart';
+import 'webpush.dart';
 
 ConnectParams connectParamsFromServerEntry(ServerEntry entry, Prefs prefs) {
 	var nick = entry.nick ?? prefs.nickname;
@@ -356,6 +359,10 @@ class ClientController {
 				client.monitor(l);
 			}
 
+			if (client.caps.enabled.contains('soju.im/webpush')) {
+				_setupPushSync();
+			}
+
 			List<Future<void>> syncFutures = [];
 
 			// Query latest READ status for user targets
@@ -691,6 +698,11 @@ class ClientController {
 	}
 
 	void _openNotifications(BufferModel buffer, List<MessageEntry> entries) async {
+		if (_isPushSupported()) {
+			// TODO: handle the case where push is supported but the
+			// subscription failed
+			return;
+		}
 		if (buffer.muted) {
 			return;
 		}
@@ -752,5 +764,57 @@ class ClientController {
 			var batch = await client.fetchChatHistoryBetween(target.name, from, to, max);
 			await _handleChatMessages(target.name, batch.messages);
 		}));
+	}
+
+	void _setupPushSync() async {
+		if (!_isPushSupported()) {
+			return;
+		}
+
+		print('Enabling push synchronization');
+
+		var subs = await _db.listWebPushSubscriptions();
+		var vapidKey = client.isupport.vapid;
+
+		WebPushSubscription? oldSub;
+		for (var sub in subs) {
+			if (sub.network == network.networkId) {
+				oldSub = sub;
+				break;
+			}
+		}
+
+		if (oldSub != null) {
+			// TODO: also unregister on Firebase token change
+
+			if (oldSub.vapidKey == vapidKey) {
+				// Refresh our subscription
+				await client.webPushRegister(oldSub.endpoint, oldSub.getPublicKeys());
+				return;
+			}
+
+			// TODO: delete our pushgarden subscription
+			await client.webPushUnregister(oldSub.endpoint);
+			await _db.deleteWebPushSubscription(oldSub.id!);
+		}
+
+		var endpoint = await createFirebaseSubscription(vapidKey);
+		var webPush = await WebPush.generate();
+		var config = await webPush.exportPrivateKeys();
+		var newSub = WebPushSubscription(
+			network: network.networkId,
+			endpoint: endpoint,
+			vapidKey: vapidKey,
+			p256dhPrivateKey: config.p256dhPrivateKey,
+			p256dhPublicKey: config.p256dhPublicKey,
+			authKey: config.authKey,
+		);
+
+		await client.webPushRegister(endpoint, config.getPublicKeys());
+		await _db.storeWebPushSubscription(newSub);
+	}
+
+	bool _isPushSupported() {
+		return client.caps.enabled.contains('soju.im/webpush') && Platform.isAndroid && FirebaseMessaging.instance.isSupported();
 	}
 }

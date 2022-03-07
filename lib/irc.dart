@@ -423,6 +423,7 @@ class IrcIsupportRegistry {
 	int? _topicLen, _nickLen, _realnameLen;
 	List<String>? _chanModes;
 	IrcIsupportElist? _elist;
+	String? _vapid;
 
 	String? get network => _network;
 	String get chanTypes => _chanTypes ?? '';
@@ -437,6 +438,7 @@ class IrcIsupportRegistry {
 	int? get realnameLen => _realnameLen;
 	List<String> get chanModes => UnmodifiableListView(_chanModes ?? ['beI', 'k', 'l', 'imnst']);
 	IrcIsupportElist? get elist => _elist;
+	String? get vapid => _vapid;
 
 	void parse(List<String> tokens) {
 		for (var tok in tokens) {
@@ -478,6 +480,9 @@ class IrcIsupportRegistry {
 					break;
 				case 'TOPIC':
 					_topicLen = null;
+					break;
+				case 'VAPID':
+					_vapid = null;
 					break;
 				case 'WHOX':
 					_whox = false;
@@ -560,6 +565,9 @@ class IrcIsupportRegistry {
 				}
 				_topicLen = int.parse(v);
 				break;
+			case 'VAPID':
+				_vapid = v;
+				break;
 			case 'WHOX':
 				_whox = true;
 				break;
@@ -580,6 +588,7 @@ class IrcIsupportRegistry {
 		_nickLen = null;
 		_realnameLen = null;
 		_elist = null;
+		_vapid = null;
 	}
 }
 

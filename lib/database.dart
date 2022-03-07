@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
 import 'package:path/path.dart';
@@ -139,6 +140,57 @@ class MessageEntry {
 	}
 }
 
+class WebPushSubscription {
+	int? id;
+	final int network;
+	final String endpoint;
+	final String? vapidKey;
+	final Uint8List p256dhPrivateKey;
+	final Uint8List p256dhPublicKey;
+	final Uint8List authKey;
+	final DateTime createdAt;
+
+	Map<String, Object?> toMap() {
+		return <String, Object?>{
+			'id': id,
+			'network': network,
+			'endpoint': endpoint,
+			'vapid_key': vapidKey,
+			'p256dh_private_key': p256dhPrivateKey,
+			'p256dh_public_key': p256dhPublicKey,
+			'auth_key': authKey,
+			'created_at': formatIrcTime(createdAt),
+		};
+	}
+
+	WebPushSubscription({
+		required this.network,
+		required this.endpoint,
+		required this.p256dhPrivateKey,
+		required this.p256dhPublicKey,
+		required this.authKey,
+		this.vapidKey,
+	}) :
+		createdAt = DateTime.now();
+
+	WebPushSubscription.fromMap(Map<String, dynamic> m) :
+		id = m['id'] as int,
+		network = m['network'] as int,
+		endpoint = m['endpoint'] as String,
+		vapidKey = m['vapid_key'] as String?,
+		p256dhPrivateKey = m['p256dh_private_key'] as Uint8List,
+		p256dhPublicKey = m['p256dh_public_key'] as Uint8List,
+		authKey = m['auth_key'] as Uint8List,
+		createdAt = DateTime.parse(m['created_at'] as String);
+
+	Map<String, Uint8List> getPublicKeys() {
+		return {
+			'p256dh': p256dhPublicKey,
+			'auth': authKey,
+		};
+	}
+}
+
 class DB {
 	final Database _db;
 
@@ -210,6 +262,20 @@ class DB {
 					CREATE INDEX index_message_buffer_time
 					ON Message(buffer, time);
 				''');
+				batch.execute('''
+					CREATE TABLE WebPushSubscription (
+						id INTEGER PRIMARY KEY,
+						network INTEGER NOT NULL,
+						endpoint TEXT NOT NULL,
+						vapid_key TEXT,
+						p256dh_public_key BLOB,
+						p256dh_private_key BLOB,
+						auth_key BLOB,
+						created_at TEXT NOT NULL,
+						FOREIGN KEY (network) REFERENCES Network(id) ON DELETE CASCADE,
+						UNIQUE(network, endpoint)
+					);
+				''');
 				await batch.commit();
 			},
 			onUpgrade: (db, prevVersion, newVersion) async {
@@ -242,12 +308,28 @@ class DB {
 						ALTER TABLE Buffer ADD COLUMN realname TEXT;
 					''');
 				}
+				if (prevVersion < 7) {
+					batch.execute('''
+						CREATE TABLE WebPushSubscription (
+							id INTEGER PRIMARY KEY,
+							network INTEGER NOT NULL,
+							endpoint TEXT NOT NULL,
+							vapid_key TEXT,
+							p256dh_public_key BLOB,
+							p256dh_private_key BLOB,
+							auth_key BLOB,
+							created_at TEXT NOT NULL,
+							FOREIGN KEY (network) REFERENCES Network(id) ON DELETE CASCADE,
+							UNIQUE(network, endpoint)
+						);
+					''');
+				}
 				await batch.commit();
 			},
 			onDowngrade: (_, prevVersion, newVersion) async {
 				throw Exception('Attempted to downgrade database from version $prevVersion to version $newVersion');
 			},
-			version: 6,
+			version: 7,
 		);
 		return DB._(db);
 	}
@@ -411,5 +493,26 @@ class DB {
 				}
 			}));
 		});
+	}
+
+	Future<List<WebPushSubscription>> listWebPushSubscriptions() async {
+		var entries = await _db.rawQuery('''
+			SELECT id, network, endpoint, vapid_key, p256dh_public_key,
+				p256dh_private_key, auth_key, created_at
+			FROM WebPushSubscription
+		''');
+		return entries.map((m) => WebPushSubscription.fromMap(m)).toList();
+	}
+
+	Future<void> storeWebPushSubscription(WebPushSubscription entry) async {
+		if (entry.id == null) {
+			entry.id = await _db.insert('WebPushSubscription', entry.toMap());
+		} else {
+			await _updateById('WebPushSubscription', entry.toMap());
+		}
+	}
+
+	Future<void> deleteWebPushSubscription(int id) async {
+		await _db.rawDelete('DELETE FROM WebPushSubscription WHERE id = ?', [id]);
 	}
 }

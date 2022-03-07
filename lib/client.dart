@@ -73,6 +73,7 @@ const _permanentCaps = [
 	'soju.im/bouncer-networks',
 	'soju.im/no-implicit-names',
 	'soju.im/read',
+	'soju.im/webpush',
 ];
 
 var _nextClientId = 0;
@@ -878,6 +879,23 @@ class Client {
 			return msg.cmd == 'SETNAME' && isMyNick(msg.source.name);
 		});
 		_params = _params.apply(realname: realname);
+	}
+
+	Future<void> webPushRegister(String endpoint, Map<String, List<int>> keys) {
+		Map<String, String> encodedKeys = Map.fromEntries(keys.entries.map((kv) {
+			return MapEntry(kv.key, base64Url.encode(kv.value));
+		}));
+		var msg = IrcMessage('WEBPUSH', ['REGISTER', endpoint, formatIrcTags(encodedKeys)]);
+		return _roundtripMessage(msg, (msg) {
+			return msg.cmd == 'WEBPUSH' && msg.params[0] == 'REGISTER' && msg.params[1] == endpoint;
+		});
+	}
+
+	Future<void> webPushUnregister(String endpoint) {
+		var msg = IrcMessage('WEBPUSH', ['UNREGISTER', endpoint]);
+		return _roundtripMessage(msg, (msg) {
+			return msg.cmd == 'WEBPUSH' && msg.params[0] == 'UNREGISTER' && msg.params[1] == endpoint;
+		});
 	}
 }
 
