@@ -69,6 +69,7 @@ class Client {
 	Map<String, List<ClientMessage>> _pendingNames = Map();
 	Future<void> _lastWhoFuture = Future.value(null);
 	List<ClientMessage> _pendingWhoReplies = [];
+	IrcNameMap<void> _monitored = IrcNameMap(defaultCaseMapping);
 
 	String get nick => _nick;
 	IrcSource? get serverSource => _serverSource;
@@ -125,6 +126,7 @@ class Client {
 				isupport.clear();
 				_batches.clear();
 				_pendingNames.clear();
+				_monitored.clear();
 
 				_setState(ClientState.disconnected);
 			});
@@ -289,6 +291,7 @@ class Client {
 			break;
 		case RPL_ISUPPORT:
 			isupport.parse(msg.params.sublist(1, msg.params.length - 1));
+			_monitored.setCaseMapping(isupport.caseMapping);
 			break;
 		case 'NICK':
 			if (isMyNick(msg.source!.name)) {
@@ -332,6 +335,12 @@ class Client {
 			break;
 		case RPL_WHOREPLY:
 			_pendingWhoReplies.add(clientMsg);
+			break;
+		case ERR_MONLISTFULL:
+			var targets = msg.params[2].split(',');
+			for (var name in targets) {
+				_monitored.remove(name);
+			}
 			break;
 		}
 
@@ -467,6 +476,37 @@ class Client {
 		});
 		_lastWhoFuture = future;
 		return future;
+	}
+
+	void monitor(Iterable<String> targets) {
+		var l = targets.where((name) => !_monitored.containsKey(name)).toList();
+		var limit = isupport.monitor;
+		if (limit == null) {
+			return;
+		} else if (_monitored.length + l.length > limit) {
+			l = l.sublist(0, limit - _monitored.length);
+		}
+
+		if (l.isEmpty) {
+			return;
+		}
+
+		send(IrcMessage('MONITOR', ['+', l.join(',')]));
+		for (var name in l) {
+			_monitored[name] = null;
+		}
+	}
+
+	void unmonitor(Iterable<String> targets) {
+		var l = targets.where((name) => _monitored.containsKey(name)).toList();
+		if (l.isEmpty) {
+			return;
+		}
+
+		send(IrcMessage('MONITOR', ['-', l.join(',')]));
+		for (var name in l) {
+			_monitored.remove(name);
+		}
 	}
 }
 
