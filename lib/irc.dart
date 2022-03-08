@@ -33,6 +33,10 @@ const ERR_SASLFAIL = '904';
 const ERR_SASLTOOLONG = '905';
 const ERR_SASLABORTED = '906';
 const ERR_SASLALREADY = '907';
+// IRCv3 MONITOR: https://ircv3.net/specs/extensions/monitor
+const RPL_MONONLINE = '730';
+const RPL_MONOFFLINE = '731';
+const ERR_MONLISTFULL = '734';
 
 String formatIrcTime(DateTime dt) {
 	dt = dt.toUtc();
@@ -342,12 +346,14 @@ class IrcIsupportRegistry {
 	String? _chanTypes;
 	String? _bouncerNetId;
 	final List<IrcIsupportMembership> _memberships = [];
+	int? _monitor;
 
 	String? get network => _network;
 	String get chanTypes => _chanTypes ?? '';
 	CaseMapping get caseMapping => _caseMapping ?? defaultCaseMapping;
 	String? get bouncerNetId => _bouncerNetId;
 	UnmodifiableListView<IrcIsupportMembership> get memberships => UnmodifiableListView(_memberships);
+	int? get monitor => _monitor;
 
 	void parse(List<String> tokens) {
 		tokens.forEach((tok) {
@@ -365,6 +371,9 @@ class IrcIsupportRegistry {
 					break;
 				case 'CHANTYPES':
 					_chanTypes = null;
+					break;
+				case 'MONITOR':
+					_monitor = null;
 					break;
 				case 'PREFIX':
 					_memberships.clear();
@@ -394,6 +403,9 @@ class IrcIsupportRegistry {
 			case 'CHANTYPES':
 				_chanTypes = v ?? '';
 				break;
+			case 'MONITOR':
+				_monitor = int.parse(v ?? '0');
+				break;
 			case 'PREFIX':
 				_memberships.clear();
 				if (v == null || v == '') {
@@ -422,6 +434,7 @@ class IrcIsupportRegistry {
 		_chanTypes = null;
 		_bouncerNetId = null;
 		_memberships.clear();
+		_monitor = null;
 	}
 }
 
