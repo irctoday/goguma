@@ -14,7 +14,7 @@ class JoinDialog extends StatefulWidget {
 
 class JoinDialogState extends State<JoinDialog> {
 	TextEditingController nameController = TextEditingController(text: '#');
-	NetworkModel? network;
+	late NetworkModel network;
 
 	@override
 	void initState() {
@@ -23,12 +23,12 @@ class JoinDialogState extends State<JoinDialog> {
 	}
 
 	void submit(BuildContext context) {
-		var client = context.read<ClientProvider>().get(network!);
+		var client = context.read<ClientProvider>().get(network);
 		var db = context.read<DB>();
 		var name = nameController.text;
 
-		db.storeBuffer(BufferEntry(name: name, network: network!.networkId)).then((entry) {
-			var buffer = BufferModel(entry: entry, network: network!);
+		db.storeBuffer(BufferEntry(name: name, network: network.networkId)).then((entry) {
+			var buffer = BufferModel(entry: entry, network: network);
 			context.read<BufferListModel>().add(buffer);
 
 			Navigator.pop(context);
@@ -70,7 +70,7 @@ class JoinDialogState extends State<JoinDialog> {
 					value: network,
 					onChanged: (NetworkModel? value) {
 						setState(() {
-							network = value;
+							network = value!;
 						});
 					},
 					items: networks.map((network) => DropdownMenuItem(
