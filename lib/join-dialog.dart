@@ -13,7 +13,7 @@ class JoinDialog extends StatefulWidget {
 }
 
 class JoinDialogState extends State<JoinDialog> {
-	TextEditingController nameController = TextEditingController(text: '#');
+	final TextEditingController nameController = TextEditingController(text: '#');
 	late NetworkModel network;
 
 	@override
