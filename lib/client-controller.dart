@@ -254,10 +254,18 @@ class ClientController {
 
 			// Send WHO commands for each user buffer we don't know the real
 			// name of
+			List<String> l = [];
 			for (var buffer in _bufferList.buffers) {
-				if (buffer.network == network && !client.isChannel(buffer.name) && buffer.realname == null) {
+				if (buffer.network != network || client.isChannel(buffer.name) || buffer.name.contains('.')) {
+					continue;
+				}
+				if (buffer.realname == null) {
 					fetchBufferUser(client, buffer);
 				}
+				l.add(buffer.name);
+			}
+			if (client.isupport.monitor != null) {
+				client.monitor(l);
 			}
 
 			List<Future> syncFutures = [];
@@ -443,6 +451,15 @@ class ClientController {
 			// TODO: recompute unread count from messages
 			buffer.unreadCount = 0;
 			return _db.storeBuffer(buffer.entry);
+		case RPL_MONONLINE:
+		case RPL_MONOFFLINE:
+			var online = msg.cmd == RPL_MONONLINE;
+			var targets = msg.params[1].split(',');
+			for (var raw in targets) {
+				var source = IrcSource.parse(raw);
+				_bufferList.get(source.name, network)?.online = online;
+			}
+			break;
 		}
 		return null;
 	}

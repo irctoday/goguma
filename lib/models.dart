@@ -263,6 +263,7 @@ class BufferModel extends ChangeNotifier {
 	List<MessageModel> _messages = [];
 	MemberListModel? _members;
 	String? _realname;
+	bool? _online;
 
 	// Kept in sync by BufferPageState
 	bool focused = false;
@@ -281,6 +282,7 @@ class BufferModel extends ChangeNotifier {
 	String? get lastDeliveredTime => _lastDeliveredTime;
 	bool get messageHistoryLoaded => _messageHistoryLoaded;
 	MemberListModel? get members => _members;
+	bool? get online => _online;
 
 	String? get realname {
 		if (_realname == null || _realname == name) {
@@ -320,6 +322,11 @@ class BufferModel extends ChangeNotifier {
 
 	set realname(String? realname) {
 		_realname = realname;
+		notifyListeners();
+	}
+
+	set online(bool? online) {
+		_online = online;
 		notifyListeners();
 	}
 

@@ -197,6 +197,8 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		var isChannel = client.isChannel(buffer.name);
 		if (isChannel) {
 			canSendMessage = canSendMessage && buffer.joined;
+		} else {
+			canSendMessage = canSendMessage && buffer.online != false;
 		}
 		var messages = buffer.messages;
 		return Scaffold(
@@ -233,6 +235,8 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 								var client = context.read<Client>();
 								if (client.isChannel(buffer.name)) {
 									client.send(IrcMessage('PART', [buffer.name]));
+								} else {
+									client.unmonitor([buffer.name]);
 								}
 								context.read<BufferListModel>().remove(buffer);
 								context.read<DB>().deleteBuffer(buffer.entry.id!);

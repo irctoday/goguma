@@ -79,6 +79,7 @@ class BufferListPageState extends State<BufferListPage> {
 						var buffer = BufferModel(entry: entry, network: network);
 						context.read<BufferListModel>().add(buffer);
 						fetchBufferUser(client, buffer);
+						client.monitor([name]);
 					});
 				}
 			});
