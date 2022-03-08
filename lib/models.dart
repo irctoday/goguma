@@ -255,18 +255,22 @@ class BufferListModel extends ChangeNotifier {
 class BufferModel extends ChangeNotifier {
 	final BufferEntry entry;
 	final NetworkModel network;
-	String? _topic;
-	bool _joined = false;
 	int _unreadCount = 0;
 	String? _lastDeliveredTime;
 	bool _messageHistoryLoaded = false;
 	List<MessageModel> _messages = [];
-	MemberListModel? _members;
-	String? _realname;
-	bool? _online;
 
 	// Kept in sync by BufferPageState
 	bool focused = false;
+
+	// For channels only
+	String? _topic;
+	bool _joined = false;
+	MemberListModel? _members;
+
+	// For users only
+	String? _realname;
+	bool? _online;
 
 	UnmodifiableListView<MessageModel> get messages => UnmodifiableListView(_messages);
 
@@ -276,12 +280,14 @@ class BufferModel extends ChangeNotifier {
 
 	int get id => entry.id!;
 	String get name => entry.name;
-	String? get topic => _topic;
-	bool get joined => _joined;
 	int get unreadCount => _unreadCount;
 	String? get lastDeliveredTime => _lastDeliveredTime;
 	bool get messageHistoryLoaded => _messageHistoryLoaded;
+
+	String? get topic => _topic;
+	bool get joined => _joined;
 	MemberListModel? get members => _members;
+
 	bool? get online => _online;
 
 	String? get realname {
