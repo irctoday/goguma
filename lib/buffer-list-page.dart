@@ -68,26 +68,8 @@ class BufferListPageState extends State<BufferListPage> {
 	}
 
 	void showJoinDialog(BuildContext context) {
-		showDialog(context: context, builder: (dialogContext) {
-			return JoinDialog(onSubmit: (name, network) {
-				var client = context.read<ClientProvider>().get(network);
-				var db = context.read<DB>();
-				db.storeBuffer(BufferEntry(name: name, network: network.networkId)).then((entry) {
-					var buffer = BufferModel(entry: entry, network: network);
-					context.read<BufferListModel>().add(buffer);
-
-					Navigator.push(context, MaterialPageRoute(builder: (context) {
-						return buildBufferPage(context, buffer);
-					}));
-
-					if (client.isChannel(name)) {
-						client.send(IrcMessage('JOIN', [name]));
-					} else {
-						fetchBufferUser(client, buffer);
-						client.monitor([name]);
-					}
-				});
-			});
+		showDialog(context: context, builder: (context) {
+			return JoinDialog();
 		});
 	}
 

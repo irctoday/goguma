@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'buffer-page.dart';
+import 'client-controller.dart';
+import 'database.dart';
+import 'irc.dart';
 import 'models.dart';
 
-typedef JoinDialogCallback(String, NetworkModel);
-
 class JoinDialog extends StatefulWidget {
-	final JoinDialogCallback? onSubmit;
-
-	JoinDialog({ Key? key, this.onSubmit }) : super(key: key);
-
 	@override
 	JoinDialogState createState() => JoinDialogState();
 }
@@ -25,8 +23,26 @@ class JoinDialogState extends State<JoinDialog> {
 	}
 
 	void submit(BuildContext context) {
-		widget.onSubmit?.call(nameController.text, network!);
-		Navigator.pop(context);
+		var client = context.read<ClientProvider>().get(network!);
+		var db = context.read<DB>();
+		var name = nameController.text;
+
+		db.storeBuffer(BufferEntry(name: name, network: network!.networkId)).then((entry) {
+			var buffer = BufferModel(entry: entry, network: network!);
+			context.read<BufferListModel>().add(buffer);
+
+			Navigator.pop(context);
+			Navigator.push(context, MaterialPageRoute(builder: (context) {
+				return buildBufferPage(context, buffer);
+			}));
+
+			if (client.isChannel(name)) {
+				client.send(IrcMessage('JOIN', [name]));
+			} else {
+				fetchBufferUser(client, buffer);
+				client.monitor([name]);
+			}
+		});
 	}
 
 	@override
