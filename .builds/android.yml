@@ -31,4 +31,4 @@ tasks:
       flutter build apk
   - analyze: |
       cd goguma
-      flutter analyze --no-fatal-infos
+      flutter analyze --no-fatal-infos || true
