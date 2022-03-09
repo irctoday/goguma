@@ -452,6 +452,8 @@ class ClientController {
 				break;
 			}
 
+			_notifController.cancelAllWithBuffer(buffer);
+
 			buffer.entry.lastReadTime = time;
 			// TODO: recompute unread count from messages
 			buffer.unreadCount = 0;

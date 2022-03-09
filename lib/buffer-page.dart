@@ -10,6 +10,7 @@ import 'irc.dart';
 import 'linkify.dart';
 import 'models.dart';
 import 'network-indicator.dart';
+import 'notification-controller.dart';
 import 'swipe-action.dart';
 
 Widget buildBufferPage(BuildContext context, BufferModel buf) {
@@ -177,6 +178,8 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 
 	void _markRead() {
 		var buffer = context.read<BufferModel>();
+		var notifController = context.read<NotificationController>();
+
 		if (buffer.unreadCount > 0 && buffer.messages.length > 0) {
 			buffer.entry.lastReadTime = buffer.messages.last.entry.time;
 			context.read<DB>().storeBuffer(buffer.entry);
@@ -187,6 +190,8 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 			}
 		}
 		buffer.unreadCount = 0;
+
+		notifController.cancelAllWithBuffer(buffer);
 	}
 
 	Iterable<String> _generateSuggestions(String text) {

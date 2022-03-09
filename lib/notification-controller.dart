@@ -7,7 +7,7 @@ import 'database.dart';
 import 'irc.dart';
 import 'models.dart';
 
-var nextId = 1;
+var _nextId = 1;
 
 class _NotificationChannel {
 	final String id;
@@ -17,9 +17,17 @@ class _NotificationChannel {
 	_NotificationChannel({ required this.id, required this.name, this.description });
 }
 
+class _ActiveNotification {
+	final int id;
+	final String payload;
+
+	_ActiveNotification(this.id, this.payload);
+}
+
 class NotificationController {
 	final FlutterLocalNotificationsPlugin _notifsPlugin = FlutterLocalNotificationsPlugin();
 	final StreamController<String?> _selectionsController = StreamController();
+	List<_ActiveNotification> _active = [];
 
 	Stream<String?> get selections => _selectionsController.stream;
 
@@ -42,6 +50,11 @@ class NotificationController {
 	}
 
 	void _handleSelectNotification(String? payload) {
+		// TODO: this removes too much, we should try to remove per ID instead,
+		// but we don't have it here...
+		if (payload != null) {
+			_cancelAllWithPayload(payload);
+		}
 		_selectionsController.add(payload);
 	}
 
@@ -75,8 +88,23 @@ class NotificationController {
 		);
 	}
 
+	void cancelAllWithBuffer(BufferModel buffer) {
+		_cancelAllWithPayload('buffer:${buffer.id}');
+	}
+
+	void _cancelAllWithPayload(String payload) {
+		_active = _active.where((notif) {
+			if (notif.payload != payload) {
+				return true;
+			}
+			_notifsPlugin.cancel(notif.id).ignore();
+			return false;
+		}).toList();
+	}
+
 	void _show({ required String title, required String body, String? subText, required _NotificationChannel channel, required String payload, DateTime? dateTime }) {
-		_notifsPlugin.show(nextId++, title, body, NotificationDetails(
+		var id = _nextId++;
+		_notifsPlugin.show(id, title, body, NotificationDetails(
 			linux: LinuxNotificationDetails(
 				category: LinuxNotificationCategory.imReceived(),
 			),
@@ -89,5 +117,6 @@ class NotificationController {
 				when: dateTime?.millisecondsSinceEpoch,
 			),
 		), payload: payload);
+		_active.add(_ActiveNotification(id, payload));
 	}
 }
