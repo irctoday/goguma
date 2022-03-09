@@ -29,3 +29,6 @@ tasks:
   - build: |
       cd goguma
       flutter build apk
+  - analyze: |
+      cd goguma
+      flutter analyze --no-fatal-infos
