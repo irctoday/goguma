@@ -101,9 +101,17 @@ class _RefreshIndicator extends StatefulWidget {
 }
 
 class _RefreshIndicatorState extends State<_RefreshIndicator> with SingleTickerProviderStateMixin<_RefreshIndicator> {
-	late final AnimationController _scaleController = AnimationController(vsync: this, duration: Duration(milliseconds: 200));
-	late final Animation<double> _scale = _scaleController.drive(Tween<double>(begin: 0.0, end: 1.0));
+	late final AnimationController _scaleController;
+	late final Animation<double> _scale;
 	bool _loading = false;
+
+	@override
+	void initState() {
+		super.initState();
+
+		_scaleController = AnimationController(vsync: this, duration: Duration(milliseconds: 200));
+		_scale = _scaleController.drive(Tween<double>(begin: 0.0, end: 1.0));
+	}
 
 	@override
 	void dispose() {
