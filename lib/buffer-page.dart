@@ -8,6 +8,7 @@ import 'database.dart';
 import 'irc.dart';
 import 'linkify.dart';
 import 'models.dart';
+import 'network-indicator.dart';
 import 'swipe-action.dart';
 
 Widget buildBufferPage(BuildContext context, BufferModel buf) {
@@ -253,7 +254,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 					),
 				],
 			),
-			body: Column(children: [
+			body: NetworkIndicator(network: network, child: Column(children: [
 				Expanded(child: ListView.builder(
 					reverse: true,
 					controller: scrollController,
@@ -305,7 +306,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 						),
 					])),
 				)),
-			]),
+			])),
 		);
 	}
 }

@@ -49,6 +49,47 @@ class _NetworkListIndicatorState extends State<NetworkListIndicator> {
 	}
 }
 
+class NetworkIndicator extends StatefulWidget {
+	final Widget child;
+	final NetworkModel network;
+
+	NetworkIndicator({ Key? key, required this.child, required this.network }) : super(key: key);
+
+	@override
+	_NetworkIndicatorState createState() => _NetworkIndicatorState();
+}
+
+class _NetworkIndicatorState extends State<NetworkIndicator> {
+	final _refreshIndicatorKey = GlobalKey<_RefreshIndicatorState>();
+
+	@override
+	void initState() {
+		super.initState();
+		widget.network.addListener(_handleNetworkChange);
+	}
+
+	@override
+	void dispose() {
+		widget.network.removeListener(_handleNetworkChange);
+		super.dispose();
+	}
+
+	void _handleNetworkChange() {
+		var state = widget.network.state;
+		var loading = state != NetworkState.offline && state != NetworkState.online;
+		_refreshIndicatorKey.currentState!.setLoading(loading);
+	}
+
+	@override
+	Widget build(BuildContext context) {
+		return _RefreshIndicator(
+			key: _refreshIndicatorKey,
+			semanticsLabel: 'Synchronizing…',
+			child: widget.child,
+		);
+	}
+}
+
 class _RefreshIndicator extends StatefulWidget {
 	final Widget child;
 	final String? semanticsLabel;
