@@ -39,7 +39,7 @@ class NotificationController {
 			var androidPlugin = _notifsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 			return androidPlugin?.getActiveNotifications() ?? Future.value(null);
 		}).then((List<ActiveNotification>? activeNotifs) {
-			for (var notif in activeNotifs ?? []) {
+			for (var notif in activeNotifs ?? <ActiveNotification>[]) {
 				// We can't get back the payload here, so we (ab)use the
 				// Android tag to store the payload
 				var payload = notif.tag;

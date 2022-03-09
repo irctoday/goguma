@@ -82,7 +82,7 @@ class NetworkModel extends ChangeNotifier {
 class BouncerNetworkListModel extends ChangeNotifier {
 	Map<String, BouncerNetwork> _networks = Map();
 
-	UnmodifiableMapView get networks => UnmodifiableMapView(_networks);
+	UnmodifiableMapView<String, BouncerNetwork> get networks => UnmodifiableMapView(_networks);
 
 	void add(BouncerNetwork network) {
 		_networks[network.id] = network;

@@ -273,8 +273,8 @@ class IrcCapRegistry {
 	Map<String, String?> _available = Map();
 	Set<String> _enabled = Set();
 
-	UnmodifiableMapView get available => UnmodifiableMapView(_available);
-	UnmodifiableSetView get enabled => UnmodifiableSetView(_enabled);
+	UnmodifiableMapView<String, String?> get available => UnmodifiableMapView(_available);
+	UnmodifiableSetView<String> get enabled => UnmodifiableSetView(_enabled);
 
 	void parse(IrcMessage msg) {
 		assert(msg.cmd == 'CAP');
@@ -383,7 +383,8 @@ class IrcIsupportRegistry {
 			}
 
 			var i = tok.indexOf('=');
-			var k = tok, v = null;
+			var k = tok;
+			String? v;
 			if (i >= 0) {
 				k = tok.substring(0, i);
 				v = tok.substring(i + 1);
@@ -448,7 +449,7 @@ class IrcIsupportMembership {
 typedef String CaseMapping(String s);
 
 CaseMapping? _caseMappingByName(String s) {
-	var caseMapChar;
+	CaseMapping caseMapChar;
 	switch (s) {
 	case 'ascii':
 		caseMapChar = _caseMapCharAscii;
@@ -462,7 +463,7 @@ CaseMapping? _caseMappingByName(String s) {
 	default:
 		return null;
 	}
-	return (s) => s.split('').map(caseMapChar).join('');
+	return (String s) => s.split('').map(caseMapChar).join('');
 }
 
 String _caseMapCharRfc1459(String ch) {

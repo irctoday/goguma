@@ -32,13 +32,13 @@ class ServerEntry {
 	ServerEntry({ required this.host, this.port, this.tls = true, this.nick, this.pass, this.saslPlainPassword });
 
 	ServerEntry.fromMap(Map<String, dynamic> m) :
-		id = m['id'],
-		host = m['host'],
-		port = m['port'],
+		id = m['id'] as int,
+		host = m['host'] as String,
+		port = m['port'] as int?,
 		tls = m['tls'] != 0,
-		nick = m['nick'],
-		pass = m['pass'],
-		saslPlainPassword = m['sasl_plain_password'];
+		nick = m['nick'] as String?,
+		pass = m['pass'] as String?,
+		saslPlainPassword = m['sasl_plain_password'] as String?;
 }
 
 class NetworkEntry {
@@ -57,9 +57,9 @@ class NetworkEntry {
 	NetworkEntry({ required this.server, this.bouncerId });
 
 	NetworkEntry.fromMap(Map<String, dynamic> m) :
-		id = m['id'],
-		server = m['server'],
-		bouncerId = m['bouncer_id'];
+		id = m['id'] as int,
+		server = m['server'] as int,
+		bouncerId = m['bouncer_id'] as String?;
 }
 
 class BufferEntry {
@@ -80,10 +80,10 @@ class BufferEntry {
 	BufferEntry({ required this.name, required this.network });
 
 	BufferEntry.fromMap(Map<String, dynamic> m) :
-		id = m['id'],
-		name = m['name'],
-		network = m['network'],
-		lastReadTime = m['last_read_time'];
+		id = m['id'] as int,
+		name = m['name'] as String,
+		network = m['network'] as int,
+		lastReadTime = m['last_read_time'] as String?;
 }
 
 class MessageEntry {
@@ -109,10 +109,10 @@ class MessageEntry {
 		_msg = msg;
 
 	MessageEntry.fromMap(Map<String, dynamic> m) :
-		id = m['id'],
-		time = m['time'],
-		buffer = m['buffer'],
-		raw = m['raw'];
+		id = m['id'] as int,
+		time = m['time'] as String,
+		buffer = m['buffer'] as int,
+		raw = m['raw'] as String;
 
 	IrcMessage get msg {
 		return _msg ?? IrcMessage.parse(raw);
@@ -334,8 +334,8 @@ class DB {
 		''').then((entries) {
 			return Map<int, int>.fromIterable(
 				entries,
-				key: (m) => m['buffer'],
-				value: (m) => m['unread_count'],
+				key: (m) => m['buffer'] as int,
+				value: (m) => m['unread_count'] as int,
 			);
 		});
 	}
@@ -348,8 +348,8 @@ class DB {
 		''').then((entries) {
 			return Map<int, String>.fromIterable(
 				entries,
-				key: (m) => m['buffer'],
-				value: (m) => m['time'],
+				key: (m) => m['buffer'] as int,
+				value: (m) => m['time'] as String,
 			);
 		});
 	}

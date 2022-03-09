@@ -218,12 +218,12 @@ class ClientController {
 	}
 
 	String? _getLastDeliveredTime() {
-		var last = null;
+		String? last = null;
 		for (var buffer in _bufferList.buffers) {
 			if (buffer.network != network || buffer.lastDeliveredTime == null) {
 				continue;
 			}
-			if (last == null || last!.compareTo(buffer.lastDeliveredTime!) < 0) {
+			if (last == null || last.compareTo(buffer.lastDeliveredTime!) < 0) {
 				last = buffer.lastDeliveredTime;
 			}
 		}

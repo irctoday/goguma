@@ -107,7 +107,7 @@ class Client {
 			);
 		}
 
-		return socketFuture.catchError((err) {
+		return socketFuture.catchError((Object err) {
 			_log('Connection failed: ' + err.toString());
 			_setState(ClientState.disconnected);
 			throw err;
@@ -115,7 +115,7 @@ class Client {
 			_log('Connection opened');
 			_socket = socket;
 
-			socket.done.catchError((err) {
+			socket.done.catchError((Object err) {
 				_log('Connection error: ' + err.toString());
 				_messagesController.addError(err);
 				_statesController.addError(err);
