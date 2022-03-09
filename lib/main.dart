@@ -22,6 +22,8 @@ import 'notification-controller.dart';
 const _debugWorkManager = false;
 const _resetWorkManager = false;
 
+const _themeMode = ThemeMode.system;
+
 void main() {
 	var syncReceivePort = ReceivePort('main:sync');
 	IsolateNameServer.registerPortWithName(syncReceivePort.sendPort, 'main:sync');
@@ -344,6 +346,8 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 		return MaterialApp(
 			title: 'Goguma',
 			theme: ThemeData(primarySwatch: Colors.indigo),
+			darkTheme: ThemeData(brightness: Brightness.dark, colorSchemeSeed: Colors.indigo),
+			themeMode: _themeMode,
 			home: home,
 			navigatorKey: _navigatorKey,
 			scaffoldMessengerKey: _scaffoldMessengerKey,

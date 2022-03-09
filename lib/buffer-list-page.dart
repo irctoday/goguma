@@ -59,8 +59,8 @@ class BufferListPageState extends State<BufferListPage> {
 				hintText: 'Search...',
 				border: InputBorder.none,
 			),
-			style: Theme.of(context).accentTextTheme.bodyText2,
-			cursorColor: Theme.of(context).accentTextTheme.bodyText2?.color,
+			style: TextStyle(color: Colors.white),
+			cursorColor: Colors.white,
 			onChanged: search,
 		);
 	}
@@ -136,7 +136,13 @@ class BufferListPageState extends State<BufferListPage> {
 		return Scaffold(
 			appBar: AppBar(
 				leading: searchQuery != null ? CloseButton() : null,
-				title: searchQuery != null ? buildSearchField(context) : Text('Goguma'),
+				title: Builder(builder: (context) {
+					if (searchQuery != null) {
+						return buildSearchField(context);
+					} else {
+						return Text('Goguma');
+					}
+				}),
 				actions: searchQuery != null ? null : [
 					IconButton(
 						tooltip: 'Search',

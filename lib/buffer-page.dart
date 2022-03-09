@@ -409,7 +409,7 @@ class _MessageItem extends StatelessWidget {
 		if (client.isMyNick(sender)) {
 			boxColor = Colors.grey[200]!;
 			boxAlignment = Alignment.centerRight;
-			textStyle = DefaultTextStyle.of(context).style;
+			textStyle = DefaultTextStyle.of(context).style.apply(color: boxColor.computeLuminance() > 0.5 ? Colors.black : Colors.white);
 		}
 
 		const margin = 16.0;
