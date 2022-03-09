@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'buffer-page.dart';
-import 'client.dart';
 import 'client-controller.dart';
 import 'connect-page.dart';
 import 'database.dart';
-import 'irc.dart';
 import 'join-dialog.dart';
 import 'models.dart';
 import 'network-indicator.dart';
