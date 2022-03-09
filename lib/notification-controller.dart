@@ -46,6 +46,9 @@ class NotificationController {
 				if (payload != null) {
 					_active.add(_ActiveNotification(notif.id, payload));
 				}
+				if (_nextId <= notif.id) {
+					_nextId = notif.id + 1;
+				}
 			}
 
 			if (Platform.isAndroid) {
