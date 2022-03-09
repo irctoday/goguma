@@ -141,9 +141,13 @@ class _RefreshIndicatorState extends State<_RefreshIndicator> with SingleTickerP
 
 	@override
 	Widget build(BuildContext context) {
+		if (!_loading) {
+			return widget.child;
+		}
+
 		return Stack(children: [
 			widget.child,
-			if (_loading) Container(
+			Container(
 				padding: EdgeInsets.only(top: 20),
 				alignment: Alignment.topCenter,
 				child: ScaleTransition(
