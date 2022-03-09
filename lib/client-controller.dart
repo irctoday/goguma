@@ -316,6 +316,11 @@ class ClientController {
 				}
 			}
 			break;
+		case 'KICK':
+			var channel = msg.params[0];
+			var nick = msg.params[1];
+			_bufferList.get(channel, network)?.members?.remove(nick);
+			break;
 		case 'MODE':
 			// TODO: update memberships
 			break;
