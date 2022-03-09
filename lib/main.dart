@@ -5,7 +5,6 @@ import 'dart:ui';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
 import 'package:workmanager/workmanager.dart';
 
@@ -17,6 +16,7 @@ import 'connect-page.dart';
 import 'database.dart';
 import 'models.dart';
 import 'network-state-aggregator.dart';
+import 'notification-controller.dart';
 
 // Debugging knobs for work manager.
 const _debugWorkManager = false;
@@ -29,7 +29,7 @@ void main() {
 	WidgetsFlutterBinding.ensureInitialized();
 	_initWorkManager();
 
-	var notifsPlugin = FlutterLocalNotificationsPlugin();
+	var notifController = NotificationController();
 
 	List<ServerEntry> serverEntries = [];
 	List<NetworkEntry> networkEntries = [];
@@ -53,7 +53,7 @@ void main() {
 			networkList: networkList,
 			bufferList: bufferList,
 			bouncerNetworkList: bouncerNetworkList,
-			notifsPlugin: notifsPlugin,
+			notifController: notifController,
 		);
 
 		Map<int, ServerEntry> serverMap = Map.fromEntries(serverEntries.map((entry) {
@@ -119,7 +119,7 @@ void main() {
 			providers: [
 				Provider<DB>.value(value: db),
 				Provider<ClientProvider>.value(value: clientProvider),
-				Provider<FlutterLocalNotificationsPlugin>.value(value: notifsPlugin),
+				Provider<NotificationController>.value(value: notifController),
 				ChangeNotifierProvider<NetworkListModel>.value(value: networkList),
 				ChangeNotifierProvider<BufferListModel>.value(value: bufferList),
 				ChangeNotifierProvider<BouncerNetworkListModel>.value(value: bouncerNetworkList),
@@ -195,6 +195,7 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 	final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey(debugLabel: 'main-scaffold-messenger');
 	late StreamSubscription _clientErrorSub;
 	late StreamSubscription _connectivitySub;
+	late StreamSubscription _notifSelectionSub;
 	late NetworkStateAggregator _networkStateAggregator;
 
 	@override
@@ -207,22 +208,9 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 			_enablePingTimer();
 		}
 
-		var notifsPlugin = context.read<FlutterLocalNotificationsPlugin>();
-		notifsPlugin.initialize(InitializationSettings(
-			linux: LinuxInitializationSettings(defaultActionName: 'Open'),
-			android: AndroidInitializationSettings('ic_stat_name'),
-		), onSelectNotification: _handleSelectNotification).then((_) {
-			if (Platform.isAndroid) {
-				return notifsPlugin.getNotificationAppLaunchDetails();
-			} else {
-				return Future.value(null);
-			}
-		}).then((NotificationAppLaunchDetails? details) {
-			if (details == null || !details.didNotificationLaunchApp) {
-				return;
-			}
-			_handleSelectNotification(details.payload);
-		});
+		var notifController = context.read<NotificationController>();
+		notifController.initialize().then(_handleSelectNotification);
+		_notifSelectionSub = notifController.selections.listen(_handleSelectNotification);
 
 		var clientProvider = context.read<ClientProvider>();
 		_clientErrorSub = clientProvider.errors.listen((err) {
@@ -247,6 +235,7 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 		_pingTimer?.cancel();
 		_clientErrorSub.cancel();
 		_connectivitySub.cancel();
+		_notifSelectionSub.cancel();
 		_networkStateAggregator.removeListener(_handleNetworkStateChange);
 		_networkStateAggregator.dispose();
 		super.dispose();

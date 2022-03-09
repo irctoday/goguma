@@ -4,13 +4,13 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_background/flutter_background.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:workmanager/workmanager.dart';
 
 import 'client.dart';
 import 'database.dart';
 import 'irc.dart';
 import 'models.dart';
+import 'notification-controller.dart';
 
 ConnectParams connectParamsFromServerEntry(ServerEntry entry) {
 	SaslPlainCredentials? saslPlain = null;
@@ -37,7 +37,7 @@ class ClientProvider {
 	final NetworkListModel _networkList;
 	final BufferListModel _bufferList;
 	final BouncerNetworkListModel _bouncerNetworkList;
-	final FlutterLocalNotificationsPlugin _notifsPlugin;
+	final NotificationController _notifController;
 
 	final ValueNotifier<bool> needBackgroundServicePermissions = ValueNotifier(false);
 
@@ -47,12 +47,12 @@ class ClientProvider {
 	Stream<IrcException> get errors => _errorsController.stream;
 	Stream<NetworkModel> get networkStates => _networkStatesController.stream;
 
-	ClientProvider({ required DB db, required NetworkListModel networkList, required BufferListModel bufferList, required BouncerNetworkListModel bouncerNetworkList, required FlutterLocalNotificationsPlugin notifsPlugin }) :
+	ClientProvider({ required DB db, required NetworkListModel networkList, required BufferListModel bufferList, required BouncerNetworkListModel bouncerNetworkList, required NotificationController notifController }) :
 		_db = db,
 		_networkList = networkList,
 		_bufferList = bufferList,
 		_bouncerNetworkList = bouncerNetworkList,
-		_notifsPlugin = notifsPlugin;
+		_notifController = notifController;
 
 	void add(Client client, NetworkModel network) {
 		_controllers[network] = ClientController(this, client, network);
@@ -170,7 +170,7 @@ class ClientController {
 	NetworkListModel get _networkList => _provider._networkList;
 	BufferListModel get _bufferList => _provider._bufferList;
 	BouncerNetworkListModel get _bouncerNetworkList => _provider._bouncerNetworkList;
-	FlutterLocalNotificationsPlugin get _notifsPlugin => _provider._notifsPlugin;
+	NotificationController get _notifController => _provider._notifController;
 
 	ClientController(ClientProvider provider, Client client, NetworkModel network) :
 			_provider = provider,
@@ -544,39 +544,12 @@ class ClientController {
 			if (buffer.lastDeliveredTime != null && buffer.lastDeliveredTime!.compareTo(entry.time) >= 0) {
 				continue;
 			}
-			String title, channelId, channelName, channelDescription;
+			bool showNetworkName = _networkList.networks.length > 1;
 			if (client.isMyNick(entry.msg.params[0])) {
-				title = 'New message from ${entry.msg.source!.name}';
-				channelId = 'privmsg';
-				channelName = 'Private messages';
-				channelDescription = 'Private messages sent directly to you';
+				_notifController.showDirectMessage(entry, buffer, showNetworkName);
 			} else if (findTextHighlight(entry.msg.params[1], client.nick)) {
-				title = '${entry.msg.source!.name} mentionned you in ${buffer.name}';
-				channelId = 'highlight';
-				channelName = 'Mentions';
-				channelDescription = 'Messages mentionning your nickname in a channel';
-			} else {
-				continue;
+				_notifController.showHighlight(entry, buffer, showNetworkName);
 			}
-			var body = stripAnsiFormatting(entry.msg.params[1]);
-			String? subText;
-			if (_networkList.networks.length > 1) {
-				subText = buffer.network.displayName;
-			}
-			_notifsPlugin.show(entry.id!, title, body, NotificationDetails(
-				linux: LinuxNotificationDetails(
-					category: LinuxNotificationCategory.imReceived(),
-				),
-				android: AndroidNotificationDetails(channelId, channelName,
-					channelDescription: channelDescription,
-					importance: Importance.high,
-					priority: Priority.high,
-					category: 'msg',
-					groupKey: 'fr.emersion.goguma.buffer.${entry.buffer}',
-					subText: subText,
-					when: entry.dateTime.millisecondsSinceEpoch,
-				),
-			), payload: 'buffer:${entry.buffer}');
 		}
 	}
 
