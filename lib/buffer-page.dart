@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:provider/provider.dart';
 
 import 'buffer-details-page.dart';
@@ -188,6 +189,47 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		buffer.unreadCount = 0;
 	}
 
+	Iterable<String> _generateSuggestions(String text) {
+		var buffer = context.read<BufferModel>();
+		var members = buffer.members;
+		if (members == null) {
+			return [];
+		}
+
+		String pattern;
+		var i = text.lastIndexOf(' ');
+		if (i >= 0) {
+			pattern = text.substring(i + 1);
+		} else {
+			pattern = text;
+		}
+		print('Pattern: $pattern');
+
+		if (pattern.length < 3) {
+			return [];
+		}
+
+		pattern = pattern.toLowerCase();
+		return members.members.keys.where((name) {
+			return name.toLowerCase().startsWith(pattern);
+		}).take(10);
+	}
+
+	void _handleSuggestionSelected(String suggestion) {
+		var text = composerController.text;
+
+		String prefix;
+		var i = text.lastIndexOf(' ');
+		if (i >= 0) {
+			composerController.text = text.substring(0, i + 1) + suggestion + ' ';
+		} else {
+			composerController.text = suggestion + ': ';
+		}
+
+		composerController.selection = TextSelection.collapsed(offset: composerController.text.length);
+		composerFocusNode.requestFocus();
+	}
+
 	@override
 	Widget build(BuildContext context) {
 		var client = context.read<Client>();
@@ -283,17 +325,32 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 				if (canSendMessage) Material(elevation: 15, child: Container(
 					padding: EdgeInsets.all(10),
 					child: Form(key: composerFormKey, child: Row(children: [
-						Expanded(child: TextFormField(
-							decoration: InputDecoration(
-								hintText: 'Write a message...',
-								border: InputBorder.none,
+						Expanded(child: TypeAheadFormField<String>(
+							textFieldConfiguration: TextFieldConfiguration(
+								decoration: InputDecoration(
+									hintText: 'Write a message...',
+									border: InputBorder.none,
+								),
+								onSubmitted: (value) {
+									submitComposer();
+								},
+								focusNode: composerFocusNode,
+								controller: composerController,
+								textInputAction: TextInputAction.send,
 							),
-							onFieldSubmitted: (value) {
-								submitComposer();
+							direction: AxisDirection.up,
+							hideOnEmpty: true,
+							hideOnLoading: true,
+							// To allow to select a suggestion, type some more,
+							// then select another suggestion, without
+							// unfocusing the text field.
+							keepSuggestionsOnSuggestionSelected: true,
+							animationDuration: const Duration(milliseconds: 300),
+							itemBuilder: (context, suggestion) {
+								return ListTile(title: Text(suggestion));
 							},
-							focusNode: composerFocusNode,
-							controller: composerController,
-							textInputAction: TextInputAction.send,
+							suggestionsCallback: _generateSuggestions,
+							onSuggestionSelected: _handleSuggestionSelected,
 						)),
 						FloatingActionButton(
 							onPressed: () {

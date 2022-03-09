@@ -24,6 +24,7 @@ dependencies:
   flutter_local_notifications: ^9.3.2
   flutter_background: ^1.1.0
   connectivity_plus: ^2.2.1
+  flutter_typeahead: ^3.2.4
 
 flutter:
   uses-material-design: true
