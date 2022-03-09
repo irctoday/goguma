@@ -346,6 +346,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 							// unfocusing the text field.
 							keepSuggestionsOnSuggestionSelected: true,
 							animationDuration: const Duration(milliseconds: 300),
+							debounceDuration: const Duration(milliseconds: 50),
 							itemBuilder: (context, suggestion) {
 								return ListTile(title: Text(suggestion));
 							},
