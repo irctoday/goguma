@@ -477,6 +477,7 @@ class ClientController {
 			var target = batch.params[0];
 			return _handleChatMessages(target, batch.messages);
 		}
+		return null;
 	}
 
 	Future<void>? _handleChatMessages(String target, List<ClientMessage> messages) {
