@@ -14,11 +14,9 @@ class NetworkListIndicator extends StatefulWidget {
 	NetworkListIndicatorState createState() => NetworkListIndicatorState();
 }
 
-class NetworkListIndicatorState extends State<NetworkListIndicator> with SingleTickerProviderStateMixin<NetworkListIndicator> {
+class NetworkListIndicatorState extends State<NetworkListIndicator> {
+	final _refreshIndicatorKey = GlobalKey<_RefreshIndicatorState>();
 	late final NetworkStateAggregator _networkStateAggregator;
-	late final AnimationController _scaleController = AnimationController(vsync: this, duration: Duration(milliseconds: 200));
-	late final Animation<double> _scale = _scaleController.drive(Tween<double>(begin: 0.0, end: 1.0));
-	bool _loading = false;
 
 	@override
 	void initState() {
@@ -32,13 +30,47 @@ class NetworkListIndicatorState extends State<NetworkListIndicator> with SingleT
 	void dispose() {
 		_networkStateAggregator.removeListener(_handleNetworkStateChange);
 		_networkStateAggregator.dispose();
-		_scaleController.dispose();
 		super.dispose();
 	}
 
 	void _handleNetworkStateChange() {
 		var state = _networkStateAggregator.state;
 		var loading = state != NetworkState.offline && state != NetworkState.online;
+		_refreshIndicatorKey.currentState!.setLoading(loading);
+	}
+
+	@override
+	Widget build(BuildContext context) {
+		return _RefreshIndicator(
+			key: _refreshIndicatorKey,
+			semanticsLabel: 'Synchronizing…',
+			child: widget.child,
+		);
+	}
+}
+
+class _RefreshIndicator extends StatefulWidget {
+	final Widget child;
+	final String? semanticsLabel;
+
+	_RefreshIndicator({ Key? key, required this.child, this.semanticsLabel }) : super(key: key);
+
+	@override
+	_RefreshIndicatorState createState() => _RefreshIndicatorState();
+}
+
+class _RefreshIndicatorState extends State<_RefreshIndicator> with SingleTickerProviderStateMixin<_RefreshIndicator> {
+	late final AnimationController _scaleController = AnimationController(vsync: this, duration: Duration(milliseconds: 200));
+	late final Animation<double> _scale = _scaleController.drive(Tween<double>(begin: 0.0, end: 1.0));
+	bool _loading = false;
+
+	@override
+	void dispose() {
+		_scaleController.dispose();
+		super.dispose();
+	}
+
+	void setLoading(bool loading) {
 		if (_loading == loading) {
 			return;
 		}
@@ -67,7 +99,7 @@ class NetworkListIndicatorState extends State<NetworkListIndicator> with SingleT
 				alignment: Alignment.topCenter,
 				child: ScaleTransition(
 					scale: _scale,
-					child: RefreshProgressIndicator(semanticsLabel: 'Synchronizing…'),
+					child: RefreshProgressIndicator(semanticsLabel: widget.semanticsLabel),
 				),
 			),
 		]);
