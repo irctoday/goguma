@@ -11,10 +11,10 @@ class NetworkListIndicator extends StatefulWidget {
 	NetworkListIndicator({ Key? key, required this.child, required NetworkListModel this.networkList }) : super(key: key);
 
 	@override
-	NetworkListIndicatorState createState() => NetworkListIndicatorState();
+	_NetworkListIndicatorState createState() => _NetworkListIndicatorState();
 }
 
-class NetworkListIndicatorState extends State<NetworkListIndicator> {
+class _NetworkListIndicatorState extends State<NetworkListIndicator> {
 	final _refreshIndicatorKey = GlobalKey<_RefreshIndicatorState>();
 	late final NetworkStateAggregator _networkStateAggregator;
 
