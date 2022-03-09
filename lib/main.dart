@@ -176,6 +176,8 @@ Future<void> _waitNetworkOnline(NetworkModel network) {
 		case NetworkState.online:
 			completer.complete();
 			break;
+		default:
+			break;
 		}
 	};
 	network.addListener(listener);
@@ -273,6 +275,8 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 				break;
 			case ClientState.disconnected:
 				client.connect().ignore();
+				break;
+			default:
 				break;
 			}
 		});
