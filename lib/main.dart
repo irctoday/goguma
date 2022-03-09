@@ -307,8 +307,6 @@ class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
 
 		_scaffoldMessengerKey.currentState?.clearSnackBars();
 
-		String text;
-		bool persistent = true;
 		if (state != NetworkState.offline) {
 			_scaffoldMessengerKey.currentState?.hideCurrentMaterialBanner();
 			return;

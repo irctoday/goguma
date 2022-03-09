@@ -223,7 +223,6 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 	void _handleSuggestionSelected(String suggestion) {
 		var text = composerController.text;
 
-		String prefix;
 		var i = text.lastIndexOf(' ');
 		if (i >= 0) {
 			composerController.text = text.substring(0, i + 1) + suggestion + ' ';
