@@ -36,6 +36,18 @@ class NotificationController {
 			linux: LinuxInitializationSettings(defaultActionName: 'Open'),
 			android: AndroidInitializationSettings('ic_stat_name'),
 		), onSelectNotification: _handleSelectNotification).then((_) {
+			var androidPlugin = _notifsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+			return androidPlugin?.getActiveNotifications() ?? Future.value(null);
+		}).then((List<ActiveNotification>? activeNotifs) {
+			for (var notif in activeNotifs ?? []) {
+				// We can't get back the payload here, so we (ab)use the
+				// Android tag to store the payload
+				var payload = notif.tag;
+				if (payload != null) {
+					_active.add(_ActiveNotification(notif.id, payload));
+				}
+			}
+
 			if (Platform.isAndroid) {
 				return _notifsPlugin.getNotificationAppLaunchDetails();
 			} else {
@@ -97,7 +109,8 @@ class NotificationController {
 			if (notif.payload != payload) {
 				return true;
 			}
-			_notifsPlugin.cancel(notif.id).ignore();
+			// See initialize() for the tag vs. payload trick
+			_notifsPlugin.cancel(notif.id, tag: notif.payload).ignore();
 			return false;
 		}).toList();
 	}
@@ -115,6 +128,7 @@ class NotificationController {
 				category: 'msg',
 				subText: subText,
 				when: dateTime?.millisecondsSinceEpoch,
+				tag: payload, // see initialize()
 			),
 		), payload: payload);
 		_active.add(_ActiveNotification(id, payload));
