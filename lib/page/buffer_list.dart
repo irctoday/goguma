@@ -224,7 +224,7 @@ class BufferItem extends StatelessWidget {
 				leading: CircleAvatar(child: Text(initials(buf.name))),
 				trailing: (buf.unreadCount == 0) ? null : Container(
 					padding: EdgeInsets.all(3),
-					decoration: new BoxDecoration(
+					decoration: BoxDecoration(
 						color: Colors.red,
 						borderRadius: BorderRadius.circular(20),
 					),

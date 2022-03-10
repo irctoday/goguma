@@ -310,7 +310,7 @@ class Client {
 				var type = msg.params[1];
 				var params = msg.params.sublist(2);
 				if (_batches.containsKey(ref)) {
-					throw new FormatException('Duplicate BATCH reference: ${ref}');
+					throw FormatException('Duplicate BATCH reference: ${ref}');
 				}
 				var batch = ClientBatch(type, params, msgBatch);
 				_batches[ref] = batch;
@@ -318,7 +318,7 @@ class Client {
 			case '-':
 				var batch = _batches[ref];
 				if (batch == null) {
-					throw new FormatException('Unknown BATCH reference: ${ref}');
+					throw FormatException('Unknown BATCH reference: ${ref}');
 				}
 				_batches.remove(ref);
 				if (!_batchesController.isClosed) {
