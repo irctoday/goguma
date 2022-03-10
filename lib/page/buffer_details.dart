@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'client.dart';
-import 'client_controller.dart';
-import 'linkify.dart';
-import 'models.dart';
+import '../client.dart';
+import '../client_controller.dart';
+import '../linkify.dart';
+import '../models.dart';
 
 Widget buildBufferDetailsPage(BuildContext context, BufferModel buf) {
 	var client = context.read<ClientProvider>().get(buf.network);

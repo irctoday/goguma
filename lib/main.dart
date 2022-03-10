@@ -8,15 +8,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:workmanager/workmanager.dart';
 
-import 'buffer_list_page.dart';
-import 'buffer_page.dart';
 import 'client.dart';
 import 'client_controller.dart';
-import 'connect_page.dart';
 import 'database.dart';
 import 'models.dart';
 import 'network_state_aggregator.dart';
 import 'notification_controller.dart';
+import 'page/buffer.dart';
+import 'page/buffer_list.dart';
+import 'page/connect.dart';
 
 // Debugging knobs for work manager.
 const _debugWorkManager = false;
