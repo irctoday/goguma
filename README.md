@@ -41,7 +41,6 @@ The built binary is in `build/linux/release/bundle/goguma`.
 
 Build with:
 
-    flutter create --org fr.emersion --project-name goguma --platforms android --no-overwrite .
     flutter build apk
 
 The built APK is in `build/app/outputs/flutter-apk/app-release.apk`.
