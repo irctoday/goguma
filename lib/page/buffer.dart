@@ -208,7 +208,6 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		} else {
 			pattern = text;
 		}
-		print('Pattern: $pattern');
 
 		if (pattern.length < 3) {
 			return [];
