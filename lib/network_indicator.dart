@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'models.dart';
-import 'network-state-aggregator.dart';
+import 'network_state_aggregator.dart';
 
 class NetworkListIndicator extends StatefulWidget {
 	final Widget child;

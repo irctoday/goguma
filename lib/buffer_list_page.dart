@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'buffer-page.dart';
-import 'client-controller.dart';
-import 'connect-page.dart';
+import 'buffer_page.dart';
+import 'client_controller.dart';
+import 'connect_page.dart';
 import 'database.dart';
-import 'join-dialog.dart';
+import 'join_dialog.dart';
 import 'models.dart';
-import 'network-indicator.dart';
+import 'network_indicator.dart';
 
 class BufferListPage extends StatefulWidget {
 	@override

@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:provider/provider.dart';
 
-import 'buffer-details-page.dart';
+import 'buffer_details_page.dart';
 import 'client.dart';
-import 'client-controller.dart';
+import 'client_controller.dart';
 import 'database.dart';
 import 'irc.dart';
 import 'linkify.dart';
 import 'models.dart';
-import 'network-indicator.dart';
-import 'notification-controller.dart';
-import 'swipe-action.dart';
+import 'network_indicator.dart';
+import 'notification_controller.dart';
+import 'swipe_action.dart';
 
 Widget buildBufferPage(BuildContext context, BufferModel buf) {
 	var client = context.read<ClientProvider>().get(buf.network);

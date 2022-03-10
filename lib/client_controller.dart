@@ -10,7 +10,7 @@ import 'client.dart';
 import 'database.dart';
 import 'irc.dart';
 import 'models.dart';
-import 'notification-controller.dart';
+import 'notification_controller.dart';
 
 ConnectParams connectParamsFromServerEntry(ServerEntry entry) {
 	SaslPlainCredentials? saslPlain = null;

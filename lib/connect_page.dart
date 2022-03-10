@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'buffer-list-page.dart';
+import 'buffer_list_page.dart';
 import 'client.dart';
-import 'client-controller.dart';
+import 'client_controller.dart';
 import 'database.dart';
 import 'irc.dart';
 import 'models.dart';

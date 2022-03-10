@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'client.dart';
-import 'client-controller.dart';
+import 'client_controller.dart';
 import 'linkify.dart';
 import 'models.dart';
 
