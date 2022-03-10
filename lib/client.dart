@@ -147,11 +147,11 @@ class Client {
 		});
 	}
 
-	_log(String s) {
+	void _log(String s) {
 		print('[${_id}] ${s}');
 	}
 
-	_setState(ClientState state) {
+	void _setState(ClientState state) {
 		if (_state == state) {
 			return;
 		}
@@ -167,7 +167,7 @@ class Client {
 		}
 	}
 
-	_tryAutoReconnect() {
+	void _tryAutoReconnect() {
 		_reconnectTimer?.cancel();
 
 		if (!_autoReconnect) {
@@ -249,7 +249,7 @@ class Client {
 		});
 	}
 
-	_handleMessage(IrcMessage msg) {
+	void _handleMessage(IrcMessage msg) {
 		_log('<- ' + msg.toString());
 
 		ClientBatch? msgBatch = null;
@@ -349,7 +349,7 @@ class Client {
 		}
 	}
 
-	disconnect() {
+	void disconnect() {
 		_autoReconnect = false;
 		_reconnectTimer?.cancel();
 		_socket?.close();
@@ -358,7 +358,7 @@ class Client {
 		_batchesController.close();
 	}
 
-	send(IrcMessage msg) {
+	void send(IrcMessage msg) {
 		if (_socket == null) {
 			return;
 		}

@@ -88,11 +88,11 @@ class _NetworkStateListener {
 		network.addListener(_handleChange);
 	}
 
-	cancel() {
+	void cancel() {
 		network.removeListener(_handleChange);
 	}
 
-	_handleChange() {
+	void _handleChange() {
 		if (network.state != _prevState) {
 			_prevState = network.state;
 			onChange();

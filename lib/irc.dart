@@ -312,7 +312,7 @@ class IrcCapRegistry {
 		}
 	}
 
-	_addAvailable(String caps) {
+	void _addAvailable(String caps) {
 		for (var s in caps.split(' ')) {
 			var i = s.indexOf('=');
 			String k = s;
