@@ -114,7 +114,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		var buffer = context.read<BufferModel>();
 		var client = context.read<Client>();
 
-		if (!buffer.messageHistoryLoaded) {
+		if (!buffer.messageHistoryLoaded || !client.caps.enabled.contains('draft/chathistory')) {
 			return;
 		}
 
