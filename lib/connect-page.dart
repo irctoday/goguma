@@ -36,6 +36,7 @@ Uri _parseServerUri(String rawUri) {
 class ConnectPageState extends State<ConnectPage> {
 	bool _loading = false;
 	Exception? _error;
+	bool _passwordRequired = false;
 
 	final formKey = GlobalKey<FormState>();
 	final serverController = TextEditingController();
@@ -84,7 +85,13 @@ class ConnectPageState extends State<ConnectPage> {
 		}).catchError((Object err) {
 			client.disconnect();
 			setState(() {
-				_error = err;
+				_error = err as Exception;
+				if (_error is IrcException) {
+					var ircErr = _error as IrcException;
+					if (ircErr.msg.cmd == 'FAIL' && ircErr.msg.params[1] == 'ACCOUNT_REQUIRED') {
+						_passwordRequired = true;
+					}
+				}
 			});
 		}, test: (err) => err is Exception).whenComplete(() {
 			setState(() {
@@ -179,13 +186,16 @@ class ConnectPageState extends State<ConnectPage> {
 					TextFormField(
 						obscureText: true,
 						decoration: InputDecoration(
-							labelText: 'Password',
+							labelText: _passwordRequired ? 'Password' : 'Password (optional)',
 							errorText: passwordErr,
 						),
 						controller: passwordController,
 						onFieldSubmitted: (_) {
 							focusNode.unfocus();
 							submit();
+						},
+						validator: (value) {
+							return (_passwordRequired && value!.isEmpty) ? 'Required' : null;
 						},
 					),
 					SizedBox(height: 20),
