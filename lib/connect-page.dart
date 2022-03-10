@@ -81,7 +81,7 @@ class ConnectPageState extends State<ConnectPage> {
 			return Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
 				return BufferListPage();
 			}));
-		}).catchError((Exception err) {
+		}).catchError((Object err) {
 			client.disconnect();
 			setState(() {
 				_error = err;
