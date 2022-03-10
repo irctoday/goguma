@@ -3,6 +3,8 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+
 import 'irc.dart';
 
 class SaslPlainCredentials {
@@ -250,7 +252,9 @@ class Client {
 	}
 
 	void _handleMessage(IrcMessage msg) {
-		_log('<- ' + msg.toString());
+		if (kDebugMode) {
+			_log('<- ' + msg.toString());
+		}
 
 		ClientBatch? msgBatch = null;
 		if (msg.tags.containsKey('batch')) {
@@ -362,7 +366,9 @@ class Client {
 		if (_socket == null) {
 			return;
 		}
-		_log('-> ' + msg.toString());
+		if (kDebugMode) {
+			_log('-> ' + msg.toString());
+		}
 		return _socket!.write(msg.toString() + '\r\n');
 	}
 
