@@ -206,15 +206,6 @@ class ClientController {
 				future.whenComplete(() => messagesSub.resume());
 			}
 		});
-
-		var batchesSub;
-		batchesSub = client.batches.listen((batch) {
-			var future = _handleBatch(batch);
-			if (future != null) {
-				batchesSub.pause();
-				future.whenComplete(() => batchesSub.resume());
-			}
-		});
 	}
 
 	String? _getLastDeliveredTime() {
@@ -467,6 +458,11 @@ class ClientController {
 				_bufferList.get(source.name, network)?.online = online;
 			}
 			break;
+		default:
+			if (msg is ClientEndOfBatch) {
+				var endOfBatch = msg as ClientEndOfBatch;
+				return _handleBatch(endOfBatch.child);
+			}
 		}
 		return null;
 	}

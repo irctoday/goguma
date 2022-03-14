@@ -63,7 +63,6 @@ class Client {
 	ClientState _state = ClientState.disconnected;
 	StreamController<ClientMessage> _messagesController = StreamController.broadcast();
 	StreamController<ClientState> _statesController = StreamController.broadcast();
-	StreamController<ClientBatch> _batchesController = StreamController.broadcast();
 	Timer? _reconnectTimer;
 	bool _autoReconnect;
 	DateTime? _lastConnectTime;
@@ -78,7 +77,6 @@ class Client {
 	ClientState get state => _state;
 	Stream<ClientMessage> get messages => _messagesController.stream;
 	Stream<ClientState> get states => _statesController.stream;
-	Stream<ClientBatch> get batches => _batchesController.stream;
 
 	Client(this.params, { bool autoReconnect = true }) :
 		_id = _nextClientId++,
@@ -121,7 +119,6 @@ class Client {
 				_log('Connection error: ' + err.toString());
 				_messagesController.addError(err);
 				_statesController.addError(err);
-				_batchesController.addError(err);
 			}).whenComplete(() {
 				_socket = null;
 				caps.clear();
@@ -244,6 +241,19 @@ class Client {
 		});
 	}
 
+	Future<ClientBatch> _roundtripBatch(IrcMessage msg, bool test(ClientBatch)) {
+		return _roundtripMessage(msg, (msg) {
+			if (!msg is ClientEndOfBatch) {
+				return false;
+			}
+			var endOfBatch = msg as ClientEndOfBatch;
+			return test(endOfBatch.child);
+		}).then((msg) {
+			var endOfBatch = msg as ClientEndOfBatch;
+			return endOfBatch.child;
+		});
+	}
+
 	Future<void> _register() {
 		_nick = params.nick;
 
@@ -324,6 +334,18 @@ class Client {
 			var names = _pendingNames.remove(channel)!;
 			clientMsg = ClientEndOfNames(msg, names, batch: msgBatch);
 			break;
+		case 'BATCH':
+			if (msg.params[0].startsWith('-')) {
+				var ref = msg.params[0].substring(1);
+				var child = _batches[ref];
+				if (child == null) {
+					throw FormatException('Unknown BATCH reference: ${ref}');
+				}
+				clientMsg = ClientEndOfBatch(msg, child, batch: msgBatch);
+			} else {
+				clientMsg = ClientMessage(msg, batch: msgBatch);
+			}
+			break;
 		default:
 			clientMsg = ClientMessage(msg, batch: msgBatch);
 		}
@@ -376,14 +398,7 @@ class Client {
 				_batches[ref] = batch;
 				break;
 			case '-':
-				var batch = _batches[ref];
-				if (batch == null) {
-					throw FormatException('Unknown BATCH reference: ${ref}');
-				}
 				_batches.remove(ref);
-				if (!_batchesController.isClosed) {
-					_batchesController.add(batch);
-				}
 				break;
 			default:
 				throw FormatException('Invalid BATCH message: ${msg}');
@@ -415,7 +430,6 @@ class Client {
 		_socket?.close();
 		_messagesController.close();
 		_statesController.close();
-		_batchesController.close();
 	}
 
 	void send(IrcMessage msg) {
@@ -452,13 +466,12 @@ class Client {
 
 	Future<List<ChatHistoryTarget>> fetchChatHistoryTargets(String t1, String t2) {
 		// TODO: paging
-		send(IrcMessage(
+		var msg = IrcMessage(
 			'CHATHISTORY',
 			['TARGETS', 'timestamp=' + t1, 'timestamp=' + t2, '100'],
-		));
+		);
 
-		// TODO: error handling
-		return batches.firstWhere((batch) {
+		return _roundtripBatch(msg, (batch) {
 			return batch.type == 'draft/chathistory-targets';
 		}).then((batch) {
 			return batch.messages.map((msg) {
@@ -471,10 +484,10 @@ class Client {
 	}
 
 	Future<ClientBatch> _fetchChatHistory(String subcmd, String target, List<String> params) {
-		send(IrcMessage('CHATHISTORY', [subcmd, target, ...params]));
+		var msg = IrcMessage('CHATHISTORY', [subcmd, target, ...params]);
 
 		var cm = isupport.caseMapping;
-		return batches.firstWhere((batch) {
+		return _roundtripBatch(msg, (batch) {
 			return batch.type == 'chathistory' && cm(batch.params[0]) == cm(target);
 		});
 	}
@@ -602,6 +615,14 @@ class ClientEndOfWho extends ClientMessage {
 
 	ClientEndOfWho(IrcMessage msg, List<ClientMessage> replies, { ClientBatch? batch }) :
 		this.replies = UnmodifiableListView(replies),
+		super(msg, batch: batch);
+}
+
+class ClientEndOfBatch extends ClientMessage {
+	final ClientBatch child;
+
+	ClientEndOfBatch(IrcMessage msg, ClientBatch child, { ClientBatch? batch }) :
+		this.child = child,
 		super(msg, batch: batch);
 }
 
