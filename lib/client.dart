@@ -188,6 +188,62 @@ class Client {
 		});
 	}
 
+	Future<ClientMessage> _waitMessage(bool test(ClientMessage)) {
+		if (state == ClientState.disconnected) {
+			return Future.error(Exception('Disconnected from server'));
+		}
+
+		Completer<ClientMessage> completer = Completer();
+
+		var statesSub = states.listen((state) {
+			if (state == ClientState.disconnected) {
+				completer.completeError(Exception('Disconnected from server'));
+			}
+		});
+
+		var messagesSub = messages.listen((msg) {
+			bool done;
+			try {
+				done = test(msg);
+			} catch (err) {
+				completer.completeError(err);
+				return;
+			}
+			if (done) {
+				completer.complete(msg);
+			}
+		});
+
+		return completer.future.whenComplete(() {
+			statesSub.cancel();
+			messagesSub.cancel();
+		});
+	}
+
+	Future<ClientMessage> _roundtripMessage(IrcMessage msg, bool test(ClientMessage)) {
+		var cmd = msg.cmd;
+		send(msg);
+
+		return _waitMessage((msg) {
+			bool isError = false;
+			switch (msg) {
+			case 'FAIL':
+				isError = msg.params[0] == cmd;
+				break;
+			case ERR_UNKNOWNERROR:
+			case ERR_UNKNOWNCOMMAND:
+			case ERR_NEEDMOREPARAMS:
+			case RPL_TRYAGAIN:
+				isError = msg.params[1] == cmd;
+			}
+			if (isError) {
+				throw IrcException(msg);
+			}
+
+			return test(msg);
+		});
+	}
+
 	Future<void> _register() {
 		_nick = params.nick;
 
@@ -218,7 +274,7 @@ class Client {
 		send(IrcMessage('CAP', ['END']));
 
 		var saslSuccess = false;
-		return messages.firstWhere((msg) {
+		return _waitMessage((msg) {
 			switch (msg.cmd) {
 			case RPL_WELCOME:
 				if (params.saslPlain != null && !saslSuccess) {
@@ -441,10 +497,10 @@ class Client {
 
 	Future<void> ping() {
 		var token = 'goguma-${_nextPingSerial}';
-		send(IrcMessage('PING', [token]));
+		var msg = IrcMessage('PING', [token]);
 		_nextPingSerial++;
 
-		return messages.firstWhere((msg) {
+		return _roundtripMessage(msg, (msg) {
 			return msg.cmd == 'PONG' && msg.params[1] == token;
 		}).timeout(Duration(seconds: 15), onTimeout: () {
 			_socket?.close();
@@ -453,10 +509,10 @@ class Client {
 	}
 
 	Future<void> fetchRead(String target) {
-		send(IrcMessage('READ', [target]));
+		var msg = IrcMessage('READ', [target]);
 
 		var cm = isupport.caseMapping;
-		return messages.firstWhere((msg) {
+		return _roundtripMessage(msg, (msg) {
 			return msg.cmd == 'READ' && isMyNick(msg.source!.name) && cm(msg.params[0]) == cm(target);
 		}).timeout(Duration(seconds: 15));
 	}
@@ -471,8 +527,8 @@ class Client {
 	Future<ClientEndOfWho> who(String mask) {
 		var cm = isupport.caseMapping;
 		var future = _lastWhoFuture.catchError((_) => null).then((_) {
-			send(IrcMessage('WHO', [mask]));
-			return messages.firstWhere((msg) {
+			var msg = IrcMessage('WHO', [mask]);
+			return _roundtripMessage(msg, (msg) {
 				return msg.cmd == RPL_ENDOFWHO && cm(msg.params[1]) == cm(mask);
 			}).timeout(Duration(seconds: 30));
 		}).then((ClientMessage msg) {

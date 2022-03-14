@@ -7,6 +7,7 @@ const RPL_YOURHOST = '002';
 const RPL_CREATED = '003';
 const RPL_MYINFO = '004';
 const RPL_ISUPPORT = '005';
+const RPL_TRYAGAIN = '263';
 const RPL_ENDOFWHO = '315';
 const RPL_NOTOPIC = '331';
 const RPL_TOPIC = '332';
@@ -15,10 +16,13 @@ const RPL_WHOREPLY = '352';
 const RPL_NAMREPLY = '353';
 const RPL_ENDOFNAMES = '366';
 const RPL_ENDOFMOTD = '376';
+const ERR_UNKNOWNERROR = '400';
+const ERR_UNKNOWNCOMMAND = '421';
 const ERR_NOMOTD = '422';
 const ERR_ERRONEUSNICKNAME = '432';
 const ERR_NICKNAMEINUSE = '433';
 const ERR_NICKCOLLISION = '436';
+const ERR_NEEDMOREPARAMS = '461';
 const ERR_NOPERMFORHOST = '463';
 const ERR_PASSWDMISMATCH = '464';
 const ERR_YOUREBANNEDCREEP = '465';
@@ -257,7 +261,7 @@ class IrcException implements Exception {
 	final IrcMessage msg;
 
 	IrcException(this.msg) {
-		assert(msg.isError());
+		assert(msg.isError() || msg.cmd == RPL_TRYAGAIN);
 	}
 
 	@override
