@@ -185,7 +185,7 @@ class Client {
 		});
 	}
 
-	Future<ClientMessage> _waitMessage(bool test(ClientMessage)) {
+	Future<ClientMessage> _waitMessage(bool test(ClientMessage msg)) {
 		if (state == ClientState.disconnected) {
 			return Future.error(Exception('Disconnected from server'));
 		}
@@ -217,13 +217,13 @@ class Client {
 		});
 	}
 
-	Future<ClientMessage> _roundtripMessage(IrcMessage msg, bool test(ClientMessage)) {
+	Future<ClientMessage> _roundtripMessage(IrcMessage msg, bool test(ClientMessage msg)) {
 		var cmd = msg.cmd;
 		send(msg);
 
 		return _waitMessage((msg) {
 			bool isError = false;
-			switch (msg) {
+			switch (msg.cmd) {
 			case 'FAIL':
 				isError = msg.params[0] == cmd;
 				break;
@@ -241,9 +241,9 @@ class Client {
 		});
 	}
 
-	Future<ClientBatch> _roundtripBatch(IrcMessage msg, bool test(ClientBatch)) {
+	Future<ClientBatch> _roundtripBatch(IrcMessage msg, bool test(ClientBatch batch)) {
 		return _roundtripMessage(msg, (msg) {
-			if (!msg is ClientEndOfBatch) {
+			if (!(msg is ClientEndOfBatch)) {
 				return false;
 			}
 			var endOfBatch = msg as ClientEndOfBatch;
