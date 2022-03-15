@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../client.dart';
 import '../client_controller.dart';
+import '../irc.dart';
 import '../linkify.dart';
 import '../models.dart';
 
@@ -24,14 +25,39 @@ class BufferDetailsPage extends StatefulWidget {
 }
 
 class BufferDetailsPageState extends State<BufferDetailsPage> {
+	Whois? _whois;
+
+	@override
+	void initState() {
+		super.initState();
+
+		var buffer = context.read<BufferModel>();
+		var client = context.read<Client>();
+		if (client.isNick(buffer.name)) {
+			_fetchUserDetails(client, buffer.name);
+		}
+	}
+
+	void _fetchUserDetails(Client client, String nick) async {
+		var whois = await client.whois(nick);
+		if (!mounted) {
+			return;
+		}
+		setState(() {
+			_whois = whois;
+		});
+	}
+
 	@override
 	Widget build(BuildContext context) {
 		var buffer = context.watch<BufferModel>();
 		var network = context.watch<NetworkModel>();
+		var client = context.read<Client>();
 
-		Widget? topic;
+		List<Widget> children = [];
+
 		if (buffer.topic != null) {
-			topic = Container(
+			children.add(Container(
 				margin: const EdgeInsets.all(15),
 				child: Builder(builder: (context) {
 					var textStyle = DefaultTextStyle.of(context).style.apply(fontSizeFactor: 1.2);
@@ -41,19 +67,85 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 						text: linkify(buffer.topic!, textStyle: textStyle, linkStyle: linkStyle),
 					);
 				}),
-			);
+			));
+			children.add(Divider());
 		}
 
-		ListTile? realname;
 		if (buffer.realname != null) {
-			realname = ListTile(
+			children.add(ListTile(
 				title: Text(buffer.realname!),
 				leading: Icon(Icons.person),
-			);
+			));
+		}
+
+		children.add(ListTile(
+			title: Text(network.displayName),
+			leading: Icon(Icons.hub),
+		));
+
+		var whois = _whois;
+		SliverList? commonChannels;
+		if (whois != null) {
+			var loggedInTitle = 'Unauthenticated';
+			var loggedInSubtitle = 'This user is logged out.';
+			var loggedInIcon = Icons.gpp_bad;
+			if (whois.account != null) {
+				loggedInIcon = Icons.gpp_good;
+				loggedInSubtitle = 'This user is logged in with the account ${whois.account}.';
+				if (whois.account == whois.nickname) {
+					loggedInTitle = 'Authenticated';
+				} else {
+					loggedInTitle = 'Authenticated as ${whois.account}';
+				}
+			}
+			children.add(ListTile(
+				title: Text(loggedInTitle),
+				subtitle: Text(loggedInSubtitle),
+				leading: Icon(loggedInIcon),
+			));
+
+			if (whois.op) {
+				children.add(ListTile(
+					title: Text('Network operator'),
+					subtitle: Text('This user is a server operator, they have administrator privileges.'),
+					leading: Icon(Icons.gavel),
+				));
+			}
+
+			if (client.params.tls && whois.secureConnection) {
+				children.add(ListTile(
+					title: Text('Secure connection'),
+					subtitle: Text('This user has established a secure connection to the server.'),
+					leading: Icon(Icons.lock),
+				));
+			}
+
+			if (!whois.channels.isEmpty) {
+				// TODO: don't sort on each build() call
+				var l = whois.channels.keys.toList();
+				l.sort();
+				commonChannels = SliverList(delegate: SliverChildBuilderDelegate(
+					(context, index) {
+						var name = l[index];
+						return ListTile(
+							leading: CircleAvatar(child: Text(_initials(name))),
+							title: Text(name),
+						);
+					},
+					childCount: l.length,
+				));
+
+				var s = l.length > 1 ? 's' : '';
+
+				children.add(Divider());
+				children.add(Container(
+					margin: const EdgeInsets.all(15),
+					child: Text('${l.length} channel$s in common', style: TextStyle(fontWeight: FontWeight.bold)),
+				));
+			}
 		}
 
 		SliverList? members;
-		int? membersCount;
 		if (buffer.members != null) {
 			// TODO: don't sort on each build() call
 			var l = buffer.members!.members.entries.toList();
@@ -71,14 +163,21 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 					var nickname = kv.key;
 					var membership = membershipDescription(kv.value);
 					return ListTile(
-						leading: CircleAvatar(child: Text(nickname[0].toUpperCase())),
+						leading: CircleAvatar(child: Text(_initials(nickname))),
 						title: Text(nickname),
 						trailing: membership == null ? null : Text(membership),
 					);
 				},
 				childCount: l.length,
 			));
-			membersCount = l.length;
+
+			var s = l.length > 1 ? 's' : '';
+
+			children.add(Divider());
+			children.add(Container(
+				margin: const EdgeInsets.all(15),
+				child: Text('${l.length} members', style: TextStyle(fontWeight: FontWeight.bold)),
+			));
 		}
 
 		return Scaffold(
@@ -94,21 +193,9 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 							centerTitle: true,
 						),
 					),
-					SliverList(delegate: SliverChildListDelegate([
-						if (topic != null) topic,
-						if (topic != null) Divider(),
-						if (realname != null) realname,
-						ListTile(
-							title: Text(network.displayName),
-							leading: Icon(Icons.hub),
-						),
-						if (members != null) Divider(),
-						if (members != null) Container(
-							margin: const EdgeInsets.all(15),
-							child: Text('${membersCount!} members', style: TextStyle(fontWeight: FontWeight.bold)),
-						),
-					])),
+					SliverList(delegate: SliverChildListDelegate(children)),
 					if (members != null) members,
+					if (commonChannels != null) commonChannels,
 				],
 			),
 		);
@@ -155,4 +242,15 @@ int _membershipLevel(String membership) {
 	default:
 		return 0;
 	}
+}
+
+String _initials(String name) {
+	for (var r in name.runes) {
+		var ch = String.fromCharCode(r);
+		if (ch == '#') {
+			continue;
+		}
+		return ch.toUpperCase();
+	}
+	return '';
 }
