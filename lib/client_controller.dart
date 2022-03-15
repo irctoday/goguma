@@ -104,10 +104,7 @@ class ClientProvider {
 			tag: 'sync',
 			existingWorkPolicy: ExistingWorkPolicy.keep,
 			initialDelay: Duration(minutes: 15),
-			constraints: Constraints(
-				networkType: NetworkType.connected,
-				// TODO: maybe requiresDeviceIdle?
-			),
+			constraints: Constraints(networkType: NetworkType.connected),
 		);
 	}
 
