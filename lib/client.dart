@@ -562,6 +562,41 @@ class Client {
 		return future;
 	}
 
+	Future<Whois> whois(String nick) {
+		var cm = isupport.caseMapping;
+		var msg = IrcMessage('WHOIS', [nick]);
+		List<ClientMessage> replies = [];
+		return _roundtripMessage(msg, (msg) {
+			switch (msg.cmd) {
+			case ERR_NOSUCHNICK:
+				throw IrcException(msg);
+			case RPL_WHOISCERTFP:
+			case RPL_WHOISREGNICK:
+			case RPL_WHOISUSER:
+			case RPL_WHOISSERVER:
+			case RPL_WHOISOPERATOR:
+			case RPL_WHOISIDLE:
+			case RPL_WHOISCHANNELS:
+			case RPL_WHOISSPECIAL:
+			case RPL_WHOISACCOUNT:
+			case RPL_WHOISACTUALLY:
+			case RPL_WHOISHOST:
+			case RPL_WHOISMODES:
+			case RPL_WHOISSECURE:
+				if (cm(msg.params[1]) == cm(nick)) {
+					replies.add(msg);
+				}
+				break;
+			case RPL_ENDOFWHOIS:
+				return cm(msg.params[1]) == cm(nick);
+			}
+			return false;
+		}).then((ClientMessage msg) {
+			var prefixes = isupport.memberships.map((m) => m.prefix).join('');
+			return Whois.parse(msg.params[1], replies, prefixes);
+		});
+	}
+
 	void monitor(Iterable<String> targets) {
 		var l = targets.where((name) => !_monitored.containsKey(name)).toList();
 		var limit = isupport.monitor;
