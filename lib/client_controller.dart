@@ -112,14 +112,16 @@ class ClientProvider {
 	}
 
 	void _setupBackgroundServiceSync(bool enable) {
-		if (enable == FlutterBackground.isBackgroundExecutionEnabled) {
+		if (!enable) {
+			needBackgroundServicePermissions.value = false;
+			if (FlutterBackground.isBackgroundExecutionEnabled) {
+				print('Disabling sync background service');
+				FlutterBackground.disableBackgroundExecution();
+			}
 			return;
 		}
 
-		if (!enable) {
-			print('Disabling sync background service');
-			needBackgroundServicePermissions.value = false;
-			FlutterBackground.disableBackgroundExecution();
+		if (FlutterBackground.isBackgroundExecutionEnabled) {
 			return;
 		}
 
