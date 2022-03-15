@@ -8,15 +8,29 @@ const RPL_CREATED = '003';
 const RPL_MYINFO = '004';
 const RPL_ISUPPORT = '005';
 const RPL_TRYAGAIN = '263';
+const RPL_WHOISCERTFP = '276';
+const RPL_WHOISREGNICK = '307';
+const RPL_WHOISUSER = '311';
+const RPL_WHOISSERVER = '312';
+const RPL_WHOISOPERATOR = '313';
 const RPL_ENDOFWHO = '315';
+const RPL_WHOISIDLE = '317';
+const RPL_ENDOFWHOIS = '318';
+const RPL_WHOISCHANNELS = '319';
+const RPL_WHOISSPECIAL = '320';
+const RPL_WHOISACCOUNT = '330';
 const RPL_NOTOPIC = '331';
 const RPL_TOPIC = '332';
 const RPL_TOPICWHOTIME = '333';
+const RPL_WHOISACTUALLY = '338';
 const RPL_WHOREPLY = '352';
 const RPL_NAMREPLY = '353';
 const RPL_ENDOFNAMES = '366';
 const RPL_ENDOFMOTD = '376';
+const RPL_WHOISHOST = '378';
+const RPL_WHOISMODES = '379';
 const ERR_UNKNOWNERROR = '400';
+const ERR_NOSUCHNICK = '401';
 const ERR_UNKNOWNCOMMAND = '421';
 const ERR_NOMOTD = '422';
 const ERR_ERRONEUSNICKNAME = '432';
@@ -26,6 +40,7 @@ const ERR_NEEDMOREPARAMS = '461';
 const ERR_NOPERMFORHOST = '463';
 const ERR_PASSWDMISMATCH = '464';
 const ERR_YOUREBANNEDCREEP = '465';
+const RPL_WHOISSECURE = '671';
 // RFC 2812
 const ERR_UNAVAILRESOURCE = '437';
 // IRCv3 SASL: https://ircv3.net/specs/extensions/sasl-3.1
@@ -649,5 +664,101 @@ bool findTextHighlight(String text, String nick) {
 		}
 
 		text = text.substring(i + nick.length);
+	}
+}
+
+class Whois {
+	final String nickname;
+	final bool loggedIn;
+	final IrcSource? source;
+	final String? realname;
+	final String? server;
+	final bool op;
+	final Map<String, String> channels;
+	final String? account;
+	final bool secureConnection;
+
+	Whois({
+		required this.nickname,
+		this.loggedIn = false,
+		this.source,
+		this.realname,
+		this.server,
+		this.op = false,
+		this.channels = const {},
+		this.account,
+		this.secureConnection = false,
+	});
+
+	factory Whois.parse(String nickname, List<IrcMessage> replies, String prefixes) {
+		var loggedIn = false;
+		IrcSource? source;
+		String? realname;
+		String? server;
+		bool op = false;
+		Map<String, String> channels = {};
+		String? account;
+		bool secureConnection = false;
+
+		for (var msg in replies) {
+			switch (msg.cmd) {
+			case RPL_WHOISREGNICK:
+				loggedIn = true;
+				break;
+			case RPL_WHOISUSER:
+				source = IrcSource(nickname, user: msg.params[2], host: msg.params[3]);
+				realname = msg.params[5];
+				break;
+			case RPL_WHOISSERVER:
+				server = msg.params[2];
+				break;
+			case RPL_WHOISOPERATOR:
+				op = true;
+				break;
+			case RPL_WHOISCHANNELS:
+				for (var raw in msg.params[2].split(' ')) {
+					if (raw == '') {
+						continue;
+					}
+					var i = 0;
+					while (i < raw.length && prefixes.contains(raw[i])) {
+						i++;
+					}
+					var prefix = raw.substring(0, i);
+					var channel = raw.substring(i);
+					channels[channel] = prefix;
+				}
+				break;
+			case RPL_WHOISACCOUNT:
+				account = msg.params[2];
+				break;
+			case RPL_WHOISSECURE:
+				secureConnection = true;
+				break;
+			case RPL_WHOISCERTFP:
+			case RPL_WHOISIDLE:
+			case RPL_WHOISSPECIAL:
+			case RPL_WHOISACTUALLY:
+			case RPL_WHOISHOST:
+			case RPL_WHOISMODES:
+				break; // not yet implemented
+			case RPL_ENDOFWHOIS:
+				break;
+			default:
+				throw Exception('Not a WHOIS reply: ${msg.cmd}');
+			}
+		}
+
+		return Whois(
+			nickname: nickname,
+			loggedIn: loggedIn,
+			source: source,
+			realname: realname,
+			server: server,
+			op: op,
+			channels: channels,
+			account: account,
+			secureConnection: secureConnection,
+		);
 	}
 }
