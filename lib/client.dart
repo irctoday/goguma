@@ -451,6 +451,15 @@ class Client {
 		return cm(name) == cm(nick);
 	}
 
+	bool isNick(String name) {
+		var cm = isupport.caseMapping;
+		if (_serverSource != null && cm(name) == cm(_serverSource!.name)) {
+			return false;
+		}
+		// Dots usually indicate server names
+		return !name.contains('.') && !isChannel(name);
+	}
+
 	void _authenticate() {
 		if (params.saslPlain == null) {
 			return;

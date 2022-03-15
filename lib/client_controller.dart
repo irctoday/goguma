@@ -247,7 +247,7 @@ class ClientController {
 			// name of
 			List<String> l = [];
 			for (var buffer in _bufferList.buffers) {
-				if (buffer.network != network || client.isChannel(buffer.name) || buffer.name.contains('.')) {
+				if (buffer.network != network || !client.isNick(buffer.name)) {
 					continue;
 				}
 				if (buffer.realname == null) {
@@ -525,7 +525,7 @@ class ClientController {
 
 				_bufferList.bumpLastDeliveredTime(buf, t);
 
-				if (isNewBuffer && !client.isChannel(buf.name)) {
+				if (isNewBuffer && client.isNick(buf.name)) {
 					fetchBufferUser(client, buf);
 				}
 			});
@@ -585,10 +585,6 @@ class ClientController {
 }
 
 void fetchBufferUser(Client client, BufferModel buffer) {
-	// Dots usually indicate server names
-	if (buffer.name.contains('.')) {
-		return;
-	}
 	client.who(buffer.name).then((endOfWho) {
 		if (endOfWho.replies.length == 0) {
 			return; // User is offline
