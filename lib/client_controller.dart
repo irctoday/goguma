@@ -314,6 +314,10 @@ class ClientController {
 		case 'MODE':
 			// TODO: update memberships
 			break;
+		case 'AWAY':
+			var away = msg.params.length > 0;
+			_bufferList.get(msg.source!.name, network)?.away = away;
+			break;
 		case 'SETNAME':
 			var realname = msg.params[0];
 			_bufferList.get(msg.source!.name, network)?.realname = realname;

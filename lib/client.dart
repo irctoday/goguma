@@ -35,6 +35,7 @@ enum ClientState { disconnected, connecting, connected }
 const _autoReconnectDelay = const Duration(seconds: 10);
 
 const _permanentCaps = [
+	'away-notify',
 	'batch',
 	'echo-message',
 	'message-tags',
