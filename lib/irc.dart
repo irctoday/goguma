@@ -366,6 +366,7 @@ class IrcIsupportRegistry {
 	String? _bouncerNetId;
 	final List<IrcIsupportMembership> _memberships = [];
 	int? _monitor;
+	String? _botMode;
 
 	String? get network => _network;
 	String get chanTypes => _chanTypes ?? '';
@@ -373,6 +374,7 @@ class IrcIsupportRegistry {
 	String? get bouncerNetId => _bouncerNetId;
 	UnmodifiableListView<IrcIsupportMembership> get memberships => UnmodifiableListView(_memberships);
 	int? get monitor => _monitor;
+	String? get botMode => _botMode;
 
 	void parse(List<String> tokens) {
 		tokens.forEach((tok) {
@@ -381,6 +383,9 @@ class IrcIsupportRegistry {
 				switch (k) {
 				case 'BOUNCER_NETID':
 					_bouncerNetId = null;
+					break;
+				case 'BOT':
+					_botMode = null;
 					break;
 				case 'CASEMAPPING':
 					_caseMapping = null;
@@ -413,6 +418,9 @@ class IrcIsupportRegistry {
 			switch (k.toUpperCase()) {
 			case 'BOUNCER_NETID':
 				_bouncerNetId = v;
+				break;
+			case 'BOT':
+				_botMode = v;
 				break;
 			case 'CASEMAPPING':
 				_caseMapping = _caseMappingByName(v ?? '');
