@@ -69,7 +69,6 @@ class Client {
 	Map<String, ClientBatch> _batches = Map();
 	Map<String, List<ClientMessage>> _pendingNames = Map();
 	Future<void> _lastWhoFuture = Future.value(null);
-	List<ClientMessage> _pendingWhoReplies = [];
 	IrcNameMap<void> _monitored = IrcNameMap(defaultCaseMapping);
 
 	String get nick => _nick;
@@ -408,9 +407,6 @@ class Client {
 			var channel = msg.params[2];
 			_pendingNames.putIfAbsent(channel, () => []).add(clientMsg);
 			break;
-		case RPL_WHOREPLY:
-			_pendingWhoReplies.add(clientMsg);
-			break;
 		case ERR_MONLISTFULL:
 			var targets = msg.params[2].split(',');
 			for (var name in targets) {
@@ -546,18 +542,22 @@ class Client {
 		send(IrcMessage('READ', [target, 'timestamp=' + t]));
 	}
 
-	Future<ClientEndOfWho> who(String mask) {
+	Future<List<WhoReply>> who(String mask) {
 		var cm = isupport.caseMapping;
+		List<WhoReply> replies = [];
 		var future = _lastWhoFuture.catchError((_) => null).then((_) {
 			var msg = IrcMessage('WHO', [mask]);
 			return _roundtripMessage(msg, (msg) {
-				return msg.cmd == RPL_ENDOFWHO && cm(msg.params[1]) == cm(mask);
+				switch (msg.cmd) {
+				case RPL_WHOREPLY:
+					replies.add(WhoReply.parse(msg));
+					break;
+				case RPL_ENDOFWHO:
+					return cm(msg.params[1]) == cm(mask);
+				}
+				return false;
 			}).timeout(Duration(seconds: 30));
-		}).then((ClientMessage msg) {
-			var replies = _pendingWhoReplies;
-			_pendingWhoReplies = [];
-			return ClientEndOfWho(msg, replies, batch: msg.batch);
-		});
+		}).then((_) => replies);
 		_lastWhoFuture = future;
 		return future;
 	}
@@ -651,14 +651,6 @@ class ClientEndOfNames extends ClientMessage {
 
 	ClientEndOfNames(IrcMessage msg, List<ClientMessage> names, { ClientBatch? batch }) :
 		this.names = UnmodifiableListView(names),
-		super(msg, batch: batch);
-}
-
-class ClientEndOfWho extends ClientMessage {
-	final UnmodifiableListView<ClientMessage> replies;
-
-	ClientEndOfWho(IrcMessage msg, List<ClientMessage> replies, { ClientBatch? batch }) :
-		this.replies = UnmodifiableListView(replies),
 		super(msg, batch: batch);
 }
 

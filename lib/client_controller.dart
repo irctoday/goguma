@@ -584,20 +584,15 @@ class ClientController {
 }
 
 void fetchBufferUser(Client client, BufferModel buffer) {
-	client.who(buffer.name).then((endOfWho) {
-		if (endOfWho.replies.length == 0) {
+	client.who(buffer.name).then((replies) {
+		if (replies.length == 0) {
 			return; // User is offline
 		}
-		if (endOfWho.replies.length != 1) {
-			throw FormatException('Expected a single WHO reply, got ${endOfWho.replies.length}');
+		if (replies.length != 1) {
+			throw FormatException('Expected a single WHO reply, got ${replies.length}');
 		}
-		var reply = endOfWho.replies[0];
-		var hopCountRealname = reply.params[7];
-		var i = hopCountRealname.indexOf(' ');
-		if (i < 0) {
-			throw FormatException('Malformed WHO reply: no realname');
-		}
-		buffer.realname = hopCountRealname.substring(i + 1);
+		var reply = replies[0];
+		buffer.realname = reply.realname;
 	}).catchError((err) {
 		print('Failed to fetch WHO ${buffer.name}: $err');
 	});
