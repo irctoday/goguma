@@ -464,6 +464,7 @@ class IrcIsupportRegistry {
 		_bouncerNetId = null;
 		_memberships.clear();
 		_monitor = null;
+		_botMode = null;
 	}
 }
 
