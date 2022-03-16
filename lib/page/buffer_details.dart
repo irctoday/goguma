@@ -134,6 +134,14 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 				));
 			}
 
+			if (whois.bot) {
+				children.add(ListTile(
+					title: Text('Bot'),
+					subtitle: Text('This user is an automated bot.'),
+					leading: Icon(Icons.smart_toy),
+				));
+			}
+
 			if (!whois.channels.isEmpty) {
 				// TODO: don't sort on each build() call
 				var l = whois.channels.keys.toList();
