@@ -271,6 +271,7 @@ class BufferModel extends ChangeNotifier {
 	// For users only
 	String? _realname;
 	bool? _online;
+	bool? _away;
 
 	UnmodifiableListView<MessageModel> get messages => UnmodifiableListView(_messages);
 
@@ -289,6 +290,7 @@ class BufferModel extends ChangeNotifier {
 	MemberListModel? get members => _members;
 
 	bool? get online => _online;
+	bool? get away => _away;
 
 	String? get realname {
 		if (_realname == null || _realname == name) {
@@ -333,6 +335,11 @@ class BufferModel extends ChangeNotifier {
 
 	set online(bool? online) {
 		_online = online;
+		notifyListeners();
+	}
+
+	set away(bool? away) {
+		_away = away;
 		notifyListeners();
 	}
 

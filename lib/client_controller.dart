@@ -587,12 +587,12 @@ void fetchBufferUser(Client client, BufferModel buffer) {
 	client.who(buffer.name).then((replies) {
 		if (replies.length == 0) {
 			return; // User is offline
-		}
-		if (replies.length != 1) {
+		} else if (replies.length != 1) {
 			throw FormatException('Expected a single WHO reply, got ${replies.length}');
 		}
 		var reply = replies[0];
 		buffer.realname = reply.realname;
+		buffer.away = reply.away;
 	}).catchError((err) {
 		print('Failed to fetch WHO ${buffer.name}: $err');
 	});

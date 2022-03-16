@@ -83,6 +83,20 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 			leading: Icon(Icons.hub),
 		));
 
+		if (buffer.online == false) {
+			children.add(ListTile(
+				title: Text('Disconnected'),
+				subtitle: Text('This user will not receive new messages.'),
+				leading: Icon(Icons.error),
+			));
+		} else if (buffer.away == true) {
+			children.add(ListTile(
+				title: Text('Away'),
+				subtitle: Text('This user might not see new messages immediately.'),
+				leading: Icon(Icons.pending),
+			));
+		}
+
 		var whois = _whois;
 		SliverList? commonChannels;
 		if (whois != null) {
