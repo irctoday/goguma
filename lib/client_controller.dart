@@ -314,6 +314,10 @@ class ClientController {
 		case 'MODE':
 			// TODO: update memberships
 			break;
+		case 'SETNAME':
+			var realname = msg.params[0];
+			_bufferList.get(msg.source!.name, network)?.realname = realname;
+			break;
 		case RPL_TOPIC:
 			var channel = msg.params[1];
 			var topic = msg.params[2];

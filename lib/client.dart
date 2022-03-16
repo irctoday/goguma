@@ -41,6 +41,7 @@ const _permanentCaps = [
 	'multi-prefix',
 	'sasl',
 	'server-time',
+	'setname',
 
 	'draft/chathistory',
 
