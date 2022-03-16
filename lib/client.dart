@@ -646,6 +646,26 @@ class Client {
 			_monitored.remove(name);
 		}
 	}
+
+	Future<void> join(String name) {
+		// TODO: support for multiple channels
+		var cm = isupport.caseMapping;
+		var msg = IrcMessage('JOIN', [name]);
+		return _roundtripMessage(msg, (msg) {
+			switch (msg.cmd) {
+			case ERR_NOSUCHCHANNEL:
+			case ERR_TOOMANYCHANNELS:
+			case ERR_BADCHANNELKEY:
+			case ERR_BANNEDFROMCHAN:
+			case ERR_CHANNELISFULL:
+			case ERR_INVITEONLYCHAN:
+				throw IrcException(msg);
+			case 'JOIN':
+				return isMyNick(msg.source!.name) && cm(msg.params[0]) == cm(name);
+			}
+			return false;
+		});
+	}
 }
 
 class ClientMessage extends IrcMessage {
