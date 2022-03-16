@@ -44,6 +44,7 @@ const _permanentCaps = [
 	'setname',
 
 	'draft/chathistory',
+	'draft/extended-monitor',
 
 	'soju.im/bouncer-networks',
 	'soju.im/read',
