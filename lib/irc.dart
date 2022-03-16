@@ -26,6 +26,7 @@ const RPL_WHOISBOT = '335';
 const RPL_WHOISACTUALLY = '338';
 const RPL_WHOREPLY = '352';
 const RPL_NAMREPLY = '353';
+const RPL_WHOSPCRPL = '354';
 const RPL_ENDOFNAMES = '366';
 const RPL_ENDOFMOTD = '376';
 const RPL_WHOISHOST = '378';
@@ -368,6 +369,7 @@ class IrcIsupportRegistry {
 	final List<IrcIsupportMembership> _memberships = [];
 	int? _monitor;
 	String? _botMode;
+	bool _whox = false;
 
 	String? get network => _network;
 	String get chanTypes => _chanTypes ?? '';
@@ -376,6 +378,7 @@ class IrcIsupportRegistry {
 	UnmodifiableListView<IrcIsupportMembership> get memberships => UnmodifiableListView(_memberships);
 	int? get monitor => _monitor;
 	String? get botMode => _botMode;
+	bool get whox => _whox;
 
 	void parse(List<String> tokens) {
 		tokens.forEach((tok) {
@@ -402,6 +405,9 @@ class IrcIsupportRegistry {
 					break;
 				case 'PREFIX':
 					_memberships.clear();
+					break;
+				case 'WHOX':
+					_whox = false;
 					break;
 				}
 				return;
@@ -453,6 +459,9 @@ class IrcIsupportRegistry {
 					_memberships.add(IrcIsupportMembership(modes[i], prefixes[i]));
 				}
 				break;
+			case 'WHOX':
+				_whox = true;
+				break;
 			}
 		});
 	}
@@ -465,6 +474,7 @@ class IrcIsupportRegistry {
 		_memberships.clear();
 		_monitor = null;
 		_botMode = null;
+		_whox = false;
 	}
 }
 
@@ -818,4 +828,38 @@ class WhoReply {
 			realname: realname,
 		);
 	}
+
+	factory WhoReply.parseWhox(IrcMessage msg, Set<WhoxField> fields) {
+		assert(msg.cmd == RPL_WHOSPCRPL);
+
+		var expected = Set.of(<WhoxField>[WhoxField.nickname, WhoxField.realname, WhoxField.flags]);
+		assert(fields.length == expected.length && fields.containsAll(expected));
+
+		var flags = msg.params[2];
+
+		var away = flags.indexOf('G') >= 0;
+		var op = flags.indexOf('*') >= 0;
+
+		return WhoReply(
+			nickname: msg.params[1],
+			away: away,
+			op: op,
+			realname: msg.params[3],
+		);
+	}
+}
+
+class WhoxField {
+	final String _letter;
+
+	const WhoxField._(this._letter);
+
+	static const nickname = WhoxField._('n');
+	static const flags = WhoxField._('f');
+	static const account = WhoxField._('a');
+	static const realname = WhoxField._('r');
+}
+
+String formatWhoxParam(Set<WhoxField> fields) {
+	return '%' + fields.toList().map((field) => field._letter).join('');
 }

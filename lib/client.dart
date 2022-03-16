@@ -549,11 +549,26 @@ class Client {
 		var cm = isupport.caseMapping;
 		List<WhoReply> replies = [];
 		var future = _lastWhoFuture.catchError((_) => null).then((_) {
-			var msg = IrcMessage('WHO', [mask]);
+			var whoxFields = Set.of(<WhoxField>[
+				WhoxField.nickname,
+				WhoxField.realname,
+				WhoxField.flags,
+			]);
+
+			List<String> params = [mask];
+			if (isupport.whox) {
+				// Only request the fields we're interested in
+				params.add(formatWhoxParam(whoxFields));
+			}
+			var msg = IrcMessage('WHO', params);
+
 			return _roundtripMessage(msg, (msg) {
 				switch (msg.cmd) {
 				case RPL_WHOREPLY:
 					replies.add(WhoReply.parse(msg));
+					break;
+				case RPL_WHOSPCRPL:
+					replies.add(WhoReply.parseWhox(msg, whoxFields));
 					break;
 				case RPL_ENDOFWHO:
 					return cm(msg.params[1]) == cm(mask);
