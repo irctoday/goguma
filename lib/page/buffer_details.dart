@@ -33,7 +33,7 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 
 		var buffer = context.read<BufferModel>();
 		var client = context.read<Client>();
-		if (client.isNick(buffer.name)) {
+		if (client.isNick(buffer.name) && buffer.online != false) {
 			_fetchUserDetails(client, buffer.name);
 		}
 	}
