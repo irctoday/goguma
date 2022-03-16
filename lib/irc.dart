@@ -382,9 +382,6 @@ class IrcIsupportRegistry {
 				case 'BOUNCER_NETID':
 					_bouncerNetId = null;
 					break;
-				case 'NETWORK':
-					_network = null;
-					break;
 				case 'CASEMAPPING':
 					_caseMapping = null;
 					break;
@@ -393,6 +390,9 @@ class IrcIsupportRegistry {
 					break;
 				case 'MONITOR':
 					_monitor = null;
+					break;
+				case 'NETWORK':
+					_network = null;
 					break;
 				case 'PREFIX':
 					_memberships.clear();
@@ -414,9 +414,6 @@ class IrcIsupportRegistry {
 			case 'BOUNCER_NETID':
 				_bouncerNetId = v;
 				break;
-			case 'NETWORK':
-				_network = v;
-				break;
 			case 'CASEMAPPING':
 				_caseMapping = _caseMappingByName(v ?? '');
 				break;
@@ -425,6 +422,9 @@ class IrcIsupportRegistry {
 				break;
 			case 'MONITOR':
 				_monitor = int.parse(v ?? '0');
+				break;
+			case 'NETWORK':
+				_network = v;
 				break;
 			case 'PREFIX':
 				_memberships.clear();
