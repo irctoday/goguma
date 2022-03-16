@@ -762,3 +762,43 @@ class Whois {
 		);
 	}
 }
+
+class WhoReply {
+	final String nickname;
+	final bool away;
+	final bool op;
+	final String realname;
+
+	WhoReply({
+		required this.nickname,
+		this.away = false,
+		this.op = false,
+		required this.realname,
+	});
+
+	factory WhoReply.parse(IrcMessage msg) {
+		if (msg.cmd != RPL_WHOREPLY) {
+			throw Exception('Not a WHO reply: ${msg.cmd}');
+		}
+
+		var nickname = msg.params[5];
+		var flags = msg.params[6];
+		var trailing = msg.params[7];
+
+		var away = flags.indexOf('G') >= 0;
+		var op = flags.indexOf('*') >= 0;
+
+		var i = trailing.indexOf(' ');
+		if (i < 0) {
+			throw FormatException('RPL_WHOREPLY trailing parameter must contain a space');
+		}
+		var realname = trailing.substring(i + 1);
+
+		return WhoReply(
+			nickname: nickname,
+			away: away,
+			op: op,
+			realname: realname,
+		);
+	}
+}
