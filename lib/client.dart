@@ -586,6 +586,7 @@ class Client {
 			case RPL_WHOISHOST:
 			case RPL_WHOISMODES:
 			case RPL_WHOISSECURE:
+			case RPL_WHOISBOT:
 				if (cm(msg.params[1]) == cm(nick)) {
 					replies.add(msg);
 				}

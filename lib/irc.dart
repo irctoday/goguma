@@ -22,6 +22,7 @@ const RPL_WHOISACCOUNT = '330';
 const RPL_NOTOPIC = '331';
 const RPL_TOPIC = '332';
 const RPL_TOPICWHOTIME = '333';
+const RPL_WHOISBOT = '335';
 const RPL_WHOISACTUALLY = '338';
 const RPL_WHOREPLY = '352';
 const RPL_NAMREPLY = '353';
@@ -685,6 +686,7 @@ class Whois {
 	final Map<String, String> channels;
 	final String? account;
 	final bool secureConnection;
+	final bool bot;
 
 	Whois({
 		required this.nickname,
@@ -696,6 +698,7 @@ class Whois {
 		this.channels = const {},
 		this.account,
 		this.secureConnection = false,
+		this.bot = false,
 	});
 
 	factory Whois.parse(String nickname, List<IrcMessage> replies, String prefixes) {
@@ -707,6 +710,7 @@ class Whois {
 		Map<String, String> channels = {};
 		String? account;
 		bool secureConnection = false;
+		bool bot = false;
 
 		for (var msg in replies) {
 			switch (msg.cmd) {
@@ -743,6 +747,9 @@ class Whois {
 			case RPL_WHOISSECURE:
 				secureConnection = true;
 				break;
+			case RPL_WHOISBOT:
+				bot = true;
+				break;
 			case RPL_WHOISCERTFP:
 			case RPL_WHOISIDLE:
 			case RPL_WHOISSPECIAL:
@@ -767,6 +774,7 @@ class Whois {
 			channels: channels,
 			account: account,
 			secureConnection: secureConnection,
+			bot: bot,
 		);
 	}
 }
