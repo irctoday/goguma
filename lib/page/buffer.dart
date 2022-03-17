@@ -398,15 +398,19 @@ class _MessageItem extends StatelessWidget {
 
 		var ircMsg = msg.msg;
 		var entry = msg.entry;
+		var sender = ircMsg.source!.name;
+		var ctcp = CtcpMessage.parse(ircMsg);
 		assert(ircMsg.cmd == 'PRIVMSG' || ircMsg.cmd == 'NOTICE');
 
 		var prevIrcMsg = prevMsg?.msg;
 		var prevEntry = prevMsg?.entry;
+		var prevMsgSameSender = prevIrcMsg != null && ircMsg.source!.name == prevIrcMsg.source!.name;
 
-		var ctcp = CtcpMessage.parse(ircMsg);
-		var sender = ircMsg.source!.name;
+		var nextMsgSameSender = nextMsg != null && ircMsg.source!.name == nextMsg!.msg.source!.name;
+
 		var showUnreadMarker = prevEntry != null && unreadMarkerTime != null && unreadMarkerTime!.compareTo(entry.time) < 0 && unreadMarkerTime!.compareTo(prevEntry.time) >= 0;
-		var showSender = showUnreadMarker || prevIrcMsg == null || ircMsg.source!.name != prevIrcMsg.source!.name;
+		var showSender = showUnreadMarker || !prevMsgSameSender;
+		var showTime = !nextMsgSameSender || nextMsg!.entry.dateTime.difference(entry.dateTime) > Duration(minutes: 2);
 
 		var unreadMarkerColor = Theme.of(context).accentColor;
 
@@ -465,6 +469,34 @@ class _MessageItem extends StatelessWidget {
 			];
 		}
 
+		Widget inner = RichText(text: TextSpan(
+			children: content,
+			style: textStyle,
+		));
+
+		if (showTime) {
+			var hh = entry.dateTime.hour.toString().padLeft(2, '0');
+			var mm = entry.dateTime.minute.toString().padLeft(2, '0');
+			var time = '   $hh:$mm';
+			var timeStyle = textStyle.apply(
+				color: textStyle.color!.withOpacity(0.5),
+				fontSizeFactor: 0.8,
+			);
+
+			// Add a fully transparent text span with the time, so that the real
+			// time text doesn't collide with the message text.
+			content.add(TextSpan(text: time, style: timeStyle.apply(color: Color(0))));
+
+			inner = Stack(children: [
+				inner,
+				Positioned(
+					bottom: 0,
+					right: 0,
+					child: Text(time, style: timeStyle),
+				),
+			]);
+		}
+
 		Widget bubble = Align(
 			alignment: boxAlignment,
 			child: Container(
@@ -473,10 +505,7 @@ class _MessageItem extends StatelessWidget {
 					color: boxColor,
 				),
 				padding: EdgeInsets.all(10),
-				child: RichText(text: TextSpan(
-					children: content,
-					style: textStyle,
-				)),
+				child: inner,
 			),
 		);
 		if (!client.isMyNick(sender)) {
