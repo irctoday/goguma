@@ -409,10 +409,12 @@ class _MessageItem extends StatelessWidget {
 		var nextMsgSameSender = nextMsg != null && ircMsg.source!.name == nextMsg!.msg.source!.name;
 
 		var showUnreadMarker = prevEntry != null && unreadMarkerTime != null && unreadMarkerTime!.compareTo(entry.time) < 0 && unreadMarkerTime!.compareTo(prevEntry.time) >= 0;
+		var showDateMarker = prevEntry == null || !_isSameDate(entry.dateTime, prevEntry.dateTime);
 		var showSender = showUnreadMarker || !prevMsgSameSender;
 		var showTime = !nextMsgSameSender || nextMsg!.entry.dateTime.difference(entry.dateTime) > Duration(minutes: 2);
 
 		var unreadMarkerColor = Theme.of(context).accentColor;
+		var eventColor = DefaultTextStyle.of(context).style.color!.withOpacity(0.5);
 
 		var colorSwatch = Colors.primaries[sender.hashCode % Colors.primaries.length];
 		var colorScheme = ColorScheme.fromSwatch(primarySwatch: colorSwatch);
@@ -533,10 +535,25 @@ class _MessageItem extends StatelessWidget {
 					Expanded(child: Divider(color: unreadMarkerColor)),
 				]),
 			),
+			if (showDateMarker) Container(
+				margin: EdgeInsets.symmetric(vertical: 20),
+				child: Center(child: Text(_formatDate(entry.dateTime), style: TextStyle(color: eventColor))),
+			),
 			Container(
 				margin: EdgeInsets.only(left: margin, right: margin, top: marginTop, bottom: marginBottom),
 				child: bubble,
 			),
 		]);
 	}
+}
+
+bool _isSameDate(DateTime a, DateTime b) {
+	return a.year == b.year && a.month == b.month && a.day == b.day;
+}
+
+String _formatDate(DateTime dt) {
+	var yyyy = dt.year.toString().padLeft(4, '0');
+	var mm = dt.month.toString().padLeft(2, '0');
+	var dd = dt.month.toString().padLeft(2, '0');
+	return '$yyyy-$mm-$dd';
 }
