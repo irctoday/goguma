@@ -15,8 +15,10 @@ Goals:
   save battery power.
 - Cross-platform: the main target platforms are Linux and Android.
 
-If you want to try out goguma on Android, our CI provides
-[nightly builds][android-ci] (check out build artifacts).
+If you want to try out goguma on Android, you can use our
+[F-Droid repository][fdroid-nightly] which provides nightly builds.
+Alternatively, you can grab APKs directly from [our CI][android-ci] (check out
+build artifacts).
 
 <img src="https://l.sr.ht/ah3N.png" width="220" alt="Conversation list">
 <img src="https://l.sr.ht/5NNh.png" width="220" alt="Conversation view">
@@ -65,6 +67,7 @@ AGPLv3, see LICENSE.
 Copyright (C) 2021 The goguma Contributors
 
 [goguma]: https://sr.ht/~emersion/goguma/
+[fdroid-nightly]: https://fdroid.emersion.fr/#goguma-nightly
 [android-ci]: https://builds.sr.ht/~emersion/goguma/commits/android
 [mailing list]: https://lists.sr.ht/~emersion/public-inbox
 [issue tracker]: https://todo.sr.ht/~emersion/goguma

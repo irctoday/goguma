@@ -10,6 +10,7 @@ packages:
 sources:
   - https://git.sr.ht/~emersion/goguma
 secrets:
+  - 5874ac5a-905e-4596-a117-fed1401c60ce # deploy SSH key
   - 6d21b97d-cd64-4490-b325-acf8b05a542f # keystore.jks
   - 431b0b53-2af2-441b-b879-86c5913bab4d # keystore.properties
 artifacts:
@@ -31,3 +32,9 @@ tasks:
   - analyze: |
       cd goguma
       flutter analyze --no-fatal-infos
+  - deploy: |
+      cd goguma
+      [ "$(git rev-parse origin/master)" = "$(git rev-parse HEAD)" ] || complete-build
+      ssh_opts="-o StrictHostKeyChecking=no"
+      scp $ssh_opts build/app/outputs/flutter-apk/app-release.apk deploy@emersion.fr:/home/deploy/fdroid-goguma-nightly/repo/fr.emersion.goguma.apk
+      ssh $ssh_opts deploy@emersion.fr "cd fdroid-goguma-nightly && fdroid update"
