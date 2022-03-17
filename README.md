@@ -1,5 +1,7 @@
 # [goguma]
 
+[![builds.sr.ht status](https://builds.sr.ht/~emersion/goguma/commits.svg)](https://builds.sr.ht/~emersion/goguma/commits?)
+
 An IRC client for mobile devices.
 
 Goals:
