@@ -563,11 +563,10 @@ class ClientController {
 			return;
 		}
 
-		bool showNetworkName = _networkList.networks.length > 1;
 		if (client.isChannel(buffer.name)) {
-			_notifController.showHighlight(notifyEntries, buffer, showNetworkName);
+			_notifController.showHighlight(notifyEntries, buffer);
 		} else {
-			_notifController.showDirectMessage(notifyEntries, buffer, showNetworkName);
+			_notifController.showDirectMessage(notifyEntries, buffer);
 		}
 	}
 

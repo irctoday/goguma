@@ -68,7 +68,7 @@ class NotificationController {
 		_selectionsController.add(payload);
 	}
 
-	void showDirectMessage(List<MessageEntry> entries, BufferModel buffer, bool showNetworkName) {
+	void showDirectMessage(List<MessageEntry> entries, BufferModel buffer) {
 		var entry = entries.last;
 
 		String title;
@@ -81,7 +81,6 @@ class NotificationController {
 		_show(
 			title: title,
 			body: stripAnsiFormatting(entry.msg.params[1]),
-			subText: showNetworkName ? buffer.network.displayName : null,
 			channel: _NotificationChannel(
 				id: 'privmsg',
 				name: 'Private messages',
@@ -93,7 +92,7 @@ class NotificationController {
 		);
 	}
 
-	void showHighlight(List<MessageEntry> entries, BufferModel buffer, bool showNetworkName) {
+	void showHighlight(List<MessageEntry> entries, BufferModel buffer) {
 		var entry = entries.last;
 
 		String title;
@@ -106,7 +105,6 @@ class NotificationController {
 		_show(
 			title: title,
 			body: stripAnsiFormatting(entry.msg.params[1]),
-			subText: showNetworkName ? buffer.network.displayName : null,
 			channel: _NotificationChannel(
 				id: 'highlight',
 				name: 'Mentions',
@@ -119,7 +117,8 @@ class NotificationController {
 	}
 
 	MessagingStyleInformation _buildMessagingStyleInfo(List<MessageEntry> entries, BufferModel buffer) {
-		// TODO: groupConversation
+		// TODO: Person.key, Person.bot, Person.uri
+		// TODO: MessagingStyleInformation.groupConversation
 		return MessagingStyleInformation(
 			Person(name: buffer.name),
 			conversationTitle: buffer.name,
@@ -151,7 +150,6 @@ class NotificationController {
 	void _show({
 		required String title,
 		String? body,
-		String? subText,
 		required _NotificationChannel channel,
 		required String payload,
 		DateTime? dateTime,
@@ -176,7 +174,6 @@ class NotificationController {
 				importance: Importance.high,
 				priority: Priority.high,
 				category: 'msg',
-				subText: subText,
 				when: dateTime?.millisecondsSinceEpoch,
 				styleInformation: styleInformation,
 				tag: payload, // see initialize()
