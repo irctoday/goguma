@@ -27,7 +27,7 @@ tasks:
       ln -s ~/keystore.jks android/keystore.jks
   - build: |
       cd goguma
-      flutter build apk
+      flutter build apk --build-number="$(git rev-list --first-parent --count HEAD)"
   - analyze: |
       cd goguma
       flutter analyze --no-fatal-infos
