@@ -198,7 +198,7 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 			children.add(Divider());
 			children.add(Container(
 				margin: const EdgeInsets.all(15),
-				child: Text('${l.length} members', style: TextStyle(fontWeight: FontWeight.bold)),
+				child: Text('${l.length} member$s', style: TextStyle(fontWeight: FontWeight.bold)),
 			));
 		}
 
