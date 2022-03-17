@@ -115,7 +115,10 @@ class MessageEntry {
 		raw = m['raw'] as String;
 
 	IrcMessage get msg {
-		return _msg ?? IrcMessage.parse(raw);
+		if (_msg == null) {
+			_msg = IrcMessage.parse(raw);
+		}
+		return _msg!;
 	}
 
 	DateTime get dateTime {
