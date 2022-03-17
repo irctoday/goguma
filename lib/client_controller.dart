@@ -309,7 +309,13 @@ class ClientController {
 		case 'KICK':
 			var channel = msg.params[0];
 			var nick = msg.params[1];
-			_bufferList.get(channel, network)?.members?.remove(nick);
+			var buffer = _bufferList.get(channel, network);
+			if (client.isMyNick(nick)) {
+				buffer?.joined = false;
+				buffer?.members = null;
+			} else {
+				buffer?.members?.remove(nick);
+			}
 			break;
 		case 'MODE':
 			// TODO: update memberships
