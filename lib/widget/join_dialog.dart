@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../client_controller.dart';
 import '../database.dart';
-import '../irc.dart';
 import '../models.dart';
 import '../page/buffer.dart';
 
