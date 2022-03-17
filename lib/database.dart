@@ -386,4 +386,16 @@ class DB {
 			}));
 		});
 	}
+
+	Future<List<MessageEntry>> listUnreadMessages(int buffer) {
+		return _db.rawQuery('''
+			SELECT Message.id, Message.time, Message.buffer, Message.raw
+			FROM Message
+			LEFT JOIN Buffer ON Message.buffer = Buffer.id
+			WHERE buffer = ? AND Message.time > Buffer.last_read_time
+			ORDER BY time
+		''', [buffer]).then((entries) {
+			return entries.map((m) => MessageEntry.fromMap(m)).toList();
+		});
+	}
 }

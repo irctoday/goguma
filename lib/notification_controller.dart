@@ -65,17 +65,21 @@ class NotificationController {
 	}
 
 	void _handleSelectNotification(String? payload) {
-		// TODO: this removes too much, we should try to remove per ID instead,
-		// but we don't have it here...
-		if (payload != null) {
-			_cancelAllWithPayload(payload);
-		}
 		_selectionsController.add(payload);
 	}
 
-	void showDirectMessage(MessageEntry entry, BufferModel buffer, bool showNetworkName) {
+	void showDirectMessage(List<MessageEntry> entries, BufferModel buffer, bool showNetworkName) {
+		var entry = entries.last;
+
+		String title;
+		if (entries.length == 1) {
+			title = 'New message from ${entry.msg.source!.name}';
+		} else {
+			title = '${entries.length} messages from ${entry.msg.source!.name}';
+		}
+
 		_show(
-			title: 'New message from ${entry.msg.source!.name}',
+			title: title,
 			body: stripAnsiFormatting(entry.msg.params[1]),
 			subText: showNetworkName ? buffer.network.displayName : null,
 			channel: _NotificationChannel(
@@ -84,13 +88,23 @@ class NotificationController {
 				description: 'Private messages sent directly to you',
 			),
 			dateTime: entry.dateTime,
-			payload: 'buffer:${entry.buffer}',
+			styleInformation: _buildMessagingStyleInfo(entries, buffer),
+			payload: 'buffer:${buffer.id}',
 		);
 	}
 
-	void showHighlight(MessageEntry entry, BufferModel buffer, bool showNetworkName) {
+	void showHighlight(List<MessageEntry> entries, BufferModel buffer, bool showNetworkName) {
+		var entry = entries.last;
+
+		String title;
+		if (entries.length == 1) {
+			title = '${entry.msg.source!.name} mentionned you in ${buffer.name}';
+		} else {
+			title = '${entries.length} mentions in ${buffer.name}';
+		}
+
 		_show(
-			title: '${entry.msg.source!.name} mentionned you in ${buffer.name}',
+			title: title,
 			body: stripAnsiFormatting(entry.msg.params[1]),
 			subText: showNetworkName ? buffer.network.displayName : null,
 			channel: _NotificationChannel(
@@ -99,7 +113,23 @@ class NotificationController {
 				description: 'Messages mentionning your nickname in a channel',
 			),
 			dateTime: entry.dateTime,
-			payload: 'buffer:${entry.buffer}',
+			styleInformation: _buildMessagingStyleInfo(entries, buffer),
+			payload: 'buffer:${buffer.id}',
+		);
+	}
+
+	MessagingStyleInformation _buildMessagingStyleInfo(List<MessageEntry> entries, BufferModel buffer) {
+		// TODO: groupConversation
+		return MessagingStyleInformation(
+			Person(name: buffer.name),
+			conversationTitle: buffer.name,
+			messages: entries.map((entry) {
+				return Message(
+					stripAnsiFormatting(entry.msg.params[1]),
+					entry.dateTime,
+					Person(name: entry.msg.source!.name),
+				);
+			}).toList(),
 		);
 	}
 
@@ -118,8 +148,25 @@ class NotificationController {
 		}).toList();
 	}
 
-	void _show({ required String title, required String body, String? subText, required _NotificationChannel channel, required String payload, DateTime? dateTime }) {
-		var id = _nextId++;
+	void _show({
+		required String title,
+		String? body,
+		String? subText,
+		required _NotificationChannel channel,
+		required String payload,
+		DateTime? dateTime,
+		StyleInformation? styleInformation,
+	}) {
+		_ActiveNotification? replace;
+		for (var notif in _active) {
+			if (notif.payload == payload) {
+				replace = notif;
+				break;
+			}
+		}
+
+		var id = replace?.id ?? _nextId++;
+
 		_notifsPlugin.show(id, title, body, NotificationDetails(
 			linux: LinuxNotificationDetails(
 				category: LinuxNotificationCategory.imReceived(),
@@ -131,6 +178,7 @@ class NotificationController {
 				category: 'msg',
 				subText: subText,
 				when: dateTime?.millisecondsSinceEpoch,
+				styleInformation: styleInformation,
 				tag: payload, // see initialize()
 			),
 		), payload: payload);

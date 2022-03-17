@@ -545,24 +545,43 @@ class ClientController {
 		});
 	}
 
-	void _openNotifications(BufferModel buffer, List<MessageEntry> entries) {
-		for (var entry in entries) {
-			if (entry.msg.cmd != 'PRIVMSG' && entry.msg.cmd != 'NOTICE') {
-				continue;
-			}
-			if (client.isMyNick(entry.msg.source!.name)) {
-				continue;
-			}
+	void _openNotifications(BufferModel buffer, List<MessageEntry> entries) async {
+		var needsNotification = entries.any((entry) {
 			if (buffer.lastDeliveredTime != null && buffer.lastDeliveredTime!.compareTo(entry.time) >= 0) {
-				continue;
+				return false;
 			}
-			bool showNetworkName = _networkList.networks.length > 1;
-			if (client.isMyNick(entry.msg.params[0])) {
-				_notifController.showDirectMessage(entry, buffer, showNetworkName);
-			} else if (findTextHighlight(entry.msg.params[1], client.nick)) {
-				_notifController.showHighlight(entry, buffer, showNetworkName);
-			}
+			return _shouldNotifyMessage(entry);
+		});
+		if (!needsNotification) {
+			return;
 		}
+
+		var unread = await _db.listUnreadMessages(buffer.id);
+		var notifyEntries = unread.where(_shouldNotifyMessage).toList();
+
+		if (notifyEntries.isEmpty) {
+			return;
+		}
+
+		bool showNetworkName = _networkList.networks.length > 1;
+		if (client.isChannel(buffer.name)) {
+			_notifController.showHighlight(notifyEntries, buffer, showNetworkName);
+		} else {
+			_notifController.showDirectMessage(notifyEntries, buffer, showNetworkName);
+		}
+	}
+
+	bool _shouldNotifyMessage(MessageEntry entry) {
+		if (entry.msg.cmd != 'PRIVMSG' && entry.msg.cmd != 'NOTICE') {
+			return false;
+		}
+		if (client.isMyNick(entry.msg.source!.name)) {
+			return false;
+		}
+		if (client.isChannel(entry.msg.params[0]) && !findTextHighlight(entry.msg.params[1], client.nick)) {
+			return false;
+		}
+		return true;
 	}
 
 	Future<BufferModel> _createBuffer(String name) {
