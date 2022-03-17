@@ -93,6 +93,7 @@ class MessageEntry {
 	final String raw;
 
 	IrcMessage? _msg;
+	DateTime? _dateTime;
 
 	Map<String, Object?> toMap() {
 		return <String, Object?>{
@@ -122,7 +123,10 @@ class MessageEntry {
 	}
 
 	DateTime get dateTime {
-		return DateTime.parse(time);
+		if (_dateTime == null) {
+			_dateTime = DateTime.parse(time);
+		}
+		return _dateTime!;
 	}
 }
 
