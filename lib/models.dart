@@ -265,6 +265,7 @@ class BufferModel extends ChangeNotifier {
 
 	// For channels only
 	String? _topic;
+	bool _joining = false;
 	bool _joined = false;
 	MemberListModel? _members;
 
@@ -286,6 +287,7 @@ class BufferModel extends ChangeNotifier {
 	bool get messageHistoryLoaded => _messageHistoryLoaded;
 
 	String? get topic => _topic;
+	bool get joining => _joining;
 	bool get joined => _joined;
 	MemberListModel? get members => _members;
 
@@ -310,6 +312,11 @@ class BufferModel extends ChangeNotifier {
 
 	set topic(String? topic) {
 		_topic = topic;
+		notifyListeners();
+	}
+
+	set joining(bool joining) {
+		_joining = joining;
 		notifyListeners();
 	}
 

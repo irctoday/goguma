@@ -239,7 +239,8 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		var buffer = context.watch<BufferModel>();
 		var network = context.watch<NetworkModel>();
 		var subtitle = buffer.topic ?? buffer.realname;
-		var canSendMessage = network.state == NetworkState.synchronizing || network.state == NetworkState.online;
+		var isOnline = network.state == NetworkState.synchronizing || network.state == NetworkState.online;
+		var canSendMessage = isOnline;
 		var isChannel = client.isChannel(buffer.name);
 		if (isChannel) {
 			canSendMessage = canSendMessage && buffer.joined;
@@ -300,6 +301,17 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 				],
 			),
 			body: NetworkIndicator(network: network, child: Column(children: [
+				if (isChannel && !buffer.joined && !buffer.joining) MaterialBanner(
+					content: Text('You have left this channel.'),
+					actions: [
+						if (isOnline) FlatButton(
+							child: Text('JOIN'),
+							onPressed: () {
+								join(client, buffer);
+							},
+						),
+					],
+				),
 				Expanded(child: ListView.builder(
 					reverse: true,
 					controller: scrollController,

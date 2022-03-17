@@ -605,3 +605,10 @@ void fetchBufferUser(Client client, BufferModel buffer) {
 		print('Failed to fetch WHO ${buffer.name}: $err');
 	});
 }
+
+void join(Client client, BufferModel buffer) {
+	buffer.joining = true;
+	client.join(buffer.name).whenComplete(() {
+		buffer.joining = false;
+	}).ignore();
+}

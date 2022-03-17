@@ -37,7 +37,7 @@ class JoinDialogState extends State<JoinDialog> {
 			}));
 
 			if (client.isChannel(name)) {
-				client.join(name);
+				join(client, buffer);
 			} else if (client.isNick(name)) {
 				fetchBufferUser(client, buffer);
 				client.monitor([name]);
