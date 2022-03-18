@@ -67,12 +67,6 @@ class BufferListPageState extends State<BufferListPage> {
 		);
 	}
 
-	void showJoinDialog(BuildContext context) {
-		showDialog(context: context, builder: (context) {
-			return JoinDialog();
-		});
-	}
-
 	void markAllBuffersRead(BuildContext context) {
 		var bufferList = context.read<BufferListModel>();
 		var clientProvider = context.read<ClientProvider>();
@@ -153,7 +147,7 @@ class BufferListPageState extends State<BufferListPage> {
 						onSelected: (key) {
 							switch (key) {
 							case 'join':
-								showJoinDialog(context);
+								JoinDialog.show(context);
 								break;
 							case 'mark-all-read':
 								markAllBuffersRead(context);

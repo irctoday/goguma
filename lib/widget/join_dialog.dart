@@ -7,6 +7,12 @@ import '../models.dart';
 import '../page/buffer.dart';
 
 class JoinDialog extends StatefulWidget {
+	static void show(BuildContext context) {
+		showDialog(context: context, builder: (context) {
+			return JoinDialog();
+		});
+	}
+
 	@override
 	JoinDialogState createState() => JoinDialogState();
 }
