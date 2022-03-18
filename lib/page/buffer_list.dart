@@ -197,11 +197,7 @@ class BufferListPageState extends State<BufferListPage> {
 				child: ListView.builder(
 					itemCount: buffers.length,
 					itemBuilder: (context, index) {
-						var buf = buffers[index];
-						return ChangeNotifierProvider.value(
-							value: buf,
-							child: BufferItem(),
-						);
+						return BufferItem(buffer: buffers[index]);
 					},
 				),
 			)),
@@ -210,13 +206,17 @@ class BufferListPageState extends State<BufferListPage> {
 }
 
 class BufferItem extends StatelessWidget {
+	final BufferModel buffer;
+
+	BufferItem({ Key? key, required this.buffer }) : super(key: key);
+
 	@override
 	Widget build(BuildContext context) {
-		return Consumer<BufferModel>(builder: (context, buf, child) {
-			var subtitle = buf.topic ?? buf.realname;
+		return AnimatedBuilder(animation: buffer, builder: (context, child) {
+			var subtitle = buffer.topic ?? buffer.realname;
 			return ListTile(
-				leading: CircleAvatar(child: Text(initials(buf.name))),
-				trailing: (buf.unreadCount == 0) ? null : Container(
+				leading: CircleAvatar(child: Text(initials(buffer.name))),
+				trailing: (buffer.unreadCount == 0) ? null : Container(
 					padding: EdgeInsets.all(3),
 					decoration: BoxDecoration(
 						color: Colors.red,
@@ -224,18 +224,18 @@ class BufferItem extends StatelessWidget {
 					),
 					constraints: BoxConstraints(minWidth: 20, minHeight: 20),
 					child: Text(
-						'${buf.unreadCount}',
+						'${buffer.unreadCount}',
 						style: TextStyle(color: Colors.white, fontSize: 12),
 						textAlign: TextAlign.center,
 					),
 				),
-				title: Text(buf.name, overflow: TextOverflow.ellipsis),
+				title: Text(buffer.name, overflow: TextOverflow.ellipsis),
 				subtitle: subtitle == null ? null : Text(subtitle,
 					overflow: TextOverflow.fade,
 					softWrap: false,
 				),
 				onTap: () {
-					Navigator.pushNamed(context, BufferPage.routeName, arguments: buf);
+					Navigator.pushNamed(context, BufferPage.routeName, arguments: buffer);
 				},
 			);
 		});
