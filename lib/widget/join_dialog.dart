@@ -83,7 +83,7 @@ class JoinDialogState extends State<JoinDialog> {
 				)),
 			]),
 			actions: [
-				FlatButton(
+				TextButton(
 					child: Text('Cancel'),
 					onPressed: () {
 						Navigator.pop(context);

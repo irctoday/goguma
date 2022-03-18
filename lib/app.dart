@@ -146,7 +146,7 @@ class AppState extends State<App> with WidgetsBindingObserver {
 		_scaffoldMessengerKey.currentState?.showMaterialBanner(MaterialBanner(
 			content: Text('Disconnected from $faultyNetworkName'),
 			actions: [
-				FlatButton(
+				TextButton(
 					child: Text('RECONNECT'),
 					onPressed: () {
 						var clientProvider = context.read<ClientProvider>();

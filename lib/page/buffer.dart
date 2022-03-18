@@ -291,7 +291,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 				if (isChannel && !buffer.joined && !buffer.joining) MaterialBanner(
 					content: Text('You have left this channel.'),
 					actions: [
-						if (isOnline) FlatButton(
+						if (isOnline) TextButton(
 							child: Text('JOIN'),
 							onPressed: () {
 								join(client, buffer);
