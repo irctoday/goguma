@@ -18,22 +18,22 @@ class JoinDialog extends StatefulWidget {
 }
 
 class JoinDialogState extends State<JoinDialog> {
-	final TextEditingController nameController = TextEditingController(text: '#');
-	late NetworkModel network;
+	final TextEditingController _nameController = TextEditingController(text: '#');
+	late NetworkModel _network;
 
 	@override
 	void initState() {
 		super.initState();
-		network = context.read<NetworkListModel>().networks.first;
+		_network = context.read<NetworkListModel>().networks.first;
 	}
 
-	void submit(BuildContext context) {
-		var client = context.read<ClientProvider>().get(network);
+	void _submit(BuildContext context) {
+		var client = context.read<ClientProvider>().get(_network);
 		var db = context.read<DB>();
-		var name = nameController.text;
+		var name = _nameController.text;
 
-		db.storeBuffer(BufferEntry(name: name, network: network.networkId)).then((entry) {
-			var buffer = BufferModel(entry: entry, network: network);
+		db.storeBuffer(BufferEntry(name: name, network: _network.networkId)).then((entry) {
+			var buffer = BufferModel(entry: entry, network: _network);
 			context.read<BufferListModel>().add(buffer);
 
 			Navigator.pop(context);
@@ -50,7 +50,7 @@ class JoinDialogState extends State<JoinDialog> {
 
 	@override
 	void dispose() {
-		nameController.dispose();
+		_nameController.dispose();
 		super.dispose();
 	}
 
@@ -61,19 +61,19 @@ class JoinDialogState extends State<JoinDialog> {
 			title: Text('Join channel'),
 			content: Row(children: [
 				Flexible(child: TextFormField(
-					controller: nameController,
+					controller: _nameController,
 					decoration: InputDecoration(hintText: 'Name'),
 					autofocus: true,
 					onFieldSubmitted: (_) {
-						submit(context);
+						_submit(context);
 					},
 				)),
 				SizedBox(width: 10),
 				Flexible(child: DropdownButtonFormField<NetworkModel>(
-					value: network,
+					value: _network,
 					onChanged: (NetworkModel? value) {
 						setState(() {
-							network = value!;
+							_network = value!;
 						});
 					},
 					items: networks.map((network) => DropdownMenuItem(
@@ -92,7 +92,7 @@ class JoinDialogState extends State<JoinDialog> {
 				ElevatedButton(
 					child: Text('Join'),
 					onPressed: () {
-						submit(context);
+						_submit(context);
 					},
 				),
 			],
