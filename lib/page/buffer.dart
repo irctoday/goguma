@@ -18,7 +18,7 @@ class BufferPage extends StatefulWidget {
 
 	final String? unreadMarkerTime;
 
-	BufferPage({ Key? key, this.unreadMarkerTime }) : super(key: key);
+	const BufferPage({ Key? key, this.unreadMarkerTime }) : super(key: key);
 
 	@override
 	BufferPageState createState() => BufferPageState();
@@ -42,7 +42,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		_scrollController.addListener(_handleScroll);
 
 		var buffer = context.read<BufferModel>();
-		var future = Future.value();
+		var future = Future<void>.value();
 		if (!buffer.messageHistoryLoaded) {
 			// TODO: only load a partial view of the messages
 			future = context.read<DB>().listMessages(buffer.id).then((entries) {
@@ -377,7 +377,14 @@ class _MessageItem extends StatelessWidget {
 	final String? unreadMarkerTime;
 	final VoidCallback? onSwipe;
 
-	_MessageItem({ Key? key, required this.msg, this.prevMsg, this.nextMsg, this.unreadMarkerTime, this.onSwipe }) : super(key: key);
+	const _MessageItem({
+		Key? key,
+		required this.msg,
+		this.prevMsg,
+		this.nextMsg,
+		this.unreadMarkerTime,
+		this.onSwipe
+	}) : super(key: key);
 
 	@override
 	Widget build(BuildContext context) {

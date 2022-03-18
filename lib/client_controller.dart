@@ -13,7 +13,7 @@ import 'models.dart';
 import 'notification_controller.dart';
 
 ConnectParams connectParamsFromServerEntry(ServerEntry entry) {
-	SaslPlainCredentials? saslPlain = null;
+	SaslPlainCredentials? saslPlain;
 	if (entry.saslPlainPassword != null) {
 		saslPlain = SaslPlainCredentials(entry.nick!, entry.saslPlainPassword!);
 	}
@@ -29,9 +29,9 @@ ConnectParams connectParamsFromServerEntry(ServerEntry entry) {
 }
 
 class ClientProvider {
-	Map<NetworkModel, ClientController> _controllers = Map();
-	StreamController<IrcException> _errorsController = StreamController.broadcast();
-	StreamController<NetworkModel> _networkStatesController = StreamController.broadcast();
+	final Map<NetworkModel, ClientController> _controllers = {};
+	final StreamController<IrcException> _errorsController = StreamController.broadcast();
+	final StreamController<NetworkModel> _networkStatesController = StreamController.broadcast();
 
 	final DB _db;
 	final NetworkListModel _networkList;
@@ -197,7 +197,7 @@ class ClientController {
 			}
 		});
 
-		var messagesSub;
+		late StreamSubscription<void> messagesSub;
 		messagesSub = client.messages.listen((msg) {
 			var future = _handleMessage(msg);
 			if (future != null) {
@@ -208,7 +208,7 @@ class ClientController {
 	}
 
 	String? _getLastDeliveredTime() {
-		String? last = null;
+		String? last;
 		for (var buffer in _bufferList.buffers) {
 			if (buffer.network != network || buffer.lastDeliveredTime == null) {
 				continue;
@@ -258,7 +258,7 @@ class ClientController {
 				client.monitor(l);
 			}
 
-			List<Future> syncFutures = [];
+			List<Future<void>> syncFutures = [];
 
 			// Query latest READ status for user targets
 			if (client.caps.enabled.contains('soju.im/read')) {
@@ -339,7 +339,7 @@ class ClientController {
 			break;
 		case 'TOPIC':
 			var channel = msg.params[0];
-			String? topic = null;
+			String? topic;
 			if (msg.params.length > 1) {
 				topic = msg.params[1];
 			}
@@ -443,7 +443,7 @@ class ClientController {
 				break;
 			}
 			if (!bound.startsWith('timestamp=')) {
-				throw FormatException('Invalid READ bound: ${msg}');
+				throw FormatException('Invalid READ bound: $msg');
 			}
 			var time = bound.replaceFirst('timestamp=', '');
 
@@ -473,8 +473,7 @@ class ClientController {
 			break;
 		default:
 			if (msg is ClientEndOfBatch) {
-				var endOfBatch = msg as ClientEndOfBatch;
-				return _handleBatch(endOfBatch.child);
+				return _handleBatch(msg.child);
 			}
 		}
 		return null;
@@ -625,7 +624,7 @@ void fetchBufferUser(Client client, BufferModel buffer) {
 		var reply = replies[0];
 		buffer.realname = reply.realname;
 		buffer.away = reply.away;
-	}).catchError((err) {
+	}).catchError((Object err) {
 		print('Failed to fetch WHO ${buffer.name}: $err');
 	});
 }

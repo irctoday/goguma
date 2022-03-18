@@ -96,7 +96,7 @@ class IrcMessage {
 			tags = const {};
 		}
 
-		IrcSource? source = null;
+		IrcSource? source;
 		if (s.startsWith(':')) {
 			var i = s.indexOf(' ');
 			if (i < 0) {
@@ -135,6 +135,7 @@ class IrcMessage {
 		return IrcMessage(cmd.toUpperCase(), params, tags: tags, source: source);
 	}
 
+	@override
 	String toString() {
 		var s = '';
 		if (tags.length > 0) {
@@ -149,7 +150,7 @@ class IrcMessage {
 				s += ' ' + params.getRange(0, params.length - 1).join(' ');
 			}
 
-			if (params.last.length == 0 || params.last.startsWith(':') || params.last.indexOf(' ') >= 0) {
+			if (params.last.length == 0 || params.last.startsWith(':') || params.last.contains(' ')) {
 				s += ' :' + params.last;
 			} else {
 				s += ' ' + params.last;
@@ -269,6 +270,7 @@ class IrcSource {
 		return IrcSource(name, user: user, host: host);
 	}
 
+	@override
 	String toString() {
 		if (host == null) {
 			return name;
@@ -297,8 +299,8 @@ class IrcException implements Exception {
 }
 
 class IrcCapRegistry {
-	Map<String, String?> _available = Map();
-	Set<String> _enabled = Set();
+	final Map<String, String?> _available = {};
+	final Set<String> _enabled = {};
 
 	UnmodifiableMapView<String, String?> get available => UnmodifiableMapView(_available);
 	UnmodifiableSetView<String> get enabled => UnmodifiableSetView(_enabled);
@@ -343,7 +345,7 @@ class IrcCapRegistry {
 		for (var s in caps.split(' ')) {
 			var i = s.indexOf('=');
 			String k = s;
-			String? v = null;
+			String? v;
 			if (i >= 0) {
 				k = s.substring(0, i);
 				v = s.substring(i + 1);
@@ -387,7 +389,7 @@ class IrcIsupportRegistry {
 	bool get whox => _whox;
 
 	void parse(List<String> tokens) {
-		tokens.forEach((tok) {
+		for (var tok in tokens) {
 			if (tok.startsWith('-')) {
 				var k = tok.substring(1).toUpperCase();
 				switch (k) {
@@ -416,7 +418,7 @@ class IrcIsupportRegistry {
 					_whox = false;
 					break;
 				}
-				return;
+				continue;
 			}
 
 			var i = tok.indexOf('=');
@@ -469,7 +471,7 @@ class IrcIsupportRegistry {
 				_whox = true;
 				break;
 			}
-		});
+		}
 	}
 
 	void clear() {
@@ -540,26 +542,31 @@ String _caseMapCharAscii(String ch) {
 
 class IrcNameMap<V> extends MapBase<String, V> {
 	CaseMapping _cm;
-	Map<String, _IrcNameMapEntry<V>> _m = Map();
+	Map<String, _IrcNameMapEntry<V>> _m = {};
 
 	IrcNameMap(CaseMapping cm) : _cm = cm;
 
+	@override
 	V? operator [](Object? key) {
 		return _m[_cm(key as String)]?.value;
 	}
 
+	@override
 	void operator []=(String key, V value) {
 		_m[_cm(key)] = _IrcNameMapEntry(key, value);
 	}
 
+	@override
 	void clear() {
 		_m.clear();
 	}
 
+	@override
 	Iterable<String> get keys {
 		return _m.values.map((entry) => entry.name);
 	}
 
+	@override
 	V? remove(Object? key) {
 		return _m.remove(_cm(key as String))?.value;
 	}
@@ -818,8 +825,8 @@ class WhoReply {
 		var flags = msg.params[6];
 		var trailing = msg.params[7];
 
-		var away = flags.indexOf('G') >= 0;
-		var op = flags.indexOf('*') >= 0;
+		var away = flags.contains('G');
+		var op = flags.contains('*');
 
 		var i = trailing.indexOf(' ');
 		if (i < 0) {
@@ -838,13 +845,13 @@ class WhoReply {
 	factory WhoReply.parseWhox(IrcMessage msg, Set<WhoxField> fields) {
 		assert(msg.cmd == RPL_WHOSPCRPL);
 
-		var expected = Set.of(<WhoxField>[WhoxField.nickname, WhoxField.realname, WhoxField.flags]);
+		var expected = <WhoxField>{WhoxField.nickname, WhoxField.realname, WhoxField.flags};
 		assert(fields.length == expected.length && fields.containsAll(expected));
 
 		var flags = msg.params[2];
 
-		var away = flags.indexOf('G') >= 0;
-		var op = flags.indexOf('*') >= 0;
+		var away = flags.contains('G');
+		var op = flags.contains('*');
 
 		return WhoReply(
 			nickname: msg.params[1],

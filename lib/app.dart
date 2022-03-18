@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
@@ -14,11 +13,12 @@ import 'page/buffer.dart';
 import 'page/buffer_details.dart';
 import 'page/buffer_list.dart';
 import 'page/connect.dart';
-import 'widget/join_dialog.dart';
 
 const _themeMode = ThemeMode.system;
 
 class App extends StatefulWidget {
+	const App({ Key? key }) : super(key: key);
+
 	@override
 	AppState createState() => AppState();
 }
@@ -27,9 +27,9 @@ class AppState extends State<App> with WidgetsBindingObserver {
 	Timer? _pingTimer;
 	final GlobalKey<NavigatorState> _navigatorKey = GlobalKey(debugLabel: 'main-navigator');
 	final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey(debugLabel: 'main-scaffold-messenger');
-	late StreamSubscription _clientErrorSub;
-	late StreamSubscription _connectivitySub;
-	late StreamSubscription _notifSelectionSub;
+	late StreamSubscription<void> _clientErrorSub;
+	late StreamSubscription<void> _connectivitySub;
+	late StreamSubscription<void> _notifSelectionSub;
 	late NetworkStateAggregator _networkStateAggregator;
 
 	@override
@@ -100,8 +100,8 @@ class AppState extends State<App> with WidgetsBindingObserver {
 		context.read<ClientProvider>().clients.forEach((client) {
 			switch (client.state) {
 			case ClientState.connected:
-				client.ping().catchError((err) {
-					print('PING failed: ${err}');
+				client.ping().catchError((Object err) {
+					print('PING failed: $err');
 					return null;
 				});
 				break;
@@ -161,7 +161,7 @@ class AppState extends State<App> with WidgetsBindingObserver {
 		));
 	}
 
-	Route? _handleGenerateRoute(RouteSettings settings) {
+	Route<dynamic>? _handleGenerateRoute(RouteSettings settings) {
 		WidgetBuilder builder;
 		switch (settings.name) {
 		case ConnectPage.routeName:

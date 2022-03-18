@@ -7,7 +7,7 @@ class NetworkListIndicator extends StatefulWidget {
 	final Widget child;
 	final NetworkListModel networkList;
 
-	NetworkListIndicator({ Key? key, required this.child, required NetworkListModel this.networkList }) : super(key: key);
+	const NetworkListIndicator({ Key? key, required this.child, required this.networkList }) : super(key: key);
 
 	@override
 	_NetworkListIndicatorState createState() => _NetworkListIndicatorState();
@@ -52,7 +52,7 @@ class NetworkIndicator extends StatefulWidget {
 	final Widget child;
 	final NetworkModel network;
 
-	NetworkIndicator({ Key? key, required this.child, required this.network }) : super(key: key);
+	const NetworkIndicator({ Key? key, required this.child, required this.network }) : super(key: key);
 
 	@override
 	_NetworkIndicatorState createState() => _NetworkIndicatorState();
@@ -93,7 +93,7 @@ class _RefreshIndicator extends StatefulWidget {
 	final Widget child;
 	final String? semanticsLabel;
 
-	_RefreshIndicator({ Key? key, required this.child, this.semanticsLabel }) : super(key: key);
+	const _RefreshIndicator({ Key? key, required this.child, this.semanticsLabel }) : super(key: key);
 
 	@override
 	_RefreshIndicatorState createState() => _RefreshIndicatorState();

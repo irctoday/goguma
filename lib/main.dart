@@ -35,8 +35,8 @@ void main() {
 	List<ServerEntry> serverEntries = [];
 	List<NetworkEntry> networkEntries = [];
 	List<BufferEntry> bufferEntries = [];
-	Map<int, int> unreadCounts = Map();
-	Map<int, String> lastDeliveredTimes = Map();
+	Map<int, int> unreadCounts = {};
+	Map<int, String> lastDeliveredTimes = {};
 	DB.open().then((db) {
 		return Future.wait([
 			db.listServers().then((entries) => serverEntries = entries),
@@ -61,7 +61,7 @@ void main() {
 			return MapEntry(entry.id!, entry);
 		}));
 
-		networkEntries.forEach((networkEntry) {
+		for (var networkEntry in networkEntries) {
 			var serverEntry = serverMap[networkEntry.server]!;
 
 			var network = NetworkModel(serverEntry, networkEntry);
@@ -73,9 +73,9 @@ void main() {
 			}
 			var client = Client(clientParams);
 			clientProvider.add(client, network);
-		});
+		}
 
-		bufferEntries.forEach((entry) {
+		for (var entry in bufferEntries) {
 			var network = networkList.networks.firstWhere((network) => network.networkId == entry.network);
 			var buffer = BufferModel(entry: entry, network: network);
 			bufferList.add(buffer);
@@ -84,11 +84,11 @@ void main() {
 			if (lastDeliveredTimes[buffer.id] != null) {
 				bufferList.bumpLastDeliveredTime(buffer, lastDeliveredTimes[buffer.id]!);
 			}
-		});
+		}
 
-		clientProvider.clients.forEach((client) {
+		for (var client in clientProvider.clients) {
 			client.connect().ignore();
-		});
+		}
 
 		// Listen for sync requests coming from the work manager Isolate
 		syncReceivePort.listen((sendPort) {
@@ -103,14 +103,14 @@ void main() {
 				return client.ping().catchError((_) => null);
 			})).then((_) {
 				return Future.wait(networkList.networks.map((network) {
-					return _waitNetworkOnline(network).catchError((err) {
+					return _waitNetworkOnline(network).catchError((Object err) {
 						throw Exception('Failed to bring network "${network.serverEntry.host}" online: $err');
 					});
 				}));
 			}).then((_) {
 				print('Finished chat history synchronization');
 				sendPort.send(true);
-			}).catchError((err) {
+			}).catchError((Object err) {
 				print('Failed chat history synchronization: $err');
 				sendPort.send(false);
 			});
@@ -166,7 +166,7 @@ Future<void> _waitNetworkOnline(NetworkModel network) {
 
 	var completer = Completer<void>();
 	var attempts = 0;
-	var listener = () {
+	void listener() {
 		switch (network.state) {
 		case NetworkState.offline:
 			attempts++;
@@ -180,7 +180,7 @@ Future<void> _waitNetworkOnline(NetworkModel network) {
 		default:
 			break;
 		}
-	};
+	}
 	network.addListener(listener);
 	return completer.future.timeout(Duration(minutes: 5)).whenComplete(() {
 		network.removeListener(listener);

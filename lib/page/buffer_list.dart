@@ -29,7 +29,7 @@ String _initials(String name) {
 
 class BufferListPageState extends State<BufferListPage> {
 	String? _searchQuery;
-	TextEditingController _searchController = TextEditingController();
+	final TextEditingController _searchController = TextEditingController();
 
 	@override
 	void dispose() {
@@ -93,10 +93,10 @@ class BufferListPageState extends State<BufferListPage> {
 		var db = context.read<DB>();
 		var networkList = context.read<NetworkListModel>();
 
-		networkList.networks.forEach((network) {
+		for (var network in networkList.networks) {
 			db.deleteNetwork(network.networkId);
 			db.deleteServer(network.serverId);
-		});
+		}
 		networkList.clear();
 		context.read<ClientProvider>().disconnectAll();
 
@@ -118,11 +118,11 @@ class BufferListPageState extends State<BufferListPage> {
 		}
 
 		var hasUnreadBuffer = false;
-		buffers.forEach((buffer) {
+		for (var buffer in buffers) {
 			if (buffer.unreadCount > 0) {
 				hasUnreadBuffer = true;
 			}
-		});
+		}
 
 		var networkList = context.read<NetworkListModel>();
 		var clientProvider = context.read<ClientProvider>();
@@ -208,7 +208,7 @@ class BufferListPageState extends State<BufferListPage> {
 class _BufferItem extends AnimatedWidget {
 	final BufferModel buffer;
 
-	_BufferItem({ Key? key, required this.buffer }) : super(key: key, listenable: buffer);
+	const _BufferItem({ Key? key, required this.buffer }) : super(key: key, listenable: buffer);
 
 	@override
 	Widget build(BuildContext context) {

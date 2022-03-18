@@ -5,7 +5,7 @@ import 'database.dart';
 import 'irc.dart';
 
 class NetworkListModel extends ChangeNotifier {
-	List<NetworkModel> _networks = [];
+	final List<NetworkModel> _networks = [];
 
 	UnmodifiableListView<NetworkModel> get networks => UnmodifiableListView(_networks);
 
@@ -80,7 +80,7 @@ class NetworkModel extends ChangeNotifier {
 }
 
 class BouncerNetworkListModel extends ChangeNotifier {
-	Map<String, BouncerNetwork> _networks = Map();
+	final Map<String, BouncerNetwork> _networks = {};
 
 	UnmodifiableMapView<String, BouncerNetwork> get networks => UnmodifiableMapView(_networks);
 
@@ -155,8 +155,8 @@ class BufferKey {
 		this.name = cm(name);
 
 	BufferKey.fromBuffer(BufferModel buffer, CaseMapping cm) :
-		this.name = cm(buffer.name),
-		this.network = buffer.network;
+		name = cm(buffer.name),
+		network = buffer.network;
 
 	@override
 	bool operator ==(Object other) {
@@ -173,7 +173,7 @@ class BufferKey {
 }
 
 class BufferListModel extends ChangeNotifier {
-	Map<BufferKey, BufferModel> _buffers = Map();
+	Map<BufferKey, BufferModel> _buffers = {};
 	List<BufferModel> _sorted = [];
 	CaseMapping _cm = defaultCaseMapping;
 
@@ -181,7 +181,9 @@ class BufferListModel extends ChangeNotifier {
 
 	@override
 	void dispose() {
-		_buffers.values.forEach((buf) => buf.dispose());
+		for (var buf in _buffers.values) {
+			buf.dispose();
+		}
 		super.dispose();
 	}
 

@@ -116,16 +116,12 @@ class MessageEntry {
 		raw = m['raw'] as String;
 
 	IrcMessage get msg {
-		if (_msg == null) {
-			_msg = IrcMessage.parse(raw);
-		}
+		_msg ??= IrcMessage.parse(raw);
 		return _msg!;
 	}
 
 	DateTime get dateTime {
-		if (_dateTime == null) {
-			_dateTime = DateTime.parse(time);
-		}
+		_dateTime ??= DateTime.parse(time);
 		return _dateTime!;
 	}
 }
@@ -133,7 +129,7 @@ class MessageEntry {
 class DB {
 	final Database _db;
 
-	DB._(Database this._db);
+	DB._(this._db);
 
 	static Future<DB> open() {
 		WidgetsFlutterBinding.ensureInitialized();
@@ -339,11 +335,10 @@ class DB {
 			WHERE Message.time > Buffer.last_read_time
 			GROUP BY Message.buffer
 		''').then((entries) {
-			return Map<int, int>.fromIterable(
-				entries,
-				key: (m) => m['buffer'] as int,
-				value: (m) => m['unread_count'] as int,
-			);
+			return <int, int>{
+				for (var m in entries)
+					m['buffer'] as int: m['unread_count'] as int,
+			};
 		});
 	}
 
@@ -353,11 +348,10 @@ class DB {
 			FROM Message
 			GROUP BY buffer
 		''').then((entries) {
-			return Map<int, String>.fromIterable(
-				entries,
-				key: (m) => m['buffer'] as int,
-				value: (m) => m['time'] as String,
-			);
+			return <int, String>{
+				for (var m in entries)
+					m['buffer'] as int: m['time'] as String,
+			};
 		});
 	}
 

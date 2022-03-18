@@ -72,6 +72,7 @@ class NetworkStateAggregator extends ChangeNotifier {
 		}
 	}
 
+	@override
 	void dispose() {
 		_removeNetworkListeners();
 		_networkList.removeListener(_handleNetworkListChange);

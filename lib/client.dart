@@ -32,7 +32,7 @@ class ConnectParams {
 
 enum ClientState { disconnected, connecting, connected }
 
-const _autoReconnectDelay = const Duration(seconds: 10);
+const _autoReconnectDelay = Duration(seconds: 10);
 
 const _permanentCaps = [
 	'away-notify',
@@ -64,15 +64,15 @@ class Client {
 	String _nick;
 	IrcSource? _serverSource;
 	ClientState _state = ClientState.disconnected;
-	StreamController<ClientMessage> _messagesController = StreamController.broadcast();
-	StreamController<ClientState> _statesController = StreamController.broadcast();
+	final StreamController<ClientMessage> _messagesController = StreamController.broadcast();
+	final StreamController<ClientState> _statesController = StreamController.broadcast();
 	Timer? _reconnectTimer;
 	bool _autoReconnect;
 	DateTime? _lastConnectTime;
-	Map<String, ClientBatch> _batches = Map();
-	Map<String, List<ClientMessage>> _pendingNames = Map();
+	final Map<String, ClientBatch> _batches = {};
+	final Map<String, List<ClientMessage>> _pendingNames = {};
 	Future<void> _lastWhoFuture = Future.value(null);
-	IrcNameMap<void> _monitored = IrcNameMap(defaultCaseMapping);
+	final IrcNameMap<void> _monitored = IrcNameMap(defaultCaseMapping);
 
 	String get nick => _nick;
 	IrcSource? get serverSource => _serverSource;
@@ -149,7 +149,7 @@ class Client {
 	}
 
 	void _log(String s) {
-		print('[${_id}] ${s}');
+		print('[$_id] $s');
 	}
 
 	void _setState(ClientState state) {
@@ -181,13 +181,13 @@ class Client {
 			return;
 		}
 
-		_log('Reconnecting in ${_autoReconnectDelay}');
+		_log('Reconnecting in $_autoReconnectDelay');
 		_reconnectTimer = Timer(_autoReconnectDelay, () {
 			connect().ignore();
 		});
 	}
 
-	Future<ClientMessage> _waitMessage(bool test(ClientMessage msg)) {
+	Future<ClientMessage> _waitMessage(bool Function(ClientMessage msg) test) {
 		if (state == ClientState.disconnected) {
 			return Future.error(Exception('Disconnected from server'));
 		}
@@ -219,7 +219,7 @@ class Client {
 		});
 	}
 
-	Future<ClientMessage> _roundtripMessage(IrcMessage msg, bool test(ClientMessage msg)) {
+	Future<ClientMessage> _roundtripMessage(IrcMessage msg, bool Function(ClientMessage msg) test) {
 		var cmd = msg.cmd;
 		send(msg);
 
@@ -243,13 +243,12 @@ class Client {
 		});
 	}
 
-	Future<ClientBatch> _roundtripBatch(IrcMessage msg, bool test(ClientBatch batch)) {
+	Future<ClientBatch> _roundtripBatch(IrcMessage msg, bool Function(ClientBatch batch) test) {
 		return _roundtripMessage(msg, (msg) {
 			if (!(msg is ClientEndOfBatch)) {
 				return false;
 			}
-			var endOfBatch = msg as ClientEndOfBatch;
-			return test(endOfBatch.child);
+			return test(msg.child);
 		}).then((msg) {
 			var endOfBatch = msg as ClientEndOfBatch;
 			return endOfBatch.child;
@@ -324,7 +323,7 @@ class Client {
 			_log('<- ' + msg.toString());
 		}
 
-		ClientBatch? msgBatch = null;
+		ClientBatch? msgBatch;
 		if (msg.tags.containsKey('batch')) {
 			msgBatch = _batches[msg.tags['batch']];
 		}
@@ -341,7 +340,7 @@ class Client {
 				var ref = msg.params[0].substring(1);
 				var child = _batches[ref];
 				if (child == null) {
-					throw FormatException('Unknown BATCH reference: ${ref}');
+					throw FormatException('Unknown BATCH reference: $ref');
 				}
 				clientMsg = ClientEndOfBatch(msg, child, batch: msgBatch);
 			} else {
@@ -394,7 +393,7 @@ class Client {
 				var type = msg.params[1];
 				var params = msg.params.sublist(2);
 				if (_batches.containsKey(ref)) {
-					throw FormatException('Duplicate BATCH reference: ${ref}');
+					throw FormatException('Duplicate BATCH reference: $ref');
 				}
 				var batch = ClientBatch(type, params, msgBatch);
 				_batches[ref] = batch;
@@ -403,7 +402,7 @@ class Client {
 				_batches.remove(ref);
 				break;
 			default:
-				throw FormatException('Invalid BATCH message: ${msg}');
+				throw FormatException('Invalid BATCH message: $msg');
 			}
 			break;
 		case RPL_NAMREPLY:
@@ -484,7 +483,7 @@ class Client {
 		}).then((batch) {
 			return batch.messages.map((msg) {
 				if (msg.cmd != 'CHATHISTORY' || msg.params[0] != 'TARGETS') {
-					throw FormatException('Expected CHATHISTORY TARGET message, got: ${msg}');
+					throw FormatException('Expected CHATHISTORY TARGET message, got: $msg');
 				}
 				return ChatHistoryTarget(msg.params[1], msg.params[2]);
 			}).toList();
@@ -517,7 +516,7 @@ class Client {
 	}
 
 	Future<void> ping() {
-		var token = 'goguma-${_nextPingSerial}';
+		var token = 'goguma-$_nextPingSerial';
 		var msg = IrcMessage('PING', [token]);
 		_nextPingSerial++;
 
@@ -549,11 +548,11 @@ class Client {
 		var cm = isupport.caseMapping;
 		List<WhoReply> replies = [];
 		var future = _lastWhoFuture.catchError((_) => null).then((_) {
-			var whoxFields = Set.of(<WhoxField>[
+			var whoxFields = <WhoxField>{
 				WhoxField.nickname,
 				WhoxField.realname,
 				WhoxField.flags,
-			]);
+			};
 
 			List<String> params = [mask];
 			if (isupport.whox) {
@@ -696,8 +695,7 @@ class ClientEndOfNames extends ClientMessage {
 class ClientEndOfBatch extends ClientMessage {
 	final ClientBatch child;
 
-	ClientEndOfBatch(IrcMessage msg, ClientBatch child, { ClientBatch? batch }) :
-		this.child = child,
+	ClientEndOfBatch(IrcMessage msg, this.child, { ClientBatch? batch }) :
 		super(msg, batch: batch);
 }
 
