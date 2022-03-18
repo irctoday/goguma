@@ -31,9 +31,7 @@ class JoinDialogState extends State<JoinDialog> {
 			context.read<BufferListModel>().add(buffer);
 
 			Navigator.pop(context);
-			Navigator.push(context, MaterialPageRoute(builder: (context) {
-				return buildBufferPage(context, buffer);
-			}));
+			Navigator.pushNamed(context, BufferPage.routeName, arguments: buffer);
 
 			if (client.isChannel(name)) {
 				join(client, buffer);

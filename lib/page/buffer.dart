@@ -13,19 +13,9 @@ import '../widget/network_indicator.dart';
 import '../widget/swipe_action.dart';
 import 'buffer_details.dart';
 
-Widget buildBufferPage(BuildContext context, BufferModel buf) {
-	var client = context.read<ClientProvider>().get(buf.network);
-	return MultiProvider(
-		providers: [
-			ChangeNotifierProvider<BufferModel>.value(value: buf),
-			ChangeNotifierProvider<NetworkModel>.value(value: buf.network),
-			Provider<Client>.value(value: client),
-		],
-		child: BufferPage(unreadMarkerTime: buf.entry.lastReadTime),
-	);
-}
-
 class BufferPage extends StatefulWidget {
+	static const routeName = '/buffer';
+
 	final String? unreadMarkerTime;
 
 	BufferPage({ Key? key, this.unreadMarkerTime }) : super(key: key);
@@ -264,9 +254,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 						],
 					),
 					onTap: () {
-						Navigator.push(context, MaterialPageRoute(builder: (context) {
-							return buildBufferDetailsPage(context, buffer);
-						}));
+						Navigator.pushNamed(context, BufferDetailsPage.routeName, arguments: buffer);
 					},
 				),
 				actions: [
@@ -274,9 +262,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 						onSelected: (key) {
 							switch (key) {
 							case 'details':
-								Navigator.push(context, MaterialPageRoute(builder: (context) {
-									return buildBufferDetailsPage(context, buffer);
-								}));
+								Navigator.pushNamed(context, BufferDetailsPage.routeName, arguments: buffer);
 								break;
 							case 'part':
 								var client = context.read<Client>();

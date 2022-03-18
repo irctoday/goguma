@@ -9,6 +9,8 @@ import '../models.dart';
 import 'buffer_list.dart';
 
 class ConnectPage extends StatefulWidget {
+	static const routeName = '/connect';
+
 	@override
 	ConnectPageState createState() => ConnectPageState();
 }
@@ -79,9 +81,7 @@ class ConnectPageState extends State<ConnectPage> {
 			context.read<ClientProvider>().add(client, network);
 			client.connect();
 
-			return Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-				return BufferListPage();
-			}));
+			return Navigator.pushReplacementNamed(context, BufferListPage.routeName);
 		}).catchError((Object err) {
 			client.disconnect();
 			setState(() {

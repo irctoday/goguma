@@ -7,19 +7,9 @@ import '../irc.dart';
 import '../linkify.dart';
 import '../models.dart';
 
-Widget buildBufferDetailsPage(BuildContext context, BufferModel buf) {
-	var client = context.read<ClientProvider>().get(buf.network);
-	return MultiProvider(
-		providers: [
-			ChangeNotifierProvider<BufferModel>.value(value: buf),
-			ChangeNotifierProvider<NetworkModel>.value(value: buf.network),
-			Provider<Client>.value(value: client),
-		],
-		child: BufferDetailsPage(),
-	);
-}
-
 class BufferDetailsPage extends StatefulWidget {
+	static const routeName = '/buffer/details';
+
 	@override
 	BufferDetailsPageState createState() => BufferDetailsPageState();
 }

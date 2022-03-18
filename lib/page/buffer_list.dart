@@ -10,6 +10,8 @@ import 'buffer.dart';
 import 'connect.dart';
 
 class BufferListPage extends StatefulWidget {
+	static const routeName = '/';
+
 	@override
 	BufferListPageState createState() => BufferListPageState();
 }
@@ -104,9 +106,7 @@ class BufferListPageState extends State<BufferListPage> {
 		networkList.clear();
 		context.read<ClientProvider>().disconnectAll();
 
-		Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-			return ConnectPage();
-		}));
+		Navigator.pushReplacementNamed(context, ConnectPage.routeName);
 	}
 
 	@override
@@ -241,9 +241,7 @@ class BufferItem extends StatelessWidget {
 					softWrap: false,
 				),
 				onTap: () {
-					Navigator.push(context, MaterialPageRoute(builder: (context) {
-						return buildBufferPage(context, buf);
-					}));
+					Navigator.pushNamed(context, BufferPage.routeName, arguments: buf);
 				},
 			);
 		});

@@ -11,8 +11,10 @@ import 'models.dart';
 import 'network_state_aggregator.dart';
 import 'notification_controller.dart';
 import 'page/buffer.dart';
+import 'page/buffer_details.dart';
 import 'page/buffer_list.dart';
 import 'page/connect.dart';
+import 'widget/join_dialog.dart';
 
 const _themeMode = ThemeMode.system;
 
@@ -125,9 +127,8 @@ class AppState extends State<App> with WidgetsBindingObserver {
 		if (buffer == null) {
 			return; // maybe closed by the user in-between
 		}
-		_navigatorKey.currentState!.push(MaterialPageRoute(builder: (context) {
-			return buildBufferPage(context, buffer);
-		}));
+		var until = ModalRoute.withName(BufferListPage.routeName);
+		_navigatorKey.currentState!.pushNamedAndRemoveUntil(BufferPage.routeName, until, arguments: buffer);
 	}
 
 	void _handleNetworkStateChange() {
@@ -160,15 +161,58 @@ class AppState extends State<App> with WidgetsBindingObserver {
 		));
 	}
 
+	Route? _handleGenerateRoute(RouteSettings settings) {
+		WidgetBuilder builder;
+		switch (settings.name) {
+		case ConnectPage.routeName:
+			builder = (context) => ConnectPage();
+			break;
+		case BufferListPage.routeName:
+			builder = (context) => BufferListPage();
+			break;
+		case BufferPage.routeName:
+			var buffer = settings.arguments as BufferModel;
+			builder = (context) {
+				var client = context.read<ClientProvider>().get(buffer.network);
+				return MultiProvider(
+					providers: [
+						ChangeNotifierProvider<BufferModel>.value(value: buffer),
+						ChangeNotifierProvider<NetworkModel>.value(value: buffer.network),
+						Provider<Client>.value(value: client),
+					],
+					child: BufferPage(unreadMarkerTime: buffer.entry.lastReadTime),
+				);
+			};
+			break;
+		case BufferDetailsPage.routeName:
+			var buffer = settings.arguments as BufferModel;
+			builder = (context) {
+				var client = context.read<ClientProvider>().get(buffer.network);
+				return MultiProvider(
+					providers: [
+						ChangeNotifierProvider<BufferModel>.value(value: buffer),
+						ChangeNotifierProvider<NetworkModel>.value(value: buffer.network),
+						Provider<Client>.value(value: client),
+					],
+					child: BufferDetailsPage(),
+				);
+			};
+			break;
+		default:
+			throw Exception('Unknown route ${settings.name}');
+		}
+		return MaterialPageRoute(builder: builder, settings: settings);
+	}
+
 	@override
 	Widget build(BuildContext context) {
 		var networkList = context.read<NetworkListModel>();
 
-		Widget home;
-		if (networkList.networks.length > 0) {
-			home = BufferListPage();
+		String initialRoute;
+		if (networkList.networks.isEmpty) {
+			initialRoute = ConnectPage.routeName;
 		} else {
-			home = ConnectPage();
+			initialRoute = BufferListPage.routeName;
 		}
 
 		return MaterialApp(
@@ -176,7 +220,8 @@ class AppState extends State<App> with WidgetsBindingObserver {
 			theme: ThemeData(primarySwatch: Colors.indigo),
 			darkTheme: ThemeData(brightness: Brightness.dark, colorSchemeSeed: Colors.indigo),
 			themeMode: _themeMode,
-			home: home,
+			initialRoute: initialRoute,
+			onGenerateRoute: _handleGenerateRoute,
 			navigatorKey: _navigatorKey,
 			scaffoldMessengerKey: _scaffoldMessengerKey,
 			debugShowCheckedModeBanner: false,
