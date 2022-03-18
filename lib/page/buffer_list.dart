@@ -205,39 +205,37 @@ class BufferListPageState extends State<BufferListPage> {
 	}
 }
 
-class BufferItem extends StatelessWidget {
+class BufferItem extends AnimatedWidget {
 	final BufferModel buffer;
 
-	BufferItem({ Key? key, required this.buffer }) : super(key: key);
+	BufferItem({ Key? key, required this.buffer }) : super(key: key, listenable: buffer);
 
 	@override
 	Widget build(BuildContext context) {
-		return AnimatedBuilder(animation: buffer, builder: (context, child) {
-			var subtitle = buffer.topic ?? buffer.realname;
-			return ListTile(
-				leading: CircleAvatar(child: Text(initials(buffer.name))),
-				trailing: (buffer.unreadCount == 0) ? null : Container(
-					padding: EdgeInsets.all(3),
-					decoration: BoxDecoration(
-						color: Colors.red,
-						borderRadius: BorderRadius.circular(20),
-					),
-					constraints: BoxConstraints(minWidth: 20, minHeight: 20),
-					child: Text(
-						'${buffer.unreadCount}',
-						style: TextStyle(color: Colors.white, fontSize: 12),
-						textAlign: TextAlign.center,
-					),
+		var subtitle = buffer.topic ?? buffer.realname;
+		return ListTile(
+			leading: CircleAvatar(child: Text(initials(buffer.name))),
+			trailing: (buffer.unreadCount == 0) ? null : Container(
+				padding: EdgeInsets.all(3),
+				decoration: BoxDecoration(
+					color: Colors.red,
+					borderRadius: BorderRadius.circular(20),
 				),
-				title: Text(buffer.name, overflow: TextOverflow.ellipsis),
-				subtitle: subtitle == null ? null : Text(subtitle,
-					overflow: TextOverflow.fade,
-					softWrap: false,
+				constraints: BoxConstraints(minWidth: 20, minHeight: 20),
+				child: Text(
+					'${buffer.unreadCount}',
+					style: TextStyle(color: Colors.white, fontSize: 12),
+					textAlign: TextAlign.center,
 				),
-				onTap: () {
-					Navigator.pushNamed(context, BufferPage.routeName, arguments: buffer);
-				},
-			);
-		});
+			),
+			title: Text(buffer.name, overflow: TextOverflow.ellipsis),
+			subtitle: subtitle == null ? null : Text(subtitle,
+				overflow: TextOverflow.fade,
+				softWrap: false,
+			),
+			onTap: () {
+				Navigator.pushNamed(context, BufferPage.routeName, arguments: buffer);
+			},
+		);
 	}
 }
