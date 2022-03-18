@@ -130,6 +130,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 
 	@override
 	void dispose() {
+		_composerFocusNode.dispose();
 		_composerController.dispose();
 		_scrollController.removeListener(_handleScroll);
 		_scrollController.dispose();
