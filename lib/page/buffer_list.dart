@@ -16,7 +16,7 @@ class BufferListPage extends StatefulWidget {
 	BufferListPageState createState() => BufferListPageState();
 }
 
-String initials(String name) {
+String _initials(String name) {
 	for (var r in name.runes) {
 		var ch = String.fromCharCode(r);
 		if (ch == '#') {
@@ -28,34 +28,34 @@ String initials(String name) {
 }
 
 class BufferListPageState extends State<BufferListPage> {
-	String? searchQuery;
-	TextEditingController searchController = TextEditingController();
+	String? _searchQuery;
+	TextEditingController _searchController = TextEditingController();
 
 	@override
 	void dispose() {
-		searchController.dispose();
+		_searchController.dispose();
 		super.dispose();
 	}
 
-	void search(String query) {
+	void _search(String query) {
 		setState(() {
-			searchQuery = query.toLowerCase();
+			_searchQuery = query.toLowerCase();
 		});
 	}
 
-	void startSearch() {
+	void _startSearch() {
 		ModalRoute.of(context)?.addLocalHistoryEntry(LocalHistoryEntry(onRemove: () {
 			setState(() {
-				searchQuery = null;
+				_searchQuery = null;
 			});
-			searchController.text = '';
+			_searchController.text = '';
 		}));
-		search('');
+		_search('');
 	}
 
-	Widget buildSearchField(BuildContext context) {
+	Widget _buildSearchField(BuildContext context) {
 		return TextField(
-			controller: searchController,
+			controller: _searchController,
 			autofocus: true,
 			decoration: InputDecoration(
 				hintText: 'Search...',
@@ -63,11 +63,11 @@ class BufferListPageState extends State<BufferListPage> {
 			),
 			style: TextStyle(color: Colors.white),
 			cursorColor: Colors.white,
-			onChanged: search,
+			onChanged: _search,
 		);
 	}
 
-	void markAllBuffersRead(BuildContext context) {
+	void _markAllBuffersRead(BuildContext context) {
 		var bufferList = context.read<BufferListModel>();
 		var clientProvider = context.read<ClientProvider>();
 		var db = context.read<DB>();
@@ -89,7 +89,7 @@ class BufferListPageState extends State<BufferListPage> {
 		setState(() {});
 	}
 
-	void logout(BuildContext context) {
+	void _logout(BuildContext context) {
 		var db = context.read<DB>();
 		var networkList = context.read<NetworkListModel>();
 
@@ -106,8 +106,8 @@ class BufferListPageState extends State<BufferListPage> {
 	@override
 	Widget build(BuildContext context) {
 		List<BufferModel> buffers = context.watch<BufferListModel>().buffers;
-		if (searchQuery != null) {
-			var query = searchQuery!;
+		if (_searchQuery != null) {
+			var query = _searchQuery!;
 			List<BufferModel> filtered = [];
 			for (var buf in buffers) {
 				if (buf.name.toLowerCase().contains(query) || (buf.topic ?? '').toLowerCase().contains(query)) {
@@ -129,19 +129,19 @@ class BufferListPageState extends State<BufferListPage> {
 
 		return Scaffold(
 			appBar: AppBar(
-				leading: searchQuery != null ? CloseButton() : null,
+				leading: _searchQuery != null ? CloseButton() : null,
 				title: Builder(builder: (context) {
-					if (searchQuery != null) {
-						return buildSearchField(context);
+					if (_searchQuery != null) {
+						return _buildSearchField(context);
 					} else {
 						return Text('Goguma');
 					}
 				}),
-				actions: searchQuery != null ? null : [
+				actions: _searchQuery != null ? null : [
 					IconButton(
 						tooltip: 'Search',
 						icon: const Icon(Icons.search),
-						onPressed: startSearch,
+						onPressed: _startSearch,
 					),
 					PopupMenuButton(
 						onSelected: (key) {
@@ -150,10 +150,10 @@ class BufferListPageState extends State<BufferListPage> {
 								JoinDialog.show(context);
 								break;
 							case 'mark-all-read':
-								markAllBuffersRead(context);
+								_markAllBuffersRead(context);
 								break;
 							case 'logout':
-								logout(context);
+								_logout(context);
 								break;
 							}
 						},
@@ -197,7 +197,7 @@ class BufferListPageState extends State<BufferListPage> {
 				child: ListView.builder(
 					itemCount: buffers.length,
 					itemBuilder: (context, index) {
-						return BufferItem(buffer: buffers[index]);
+						return _BufferItem(buffer: buffers[index]);
 					},
 				),
 			)),
@@ -205,16 +205,16 @@ class BufferListPageState extends State<BufferListPage> {
 	}
 }
 
-class BufferItem extends AnimatedWidget {
+class _BufferItem extends AnimatedWidget {
 	final BufferModel buffer;
 
-	BufferItem({ Key? key, required this.buffer }) : super(key: key, listenable: buffer);
+	_BufferItem({ Key? key, required this.buffer }) : super(key: key, listenable: buffer);
 
 	@override
 	Widget build(BuildContext context) {
 		var subtitle = buffer.topic ?? buffer.realname;
 		return ListTile(
-			leading: CircleAvatar(child: Text(initials(buffer.name))),
+			leading: CircleAvatar(child: Text(_initials(buffer.name))),
 			trailing: (buffer.unreadCount == 0) ? null : Container(
 				padding: EdgeInsets.all(3),
 				decoration: BoxDecoration(
