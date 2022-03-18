@@ -16,12 +16,12 @@ import 'page/connect.dart';
 
 const _themeMode = ThemeMode.system;
 
-class GogumaApp extends StatefulWidget {
+class App extends StatefulWidget {
 	@override
-	GogumaAppState createState() => GogumaAppState();
+	AppState createState() => AppState();
 }
 
-class GogumaAppState extends State<GogumaApp> with WidgetsBindingObserver {
+class AppState extends State<App> with WidgetsBindingObserver {
 	Timer? _pingTimer;
 	final GlobalKey<NavigatorState> _navigatorKey = GlobalKey(debugLabel: 'main-navigator');
 	final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey(debugLabel: 'main-scaffold-messenger');

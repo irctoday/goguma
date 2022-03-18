@@ -125,7 +125,7 @@ void main() {
 				ChangeNotifierProvider<BufferListModel>.value(value: bufferList),
 				ChangeNotifierProvider<BouncerNetworkListModel>.value(value: bouncerNetworkList),
 			],
-			child: GogumaApp(),
+			child: App(),
 		));
 	});
 }
