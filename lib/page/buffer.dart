@@ -25,10 +25,10 @@ class BufferPage extends StatefulWidget {
 }
 
 class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
-	final composerFocusNode = FocusNode();
-	final composerFormKey = GlobalKey<FormState>();
-	final composerController = TextEditingController();
-	final scrollController = ScrollController();
+	final _composerFocusNode = FocusNode();
+	final _composerFormKey = GlobalKey<FormState>();
+	final _composerController = TextEditingController();
+	final _scrollController = ScrollController();
 
 	bool _activated = true;
 	bool _chatHistoryLoading = false;
@@ -39,7 +39,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 
 		WidgetsBinding.instance!.addObserver(this);
 
-		scrollController.addListener(_handleScroll);
+		_scrollController.addListener(_handleScroll);
 
 		var buffer = context.read<BufferModel>();
 		var future = Future.value();
@@ -61,12 +61,12 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		});
 	}
 
-	void submitComposer() {
-		if (composerController.text != '') {
+	void _submitComposer() {
+		if (_composerController.text != '') {
 			var buffer = context.read<BufferModel>();
 			var client = context.read<Client>();
 
-			var msg = IrcMessage('PRIVMSG', [buffer.name, composerController.text]);
+			var msg = IrcMessage('PRIVMSG', [buffer.name, _composerController.text]);
 			client.send(msg);
 
 			if (!client.caps.enabled.contains('echo-message')) {
@@ -80,18 +80,18 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 				});
 			}
 		}
-		composerController.text = '';
-		composerFocusNode.requestFocus();
+		_composerController.text = '';
+		_composerFocusNode.requestFocus();
 	}
 
 	void _handleMessageSwipe(MessageModel msg) {
-		composerController.text = '${msg.msg.source!.name}: ';
-		composerController.selection = TextSelection.collapsed(offset: composerController.text.length);
-		composerFocusNode.requestFocus();
+		_composerController.text = '${msg.msg.source!.name}: ';
+		_composerController.selection = TextSelection.collapsed(offset: _composerController.text.length);
+		_composerFocusNode.requestFocus();
 	}
 
 	void _handleScroll() {
-		if (scrollController.position.pixels == scrollController.position.maxScrollExtent) {
+		if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
 			_fetchChatHistory();
 		}
 	}
@@ -130,9 +130,9 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 
 	@override
 	void dispose() {
-		composerController.dispose();
-		scrollController.removeListener(_handleScroll);
-		scrollController.dispose();
+		_composerController.dispose();
+		_scrollController.removeListener(_handleScroll);
+		_scrollController.dispose();
 		WidgetsBinding.instance!.removeObserver(this);
 		super.dispose();
 	}
@@ -210,17 +210,17 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 	}
 
 	void _handleSuggestionSelected(String suggestion) {
-		var text = composerController.text;
+		var text = _composerController.text;
 
 		var i = text.lastIndexOf(' ');
 		if (i >= 0) {
-			composerController.text = text.substring(0, i + 1) + suggestion + ' ';
+			_composerController.text = text.substring(0, i + 1) + suggestion + ' ';
 		} else {
-			composerController.text = suggestion + ': ';
+			_composerController.text = suggestion + ': ';
 		}
 
-		composerController.selection = TextSelection.collapsed(offset: composerController.text.length);
-		composerFocusNode.requestFocus();
+		_composerController.selection = TextSelection.collapsed(offset: _composerController.text.length);
+		_composerFocusNode.requestFocus();
 	}
 
 	@override
@@ -300,7 +300,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 				),
 				Expanded(child: ListView.builder(
 					reverse: true,
-					controller: scrollController,
+					controller: _scrollController,
 					itemCount: messages.length,
 					itemBuilder: (context, index) {
 						var msgIndex = messages.length - index - 1;
@@ -325,7 +325,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 				)),
 				if (canSendMessage) Material(elevation: 15, child: Container(
 					padding: EdgeInsets.all(10),
-					child: Form(key: composerFormKey, child: Row(children: [
+					child: Form(key: _composerFormKey, child: Row(children: [
 						Expanded(child: TypeAheadFormField<String>(
 							textFieldConfiguration: TextFieldConfiguration(
 								decoration: InputDecoration(
@@ -333,10 +333,10 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 									border: InputBorder.none,
 								),
 								onSubmitted: (value) {
-									submitComposer();
+									_submitComposer();
 								},
-								focusNode: composerFocusNode,
-								controller: composerController,
+								focusNode: _composerFocusNode,
+								controller: _composerController,
 								textInputAction: TextInputAction.send,
 							),
 							direction: AxisDirection.up,
@@ -356,7 +356,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 						)),
 						FloatingActionButton(
 							onPressed: () {
-								submitComposer();
+								_submitComposer();
 							},
 							tooltip: 'Send',
 							child: Icon(Icons.send, size: 18),
