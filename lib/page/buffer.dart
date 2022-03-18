@@ -385,6 +385,7 @@ class _MessageItem extends StatelessWidget {
 		var ircMsg = msg.msg;
 		var entry = msg.entry;
 		var sender = ircMsg.source!.name;
+		var localDateTime = entry.dateTime.toLocal();
 		var ctcp = CtcpMessage.parse(ircMsg);
 		assert(ircMsg.cmd == 'PRIVMSG' || ircMsg.cmd == 'NOTICE');
 
@@ -395,7 +396,7 @@ class _MessageItem extends StatelessWidget {
 		var nextMsgSameSender = nextMsg != null && ircMsg.source!.name == nextMsg!.msg.source!.name;
 
 		var showUnreadMarker = prevEntry != null && unreadMarkerTime != null && unreadMarkerTime!.compareTo(entry.time) < 0 && unreadMarkerTime!.compareTo(prevEntry.time) >= 0;
-		var showDateMarker = prevEntry == null || !_isSameDate(entry.dateTime, prevEntry.dateTime);
+		var showDateMarker = prevEntry == null || !_isSameDate(localDateTime, prevEntry.dateTime.toLocal());
 		var showSender = showUnreadMarker || !prevMsgSameSender;
 		var showTime = !nextMsgSameSender || nextMsg!.entry.dateTime.difference(entry.dateTime) > Duration(minutes: 2);
 
@@ -463,8 +464,8 @@ class _MessageItem extends StatelessWidget {
 		));
 
 		if (showTime) {
-			var hh = entry.dateTime.hour.toString().padLeft(2, '0');
-			var mm = entry.dateTime.minute.toString().padLeft(2, '0');
+			var hh = localDateTime.hour.toString().padLeft(2, '0');
+			var mm = localDateTime.minute.toString().padLeft(2, '0');
 			var time = '   $hh:$mm';
 			var timeStyle = textStyle.apply(
 				color: textStyle.color!.withOpacity(0.5),
@@ -523,7 +524,7 @@ class _MessageItem extends StatelessWidget {
 			),
 			if (showDateMarker) Container(
 				margin: EdgeInsets.symmetric(vertical: 20),
-				child: Center(child: Text(_formatDate(entry.dateTime), style: TextStyle(color: eventColor))),
+				child: Center(child: Text(_formatDate(localDateTime), style: TextStyle(color: eventColor))),
 			),
 			Container(
 				margin: EdgeInsets.only(left: margin, right: margin, top: marginTop, bottom: marginBottom),
