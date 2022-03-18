@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:workmanager/workmanager.dart';
 
+import 'android_le.dart';
 import 'app.dart';
 import 'client.dart';
 import 'client_controller.dart';
@@ -24,6 +25,10 @@ void main() {
 
 	WidgetsFlutterBinding.ensureInitialized();
 	_initWorkManager();
+
+	if (Platform.isAndroid) {
+		trustIsrgRootX1();
+	}
 
 	var notifController = NotificationController();
 
