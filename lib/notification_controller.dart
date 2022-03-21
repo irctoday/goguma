@@ -25,19 +25,19 @@ class _ActiveNotification {
 }
 
 class NotificationController {
-	final FlutterLocalNotificationsPlugin _notifsPlugin = FlutterLocalNotificationsPlugin();
+	final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
 	final StreamController<String?> _selectionsController = StreamController(sync: true);
 	List<_ActiveNotification> _active = [];
 
 	Stream<String?> get selections => _selectionsController.stream;
 
 	Future<String?> initialize() async {
-		await _notifsPlugin.initialize(InitializationSettings(
+		await _plugin.initialize(InitializationSettings(
 			linux: LinuxInitializationSettings(defaultActionName: 'Open'),
 			android: AndroidInitializationSettings('ic_stat_name'),
 		), onSelectNotification: _handleSelectNotification);
 
-		var androidPlugin = _notifsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+		var androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 		if (androidPlugin != null) {
 			var activeNotifs = await androidPlugin.getActiveNotifications();
 			for (var notif in activeNotifs ?? <ActiveNotification>[]) {
@@ -49,7 +49,7 @@ class NotificationController {
 				}
 			}
 
-			var launchDetails = await _notifsPlugin.getNotificationAppLaunchDetails();
+			var launchDetails = await _plugin.getNotificationAppLaunchDetails();
 			if (launchDetails == null || !launchDetails.didNotificationLaunchApp) {
 				return null;
 			}
@@ -136,7 +136,7 @@ class NotificationController {
 			if (notif.tag != tag) {
 				return true;
 			}
-			_notifsPlugin.cancel(notif.id, tag: notif.tag).ignore();
+			_plugin.cancel(notif.id, tag: notif.tag).ignore();
 			return false;
 		}).toList();
 	}
@@ -159,7 +159,7 @@ class NotificationController {
 
 		var id = replace?.id ?? _nextId++;
 
-		_notifsPlugin.show(id, title, body, NotificationDetails(
+		_plugin.show(id, title, body, NotificationDetails(
 			linux: LinuxNotificationDetails(
 				category: LinuxNotificationCategory.imReceived(),
 			),
