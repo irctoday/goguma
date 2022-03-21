@@ -19,9 +19,9 @@ class _NotificationChannel {
 
 class _ActiveNotification {
 	final int id;
-	final String payload;
+	final String tag;
 
-	_ActiveNotification(this.id, this.payload);
+	_ActiveNotification(this.id, this.tag);
 }
 
 class NotificationController {
@@ -40,11 +40,8 @@ class NotificationController {
 			return androidPlugin?.getActiveNotifications() ?? Future.value(null);
 		}).then((List<ActiveNotification>? activeNotifs) {
 			for (var notif in activeNotifs ?? <ActiveNotification>[]) {
-				// We can't get back the payload here, so we (ab)use the
-				// Android tag to store the payload
-				var payload = notif.tag;
-				if (payload != null) {
-					_active.add(_ActiveNotification(notif.id, payload));
+				if (notif.tag != null) {
+					_active.add(_ActiveNotification(notif.id, notif.tag!));
 				}
 				if (_nextId <= notif.id) {
 					_nextId = notif.id + 1;
@@ -88,7 +85,7 @@ class NotificationController {
 			),
 			dateTime: entry.dateTime,
 			styleInformation: _buildMessagingStyleInfo(entries, buffer),
-			payload: 'buffer:${buffer.id}',
+			tag: 'buffer:${buffer.id}',
 		);
 	}
 
@@ -112,7 +109,7 @@ class NotificationController {
 			),
 			dateTime: entry.dateTime,
 			styleInformation: _buildMessagingStyleInfo(entries, buffer),
-			payload: 'buffer:${buffer.id}',
+			tag: 'buffer:${buffer.id}',
 		);
 	}
 
@@ -133,16 +130,15 @@ class NotificationController {
 	}
 
 	void cancelAllWithBuffer(BufferModel buffer) {
-		_cancelAllWithPayload('buffer:${buffer.id}');
+		_cancelAllWithTag('buffer:${buffer.id}');
 	}
 
-	void _cancelAllWithPayload(String payload) {
+	void _cancelAllWithTag(String tag) {
 		_active = _active.where((notif) {
-			if (notif.payload != payload) {
+			if (notif.tag != tag) {
 				return true;
 			}
-			// See initialize() for the tag vs. payload trick
-			_notifsPlugin.cancel(notif.id, tag: notif.payload).ignore();
+			_notifsPlugin.cancel(notif.id, tag: notif.tag).ignore();
 			return false;
 		}).toList();
 	}
@@ -151,13 +147,13 @@ class NotificationController {
 		required String title,
 		String? body,
 		required _NotificationChannel channel,
-		required String payload,
+		required String tag,
 		DateTime? dateTime,
 		StyleInformation? styleInformation,
 	}) {
 		_ActiveNotification? replace;
 		for (var notif in _active) {
-			if (notif.payload == payload) {
+			if (notif.tag == tag) {
 				replace = notif;
 				break;
 			}
@@ -176,9 +172,9 @@ class NotificationController {
 				category: 'msg',
 				when: dateTime?.millisecondsSinceEpoch,
 				styleInformation: styleInformation,
-				tag: payload, // see initialize()
+				tag: tag,
 			),
-		), payload: payload);
-		_active.add(_ActiveNotification(id, payload));
+		), payload: tag);
+		_active.add(_ActiveNotification(id, tag));
 	}
 }
