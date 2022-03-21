@@ -460,7 +460,7 @@ class Client {
 			return false;
 		}
 		// Dots usually indicate server names
-		return !name.contains('.') && !isChannel(name);
+		return !name.contains('.') && !isChannel(name) && name != "*";
 	}
 
 	void _authenticate() {
