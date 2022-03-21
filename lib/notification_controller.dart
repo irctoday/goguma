@@ -84,7 +84,7 @@ class NotificationController {
 				description: 'Private messages sent directly to you',
 			),
 			dateTime: entry.dateTime,
-			styleInformation: _buildMessagingStyleInfo(entries, buffer),
+			styleInformation: _buildMessagingStyleInfo(entries, buffer, false),
 			tag: 'buffer:${buffer.id}',
 		);
 	}
@@ -108,17 +108,17 @@ class NotificationController {
 				description: 'Messages mentionning your nickname in a channel',
 			),
 			dateTime: entry.dateTime,
-			styleInformation: _buildMessagingStyleInfo(entries, buffer),
+			styleInformation: _buildMessagingStyleInfo(entries, buffer, true),
 			tag: 'buffer:${buffer.id}',
 		);
 	}
 
-	MessagingStyleInformation _buildMessagingStyleInfo(List<MessageEntry> entries, BufferModel buffer) {
+	MessagingStyleInformation _buildMessagingStyleInfo(List<MessageEntry> entries, BufferModel buffer, bool isChannel) {
 		// TODO: Person.key, Person.bot, Person.uri
-		// TODO: MessagingStyleInformation.groupConversation
 		return MessagingStyleInformation(
 			Person(name: buffer.name),
 			conversationTitle: buffer.name,
+			groupConversation: isChannel,
 			messages: entries.map((entry) {
 				return Message(
 					stripAnsiFormatting(entry.msg.params[1]),
