@@ -323,6 +323,11 @@ class Client {
 			_log('<- ' + msg.toString());
 		}
 
+		if (msg.source == null) {
+			var source = _serverSource ?? IrcSource("*");
+			msg = IrcMessage(msg.cmd, msg.params, tags: msg.tags, source: source);
+		}
+
 		ClientBatch? msgBatch;
 		if (msg.tags.containsKey('batch')) {
 			msgBatch = _batches[msg.tags['batch']];
@@ -533,7 +538,7 @@ class Client {
 
 		var cm = isupport.caseMapping;
 		return _roundtripMessage(msg, (msg) {
-			return msg.cmd == 'READ' && isMyNick(msg.source!.name) && cm(msg.params[0]) == cm(target);
+			return msg.cmd == 'READ' && isMyNick(msg.source.name) && cm(msg.params[0]) == cm(target);
 		}).timeout(Duration(seconds: 15));
 	}
 
@@ -660,7 +665,7 @@ class Client {
 			case ERR_INVITEONLYCHAN:
 				throw IrcException(msg);
 			case 'JOIN':
-				return isMyNick(msg.source!.name) && cm(msg.params[0]) == cm(name);
+				return isMyNick(msg.source.name) && cm(msg.params[0]) == cm(name);
 			}
 			return false;
 		});
@@ -672,6 +677,8 @@ class ClientMessage extends IrcMessage {
 
 	ClientMessage(IrcMessage msg, { this.batch }) :
 		super(msg.cmd, msg.params, tags: msg.tags, source: msg.source);
+
+	IrcSource get source => super.source!;
 
 	ClientBatch? batchByType(String type) {
 		ClientBatch? batch = this.batch;

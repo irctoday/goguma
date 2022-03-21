@@ -281,28 +281,28 @@ class ClientController {
 			break;
 		case 'JOIN':
 			var channel = msg.params[0];
-			if (client.isMyNick(msg.source!.name)) {
+			if (client.isMyNick(msg.source.name)) {
 				return _createBuffer(channel).then((buffer) {
 					buffer.joined = true;
 				});
 			} else {
-				_bufferList.get(channel, network)?.members?.set(msg.source!.name, '');
+				_bufferList.get(channel, network)?.members?.set(msg.source.name, '');
 				break;
 			}
 		case 'PART':
 			var channel = msg.params[0];
 			var buffer = _bufferList.get(channel, network);
-			if (client.isMyNick(msg.source!.name)) {
+			if (client.isMyNick(msg.source.name)) {
 				buffer?.joined = false;
 				buffer?.members = null;
 			} else {
-				buffer?.members?.remove(msg.source!.name);
+				buffer?.members?.remove(msg.source.name);
 			}
 			break;
 		case 'QUIT':
 			for (var buffer in _bufferList.buffers) {
 				if (buffer.network == network) {
-					buffer.members?.remove(msg.source!.name);
+					buffer.members?.remove(msg.source.name);
 				}
 			}
 			break;
@@ -322,11 +322,11 @@ class ClientController {
 			break;
 		case 'AWAY':
 			var away = msg.params.length > 0;
-			_bufferList.get(msg.source!.name, network)?.away = away;
+			_bufferList.get(msg.source.name, network)?.away = away;
 			break;
 		case 'SETNAME':
 			var realname = msg.params[0];
-			_bufferList.get(msg.source!.name, network)?.realname = realname;
+			_bufferList.get(msg.source.name, network)?.realname = realname;
 			break;
 		case RPL_TOPIC:
 			var channel = msg.params[1];
@@ -374,8 +374,8 @@ class ClientController {
 			}
 			// target can be my own nick for direct messages, "*" for server
 			// messages, "$xxx" for server-wide broadcasts
-			if (!client.isChannel(target) && !client.isMyNick(msg.source!.name)) {
-				target = msg.source!.name;
+			if (!client.isChannel(target) && !client.isMyNick(msg.source.name)) {
+				target = msg.source.name;
 			}
 			return _handleChatMessages(target, [msg]);
 		case 'BOUNCER':
