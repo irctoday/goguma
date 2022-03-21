@@ -31,14 +31,15 @@ class NotificationController {
 
 	Stream<String?> get selections => _selectionsController.stream;
 
-	Future<String?> initialize() {
-		return _notifsPlugin.initialize(InitializationSettings(
+	Future<String?> initialize() async {
+		await _notifsPlugin.initialize(InitializationSettings(
 			linux: LinuxInitializationSettings(defaultActionName: 'Open'),
 			android: AndroidInitializationSettings('ic_stat_name'),
-		), onSelectNotification: _handleSelectNotification).then((_) {
-			var androidPlugin = _notifsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-			return androidPlugin?.getActiveNotifications() ?? Future.value(null);
-		}).then((List<ActiveNotification>? activeNotifs) {
+		), onSelectNotification: _handleSelectNotification);
+
+		var androidPlugin = _notifsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+		if (androidPlugin != null) {
+			var activeNotifs = await androidPlugin.getActiveNotifications();
 			for (var notif in activeNotifs ?? <ActiveNotification>[]) {
 				if (notif.tag != null) {
 					_active.add(_ActiveNotification(notif.id, notif.tag!));
@@ -48,17 +49,14 @@ class NotificationController {
 				}
 			}
 
-			if (Platform.isAndroid) {
-				return _notifsPlugin.getNotificationAppLaunchDetails();
-			} else {
-				return Future.value(null);
-			}
-		}).then((NotificationAppLaunchDetails? details) {
-			if (details == null || !details.didNotificationLaunchApp) {
+			var launchDetails = await _notifsPlugin.getNotificationAppLaunchDetails();
+			if (launchDetails == null || !launchDetails.didNotificationLaunchApp) {
 				return null;
 			}
-			return details.payload;
-		});
+			return launchDetails.payload;
+		}
+
+		return null;
 	}
 
 	void _handleSelectNotification(String? payload) {
