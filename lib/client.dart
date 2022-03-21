@@ -313,7 +313,7 @@ class Client {
 				break;
 			}
 			return false;
-		}).timeout(Duration(seconds: 15), onTimeout: () {
+		}).timeout(Duration(seconds: 30), onTimeout: () {
 			throw TimeoutException('Connection registration timed out');
 		});
 	}
