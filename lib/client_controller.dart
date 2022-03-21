@@ -30,8 +30,8 @@ ConnectParams connectParamsFromServerEntry(ServerEntry entry) {
 
 class ClientProvider {
 	final Map<NetworkModel, ClientController> _controllers = {};
-	final StreamController<IrcException> _errorsController = StreamController.broadcast();
-	final StreamController<NetworkModel> _networkStatesController = StreamController.broadcast();
+	final StreamController<IrcException> _errorsController = StreamController.broadcast(sync: true);
+	final StreamController<NetworkModel> _networkStatesController = StreamController.broadcast(sync: true);
 
 	final DB _db;
 	final NetworkListModel _networkList;

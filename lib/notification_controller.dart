@@ -26,7 +26,7 @@ class _ActiveNotification {
 
 class NotificationController {
 	final FlutterLocalNotificationsPlugin _notifsPlugin = FlutterLocalNotificationsPlugin();
-	final StreamController<String?> _selectionsController = StreamController();
+	final StreamController<String?> _selectionsController = StreamController(sync: true);
 	List<_ActiveNotification> _active = [];
 
 	Stream<String?> get selections => _selectionsController.stream;

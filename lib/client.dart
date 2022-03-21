@@ -64,8 +64,8 @@ class Client {
 	String _nick;
 	IrcSource? _serverSource;
 	ClientState _state = ClientState.disconnected;
-	final StreamController<ClientMessage> _messagesController = StreamController.broadcast();
-	final StreamController<ClientState> _statesController = StreamController.broadcast();
+	final StreamController<ClientMessage> _messagesController = StreamController.broadcast(sync: true);
+	final StreamController<ClientState> _statesController = StreamController.broadcast(sync: true);
 	Timer? _reconnectTimer;
 	bool _autoReconnect;
 	DateTime? _lastConnectTime;
