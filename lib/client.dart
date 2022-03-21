@@ -324,7 +324,7 @@ class Client {
 		}
 
 		if (msg.source == null) {
-			var source = _serverSource ?? IrcSource("*");
+			var source = _serverSource ?? IrcSource('*');
 			msg = IrcMessage(msg.cmd, msg.params, tags: msg.tags, source: source);
 		}
 
@@ -460,7 +460,7 @@ class Client {
 			return false;
 		}
 		// Dots usually indicate server names
-		return !name.contains('.') && !isChannel(name) && name != "*";
+		return !name.contains('.') && !isChannel(name) && name != '*';
 	}
 
 	void _authenticate() {
