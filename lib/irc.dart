@@ -489,7 +489,7 @@ class IrcIsupportMembership {
 	final String mode;
 	final String prefix;
 
-	IrcIsupportMembership(this.mode, this.prefix);
+	const IrcIsupportMembership(this.mode, this.prefix);
 }
 
 typedef String CaseMapping(String s);
