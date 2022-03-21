@@ -252,22 +252,21 @@ class IrcSource {
 	IrcSource(this.name, { this.user, this.host });
 
 	static IrcSource parse(String s) {
-		var i = s.indexOf('@');
-		if (i < 0) {
-			return IrcSource(s);
-		}
+		String? user, host;
 
-		var host = s.substring(i + 1);
-		s = s.substring(0, i);
+		var i = s.indexOf('@');
+		if (i >= 0) {
+			host = s.substring(i + 1);
+			s = s.substring(0, i);
+		}
 
 		i = s.indexOf('!');
-		if (i < 0) {
-			return IrcSource(s, host: host);
+		if (i >= 0) {
+			user = s.substring(i + 1);
+			s = s.substring(0, i);
 		}
 
-		var name = s.substring(0, i);
-		var user = s.substring(i + 1);
-		return IrcSource(name, user: user, host: host);
+		return IrcSource(s, user: user, host: host);
 	}
 
 	@override
