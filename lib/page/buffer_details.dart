@@ -5,6 +5,7 @@ import '../client.dart';
 import '../irc.dart';
 import '../linkify.dart';
 import '../models.dart';
+import '../widget/edit_topic_dialog.dart';
 
 class BufferDetailsPage extends StatefulWidget {
 	static const routeName = '/buffer/details';
@@ -42,6 +43,17 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 		var buffer = context.watch<BufferModel>();
 		var network = context.watch<NetworkModel>();
 		var client = context.read<Client>();
+
+		// TODO: relax if channel mode +t isn't set
+		var canEditTopic = false;
+		if (client.state == ClientState.connected && buffer.members != null) {
+			var membership = buffer.members!.members[client.nick] ?? '';
+			for (var prefix in <String>['~', '@', '%']) {
+				if (membership.contains(prefix)) {
+					canEditTopic = true;
+				}
+			}
+		}
 
 		List<Widget> children = [];
 
@@ -203,6 +215,15 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 							title: Text(buffer.name),
 							centerTitle: true,
 						),
+						actions: [
+							if (canEditTopic) IconButton(
+								icon: Icon(Icons.edit),
+								tooltip: 'Edit topic',
+								onPressed: () {
+									EditTopicDialog.show(context, buffer);
+								},
+							),
+						],
 					),
 					SliverList(delegate: SliverChildListDelegate(children)),
 					if (members != null) members,
