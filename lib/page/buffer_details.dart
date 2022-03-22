@@ -16,6 +16,8 @@ class BufferDetailsPage extends StatefulWidget {
 
 class BufferDetailsPageState extends State<BufferDetailsPage> {
 	Whois? _whois;
+
+	bool? _inviteOnly;
 	bool? _protectedTopic;
 
 	@override
@@ -49,6 +51,7 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 		}
 		var modes = modeReply.params[2];
 		setState(() {
+			_inviteOnly = modes.contains(ChannelMode.inviteOnly);
 			_protectedTopic = modes.contains(ChannelMode.protectedTopic);
 		});
 	}
@@ -112,6 +115,14 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 				title: Text('Away'),
 				subtitle: Text('This user might not see new messages immediately.'),
 				leading: Icon(Icons.pending),
+			));
+		}
+
+		if (_inviteOnly == true) {
+			children.add(ListTile(
+				title: Text('Invite-only'),
+				subtitle: Text('Only invited users can join this channel.'),
+				leading: Icon(Icons.shield),
 			));
 		}
 
