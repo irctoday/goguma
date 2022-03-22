@@ -17,6 +17,7 @@ class BufferDetailsPage extends StatefulWidget {
 class BufferDetailsPageState extends State<BufferDetailsPage> {
 	Whois? _whois;
 
+	List<WhoReply>? _members;
 	bool? _inviteOnly;
 	bool? _protectedTopic;
 
@@ -45,14 +46,44 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 	}
 
 	void _fetchChannelDetails(Client client, String channel) async {
-		var modeReply = await client.fetchMode(channel);
+		var modeFuture = client.fetchMode(channel);
+		var whoxFields = const { WhoxField.channel, WhoxField.flags, WhoxField.nickname, WhoxField.realname };
+		var whoFuture = client.who(channel, whoxFields: whoxFields);
+
+		var modeReply = await modeFuture;
+		var whoReplies = await whoFuture;
 		if (!mounted) {
 			return;
 		}
+
 		var modes = modeReply.params[2];
+
+		var prefixes = client.isupport.memberships.map((m) => m.prefix).join('');
+		whoReplies.sort((a, b) {
+			int i = -1, j = -1;
+			if (a.membershipPrefix != null && a.membershipPrefix!.length > 0) {
+				i = prefixes.indexOf(a.membershipPrefix![0]);
+			}
+			if (b.membershipPrefix != null && b.membershipPrefix!.length > 0) {
+				j = prefixes.indexOf(b.membershipPrefix![0]);
+			}
+			if (i < 0) {
+				i = prefixes.length;
+			}
+			if (j < 0) {
+				j = prefixes.length;
+			}
+
+			if (i != j) {
+				return i - j;
+			}
+			return a.nickname.compareTo(b.nickname);
+		});
+
 		setState(() {
 			_inviteOnly = modes.contains(ChannelMode.inviteOnly);
 			_protectedTopic = modes.contains(ChannelMode.protectedTopic);
+			_members = whoReplies;
 		});
 	}
 
@@ -197,37 +228,26 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 		}
 
 		SliverList? members;
-		if (buffer.members != null) {
-			// TODO: don't sort on each build() call
-			var l = buffer.members!.members.entries.toList();
-			l.sort((a, b) {
-				var aLevel = _membershipLevel(a.value);
-				var bLevel = _membershipLevel(b.value);
-				if (aLevel != bLevel) {
-					return bLevel - aLevel;
-				}
-				return a.key.toLowerCase().compareTo(b.key.toLowerCase());
-			});
+		if (_members != null) {
 			members = SliverList(delegate: SliverChildBuilderDelegate(
 				(context, index) {
-					var kv = l.elementAt(index);
-					var nickname = kv.key;
-					var membership = membershipDescription(kv.value);
+					var member = _members![index];
+					var membership = _membershipDescription(member.membershipPrefix ?? '');
 					return ListTile(
-						leading: CircleAvatar(child: Text(_initials(nickname))),
-						title: Text(nickname),
+						leading: CircleAvatar(child: Text(_initials(member.nickname))),
+						title: Text(member.nickname),
 						trailing: membership == null ? null : Text(membership),
 					);
 				},
-				childCount: l.length,
+				childCount: _members!.length,
 			));
 
-			var s = l.length > 1 ? 's' : '';
+			var s = _members!.length > 1 ? 's' : '';
 
 			children.add(Divider());
 			children.add(Container(
 				margin: const EdgeInsets.all(15),
-				child: Text('${l.length} member$s', style: TextStyle(fontWeight: FontWeight.bold)),
+				child: Text('${_members!.length} member$s', style: TextStyle(fontWeight: FontWeight.bold)),
 			));
 		}
 
@@ -262,7 +282,7 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 	}
 }
 
-String? membershipDescription(String membership) {
+String? _membershipDescription(String membership) {
 	if (membership == '') {
 		return null;
 	}
