@@ -16,6 +16,7 @@ class BufferDetailsPage extends StatefulWidget {
 
 class BufferDetailsPageState extends State<BufferDetailsPage> {
 	Whois? _whois;
+	bool? _protectedTopic;
 
 	@override
 	void initState() {
@@ -25,6 +26,9 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 		var client = context.read<Client>();
 		if (client.isNick(buffer.name) && buffer.online != false) {
 			_fetchUserDetails(client, buffer.name);
+		}
+		if (client.isChannel(buffer.name)) {
+			_fetchChannelDetails(client, buffer.name);
 		}
 	}
 
@@ -38,13 +42,23 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 		});
 	}
 
+	void _fetchChannelDetails(Client client, String channel) async {
+		var modeReply = await client.fetchMode(channel);
+		if (!mounted) {
+			return;
+		}
+		var modes = modeReply.params[2];
+		setState(() {
+			_protectedTopic = modes.contains(ChannelMode.protectedTopic);
+		});
+	}
+
 	@override
 	Widget build(BuildContext context) {
 		var buffer = context.watch<BufferModel>();
 		var network = context.watch<NetworkModel>();
 		var client = context.read<Client>();
 
-		// TODO: relax if channel mode +t isn't set
 		var canEditTopic = false;
 		if (client.state == ClientState.connected && buffer.members != null) {
 			var membership = buffer.members!.members[client.nick] ?? '';
@@ -53,6 +67,9 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 					canEditTopic = true;
 				}
 			}
+		}
+		if (client.state == ClientState.connected && _protectedTopic == false) {
+			canEditTopic = true;
 		}
 
 		List<Widget> children = [];
