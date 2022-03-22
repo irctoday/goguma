@@ -575,7 +575,7 @@ class Client {
 
 		var cm = isupport.caseMapping;
 		List<WhoReply> replies = [];
-		var future = _lastWhoFuture.catchError((_) => null).then((_) {
+		var future = _lastWhoFuture.then((_) {
 			List<String> params = [mask];
 			if (isupport.whox) {
 				// Only request the fields we're interested in
@@ -597,8 +597,14 @@ class Client {
 				return false;
 			}).timeout(Duration(seconds: 30));
 		}).then((_) => replies);
-		_lastWhoFuture = future;
-		return future;
+
+		// Create a new Future which never errors out, always succeeds when the
+		// previous WHO command completes
+		var completer = Completer<void>();
+		_lastWhoFuture = completer.future;
+		return future.whenComplete(() {
+			completer.complete(null);
+		});
 	}
 
 	Future<Whois> whois(String nick) {
