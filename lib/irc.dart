@@ -85,7 +85,9 @@ class IrcMessage {
 		this.params = UnmodifiableListView(params);
 
 	static IrcMessage parse(String s) {
-		s = s.trim();
+		while (s.endsWith('\n') || s.endsWith('\r')) {
+			s = s.substring(0, s.length - 1);
+		}
 
 		Map<String, String?> tags;
 		if (s.startsWith('@')) {
