@@ -1102,3 +1102,20 @@ abstract class ChannelMode {
 	static const protectedTopic = 't';
 	static const noExternalMessages = 'n';
 }
+
+/// Checks whether a realname is worth displaying.
+bool isStubRealname(String realname, String nickname) {
+	if (realname == nickname) {
+		return true;
+	}
+
+	// Since the realname is mandatory, many clients set a meaningless one.
+	switch (realname.toLowerCase()) {
+	case 'realname':
+	case 'unknown':
+	case 'fullname':
+		return true;
+	}
+
+	return false;
+}

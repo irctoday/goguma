@@ -297,19 +297,10 @@ class BufferModel extends ChangeNotifier {
 	bool? get away => _away;
 
 	String? get realname {
-		if (_realname == null || _realname == name) {
+		if (_realname == null || isStubRealname(_realname!, name)) {
 			return null;
 		}
-
-		// Since the realname is mandatory, many clients set a meaningless one.
-		switch (_realname!.toLowerCase()) {
-		case 'realname':
-		case 'unknown':
-		case 'fullname':
-			return null;
-		}
-
-		return _realname;
+		return _realname!;
 	}
 
 	set topic(String? topic) {
