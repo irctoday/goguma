@@ -626,9 +626,9 @@ class ClientController {
 		});
 	}
 
-	Future<void> _fetchBacklog(String from, String to) {
+	Future<void> _fetchBacklog(String from, String to) async {
 		if (!client.caps.enabled.contains('draft/chathistory')) {
-			return Future.value(null);
+			return;
 		}
 
 		var max = client.caps.chatHistory!;
@@ -636,11 +636,10 @@ class ClientController {
 			max = 1000;
 		}
 
-		return client.fetchChatHistoryTargets(from, to).then((targets) {
-			return Future.wait(targets.map((target) {
-				return client.fetchChatHistoryBetween(target.name, from, to, max);
-			}));
-		});
+		var targets = await client.fetchChatHistoryTargets(from, to);
+		await Future.wait(targets.map((target) async {
+			await client.fetchChatHistoryBetween(target.name, from, to, max);
+		}));
 	}
 }
 

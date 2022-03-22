@@ -142,11 +142,11 @@ class DB {
 		var basePath = await _getBasePath();
 		var db = await openDatabase(
 			join(basePath, 'main.db'),
-			onConfigure: (db) {
+			onConfigure: (db) async {
 				// Enable support for ON DELETE CASCADE
-				return db.execute('PRAGMA foreign_keys = ON');
+				await db.execute('PRAGMA foreign_keys = ON');
 			},
-			onCreate: (db, version) {
+			onCreate: (db, version) async {
 				print('Initializing database version $version');
 
 				var batch = db.batch();
@@ -193,9 +193,9 @@ class DB {
 					CREATE INDEX index_message_buffer_time
 					ON Message(buffer, time);
 				''');
-				return batch.commit();
+				await batch.commit();
 			},
-			onUpgrade: (db, prevVersion, newVersion) {
+			onUpgrade: (db, prevVersion, newVersion) async {
 				print('Upgrading database from version $prevVersion to version $newVersion');
 
 				var batch = db.batch();
@@ -205,9 +205,9 @@ class DB {
 						ON Message(buffer, time);
 					''');
 				}
-				return batch.commit();
+				await batch.commit();
 			},
-			onDowngrade: (_, prevVersion, newVersion) {
+			onDowngrade: (_, prevVersion, newVersion) async {
 				throw Exception('Attempted to downgrade database from version $prevVersion to version $newVersion');
 			},
 			version: 2,
