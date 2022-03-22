@@ -706,6 +706,27 @@ class Client {
 			return false;
 		});
 	}
+
+	Future<IrcMessage> fetchMode(String target) {
+		assert(isChannel(target)); // TODO: support for fetching user modes
+		var cm = isupport.caseMapping;
+		var msg = IrcMessage('MODE', [target]);
+		return _roundtripMessage(msg, (msg) {
+			switch (msg.cmd) {
+			case ERR_NOSUCHCHANNEL:
+				if (cm(msg.params[1]) == cm(target)) {
+					throw IrcException(msg);
+				}
+				break;
+			case RPL_CHANNELMODEIS:
+				if (cm(msg.params[1]) == cm(target)) {
+					return true;
+				}
+				break;
+			}
+			return false;
+		});
+	}
 }
 
 class ClientMessage extends IrcMessage {
