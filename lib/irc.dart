@@ -899,6 +899,11 @@ class WhoxField {
 
 	const WhoxField._(this._letter);
 
+	@override
+	String toString() {
+		return _letter;
+	}
+
 	static const nickname = WhoxField._('n');
 	static const flags = WhoxField._('f');
 	static const account = WhoxField._('a');
