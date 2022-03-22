@@ -131,7 +131,7 @@ class DB {
 
 	DB._(this._db);
 
-	static Future<DB> open() {
+	static Future<DB> open() async {
 		WidgetsFlutterBinding.ensureInitialized();
 
 		if (Platform.isLinux) {
@@ -139,82 +139,80 @@ class DB {
 			databaseFactory = databaseFactoryFfi;
 		}
 
-		return _getBasePath().then((basePath) {
-			return openDatabase(
-				join(basePath, 'main.db'),
-				onConfigure: (db) {
-					// Enable support for ON DELETE CASCADE
-					return db.execute('PRAGMA foreign_keys = ON');
-				},
-				onCreate: (db, version) {
-					print('Initializing database version $version');
+		var basePath = await _getBasePath();
+		var db = await openDatabase(
+			join(basePath, 'main.db'),
+			onConfigure: (db) {
+				// Enable support for ON DELETE CASCADE
+				return db.execute('PRAGMA foreign_keys = ON');
+			},
+			onCreate: (db, version) {
+				print('Initializing database version $version');
 
-					var batch = db.batch();
-					batch.execute('''
-						CREATE TABLE Server (
-							id INTEGER PRIMARY KEY,
-							host TEXT NOT NULL,
-							port INTEGER,
-							tls INTEGER NOT NULL DEFAULT 1,
-							nick TEXT,
-							pass TEXT,
-							sasl_plain_password TEXT
-						)
-					''');
-					batch.execute('''
-						CREATE TABLE Network (
-							id INTEGER PRIMARY KEY,
-							server INTEGER NOT NULL,
-							bouncer_id TEXT,
-							FOREIGN KEY (server) REFERENCES Server(id) ON DELETE CASCADE,
-							UNIQUE(server, bouncer_id)
-						)
-					''');
-					batch.execute('''
-						CREATE TABLE Buffer (
-							id INTEGER PRIMARY KEY,
-							name TEXT NOT NULL,
-							network INTEGER NOT NULL,
-							last_read_time TEXT,
-							FOREIGN KEY (network) REFERENCES Network(id) ON DELETE CASCADE,
-							UNIQUE(name, network)
-						)
-					''');
-					batch.execute('''
-						CREATE TABLE Message (
-							id INTEGER PRIMARY KEY,
-							time TEXT NOT NULL,
-							buffer INTEGER NOT NULL,
-							raw TEXT NOT NULL,
-							FOREIGN KEY (buffer) REFERENCES Buffer(id) ON DELETE CASCADE
-						)
-					''');
+				var batch = db.batch();
+				batch.execute('''
+					CREATE TABLE Server (
+						id INTEGER PRIMARY KEY,
+						host TEXT NOT NULL,
+						port INTEGER,
+						tls INTEGER NOT NULL DEFAULT 1,
+						nick TEXT,
+						pass TEXT,
+						sasl_plain_password TEXT
+					)
+				''');
+				batch.execute('''
+					CREATE TABLE Network (
+						id INTEGER PRIMARY KEY,
+						server INTEGER NOT NULL,
+						bouncer_id TEXT,
+						FOREIGN KEY (server) REFERENCES Server(id) ON DELETE CASCADE,
+						UNIQUE(server, bouncer_id)
+					)
+				''');
+				batch.execute('''
+					CREATE TABLE Buffer (
+						id INTEGER PRIMARY KEY,
+						name TEXT NOT NULL,
+						network INTEGER NOT NULL,
+						last_read_time TEXT,
+						FOREIGN KEY (network) REFERENCES Network(id) ON DELETE CASCADE,
+						UNIQUE(name, network)
+					)
+				''');
+				batch.execute('''
+					CREATE TABLE Message (
+						id INTEGER PRIMARY KEY,
+						time TEXT NOT NULL,
+						buffer INTEGER NOT NULL,
+						raw TEXT NOT NULL,
+						FOREIGN KEY (buffer) REFERENCES Buffer(id) ON DELETE CASCADE
+					)
+				''');
+				batch.execute('''
+					CREATE INDEX index_message_buffer_time
+					ON Message(buffer, time);
+				''');
+				return batch.commit();
+			},
+			onUpgrade: (db, prevVersion, newVersion) {
+				print('Upgrading database from version $prevVersion to version $newVersion');
+
+				var batch = db.batch();
+				if (prevVersion < 2) {
 					batch.execute('''
 						CREATE INDEX index_message_buffer_time
 						ON Message(buffer, time);
 					''');
-					return batch.commit();
-				},
-				onUpgrade: (db, prevVersion, newVersion) {
-					print('Upgrading database from version $prevVersion to version $newVersion');
-
-					var batch = db.batch();
-					if (prevVersion < 2) {
-						batch.execute('''
-							CREATE INDEX index_message_buffer_time
-							ON Message(buffer, time);
-						''');
-					}
-					return batch.commit();
-				},
-				onDowngrade: (_, prevVersion, newVersion) {
-					throw Exception('Attempted to downgrade database from version $prevVersion to version $newVersion');
-				},
-				version: 2,
-			);
-		}).then((db) {
-			return DB._(db);
-		});
+				}
+				return batch.commit();
+			},
+			onDowngrade: (_, prevVersion, newVersion) {
+				throw Exception('Attempted to downgrade database from version $prevVersion to version $newVersion');
+			},
+			version: 2,
+		);
+		return DB._(db);
 	}
 
 	static Future<String> _getBasePath() {
@@ -241,155 +239,148 @@ class DB {
 		);
 	}
 
-	Future<List<ServerEntry>> listServers() {
-		return _db.rawQuery('''
+	Future<List<ServerEntry>> listServers() async {
+		var entries = await _db.rawQuery('''
 			SELECT id, host, port, tls, nick, pass, sasl_plain_password
 			FROM Server ORDER BY id
-		''').then((entries) => entries.map((m) => ServerEntry.fromMap(m)).toList());
+		''');
+		return entries.map((m) => ServerEntry.fromMap(m)).toList();
 	}
 
-	Future<ServerEntry> storeServer(ServerEntry entry) {
+	Future<ServerEntry> storeServer(ServerEntry entry) async {
 		if (entry.id == null) {
-			return _db.insert('Server', entry.toMap()).then((id) {
-				entry.id = id;
-				return entry;
-			});
+			var id = await _db.insert('Server', entry.toMap());
+			entry.id = id;
 		} else {
-			return _updateById('Server', entry.toMap()).then((_) => entry);
+			await _updateById('Server', entry.toMap());
 		}
+		return entry;
 	}
 
-	Future<void> deleteServer(int id) {
-		return _db.rawDelete('DELETE FROM Server WHERE id = ?', [id]);
+	Future<void> deleteServer(int id) async {
+		await _db.rawDelete('DELETE FROM Server WHERE id = ?', [id]);
 	}
 
-	Future<List<NetworkEntry>> listNetworks() {
-		return _db.rawQuery('''
+	Future<List<NetworkEntry>> listNetworks() async {
+		var entries = await _db.rawQuery('''
 			SELECT id, server, bouncer_id FROM Network ORDER BY id
-		''').then((entries) => entries.map((m) => NetworkEntry.fromMap(m)).toList());
+		''');
+		return entries.map((m) => NetworkEntry.fromMap(m)).toList();
 	}
 
-	Future<NetworkEntry> storeNetwork(NetworkEntry entry) {
+	Future<NetworkEntry> storeNetwork(NetworkEntry entry) async {
 		if (entry.id == null) {
-			return _db.insert('Network', entry.toMap()).then((id) {
-				entry.id = id;
-				return entry;
-			});
+			var id = await _db.insert('Network', entry.toMap());
+			entry.id = id;
 		} else {
-			return _updateById('Network', entry.toMap()).then((_) => entry);
+			await _updateById('Network', entry.toMap());
 		}
+		return entry;
 	}
 
-	Future<void> deleteNetwork(int id) {
-		return _db.transaction((txn) {
-			return txn.rawQuery('''
+	Future<void> deleteNetwork(int id) async {
+		await _db.transaction((txn) async {
+			var entries = await txn.rawQuery('''
 				SELECT server, COUNT(id) AS n
 				FROM Network
 				WHERE server IN (
 					SELECT server FROM Network WHERE id = ?
 				)
-			''', [id]).then((entries) {
-				assert(entries.length == 1);
-				var serverId = entries.first['server'] as int;
-				var n = entries.first['n'] as int;
-				assert(n > 0);
+			''', [id]);
+			assert(entries.length == 1);
+			var serverId = entries.first['server'] as int;
+			var n = entries.first['n'] as int;
+			assert(n > 0);
 
-				if (n == 1) {
-					// This is the last network using that server, we can
-					// delete the server
-					return txn.rawDelete('DELETE FROM Server WHERE id = ?', [serverId]);
-				} else {
-					return txn.rawDelete('DELETE FROM Network WHERE id = ?', [id]);
-				}
-			});
+			if (n == 1) {
+				// This is the last network using that server, we can
+				// delete the server
+				await txn.rawDelete('DELETE FROM Server WHERE id = ?', [serverId]);
+			} else {
+				await txn.rawDelete('DELETE FROM Network WHERE id = ?', [id]);
+			}
 		});
 	}
 
-	Future<List<BufferEntry>> listBuffers() {
-		return _db.rawQuery('''
+	Future<List<BufferEntry>> listBuffers() async {
+		var entries = await _db.rawQuery('''
 			SELECT id, name, network, last_read_time FROM Buffer ORDER BY id
-		''').then((entries) => entries.map((m) => BufferEntry.fromMap(m)).toList());
+		''');
+		return entries.map((m) => BufferEntry.fromMap(m)).toList();
 	}
 
-	Future<BufferEntry> storeBuffer(BufferEntry entry) {
+	Future<BufferEntry> storeBuffer(BufferEntry entry) async {
 		if (entry.id == null) {
-			return _db.insert('Buffer', entry.toMap()).then((id) {
-				entry.id = id;
-				return entry;
-			});
+			var id = await _db.insert('Buffer', entry.toMap());
+			entry.id = id;
 		} else {
-			return _updateById('Buffer', entry.toMap()).then((_) => entry);
+			await _updateById('Buffer', entry.toMap());
 		}
+		return entry;
 	}
 
-	Future<void> deleteBuffer(int id) {
-		return _db.rawDelete('DELETE FROM Buffer WHERE id = ?', [id]);
+	Future<void> deleteBuffer(int id) async {
+		await _db.rawDelete('DELETE FROM Buffer WHERE id = ?', [id]);
 	}
 
-	Future<Map<int, int>> fetchBuffersUnreadCount() {
-		return _db.rawQuery('''
+	Future<Map<int, int>> fetchBuffersUnreadCount() async {
+		var entries = await _db.rawQuery('''
 			SELECT
 				Message.buffer, COUNT(Message.id) AS unread_count
 			FROM Message
 			LEFT JOIN Buffer ON Message.buffer = Buffer.id
 			WHERE Message.time > Buffer.last_read_time
 			GROUP BY Message.buffer
-		''').then((entries) {
-			return <int, int>{
-				for (var m in entries)
-					m['buffer'] as int: m['unread_count'] as int,
-			};
-		});
+		''');
+		return <int, int>{
+			for (var m in entries)
+				m['buffer'] as int: m['unread_count'] as int,
+		};
 	}
 
-	Future<Map<int, String>> fetchBuffersLastDeliveredTime() {
-		return _db.rawQuery('''
+	Future<Map<int, String>> fetchBuffersLastDeliveredTime() async {
+		var entries = await _db.rawQuery('''
 			SELECT buffer, MAX(time) AS time
 			FROM Message
 			GROUP BY buffer
-		''').then((entries) {
-			return <int, String>{
-				for (var m in entries)
-					m['buffer'] as int: m['time'] as String,
-			};
-		});
+		''');
+		return <int, String>{
+			for (var m in entries)
+				m['buffer'] as int: m['time'] as String,
+		};
 	}
 
-	Future<List<MessageEntry>> listMessages(int buffer) {
-		return _db.rawQuery('''
+	Future<List<MessageEntry>> listMessages(int buffer) async {
+		var entries = await _db.rawQuery('''
 			SELECT id, time, buffer, raw
 			FROM Message
 			WHERE buffer = ?
 			ORDER BY time
-		''', [buffer]).then((entries) {
-			return entries.map((m) => MessageEntry.fromMap(m)).toList();
-		});
+		''', [buffer]);
+		return entries.map((m) => MessageEntry.fromMap(m)).toList();
 	}
 
-	Future<void> storeMessages(List<MessageEntry> entries) {
-		return _db.transaction((txn) {
-			return Future.wait(entries.map((entry) {
+	Future<void> storeMessages(List<MessageEntry> entries) async {
+		await _db.transaction((txn) async {
+			await Future.wait(entries.map((entry) async {
 				if (entry.id == null) {
-					return txn.insert('Message', entry.toMap()).then((id) {
-						entry.id = id;
-						return entry;
-					});
+					var id = await txn.insert('Message', entry.toMap());
+					entry.id = id;
 				} else {
-					return _updateById('Message', entry.toMap(), executor: txn).then((_) => entry);
+					await _updateById('Message', entry.toMap(), executor: txn);
 				}
 			}));
 		});
 	}
 
-	Future<List<MessageEntry>> listUnreadMessages(int buffer) {
-		return _db.rawQuery('''
+	Future<List<MessageEntry>> listUnreadMessages(int buffer) async {
+		var entries = await _db.rawQuery('''
 			SELECT Message.id, Message.time, Message.buffer, Message.raw
 			FROM Message
 			LEFT JOIN Buffer ON Message.buffer = Buffer.id
 			WHERE buffer = ? AND Message.time > Buffer.last_read_time
 			ORDER BY time
-		''', [buffer]).then((entries) {
-			return entries.map((m) => MessageEntry.fromMap(m)).toList();
-		});
+		''', [buffer]);
+		return entries.map((m) => MessageEntry.fromMap(m)).toList();
 	}
 }
