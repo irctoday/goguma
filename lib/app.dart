@@ -25,6 +25,7 @@ class App extends StatefulWidget {
 
 class AppState extends State<App> with WidgetsBindingObserver {
 	Timer? _pingTimer;
+	ClientAutoReconnectLock? _autoReconnectLock;
 	final GlobalKey<NavigatorState> _navigatorKey = GlobalKey(debugLabel: 'main-navigator');
 	final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey(debugLabel: 'main-scaffold-messenger');
 	late StreamSubscription<void> _clientErrorSub;
@@ -39,6 +40,7 @@ class AppState extends State<App> with WidgetsBindingObserver {
 
 		var state = WidgetsBinding.instance!.lifecycleState;
 		if (state == AppLifecycleState.resumed || state == null) {
+			_enableAutoReconnect();
 			_enablePingTimer();
 		}
 
@@ -67,6 +69,7 @@ class AppState extends State<App> with WidgetsBindingObserver {
 	void dispose() {
 		WidgetsBinding.instance!.removeObserver(this);
 		_pingTimer?.cancel();
+		_autoReconnectLock?.release();
 		_clientErrorSub.cancel();
 		_connectivitySub.cancel();
 		_notifSelectionSub.cancel();
@@ -80,13 +83,22 @@ class AppState extends State<App> with WidgetsBindingObserver {
 		super.didChangeAppLifecycleState(state);
 
 		if (state == AppLifecycleState.resumed) {
+			_enableAutoReconnect();
 			// Send PINGs to make sure the connections are healthy
 			_pingAll();
 			_enablePingTimer();
 		} else {
+			_autoReconnectLock?.release();
+			_autoReconnectLock = null;
 			_pingTimer?.cancel();
 			_pingTimer = null;
 		}
+	}
+
+	void _enableAutoReconnect() {
+		var clientProvider = context.read<ClientProvider>();
+		_autoReconnectLock?.release();
+		_autoReconnectLock = ClientAutoReconnectLock.acquire(clientProvider);
 	}
 
 	void _enablePingTimer() {

@@ -94,8 +94,11 @@ void main() {
 		syncReceivePort.listen((sendPort) {
 			print('Starting chat history synchronization');
 
+			var autoReconnectLock = ClientAutoReconnectLock.acquire(clientProvider);
+
 			// Make sure all connected clients are alive
 			Future.wait(clientProvider.clients.map((client) {
+				client.autoReconnect = true;
 				if (client.state != ClientState.connected) {
 					return Future.value(null);
 				}
@@ -113,6 +116,8 @@ void main() {
 			}).catchError((Object err) {
 				print('Failed chat history synchronization: $err');
 				sendPort.send(false);
+			}).whenComplete(() {
+				autoReconnectLock.release();
 			});
 		});
 

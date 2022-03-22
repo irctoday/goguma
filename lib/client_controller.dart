@@ -32,6 +32,7 @@ class ClientProvider {
 	final Map<NetworkModel, ClientController> _controllers = {};
 	final StreamController<IrcException> _errorsController = StreamController.broadcast(sync: true);
 	final StreamController<NetworkModel> _networkStatesController = StreamController.broadcast(sync: true);
+	final Set<ClientAutoReconnectLock> _autoReconnectLocks = {};
 
 	final DB _db;
 	final NetworkListModel _networkList;
@@ -42,6 +43,7 @@ class ClientProvider {
 	final ValueNotifier<bool> needBackgroundServicePermissions = ValueNotifier(false);
 
 	bool _workManagerSyncEnabled = false;
+	ClientAutoReconnectLock? _backgroundServiceAutoReconnectLock;
 
 	UnmodifiableListView<Client> get clients => UnmodifiableListView(_controllers.values.map((cc) => cc.client));
 	Stream<IrcException> get errors => _errorsController.stream;
@@ -111,6 +113,8 @@ class ClientProvider {
 	void _setupBackgroundServiceSync(bool enable) {
 		if (!enable) {
 			needBackgroundServicePermissions.value = false;
+			_backgroundServiceAutoReconnectLock?.release();
+			_backgroundServiceAutoReconnectLock = null;
 			if (FlutterBackground.isBackgroundExecutionEnabled) {
 				print('Disabling sync background service');
 				FlutterBackground.disableBackgroundExecution();
@@ -119,6 +123,8 @@ class ClientProvider {
 		}
 
 		if (FlutterBackground.isBackgroundExecutionEnabled) {
+			_backgroundServiceAutoReconnectLock?.release();
+			_backgroundServiceAutoReconnectLock = ClientAutoReconnectLock.acquire(this);
 			return;
 		}
 
@@ -147,10 +153,32 @@ class ClientProvider {
 		}).then((success) {
 			if (success) {
 				print('Enabled sync background service');
+				_backgroundServiceAutoReconnectLock?.release();
+				_backgroundServiceAutoReconnectLock = ClientAutoReconnectLock.acquire(this);
 			} else {
 				print('Failed to enable sync background service');
 			}
 		});
+	}
+}
+
+class ClientAutoReconnectLock {
+	final ClientProvider _provider;
+
+	ClientAutoReconnectLock.acquire(this._provider) {
+		_provider._autoReconnectLocks.add(this);
+		_updateAutoReconnect();
+	}
+
+	void release() {
+		_provider._autoReconnectLocks.remove(this);
+		_updateAutoReconnect();
+	}
+
+	void _updateAutoReconnect() {
+		for (var client in _provider.clients) {
+			client.autoReconnect = !_provider._autoReconnectLocks.isEmpty;
+		}
 	}
 }
 
@@ -176,6 +204,8 @@ class ClientController {
 			_client = client,
 			_network = network {
 		assert(client.state == ClientState.disconnected);
+
+		client.autoReconnect = !provider._autoReconnectLocks.isEmpty;
 
 		client.states.listen((state) {
 			switch (state) {
