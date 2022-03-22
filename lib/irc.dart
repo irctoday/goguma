@@ -379,6 +379,7 @@ class IrcIsupportRegistry {
 	int? _monitor;
 	String? _botMode;
 	bool _whox = false;
+	int? _topicLen;
 
 	String? get network => _network;
 	String get chanTypes => _chanTypes ?? '';
@@ -388,6 +389,7 @@ class IrcIsupportRegistry {
 	int? get monitor => _monitor;
 	String? get botMode => _botMode;
 	bool get whox => _whox;
+	int? get topicLen => _topicLen;
 
 	void parse(List<String> tokens) {
 		for (var tok in tokens) {
@@ -414,6 +416,9 @@ class IrcIsupportRegistry {
 					break;
 				case 'PREFIX':
 					_memberships.clear();
+					break;
+				case 'TOPIC':
+					_topicLen = null;
 					break;
 				case 'WHOX':
 					_whox = false;
@@ -468,6 +473,12 @@ class IrcIsupportRegistry {
 					_memberships.add(IrcIsupportMembership(modes[i], prefixes[i]));
 				}
 				break;
+			case 'TOPICLEN':
+				if (v == null) {
+					throw FormatException('Malformed ISUPPORT TOPICLEN: no value');
+				}
+				_topicLen = int.parse(v);
+				break;
 			case 'WHOX':
 				_whox = true;
 				break;
@@ -484,6 +495,7 @@ class IrcIsupportRegistry {
 		_monitor = null;
 		_botMode = null;
 		_whox = false;
+		_topicLen = null;
 	}
 }
 

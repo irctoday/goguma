@@ -21,11 +21,15 @@ class EditTopicDialog extends StatefulWidget {
 
 class EditTopicDialogState extends State<EditTopicDialog> {
 	late final TextEditingController _topicController;
+	late final int? _topicLen;
 
 	@override
 	void initState() {
 		super.initState();
 		_topicController = TextEditingController(text: widget.buffer.topic);
+
+		var client = context.read<ClientProvider>().get(widget.buffer.network);
+		_topicLen = client.isupport.topicLen;
 	}
 
 	void _submit() {
@@ -49,6 +53,7 @@ class EditTopicDialogState extends State<EditTopicDialog> {
 				decoration: InputDecoration(hintText: 'Topic'),
 				autofocus: true,
 				maxLines: null,
+				maxLength: _topicLen,
 				keyboardType: TextInputType.text, // disallows newlines
 				onFieldSubmitted: (_) {
 					_submit();
