@@ -692,6 +692,7 @@ class ClientMessage extends IrcMessage {
 	ClientMessage(IrcMessage msg, { this.batch }) :
 		super(msg.cmd, msg.params, tags: msg.tags, source: msg.source);
 
+	@override
 	IrcSource get source => super.source!;
 
 	ClientBatch? batchByType(String type) {
