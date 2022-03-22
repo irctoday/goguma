@@ -90,6 +90,7 @@ class Client {
 		_reconnectTimer?.cancel();
 		_setState(ClientState.connecting);
 		_lastConnectTime = DateTime.now();
+		_socket?.close();
 
 		_log('Connecting to ${params.host}...');
 
