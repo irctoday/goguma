@@ -492,7 +492,7 @@ class IrcIsupportMembership {
 	const IrcIsupportMembership(this.mode, this.prefix);
 }
 
-typedef String CaseMapping(String s);
+typedef CaseMapping = String Function(String s);
 
 CaseMapping? _caseMappingByName(String s) {
 	CaseMapping caseMapChar;
