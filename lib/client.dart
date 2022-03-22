@@ -79,6 +79,7 @@ class Client {
 	ClientState get state => _state;
 	Stream<ClientMessage> get messages => _messagesController.stream;
 	Stream<ClientState> get states => _statesController.stream;
+	bool get autoReconnect => _autoReconnect;
 
 	Client(this.params, { bool autoReconnect = true }) :
 		_id = _nextClientId++,
@@ -166,6 +167,19 @@ class Client {
 		if (state == ClientState.disconnected) {
 			_tryAutoReconnect();
 		}
+	}
+
+	set autoReconnect(bool autoReconnect) {
+		if (_autoReconnect == autoReconnect) {
+			return;
+		}
+
+		_autoReconnect = autoReconnect;
+
+		_reconnectTimer?.cancel();
+		_reconnectTimer = null;
+
+		_tryAutoReconnect();
 	}
 
 	void _tryAutoReconnect() {
