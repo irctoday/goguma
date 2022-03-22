@@ -18,6 +18,7 @@ const RPL_WHOISIDLE = '317';
 const RPL_ENDOFWHOIS = '318';
 const RPL_WHOISCHANNELS = '319';
 const RPL_WHOISSPECIAL = '320';
+const RPL_CHANNELMODEIS = '324';
 const RPL_WHOISACCOUNT = '330';
 const RPL_NOTOPIC = '331';
 const RPL_TOPIC = '332';
@@ -1008,4 +1009,21 @@ int _membershipIndexByPrefix(List<IrcIsupportMembership> memberships, String pre
 		}
 	}
 	throw Exception('Unknown membership prefix "$prefix"');
+}
+
+abstract class UserMode {
+	static const invisible = 'i';
+	static const op = 'o';
+	static const localOp = 'O';
+}
+
+abstract class ChannelMode {
+	static const ban = 'b';
+	static const clientLimit = 'l';
+	static const inviteOnly = 'i';
+	static const key = 'k';
+	static const moderated = 'm';
+	static const secret = 's';
+	static const protectedTopic = 't';
+	static const noExternalMessages = 'n';
 }
