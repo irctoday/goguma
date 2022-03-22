@@ -134,7 +134,8 @@ class Client {
 				_setState(ClientState.disconnected);
 			});
 
-			var text = utf8.decoder.bind(socket);
+			var decoder = Utf8Decoder(allowMalformed: true);
+			var text = decoder.bind(socket);
 			var lines = text.transform(const LineSplitter());
 
 			lines.listen((l) {
