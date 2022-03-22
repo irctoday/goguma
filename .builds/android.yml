@@ -35,6 +35,7 @@ tasks:
   - deploy: |
       cd goguma
       [ "$(git rev-parse origin/master)" = "$(git rev-parse HEAD)" ] || complete-build
+      build_number="$(git rev-list --first-parent --count HEAD)"
       ssh_opts="-o StrictHostKeyChecking=no"
-      scp $ssh_opts build/app/outputs/flutter-apk/app-release.apk deploy@emersion.fr:/home/deploy/fdroid-goguma-nightly/repo/fr.emersion.goguma.apk
-      ssh $ssh_opts deploy@emersion.fr "cd fdroid-goguma-nightly && fdroid update"
+      scp $ssh_opts build/app/outputs/flutter-apk/app-release.apk deploy@emersion.fr:/home/deploy/fdroid-goguma-nightly/repo/goguma-"$build_number".apk
+      ssh $ssh_opts deploy@emersion.fr "cd fdroid-goguma-nightly && (ls -t *.apk | tail -n +5 | xargs -r rm --) && fdroid update"
