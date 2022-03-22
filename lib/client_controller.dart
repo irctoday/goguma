@@ -355,22 +355,13 @@ class ClientController {
 			}
 
 			var buffer = _bufferList.get(target, network);
-			if (buffer == null || buffer.members == null) {
+			if (buffer == null) {
 				break;
 			}
 
 			var updates = ChanModeUpdate.parse(msg, client.isupport);
 			for (var update in updates) {
-				var nick = update.arg;
-				if (nick == null) {
-					continue;
-				}
-				var prefix = buffer.members!.members[nick];
-				if (prefix == null) {
-					continue;
-				}
-				prefix = updateIrcMembership(prefix, update, client.isupport);
-				buffer.members!.set(nick, prefix);
+				_handleChanModeUpdate(buffer, update);
 			}
 			break;
 		case 'AWAY':
@@ -595,6 +586,23 @@ class ClientController {
 				}
 			});
 		});
+	}
+
+	void _handleChanModeUpdate(BufferModel buffer, ChanModeUpdate update) {
+		if (buffer.members == null) {
+			return;
+		}
+
+		var nick = update.arg;
+		if (nick == null) {
+			return;
+		}
+		var prefix = buffer.members!.members[nick];
+		if (prefix == null) {
+			return;
+		}
+		prefix = updateIrcMembership(prefix, update, client.isupport);
+		buffer.members!.set(nick, prefix);
 	}
 
 	void _openNotifications(BufferModel buffer, List<MessageEntry> entries) async {
