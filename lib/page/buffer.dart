@@ -185,8 +185,13 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		notifController.cancelAllWithBuffer(buffer);
 	}
 
-	Iterable<String> _generateSuggestions(String text) {
+	Future<Iterable<String>> _generateSuggestions(String text) async {
 		var buffer = context.read<BufferModel>();
+		var client = context.read<Client>();
+		if (buffer.members == null && client.isChannel(buffer.name)) {
+			await client.names(buffer.name);
+		}
+
 		var members = buffer.members;
 		if (members == null) {
 			return [];

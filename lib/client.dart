@@ -48,6 +48,7 @@ const _permanentCaps = [
 	'draft/extended-monitor',
 
 	'soju.im/bouncer-networks',
+	'soju.im/no-implicit-names',
 	'soju.im/read',
 ];
 
@@ -558,6 +559,14 @@ class Client {
 			return;
 		}
 		send(IrcMessage('READ', [target, 'timestamp=' + t]));
+	}
+
+	Future<ClientEndOfNames> names(String channel) {
+		var cm = isupport.caseMapping;
+		var msg = IrcMessage('NAMES', [channel]);
+		return _roundtripMessage(msg, (msg) {
+			return msg.cmd == RPL_ENDOFNAMES && cm(msg.params[1]) == cm(channel);
+		}).then((msg) => msg as ClientEndOfNames);
 	}
 
 	Future<List<WhoReply>> who(String mask, { Set<WhoxField> whoxFields = const {} }) {
