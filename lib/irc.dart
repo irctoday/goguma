@@ -517,6 +517,12 @@ class IrcIsupportMembership {
 	final String prefix;
 
 	const IrcIsupportMembership(this.mode, this.prefix);
+
+	static const founder = IrcIsupportMembership('q', '~');
+	static const protected = IrcIsupportMembership('a', '&');
+	static const op = IrcIsupportMembership('o', '@');
+	static const halfop = IrcIsupportMembership('h', '%');
+	static const voice = IrcIsupportMembership('v', '+');
 }
 
 typedef CaseMapping = String Function(String s);
