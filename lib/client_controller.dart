@@ -348,7 +348,30 @@ class ClientController {
 			}
 			break;
 		case 'MODE':
-			// TODO: update memberships
+			var target = msg.params[0];
+
+			if (!client.isChannel(target)) {
+				break; // TODO: handle user mode changes too
+			}
+
+			var buffer = _bufferList.get(target, network);
+			if (buffer == null || buffer.members == null) {
+				break;
+			}
+
+			var updates = ChanModeUpdate.parse(msg, client.isupport);
+			for (var update in updates) {
+				var nick = update.arg;
+				if (nick == null) {
+					continue;
+				}
+				var prefix = buffer.members!.members[nick];
+				if (prefix == null) {
+					continue;
+				}
+				prefix = updateIrcMembership(prefix, update, client.isupport);
+				buffer.members!.set(nick, prefix);
+			}
 			break;
 		case 'AWAY':
 			var away = msg.params.length > 0;
