@@ -684,6 +684,28 @@ class Client {
 			return false;
 		});
 	}
+
+	Future<void> setTopic(String channel, String? topic) {
+		var cm = isupport.caseMapping;
+		var msg = IrcMessage('TOPIC', [channel, topic ?? '']);
+		return _roundtripMessage(msg, (msg) {
+			switch (msg.cmd) {
+			case ERR_NOSUCHCHANNEL:
+			case ERR_NOTONCHANNEL:
+			case ERR_CHANOPRIVSNEEDED:
+				if (cm(msg.params[1]) == cm(channel)) {
+					throw IrcException(msg);
+				}
+				break;
+			case 'TOPIC':
+				if (cm(msg.params[0]) == cm(channel)) {
+					return true;
+				}
+				break;
+			}
+			return false;
+		});
+	}
 }
 
 class ClientMessage extends IrcMessage {
