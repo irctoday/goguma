@@ -164,9 +164,7 @@ class Client {
 			_statesController.add(state);
 		}
 
-		if (state == ClientState.disconnected) {
-			_tryAutoReconnect();
-		}
+		_tryAutoReconnect();
 	}
 
 	set autoReconnect(bool autoReconnect) {
@@ -183,6 +181,10 @@ class Client {
 	}
 
 	void _tryAutoReconnect() {
+		if (state != ClientState.disconnected) {
+			return;
+		}
+
 		_reconnectTimer?.cancel();
 
 		if (!_autoReconnect) {
