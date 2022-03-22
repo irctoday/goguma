@@ -174,21 +174,14 @@ class Client {
 		}
 
 		_autoReconnect = autoReconnect;
-
-		_reconnectTimer?.cancel();
-		_reconnectTimer = null;
-
 		_tryAutoReconnect();
 	}
 
 	void _tryAutoReconnect() {
-		if (state != ClientState.disconnected) {
-			return;
-		}
-
 		_reconnectTimer?.cancel();
+		_reconnectTimer = null;
 
-		if (!_autoReconnect) {
+		if (!_autoReconnect || state != ClientState.disconnected) {
 			return;
 		}
 
