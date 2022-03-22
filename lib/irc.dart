@@ -380,6 +380,7 @@ class IrcIsupportRegistry {
 	String? _botMode;
 	bool _whox = false;
 	int? _topicLen;
+	List<String>? _chanModes;
 
 	String? get network => _network;
 	String get chanTypes => _chanTypes ?? '';
@@ -390,6 +391,7 @@ class IrcIsupportRegistry {
 	String? get botMode => _botMode;
 	bool get whox => _whox;
 	int? get topicLen => _topicLen;
+	List<String> get chanModes => UnmodifiableListView(_chanModes ?? ['beI', 'k', 'l', 'imnst']);
 
 	void parse(List<String> tokens) {
 		for (var tok in tokens) {
@@ -404,6 +406,9 @@ class IrcIsupportRegistry {
 					break;
 				case 'CASEMAPPING':
 					_caseMapping = null;
+					break;
+				case 'CHANMODES':
+					_chanModes = null;
 					break;
 				case 'CHANTYPES':
 					_chanTypes = null;
@@ -445,6 +450,13 @@ class IrcIsupportRegistry {
 				break;
 			case 'CASEMAPPING':
 				_caseMapping = _caseMappingByName(v ?? '');
+				break;
+			case 'CHANMODES':
+				var l = (v ?? '').split(',');
+				if (l.length < 4) {
+					throw FormatException('Malformed ISUPPORT CHANMODES value: $v');
+				}
+				_chanModes = l;
 				break;
 			case 'CHANTYPES':
 				_chanTypes = v ?? '';
