@@ -233,9 +233,14 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 				(context, index) {
 					var member = _members![index];
 					var membership = _membershipDescription(member.membershipPrefix ?? '');
+					String? realname;
+					if (!isStubRealname(member.realname, member.nickname)) {
+						realname = member.realname;
+					}
 					return ListTile(
 						leading: CircleAvatar(child: Text(_initials(member.nickname))),
 						title: Text(member.nickname),
+						subtitle: realname == null ? null : Text(realname, overflow: TextOverflow.fade, softWrap: false),
 						trailing: membership == null ? null : Text(membership),
 					);
 				},
