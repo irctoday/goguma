@@ -701,10 +701,7 @@ class Client {
 				}
 				break;
 			case 'TOPIC':
-				if (cm(msg.params[0]) == cm(channel)) {
-					return true;
-				}
-				break;
+				return cm(msg.params[0]) == cm(channel);
 			}
 			return false;
 		});
@@ -722,10 +719,7 @@ class Client {
 				}
 				break;
 			case RPL_CHANNELMODEIS:
-				if (cm(msg.params[1]) == cm(target)) {
-					return true;
-				}
-				break;
+				return cm(msg.params[1]) == cm(target);
 			}
 			return false;
 		});
