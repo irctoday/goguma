@@ -840,25 +840,29 @@ class WhoReply {
 	final bool away;
 	final bool op;
 	final String realname;
+	final String? channel;
+	final String? membershipPrefix;
 
-	WhoReply({
+	const WhoReply({
 		required this.nickname,
 		this.away = false,
 		this.op = false,
 		required this.realname,
+		this.channel,
+		this.membershipPrefix,
 	});
 
-	factory WhoReply.parse(IrcMessage msg) {
+	factory WhoReply.parse(IrcMessage msg, IrcIsupportRegistry isupport) {
 		if (msg.cmd != RPL_WHOREPLY) {
 			throw Exception('Not a WHO reply: ${msg.cmd}');
 		}
 
+		var channel = msg.params[1];
 		var nickname = msg.params[5];
-		var flags = msg.params[6];
+		var rawFlags = msg.params[6];
 		var trailing = msg.params[7];
 
-		var away = flags.contains('G');
-		var op = flags.contains('*');
+		var flags = _WhoFlags.parse(rawFlags, isupport);
 
 		var i = trailing.indexOf(' ');
 		if (i < 0) {
@@ -868,31 +872,88 @@ class WhoReply {
 
 		return WhoReply(
 			nickname: nickname,
-			away: away,
-			op: op,
+			away: flags.away,
+			op: flags.op,
 			realname: realname,
+			channel: channel != '*' ? channel : null,
+			membershipPrefix: channel != '*' ? flags.membershipPrefix : null,
 		);
 	}
 
-	factory WhoReply.parseWhox(IrcMessage msg, Set<WhoxField> fields) {
+	factory WhoReply.parseWhox(IrcMessage msg, Set<WhoxField> fields, IrcIsupportRegistry isupport) {
 		assert(msg.cmd == RPL_WHOSPCRPL);
 
-		var expected = <WhoxField>{WhoxField.nickname, WhoxField.realname, WhoxField.flags};
-		assert(fields.length == expected.length && fields.containsAll(expected));
+		String? channel, nickname, realname;
+		_WhoFlags? flags;
+		var i = 1;
+		for (var field in _whoxFields) {
+			if (!fields.contains(field)) {
+				continue;
+			}
 
-		var flags = msg.params[2];
+			var v = msg.params[i];
+			i++;
 
-		var away = flags.contains('G');
-		var op = flags.contains('*');
+			switch (field) {
+			case WhoxField.channel:
+				channel = v;
+				break;
+			case WhoxField.nickname:
+				nickname = v;
+				break;
+			case WhoxField.flags:
+				flags = _WhoFlags.parse(v, isupport);
+				break;
+			case WhoxField.realname:
+				realname = v;
+				break;
+			}
+		}
 
 		return WhoReply(
-			nickname: msg.params[1],
-			away: away,
-			op: op,
-			realname: msg.params[3],
+			nickname: nickname!,
+			away: flags!.away,
+			op: flags.op,
+			realname: realname!,
+			channel: channel,
+			membershipPrefix: channel != null ? flags.membershipPrefix : null,
 		);
 	}
 }
+
+class _WhoFlags {
+	final bool away;
+	final bool op;
+	final String membershipPrefix;
+
+	const _WhoFlags({
+		this.away = false,
+		this.op = false,
+		this.membershipPrefix = '',
+	});
+
+	factory _WhoFlags.parse(String flags, IrcIsupportRegistry isupport) {
+		var away = flags.contains('G');
+		var op = flags.contains('*');
+
+		var prefixes = isupport.memberships.map((m) => m.prefix).join('');
+		var membershipPrefix = flags.split('').where((flag) => prefixes.contains(flag)).join('');
+
+		return _WhoFlags(
+			away: away,
+			op: op,
+			membershipPrefix: membershipPrefix,
+		);
+	}
+}
+
+const _whoxFields = [
+	WhoxField.channel,
+	WhoxField.nickname,
+	WhoxField.flags,
+	WhoxField.account,
+	WhoxField.realname,
+];
 
 class WhoxField {
 	final String _letter;
@@ -904,6 +965,7 @@ class WhoxField {
 		return _letter;
 	}
 
+	static const channel = WhoxField._('c');
 	static const nickname = WhoxField._('n');
 	static const flags = WhoxField._('f');
 	static const account = WhoxField._('a');

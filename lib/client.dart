@@ -559,16 +559,13 @@ class Client {
 		send(IrcMessage('READ', [target, 'timestamp=' + t]));
 	}
 
-	Future<List<WhoReply>> who(String mask) {
+	Future<List<WhoReply>> who(String mask, { Set<WhoxField> whoxFields = const {} }) {
+		whoxFields = { ...whoxFields };
+		whoxFields.addAll([WhoxField.nickname, WhoxField.realname, WhoxField.flags]);
+
 		var cm = isupport.caseMapping;
 		List<WhoReply> replies = [];
 		var future = _lastWhoFuture.catchError((_) => null).then((_) {
-			var whoxFields = <WhoxField>{
-				WhoxField.nickname,
-				WhoxField.realname,
-				WhoxField.flags,
-			};
-
 			List<String> params = [mask];
 			if (isupport.whox) {
 				// Only request the fields we're interested in
@@ -579,10 +576,10 @@ class Client {
 			return _roundtripMessage(msg, (msg) {
 				switch (msg.cmd) {
 				case RPL_WHOREPLY:
-					replies.add(WhoReply.parse(msg));
+					replies.add(WhoReply.parse(msg, isupport));
 					break;
 				case RPL_WHOSPCRPL:
-					replies.add(WhoReply.parseWhox(msg, whoxFields));
+					replies.add(WhoReply.parseWhox(msg, whoxFields, isupport));
 					break;
 				case RPL_ENDOFWHO:
 					return cm(msg.params[1]) == cm(mask);
