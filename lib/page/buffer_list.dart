@@ -117,8 +117,10 @@ class BufferListPageState extends State<BufferListPage> {
 			buffers = filtered;
 		}
 
+		Map<String, int> bufferNames = {};
 		var hasUnreadBuffer = false;
 		for (var buffer in buffers) {
+			bufferNames.update(buffer.name.toLowerCase(), (n) => n + 1, ifAbsent: () => 1);
 			if (buffer.unreadCount > 0) {
 				hasUnreadBuffer = true;
 			}
@@ -197,7 +199,11 @@ class BufferListPageState extends State<BufferListPage> {
 				child: ListView.builder(
 					itemCount: buffers.length,
 					itemBuilder: (context, index) {
-						return _BufferItem(buffer: buffers[index]);
+						var buffer = buffers[index];
+						return _BufferItem(
+							buffer: buffer,
+							showNetworkName: bufferNames[buffer.name.toLowerCase()]! > 1,
+						);
 					},
 				),
 			)),
@@ -207,12 +213,27 @@ class BufferListPageState extends State<BufferListPage> {
 
 class _BufferItem extends AnimatedWidget {
 	final BufferModel buffer;
+	final bool showNetworkName;
 
-	const _BufferItem({ Key? key, required this.buffer }) : super(key: key, listenable: buffer);
+	const _BufferItem({ Key? key, required this.buffer, this.showNetworkName = false }) : super(key: key, listenable: buffer);
 
 	@override
 	Widget build(BuildContext context) {
 		var subtitle = buffer.topic ?? buffer.realname;
+
+		Widget title;
+		if (showNetworkName) {
+			title = RichText(overflow: TextOverflow.ellipsis, text: TextSpan(children: [
+				TextSpan(text: buffer.name),
+				TextSpan(
+					text: ' on ${buffer.network.displayName}',
+					style: TextStyle(color: DefaultTextStyle.of(context).style.color!.withOpacity(0.7)),
+				),
+			]));
+		} else {
+			title = Text(buffer.name, overflow: TextOverflow.ellipsis);
+		}
+
 		return ListTile(
 			leading: CircleAvatar(child: Text(_initials(buffer.name))),
 			trailing: (buffer.unreadCount == 0) ? null : Container(
@@ -228,7 +249,7 @@ class _BufferItem extends AnimatedWidget {
 					textAlign: TextAlign.center,
 				),
 			),
-			title: Text(buffer.name, overflow: TextOverflow.ellipsis),
+			title: title,
 			subtitle: subtitle == null ? null : Text(subtitle,
 				overflow: TextOverflow.fade,
 				softWrap: false,
