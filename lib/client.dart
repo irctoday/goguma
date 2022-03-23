@@ -643,6 +643,22 @@ class Client {
 		});
 	}
 
+	Future<List<ListReply>> list(String mask) {
+		// TODO: ensure at most one LIST command is running at a time
+		var msg = IrcMessage('LIST', [mask]);
+		List<ListReply> replies = [];
+		return _roundtripMessage(msg, (msg) {
+			switch (msg.cmd) {
+			case RPL_LIST:
+				replies.add(ListReply.parse(msg));
+				break;
+			case RPL_LISTEND:
+				return true;
+			}
+			return false;
+		}).then((_) => replies).timeout(Duration(seconds: 30));
+	}
+
 	void monitor(Iterable<String> targets) {
 		var l = targets.where((name) => !_monitored.containsKey(name)).toList();
 		var limit = isupport.monitor;
