@@ -309,26 +309,6 @@ String? _membershipDescription(String membership) {
 	}).join(', ');
 }
 
-int _membershipLevel(String membership) {
-	if (membership == '') {
-		return 0;
-	}
-	switch (membership[0]) {
-	case '~':
-		return 5;
-	case '&':
-		return 4;
-	case '@':
-		return 3;
-	case '%':
-		return 2;
-	case '+':
-		return 1;
-	default:
-		return 0;
-	}
-}
-
 String _initials(String name) {
 	for (var r in name.runes) {
 		var ch = String.fromCharCode(r);
