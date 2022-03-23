@@ -224,7 +224,7 @@ class _JoinItem extends StatelessWidget {
 			return ListTile(
 				leading: Icon(Icons.person),
 				title: title,
-				subtitle: action.whoReply.realname == null ? null : Text(
+				subtitle: isStubRealname(action.whoReply.realname, action.whoReply.nickname) ? null : Text(
 					action.whoReply.realname,
 					overflow: TextOverflow.fade,
 					softWrap: false,
