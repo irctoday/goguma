@@ -254,7 +254,7 @@ class IrcSource {
 	final String? user;
 	final String? host;
 
-	IrcSource(this.name, { this.user, this.host });
+	const IrcSource(this.name, { this.user, this.host });
 
 	static IrcSource parse(String s) {
 		String? user, host;
@@ -746,7 +746,7 @@ class Whois {
 	final bool secureConnection;
 	final bool bot;
 
-	Whois({
+	const Whois({
 		required this.nickname,
 		this.loggedIn = false,
 		this.source,
