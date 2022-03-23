@@ -844,6 +844,7 @@ class WhoReply {
 	final String realname;
 	final String? channel;
 	final String? membershipPrefix;
+	final String? account;
 
 	const WhoReply({
 		required this.nickname,
@@ -852,6 +853,7 @@ class WhoReply {
 		required this.realname,
 		this.channel,
 		this.membershipPrefix,
+		this.account,
 	});
 
 	factory WhoReply.parse(IrcMessage msg, IrcIsupportRegistry isupport) {
@@ -885,7 +887,7 @@ class WhoReply {
 	factory WhoReply.parseWhox(IrcMessage msg, Set<WhoxField> fields, IrcIsupportRegistry isupport) {
 		assert(msg.cmd == RPL_WHOSPCRPL);
 
-		String? channel, nickname, realname;
+		String? channel, nickname, account, realname;
 		_WhoFlags? flags;
 		var i = 1;
 		for (var field in _whoxFields) {
@@ -906,6 +908,11 @@ class WhoReply {
 			case WhoxField.flags:
 				flags = _WhoFlags.parse(v, isupport);
 				break;
+			case WhoxField.account:
+				if (v != '0') {
+					account = v;
+				}
+				break;
 			case WhoxField.realname:
 				realname = v;
 				break;
@@ -919,6 +926,7 @@ class WhoReply {
 			realname: realname!,
 			channel: channel,
 			membershipPrefix: channel != null ? flags.membershipPrefix : null,
+			account: account,
 		);
 	}
 }
