@@ -192,11 +192,6 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 			await client.names(buffer.name);
 		}
 
-		var members = buffer.members;
-		if (members == null) {
-			return [];
-		}
-
 		String pattern;
 		var i = text.lastIndexOf(' ');
 		if (i >= 0) {
@@ -204,15 +199,27 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		} else {
 			pattern = text;
 		}
+		pattern = pattern.toLowerCase();
 
 		if (pattern.length < 3) {
 			return [];
 		}
 
-		pattern = pattern.toLowerCase();
-		return members.members.keys.where((name) {
-			return name.toLowerCase().startsWith(pattern);
-		}).take(10);
+		if (client.isChannel(pattern)) {
+			var bufferList = context.read<BufferListModel>();
+			return bufferList.buffers.where((buffer) {
+				return buffer.name.toLowerCase().startsWith(pattern);
+			}).map((buffer) => buffer.name).take(10);
+		} else {
+			var members = buffer.members;
+			if (members == null) {
+				return [];
+			}
+
+			return members.members.keys.where((name) {
+				return name.toLowerCase().startsWith(pattern);
+			}).take(10);
+		}
 	}
 
 	void _handleSuggestionSelected(String suggestion) {
