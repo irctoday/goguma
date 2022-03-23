@@ -384,6 +384,7 @@ class IrcIsupportRegistry {
 	bool _whox = false;
 	int? _topicLen;
 	List<String>? _chanModes;
+	IrcIsupportElist? _elist;
 
 	String? get network => _network;
 	String get chanTypes => _chanTypes ?? '';
@@ -395,6 +396,7 @@ class IrcIsupportRegistry {
 	bool get whox => _whox;
 	int? get topicLen => _topicLen;
 	List<String> get chanModes => UnmodifiableListView(_chanModes ?? ['beI', 'k', 'l', 'imnst']);
+	IrcIsupportElist? get elist => _elist;
 
 	void parse(List<String> tokens) {
 		for (var tok in tokens) {
@@ -415,6 +417,9 @@ class IrcIsupportRegistry {
 					break;
 				case 'CHANTYPES':
 					_chanTypes = null;
+					break;
+				case 'ELIST':
+					_elist = null;
 					break;
 				case 'MONITOR':
 					_monitor = null;
@@ -464,6 +469,9 @@ class IrcIsupportRegistry {
 			case 'CHANTYPES':
 				_chanTypes = v ?? '';
 				break;
+			case 'ELIST':
+				_elist = IrcIsupportElist.parse(v ?? '');
+				break;
 			case 'MONITOR':
 				_monitor = int.parse(v ?? '0');
 				break;
@@ -511,6 +519,7 @@ class IrcIsupportRegistry {
 		_botMode = null;
 		_whox = false;
 		_topicLen = null;
+		_elist = null;
 	}
 }
 
@@ -525,6 +534,33 @@ class IrcIsupportMembership {
 	static const op = IrcIsupportMembership('o', '@');
 	static const halfop = IrcIsupportMembership('h', '%');
 	static const voice = IrcIsupportMembership('v', '+');
+}
+
+class IrcIsupportElist {
+	final bool creationTime;
+	final bool mask;
+	final bool negativeMask;
+	final bool topicTime;
+	final bool userCount;
+
+	const IrcIsupportElist({
+		this.creationTime = false,
+		this.mask = false,
+		this.negativeMask = false,
+		this.topicTime = false,
+		this.userCount = false,
+	});
+
+	factory IrcIsupportElist.parse(String str) {
+		str = str.toUpperCase();
+		return IrcIsupportElist(
+			creationTime: str.contains('C'),
+			mask: str.contains('M'),
+			negativeMask: str.contains('N'),
+			topicTime: str.contains('T'),
+			userCount: str.contains('U'),
+		);
+	}
 }
 
 typedef CaseMapping = String Function(String s);
