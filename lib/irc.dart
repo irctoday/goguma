@@ -18,6 +18,8 @@ const RPL_WHOISIDLE = '317';
 const RPL_ENDOFWHOIS = '318';
 const RPL_WHOISCHANNELS = '319';
 const RPL_WHOISSPECIAL = '320';
+const RPL_LIST = '322';
+const RPL_LISTEND = '323';
 const RPL_CHANNELMODEIS = '324';
 const RPL_WHOISACCOUNT = '330';
 const RPL_NOTOPIC = '331';
@@ -1162,4 +1164,22 @@ bool isStubRealname(String realname, String nickname) {
 	}
 
 	return false;
+}
+
+class ListReply {
+	final String channel;
+	final int clients;
+	final String topic;
+
+	const ListReply({ required this.channel, required this.clients, required this.topic });
+
+	factory ListReply.parse(IrcMessage msg) {
+		assert(msg.cmd == RPL_LIST);
+
+		return ListReply(
+			channel: msg.params[1],
+			clients: int.parse(msg.params[2]),
+			topic: msg.params[3],
+		);
+	}
 }
