@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../client_controller.dart';
 import '../database.dart';
 import '../models.dart';
-import '../widget/join_dialog.dart';
+import '../page/join.dart';
 import '../widget/network_indicator.dart';
 import 'buffer.dart';
 import 'connect.dart';
@@ -149,7 +149,7 @@ class BufferListPageState extends State<BufferListPage> {
 						onSelected: (key) {
 							switch (key) {
 							case 'join':
-								JoinDialog.show(context);
+								Navigator.pushNamed(context, JoinPage.routeName);
 								break;
 							case 'mark-all-read':
 								_markAllBuffersRead(context);
@@ -161,7 +161,7 @@ class BufferListPageState extends State<BufferListPage> {
 						},
 						itemBuilder: (context) {
 							return [
-								PopupMenuItem(child: Text('Join'), value: 'join'),
+								PopupMenuItem(child: Text('New conversation'), value: 'join'),
 								if (hasUnreadBuffer) PopupMenuItem(child: Text('Mark all as read'), value: 'mark-all-read'),
 								PopupMenuItem(child: Text('Logout'), value: 'logout'),
 							];
