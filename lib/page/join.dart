@@ -216,6 +216,7 @@ class _JoinItem extends StatelessWidget {
 		}
 	}
 
+	@override
 	Widget build(BuildContext context) {
 		var action = _action;
 
