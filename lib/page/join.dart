@@ -22,6 +22,7 @@ class JoinPage extends StatefulWidget {
 class _JoinPageState extends State<JoinPage> {
 	final TextEditingController _nameController = TextEditingController();
 	int _serial = 0;
+	String _query = '';
 	Timer? _debounceNameTimer;
 
 	bool _loading = false;
@@ -37,6 +38,13 @@ class _JoinPageState extends State<JoinPage> {
 	void _handleNameChange(String query) {
 		_debounceNameTimer?.cancel();
 		_debounceNameTimer = Timer(const Duration(milliseconds: 500), () {
+			// Sometimes "onChanged" is called even if the query didn't
+			// actually change (e.g. when the virtual keyboard is dismissed)
+			if (_query == query) {
+				return;
+			}
+			_query = query;
+
 			_search(query);
 		});
 	}
