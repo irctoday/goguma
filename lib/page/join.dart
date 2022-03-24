@@ -200,30 +200,6 @@ class _JoinItem extends StatelessWidget {
 		_action = action,
 		super(key: key);
 
-	void _open(BuildContext context, String name, NetworkModel network) async {
-		var bufferList = context.read<BufferListModel>();
-		var clientProvider = context.read<ClientProvider>();
-		var client = clientProvider.get(network);
-
-		var buffer = bufferList.get(name, network);
-		if (buffer == null) {
-			var db = context.read<DB>();
-			var entry = await db.storeBuffer(BufferEntry(name: name, network: network.networkId));
-			buffer = BufferModel(entry: entry, network: network);
-			bufferList.add(buffer);
-		}
-
-		Navigator.pop(context);
-		Navigator.pushNamed(context, BufferPage.routeName, arguments: buffer);
-
-		if (client.isChannel(name)) {
-			join(client, buffer);
-		} else {
-			fetchBufferUser(client, buffer);
-			client.monitor([name]);
-		}
-	}
-
 	@override
 	Widget build(BuildContext context) {
 		var action = _action;
@@ -249,7 +225,7 @@ class _JoinItem extends StatelessWidget {
 					softWrap: false,
 				),
 				onTap: () {
-					_open(context, action.listReply.channel, action.network);
+					BufferPage.open(context, action.listReply.channel, action.network);
 				},
 			);
 		} else if (action is _CreateChannelAction) {
@@ -257,7 +233,7 @@ class _JoinItem extends StatelessWidget {
 				leading: Icon(Icons.add),
 				title: title,
 				onTap: () {
-					_open(context, action.channel, action.network);
+					BufferPage.open(context, action.channel, action.network);
 				},
 			);
 		} else if (action is _JoinUserAction) {
@@ -270,7 +246,7 @@ class _JoinItem extends StatelessWidget {
 					softWrap: false,
 				),
 				onTap: () {
-					_open(context, action.whoReply.nickname, action.network);
+					BufferPage.open(context, action.whoReply.nickname, action.network);
 				},
 			);
 		} else {

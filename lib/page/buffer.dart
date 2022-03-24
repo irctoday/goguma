@@ -12,6 +12,7 @@ import '../notification_controller.dart';
 import '../widget/network_indicator.dart';
 import '../widget/swipe_action.dart';
 import 'buffer_details.dart';
+import 'buffer_list.dart';
 
 class BufferPage extends StatefulWidget {
 	static const routeName = '/buffer';
@@ -22,6 +23,30 @@ class BufferPage extends StatefulWidget {
 
 	@override
 	BufferPageState createState() => BufferPageState();
+
+	static void open(BuildContext context, String name, NetworkModel network) async {
+		var bufferList = context.read<BufferListModel>();
+		var clientProvider = context.read<ClientProvider>();
+		var client = clientProvider.get(network);
+
+		var buffer = bufferList.get(name, network);
+		if (buffer == null) {
+			var db = context.read<DB>();
+			var entry = await db.storeBuffer(BufferEntry(name: name, network: network.networkId));
+			buffer = BufferModel(entry: entry, network: network);
+			bufferList.add(buffer);
+		}
+
+		var until = ModalRoute.withName(BufferListPage.routeName);
+		Navigator.pushNamedAndRemoveUntil(context, routeName, until, arguments: buffer);
+
+		if (client.isChannel(name)) {
+			join(client, buffer);
+		} else {
+			fetchBufferUser(client, buffer);
+			client.monitor([name]);
+		}
+	}
 }
 
 class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
