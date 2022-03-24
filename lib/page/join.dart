@@ -22,6 +22,7 @@ class JoinPage extends StatefulWidget {
 class _JoinPageState extends State<JoinPage> {
 	final TextEditingController _nameController = TextEditingController();
 
+	bool _loading = false;
 	List<_Action> _actions = [];
 	Timer? _debounceNameTimer;
 
@@ -48,11 +49,16 @@ class _JoinPageState extends State<JoinPage> {
 			return;
 		}
 
+		setState(() {
+			_loading = true;
+		});
+
 		// TODO: when refining a search, don't query servers again, instead
 		// filter the local results list
 
 		var networkList = context.read<NetworkListModel>();
 		var clientProvider = context.read<ClientProvider>();
+		List<Future<void>> futures = [];
 		for (var network in networkList.networks) {
 			if (network.state != NetworkState.online) {
 				continue;
@@ -61,9 +67,15 @@ class _JoinPageState extends State<JoinPage> {
 				continue;
 			}
 			var client = clientProvider.get(network);
-			_searchNetworkChannels(query, network, client);
-			_searchNetworkUsers(query, network, client);
+			futures.add(_searchNetworkChannels(query, network, client));
+			futures.add(_searchNetworkUsers(query, network, client));
 		}
+
+		Future.wait(futures).whenComplete(() {
+			setState(() {
+				_loading = false;
+			});
+		});
 	}
 
 	Future<void> _searchNetworkChannels(String query, NetworkModel network, Client client) async {
@@ -141,6 +153,11 @@ class _JoinPageState extends State<JoinPage> {
 							hintText: 'Channel name or nickname',
 							filled: true,
 							border: InputBorder.none,
+							suffix: !_loading ? null : SizedBox(
+								width: 15,
+								height: 15,
+								child: CircularProgressIndicator(strokeWidth: 2),
+							),
 						),
 						style: TextStyle(color: Colors.white),
 						cursorColor: Colors.white,
