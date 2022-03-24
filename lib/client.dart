@@ -73,6 +73,7 @@ class Client {
 	final Map<String, ClientBatch> _batches = {};
 	final Map<String, List<ClientMessage>> _pendingNames = {};
 	Future<void> _lastWhoFuture = Future.value(null);
+	Future<void> _lastListFuture = Future.value(null);
 	final IrcNameMap<void> _monitored = IrcNameMap(defaultCaseMapping);
 
 	String get nick => _nick;
@@ -644,19 +645,28 @@ class Client {
 	}
 
 	Future<List<ListReply>> list(String mask) {
-		// TODO: ensure at most one LIST command is running at a time
-		var msg = IrcMessage('LIST', [mask]);
-		List<ListReply> replies = [];
-		return _roundtripMessage(msg, (msg) {
-			switch (msg.cmd) {
-			case RPL_LIST:
-				replies.add(ListReply.parse(msg));
-				break;
-			case RPL_LISTEND:
-				return true;
-			}
-			return false;
-		}).then((_) => replies).timeout(Duration(seconds: 30));
+		var future = _lastListFuture.then((_) {
+			var msg = IrcMessage('LIST', [mask]);
+			List<ListReply> replies = [];
+			return _roundtripMessage(msg, (msg) {
+				switch (msg.cmd) {
+				case RPL_LIST:
+					replies.add(ListReply.parse(msg));
+					break;
+				case RPL_LISTEND:
+					return true;
+				}
+				return false;
+			}).then((_) => replies).timeout(Duration(seconds: 30));
+		});
+
+		// Create a new Future which never errors out, always succeeds when the
+		// previous LIST command completes
+		var completer = Completer<void>();
+		_lastListFuture = completer.future;
+		return future.whenComplete(() {
+			completer.complete(null);
+		});
 	}
 
 	void monitor(Iterable<String> targets) {
