@@ -220,13 +220,16 @@ class _JoinItem extends StatelessWidget {
 	Widget build(BuildContext context) {
 		var action = _action;
 
-		var title = RichText(overflow: TextOverflow.fade, text: TextSpan(children: [
-			TextSpan(text: action.title),
-			TextSpan(
-				text: ' on ${action.network.displayName}',
-				style: TextStyle(color: DefaultTextStyle.of(context).style.color!.withOpacity(0.7)),
-			),
-		]));
+		var title = Text.rich(
+			TextSpan(children: [
+				TextSpan(text: action.title),
+				TextSpan(
+					text: ' on ${action.network.displayName}',
+					style: TextStyle(color: Theme.of(context).textTheme.caption!.color),
+				),
+			]),
+			overflow: TextOverflow.fade,
+		);
 
 		if (action is _JoinChannelAction) {
 			return ListTile(

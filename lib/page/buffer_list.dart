@@ -223,13 +223,16 @@ class _BufferItem extends AnimatedWidget {
 
 		Widget title;
 		if (showNetworkName) {
-			title = RichText(overflow: TextOverflow.ellipsis, text: TextSpan(children: [
-				TextSpan(text: buffer.name),
-				TextSpan(
-					text: ' on ${buffer.network.displayName}',
-					style: TextStyle(color: DefaultTextStyle.of(context).style.color!.withOpacity(0.7)),
-				),
-			]));
+			title = Text.rich(
+				TextSpan(children: [
+					TextSpan(text: buffer.name),
+					TextSpan(
+						text: ' on ${buffer.network.displayName}',
+						style: TextStyle(color: Theme.of(context).textTheme.caption!.color),
+					),
+				]),
+				overflow: TextOverflow.fade,
+			);
 		} else {
 			title = Text(buffer.name, overflow: TextOverflow.ellipsis);
 		}
