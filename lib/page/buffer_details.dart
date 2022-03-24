@@ -6,6 +6,7 @@ import '../irc.dart';
 import '../linkify.dart';
 import '../models.dart';
 import '../widget/edit_topic_dialog.dart';
+import 'buffer.dart';
 
 class BufferDetailsPage extends StatefulWidget {
 	static const routeName = '/buffer/details';
@@ -212,6 +213,9 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 						return ListTile(
 							leading: CircleAvatar(child: Text(_initials(name))),
 							title: Text(name),
+							onTap: () {
+								BufferPage.open(context, name, network);
+							},
 						);
 					},
 					childCount: l.length,
@@ -242,6 +246,9 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 						title: Text(member.nickname),
 						subtitle: realname == null ? null : Text(realname, overflow: TextOverflow.fade, softWrap: false),
 						trailing: membership == null ? null : Text(membership),
+						onTap: () {
+							BufferPage.open(context, member.nickname, network);
+						},
 					);
 				},
 				childCount: _members!.length,
