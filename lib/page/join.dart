@@ -21,10 +21,11 @@ class JoinPage extends StatefulWidget {
 
 class _JoinPageState extends State<JoinPage> {
 	final TextEditingController _nameController = TextEditingController();
+	int _serial = 0;
+	Timer? _debounceNameTimer;
 
 	bool _loading = false;
 	List<_Action> _actions = [];
-	Timer? _debounceNameTimer;
 
 	@override
 	void dispose() {
@@ -49,12 +50,25 @@ class _JoinPageState extends State<JoinPage> {
 			return;
 		}
 
+		_serial++;
+		var serial = _serial;
+
 		setState(() {
 			_loading = true;
 		});
 
 		// TODO: when refining a search, don't query servers again, instead
 		// filter the local results list
+
+		void handleActions(Iterable<_Action> actions) {
+			if (_serial != serial) {
+				return;
+			}
+			setState(() {
+				_actions.addAll(actions);
+				_sortActions(_actions);
+			});
+		}
 
 		var networkList = context.read<NetworkListModel>();
 		var clientProvider = context.read<ClientProvider>();
@@ -67,21 +81,24 @@ class _JoinPageState extends State<JoinPage> {
 				continue;
 			}
 			var client = clientProvider.get(network);
-			futures.add(_searchNetworkChannels(query, network, client));
-			futures.add(_searchNetworkUsers(query, network, client));
+			futures.add(_searchNetworkChannels(query, network, client).then(handleActions));
+			futures.add(_searchNetworkUsers(query, network, client).then(handleActions));
 		}
 
 		Future.wait(futures).whenComplete(() {
+			if (_serial != serial) {
+				return;
+			}
 			setState(() {
 				_loading = false;
 			});
 		});
 	}
 
-	Future<void> _searchNetworkChannels(String query, NetworkModel network, Client client) async {
+	Future<Iterable<_Action>> _searchNetworkChannels(String query, NetworkModel network, Client client) async {
 		var chanTypes = client.isupport.chanTypes;
 		if (chanTypes.length == 0) {
-			return; // server doesn't support channels
+			return []; // server doesn't support channels
 		}
 		if (!chanTypes.contains(query[0])) {
 			// TODO: search with as many prefixes as there are CHANTYPES
@@ -100,25 +117,24 @@ class _JoinPageState extends State<JoinPage> {
 			print('Failed to LIST channels: $err');
 		}
 
-		setState(() {
-			bool exactMatch = false;
-			for (var reply in replies) {
-				if (reply.channel.toLowerCase() == query.toLowerCase()) {
-					exactMatch = true;
-				}
-				_actions.add(_JoinChannelAction(reply, network));
+		List<_Action> actions = [];
+		bool exactMatch = false;
+		for (var reply in replies) {
+			if (reply.channel.toLowerCase() == query.toLowerCase()) {
+				exactMatch = true;
 			}
-			if (!exactMatch) {
-				_actions.add(_CreateChannelAction(query, network));
-			}
-			_sortActions(_actions);
-		});
+			actions.add(_JoinChannelAction(reply, network));
+		}
+		if (!exactMatch) {
+			actions.add(_CreateChannelAction(query, network));
+		}
+		return actions;
 	}
 
-	Future<void> _searchNetworkUsers(String query, NetworkModel network, Client client) async {
+	Future<Iterable<_Action>> _searchNetworkUsers(String query, NetworkModel network, Client client) async {
 		var chanTypes = client.isupport.chanTypes;
 		if (chanTypes.contains(query[0])) {
-			return; // user is explicitly searching for a channel
+			return []; // user is explicitly searching for a channel
 		}
 
 		// TODO: find a way to know whether the server supports masks in WHO
@@ -130,12 +146,7 @@ class _JoinPageState extends State<JoinPage> {
 			print('Failed to WHO user: $err');
 		}
 
-		setState(() {
-			for (var reply in replies) {
-				_actions.add(_JoinUserAction(reply, network));
-			}
-			_sortActions(_actions);
-		});
+		return replies.map((reply) => _JoinUserAction(reply, network));
 	}
 
 	@override
