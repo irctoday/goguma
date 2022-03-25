@@ -62,7 +62,7 @@ class NotificationController {
 		_selectionsController.add(payload);
 	}
 
-	void showDirectMessage(List<MessageEntry> entries, BufferModel buffer) {
+	Future<void> showDirectMessage(List<MessageEntry> entries, BufferModel buffer) async {
 		var entry = entries.last;
 
 		String title;
@@ -72,7 +72,7 @@ class NotificationController {
 			title = '${entries.length} messages from ${entry.msg.source!.name}';
 		}
 
-		_show(
+		await _show(
 			title: title,
 			body: stripAnsiFormatting(entry.msg.params[1]),
 			channel: _NotificationChannel(
@@ -86,7 +86,7 @@ class NotificationController {
 		);
 	}
 
-	void showHighlight(List<MessageEntry> entries, BufferModel buffer) {
+	Future<void> showHighlight(List<MessageEntry> entries, BufferModel buffer) async {
 		var entry = entries.last;
 
 		String title;
@@ -96,7 +96,7 @@ class NotificationController {
 			title = '${entries.length} mentions in ${buffer.name}';
 		}
 
-		_show(
+		await _show(
 			title: title,
 			body: stripAnsiFormatting(entry.msg.params[1]),
 			channel: _NotificationChannel(
@@ -126,28 +126,32 @@ class NotificationController {
 		);
 	}
 
-	void cancelAllWithBuffer(BufferModel buffer) {
-		_cancelAllWithTag('buffer:${buffer.id}');
+	Future<void> cancelAllWithBuffer(BufferModel buffer) async {
+		await _cancelAllWithTag('buffer:${buffer.id}');
 	}
 
-	void _cancelAllWithTag(String tag) {
-		_active = _active.where((notif) {
-			if (notif.tag != tag) {
-				return true;
+	Future<void> _cancelAllWithTag(String tag) async {
+		List<Future<void>> futures = [];
+		List<_ActiveNotification> others = [];
+		for (var notif in _active) {
+			if (notif.tag == tag) {
+				futures.add(_plugin.cancel(notif.id, tag: notif.tag));
+			} else {
+				others.add(notif);
 			}
-			_plugin.cancel(notif.id, tag: notif.tag).ignore();
-			return false;
-		}).toList();
+		}
+		_active = others;
+		await Future.wait(futures);
 	}
 
-	void _show({
+	Future<void> _show({
 		required String title,
 		String? body,
 		required _NotificationChannel channel,
 		required String tag,
 		DateTime? dateTime,
 		StyleInformation? styleInformation,
-	}) {
+	}) async {
 		_ActiveNotification? replace;
 		for (var notif in _active) {
 			if (notif.tag == tag) {
@@ -157,8 +161,9 @@ class NotificationController {
 		}
 
 		var id = replace?.id ?? _nextId++;
+		_active.add(_ActiveNotification(id, tag));
 
-		_plugin.show(id, title, body, NotificationDetails(
+		await _plugin.show(id, title, body, NotificationDetails(
 			linux: LinuxNotificationDetails(
 				category: LinuxNotificationCategory.imReceived(),
 			),
@@ -172,6 +177,5 @@ class NotificationController {
 				tag: tag,
 			),
 		), payload: tag);
-		_active.add(_ActiveNotification(id, tag));
 	}
 }
