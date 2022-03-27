@@ -220,6 +220,21 @@ class AppState extends State<App> with WidgetsBindingObserver {
 		return MaterialPageRoute(builder: builder, settings: settings);
 	}
 
+	List<Route<dynamic>> _handleGenerateInitialRoutes(String initialRoute) {
+		if (initialRoute == ConnectPage.routeName) {
+			// Prevent the default implementation from generating routes for
+			// both '/' and '/connect'
+			return [
+				MaterialPageRoute(
+					builder: (context) => ConnectPage(),
+					settings: RouteSettings(name: initialRoute),
+				),
+			];
+		} else {
+			return Navigator.defaultGenerateInitialRoutes(_navigatorKey.currentState!, initialRoute);
+		}
+	}
+
 	@override
 	Widget build(BuildContext context) {
 		var networkList = context.read<NetworkListModel>();
@@ -238,6 +253,7 @@ class AppState extends State<App> with WidgetsBindingObserver {
 			themeMode: _themeMode,
 			initialRoute: initialRoute,
 			onGenerateRoute: _handleGenerateRoute,
+			onGenerateInitialRoutes: _handleGenerateInitialRoutes,
 			navigatorKey: _navigatorKey,
 			scaffoldMessengerKey: _scaffoldMessengerKey,
 			debugShowCheckedModeBanner: false,
