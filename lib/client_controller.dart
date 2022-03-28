@@ -110,7 +110,7 @@ class ClientProvider {
 		);
 	}
 
-	void _setupBackgroundServiceSync(bool enable) {
+	void _setupBackgroundServiceSync(bool enable) async {
 		if (!enable) {
 			needBackgroundServicePermissions.value = false;
 			_backgroundServiceAutoReconnectLock?.release();
@@ -128,37 +128,36 @@ class ClientProvider {
 			return;
 		}
 
-		FlutterBackground.hasPermissions.then((hasPermissions) {
-			needBackgroundServicePermissions.value = !hasPermissions;
-			if (hasPermissions) {
-				askBackgroundServicePermissions();
-			}
-		});
+		var hasPermissions = await FlutterBackground.hasPermissions;
+		needBackgroundServicePermissions.value = !hasPermissions;
+		if (hasPermissions) {
+			askBackgroundServicePermissions();
+		}
 	}
 
-	void askBackgroundServicePermissions() {
+	void askBackgroundServicePermissions() async {
 		print('Enabling sync background service');
-		FlutterBackground.initialize(androidConfig: FlutterBackgroundAndroidConfig(
+
+		var success = await FlutterBackground.initialize(androidConfig: FlutterBackgroundAndroidConfig(
 			notificationTitle: 'Goguma connection',
 			notificationText: 'Goguma is running in the background',
 			notificationIcon: AndroidResource(name: 'ic_stat_name'),
 			enableWifiLock: true,
-		)).then<bool>((success) {
-			needBackgroundServicePermissions.value = !success;
-			if (!success) {
-				print('Failed to obtain permissions for background service');
-				return false;
-			}
-			return FlutterBackground.enableBackgroundExecution();
-		}).then((success) {
-			if (success) {
-				print('Enabled sync background service');
-				_backgroundServiceAutoReconnectLock?.release();
-				_backgroundServiceAutoReconnectLock = ClientAutoReconnectLock.acquire(this);
-			} else {
-				print('Failed to enable sync background service');
-			}
-		});
+		));
+		needBackgroundServicePermissions.value = !success;
+		if (!success) {
+			print('Failed to obtain permissions for background service');
+			return;
+		}
+
+		success = await FlutterBackground.enableBackgroundExecution();
+		if (success) {
+			print('Enabled sync background service');
+			_backgroundServiceAutoReconnectLock?.release();
+			_backgroundServiceAutoReconnectLock = ClientAutoReconnectLock.acquire(this);
+		} else {
+			print('Failed to enable sync background service');
+		}
 	}
 }
 
@@ -532,60 +531,55 @@ class ClientController {
 		return null;
 	}
 
-	Future<void>? _handleChatMessages(String target, List<ClientMessage> messages) {
+	Future<void> _handleChatMessages(String target, List<ClientMessage> messages) async {
 		if (messages.length == 0) {
-			return null;
+			return;
 		}
 
 		var isHistory = messages.first.batchByType('chathistory') != null;
 
 		var buf = _bufferList.get(target, network);
 		var isNewBuffer = false;
-		Future<BufferModel> bufFuture;
-		if (buf != null) {
-			bufFuture = Future.value(buf);
-		} else if (!client.isChannel(target)) {
+		if (!client.isChannel(target)) {
 			isNewBuffer = true;
-			bufFuture = _createBuffer(target);
-		} else {
-			return null;
+			buf = await _createBuffer(target);
+		}
+		if (buf == null) {
+			return;
 		}
 
-		return bufFuture.then((buf) {
-			var entries = messages.map((msg) => MessageEntry(msg, buf.id)).toList();
-			return _db.storeMessages(entries).then((_) {
-				if (buf.messageHistoryLoaded) {
-					buf.addMessages(entries.map((entry) => MessageModel(entry: entry)), append: !isHistory);
-				}
+		var entries = messages.map((msg) => MessageEntry(msg, buf!.id)).toList();
+		await _db.storeMessages(entries);
+		if (buf.messageHistoryLoaded) {
+			buf.addMessages(entries.map((entry) => MessageModel(entry: entry)), append: !isHistory);
+		}
 
-				String t = entries.first.time;
-				List<MessageEntry> unread = [];
-				for (var entry in entries) {
-					if (entry.time.compareTo(t) > 0) {
-						t = entry.time;
-					}
+		String t = entries.first.time;
+		List<MessageEntry> unread = [];
+		for (var entry in entries) {
+			if (entry.time.compareTo(t) > 0) {
+				t = entry.time;
+			}
 
-					if (!client.isMyNick(entry.msg.source!.name) && (buf.entry.lastReadTime == null || buf.entry.lastReadTime!.compareTo(entry.time) < 0)) {
-						unread.add(entry);
-					}
-				}
+			if (!client.isMyNick(entry.msg.source!.name) && (buf.entry.lastReadTime == null || buf.entry.lastReadTime!.compareTo(entry.time) < 0)) {
+				unread.add(entry);
+			}
+		}
 
-				if (!buf.focused) {
-					buf.unreadCount += unread.length;
-					_openNotifications(buf, unread);
-				} else if (buf.entry.lastReadTime == null || buf.entry.lastReadTime!.compareTo(t) < 0) {
-					buf.entry.lastReadTime = t;
-					_db.storeBuffer(buf.entry);
-					client.setRead(buf.name, buf.entry.lastReadTime!);
-				}
+		if (!buf.focused) {
+			buf.unreadCount += unread.length;
+			_openNotifications(buf, unread);
+		} else if (buf.entry.lastReadTime == null || buf.entry.lastReadTime!.compareTo(t) < 0) {
+			buf.entry.lastReadTime = t;
+			_db.storeBuffer(buf.entry);
+			client.setRead(buf.name, buf.entry.lastReadTime!);
+		}
 
-				_bufferList.bumpLastDeliveredTime(buf, t);
+		_bufferList.bumpLastDeliveredTime(buf, t);
 
-				if (isNewBuffer && client.isNick(buf.name)) {
-					fetchBufferUser(client, buf);
-				}
-			});
-		});
+		if (isNewBuffer && client.isNick(buf.name)) {
+			fetchBufferUser(client, buf);
+		}
 	}
 
 	void _handleChanModeUpdate(BufferModel buffer, ChanModeUpdate update) {
@@ -643,18 +637,17 @@ class ClientController {
 		return true;
 	}
 
-	Future<BufferModel> _createBuffer(String name) {
+	Future<BufferModel> _createBuffer(String name) async {
 		var buffer = _bufferList.get(name, network);
 		if (buffer != null) {
-			return Future.value(buffer);
+			return buffer;
 		}
 
 		var entry = BufferEntry(name: name, network: network.networkId);
-		return _db.storeBuffer(entry).then((_) {
-			var buffer = BufferModel(entry: entry, network: network);
-			_bufferList.add(buffer);
-			return buffer;
-		});
+		await _db.storeBuffer(entry);
+		buffer = BufferModel(entry: entry, network: network);
+		_bufferList.add(buffer);
+		return buffer;
 	}
 
 	Future<void> _fetchBacklog(String from, String to) async {
@@ -674,24 +667,31 @@ class ClientController {
 	}
 }
 
-void fetchBufferUser(Client client, BufferModel buffer) {
-	client.who(buffer.name).then((replies) {
-		if (replies.length == 0) {
-			return; // User is offline
-		} else if (replies.length != 1) {
-			throw FormatException('Expected a single WHO reply, got ${replies.length}');
-		}
-		var reply = replies[0];
-		buffer.realname = reply.realname;
-		buffer.away = reply.away;
-	}).catchError((Object err) {
+void fetchBufferUser(Client client, BufferModel buffer) async {
+	List<WhoReply> replies;
+	try {
+		replies = await client.who(buffer.name);
+	} on Exception catch (err) {
 		print('Failed to fetch WHO ${buffer.name}: $err');
-	});
+		return;
+	}
+
+	if (replies.length == 0) {
+		return; // User is offline
+	} else if (replies.length != 1) {
+		throw FormatException('Expected a single WHO reply, got ${replies.length}');
+	}
+
+	var reply = replies[0];
+	buffer.realname = reply.realname;
+	buffer.away = reply.away;
 }
 
-void join(Client client, BufferModel buffer) {
+void join(Client client, BufferModel buffer) async {
 	buffer.joining = true;
-	client.join(buffer.name).whenComplete(() {
+	try {
+		await client.join(buffer.name);
+	} finally {
 		buffer.joining = false;
-	}).ignore();
+	}
 }
