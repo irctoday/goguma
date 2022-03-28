@@ -43,11 +43,22 @@ class BufferPage extends StatefulWidget {
 		Navigator.pushNamedAndRemoveUntil(context, routeName, until, arguments: buffer);
 
 		if (client.isChannel(name)) {
-			join(client, buffer);
+			_join(client, buffer);
 		} else {
 			fetchBufferUser(client, buffer);
 			client.monitor([name]);
 		}
+	}
+}
+
+void _join(Client client, BufferModel buffer) async {
+	buffer.joining = true;
+	try {
+		await client.join(buffer.name);
+	} on IrcException catch (err) {
+		print('Failed to join "${buffer.name}": $err');
+	} finally {
+		buffer.joining = false;
 	}
 }
 
@@ -337,7 +348,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 						if (isOnline) TextButton(
 							child: Text('JOIN'),
 							onPressed: () {
-								join(client, buffer);
+								_join(client, buffer);
 							},
 						),
 					],

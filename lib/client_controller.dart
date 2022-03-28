@@ -686,12 +686,3 @@ void fetchBufferUser(Client client, BufferModel buffer) async {
 	buffer.realname = reply.realname;
 	buffer.away = reply.away;
 }
-
-void join(Client client, BufferModel buffer) async {
-	buffer.joining = true;
-	try {
-		await client.join(buffer.name);
-	} finally {
-		buffer.joining = false;
-	}
-}
