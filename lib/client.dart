@@ -88,7 +88,7 @@ class Client {
 		_nick = params.nick,
 		_autoReconnect = autoReconnect;
 
-	Future<void> connect() {
+	Future<void> connect() async {
 		_reconnectTimer?.cancel();
 		_setState(ClientState.connecting);
 		_lastConnectTime = DateTime.now();
@@ -113,44 +113,47 @@ class Client {
 			);
 		}
 
-		return socketFuture.catchError((Object err) {
+		Socket socket;
+		try {
+			socket = await socketFuture;
+		} on Exception catch (err) {
 			_log('Connection failed: ' + err.toString());
 			_setState(ClientState.disconnected);
 			throw err;
-		}).then((socket) {
-			_log('Connection opened');
-			_socket = socket;
+		}
 
-			socket.done.catchError((Object err) {
-				_log('Connection error: ' + err.toString());
-				_messagesController.addError(err);
-				_statesController.addError(err);
-			}).whenComplete(() {
-				_socket = null;
-				caps.clear();
-				isupport.clear();
-				_batches.clear();
-				_pendingNames.clear();
-				_monitored.clear();
+		_log('Connection opened');
+		_socket = socket;
 
-				_setState(ClientState.disconnected);
-			});
+		socket.done.catchError((Object err) {
+			_log('Connection error: ' + err.toString());
+			_messagesController.addError(err);
+			_statesController.addError(err);
+		}).whenComplete(() {
+			_socket = null;
+			caps.clear();
+			isupport.clear();
+			_batches.clear();
+			_pendingNames.clear();
+			_monitored.clear();
 
-			var decoder = Utf8Decoder(allowMalformed: true);
-			var text = decoder.bind(socket);
-			var lines = text.transform(const LineSplitter());
-
-			lines.listen((l) {
-				var msg = IrcMessage.parse(l);
-				_handleMessage(msg);
-			}, onDone: () {
-				_log('Connection closed');
-				_socket?.close();
-			});
-
-			_setState(ClientState.connected);
-			return _register();
+			_setState(ClientState.disconnected);
 		});
+
+		var decoder = Utf8Decoder(allowMalformed: true);
+		var text = decoder.bind(socket);
+		var lines = text.transform(const LineSplitter());
+
+		lines.listen((l) {
+			var msg = IrcMessage.parse(l);
+			_handleMessage(msg);
+		}, onDone: () {
+			_log('Connection closed');
+			_socket?.close();
+		});
+
+		_setState(ClientState.connected);
+		await _register();
 	}
 
 	void _log(String s) {
@@ -256,16 +259,15 @@ class Client {
 		});
 	}
 
-	Future<ClientBatch> _roundtripBatch(IrcMessage msg, bool Function(ClientBatch batch) test) {
-		return _roundtripMessage(msg, (msg) {
+	Future<ClientBatch> _roundtripBatch(IrcMessage msg, bool Function(ClientBatch batch) test) async {
+		var endMsg = await _roundtripMessage(msg, (msg) {
 			if (!(msg is ClientEndOfBatch)) {
 				return false;
 			}
 			return test(msg.child);
-		}).then((msg) {
-			var endOfBatch = msg as ClientEndOfBatch;
-			return endOfBatch.child;
 		});
+		var endOfBatch = endMsg as ClientEndOfBatch;
+		return endOfBatch.child;
 	}
 
 	Future<void> _register() {
@@ -489,23 +491,22 @@ class Client {
 		send(IrcMessage('AUTHENTICATE', [base64.encode(payload)]));
 	}
 
-	Future<List<ChatHistoryTarget>> fetchChatHistoryTargets(String t1, String t2) {
+	Future<List<ChatHistoryTarget>> fetchChatHistoryTargets(String t1, String t2) async {
 		// TODO: paging
 		var msg = IrcMessage(
 			'CHATHISTORY',
 			['TARGETS', 'timestamp=' + t1, 'timestamp=' + t2, '100'],
 		);
 
-		return _roundtripBatch(msg, (batch) {
+		var batch = await _roundtripBatch(msg, (batch) {
 			return batch.type == 'draft/chathistory-targets';
-		}).then((batch) {
-			return batch.messages.map((msg) {
-				if (msg.cmd != 'CHATHISTORY' || msg.params[0] != 'TARGETS') {
-					throw FormatException('Expected CHATHISTORY TARGET message, got: $msg');
-				}
-				return ChatHistoryTarget(msg.params[1], msg.params[2]);
-			}).toList();
 		});
+		return batch.messages.map((msg) {
+			if (msg.cmd != 'CHATHISTORY' || msg.params[0] != 'TARGETS') {
+				throw FormatException('Expected CHATHISTORY TARGET message, got: $msg');
+			}
+			return ChatHistoryTarget(msg.params[1], msg.params[2]);
+		}).toList();
 	}
 
 	Future<ClientBatch> _fetchChatHistory(String subcmd, String target, List<String> params) {
@@ -562,42 +563,47 @@ class Client {
 		send(IrcMessage('READ', [target, 'timestamp=' + t]));
 	}
 
-	Future<ClientEndOfNames> names(String channel) {
+	Future<ClientEndOfNames> names(String channel) async {
 		var cm = isupport.caseMapping;
 		var msg = IrcMessage('NAMES', [channel]);
-		return _roundtripMessage(msg, (msg) {
+		var endMsg = _roundtripMessage(msg, (msg) {
 			return msg.cmd == RPL_ENDOFNAMES && cm(msg.params[1]) == cm(channel);
-		}).then((msg) => msg as ClientEndOfNames);
+		});
+		return endMsg as ClientEndOfNames;
 	}
 
-	Future<List<WhoReply>> who(String mask, { Set<WhoxField> whoxFields = const {} }) {
+	Future<List<WhoReply>> _who(String mask, Set<WhoxField> whoxFields) async {
 		whoxFields = { ...whoxFields };
 		whoxFields.addAll([WhoxField.nickname, WhoxField.realname, WhoxField.flags]);
 
-		var cm = isupport.caseMapping;
-		List<WhoReply> replies = [];
-		var future = _lastWhoFuture.then((_) {
-			List<String> params = [mask];
-			if (isupport.whox) {
-				// Only request the fields we're interested in
-				params.add(formatWhoxParam(whoxFields));
-			}
-			var msg = IrcMessage('WHO', params);
+		List<String> params = [mask];
+		if (isupport.whox) {
+			// Only request the fields we're interested in
+			params.add(formatWhoxParam(whoxFields));
+		}
+		var msg = IrcMessage('WHO', params);
 
-			return _roundtripMessage(msg, (msg) {
-				switch (msg.cmd) {
-				case RPL_WHOREPLY:
-					replies.add(WhoReply.parse(msg, isupport));
-					break;
-				case RPL_WHOSPCRPL:
-					replies.add(WhoReply.parseWhox(msg, whoxFields, isupport));
-					break;
-				case RPL_ENDOFWHO:
-					return cm(msg.params[1]) == cm(mask);
-				}
-				return false;
-			}).timeout(Duration(seconds: 30));
-		}).then((_) => replies);
+		List<WhoReply> replies = [];
+		var cm = isupport.caseMapping;
+		await _roundtripMessage(msg, (msg) {
+			switch (msg.cmd) {
+			case RPL_WHOREPLY:
+				replies.add(WhoReply.parse(msg, isupport));
+				break;
+			case RPL_WHOSPCRPL:
+				replies.add(WhoReply.parseWhox(msg, whoxFields, isupport));
+				break;
+			case RPL_ENDOFWHO:
+				return cm(msg.params[1]) == cm(mask);
+			}
+			return false;
+		}).timeout(Duration(seconds: 30));
+
+		return replies;
+	}
+
+	Future<List<WhoReply>> who(String mask, { Set<WhoxField> whoxFields = const {} }) {
+		var future = _lastWhoFuture.then((_) => _who(mask, whoxFields));
 
 		// Create a new Future which never errors out, always succeeds when the
 		// previous WHO command completes
@@ -608,11 +614,11 @@ class Client {
 		});
 	}
 
-	Future<Whois> whois(String nick) {
+	Future<Whois> whois(String nick) async {
 		var cm = isupport.caseMapping;
 		var msg = IrcMessage('WHOIS', [nick]);
 		List<ClientMessage> replies = [];
-		return _roundtripMessage(msg, (msg) {
+		var endMsg = await _roundtripMessage(msg, (msg) {
 			switch (msg.cmd) {
 			case ERR_NOSUCHNICK:
 				throw IrcException(msg);
@@ -638,27 +644,29 @@ class Client {
 				return cm(msg.params[1]) == cm(nick);
 			}
 			return false;
-		}).then((ClientMessage msg) {
-			var prefixes = isupport.memberships.map((m) => m.prefix).join('');
-			return Whois.parse(msg.params[1], replies, prefixes);
 		});
+		var prefixes = isupport.memberships.map((m) => m.prefix).join('');
+		return Whois.parse(endMsg.params[1], replies, prefixes);
+	}
+
+	Future<List<ListReply>> _list(String mask) async {
+		var msg = IrcMessage('LIST', [mask]);
+		List<ListReply> replies = [];
+		await _roundtripMessage(msg, (msg) {
+			switch (msg.cmd) {
+			case RPL_LIST:
+				replies.add(ListReply.parse(msg));
+				break;
+			case RPL_LISTEND:
+				return true;
+			}
+			return false;
+		}).timeout(Duration(seconds: 30));
+		return replies;
 	}
 
 	Future<List<ListReply>> list(String mask) {
-		var future = _lastListFuture.then((_) {
-			var msg = IrcMessage('LIST', [mask]);
-			List<ListReply> replies = [];
-			return _roundtripMessage(msg, (msg) {
-				switch (msg.cmd) {
-				case RPL_LIST:
-					replies.add(ListReply.parse(msg));
-					break;
-				case RPL_LISTEND:
-					return true;
-				}
-				return false;
-			}).then((_) => replies).timeout(Duration(seconds: 30));
-		});
+		var future = _lastListFuture.then((_) => _list(mask));
 
 		// Create a new Future which never errors out, always succeeds when the
 		// previous LIST command completes
