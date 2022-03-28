@@ -89,10 +89,14 @@ class Client {
 		_autoReconnect = autoReconnect;
 
 	Future<void> connect() async {
+		// Always switch to the disconnected state, because users reset their
+		// state when handling that transition.
 		_reconnectTimer?.cancel();
+		_setState(ClientState.disconnected);
 		_setState(ClientState.connecting);
 		_lastConnectTime = DateTime.now();
-		_socket?.close();
+
+		await _socket?.close();
 
 		_log('Connecting to ${params.host}...');
 
@@ -119,17 +123,24 @@ class Client {
 		} on Exception catch (err) {
 			_log('Connection failed: ' + err.toString());
 			_setState(ClientState.disconnected);
+			_tryAutoReconnect();
 			throw err;
 		}
 
 		_log('Connection opened');
 		_socket = socket;
+		_setState(ClientState.connected);
 
+		// socket.done is resolved when socket.close() is called. It's not
+		// called when only the incoming side of the bi-directional connection
+		// is closed. See the onDone callback below.
 		socket.done.catchError((Object err) {
-			_log('Connection error: ' + err.toString());
+			_log('Connection error: $err');
 			_messagesController.addError(err);
 			_statesController.addError(err);
 		}).whenComplete(() {
+			_log('Connection closed');
+
 			_socket = null;
 			caps.clear();
 			isupport.clear();
@@ -137,7 +148,12 @@ class Client {
 			_pendingNames.clear();
 			_monitored.clear();
 
+			// Don't try to auto-reconnect if we're already trying to connect
+			var connecting = _state == ClientState.connecting;
 			_setState(ClientState.disconnected);
+			if (!connecting) {
+				_tryAutoReconnect();
+			}
 		});
 
 		var decoder = Utf8Decoder(allowMalformed: true);
@@ -148,11 +164,12 @@ class Client {
 			var msg = IrcMessage.parse(l);
 			_handleMessage(msg);
 		}, onDone: () {
-			_log('Connection closed');
+			// This callback is invoked when the incoming side of the
+			// bi-directional connection is closed. We close the outgoing side
+			// here.
 			_socket?.close();
 		});
 
-		_setState(ClientState.connected);
 		await _register();
 	}
 
@@ -170,8 +187,6 @@ class Client {
 		if (!_statesController.isClosed) {
 			_statesController.add(state);
 		}
-
-		_tryAutoReconnect();
 	}
 
 	set autoReconnect(bool autoReconnect) {
