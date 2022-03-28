@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:provider/provider.dart';
@@ -66,44 +68,48 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 
 		_scrollController.addListener(_handleScroll);
 
+		// Timer.run prevents calling setState() from inside initState()
+		Timer.run(_loadMessages);
+	}
+
+	void _loadMessages() async {
 		var buffer = context.read<BufferModel>();
-		var future = Future<void>.value();
 		if (!buffer.messageHistoryLoaded) {
 			// TODO: only load a partial view of the messages
-			future = context.read<DB>().listMessages(buffer.id).then((entries) {
-				buffer.populateMessageHistory(entries.map((entry) {
-					return MessageModel(entry: entry);
-				}).toList());
+			var entries = await context.read<DB>().listMessages(buffer.id);
+			buffer.populateMessageHistory(entries.map((entry) {
+				return MessageModel(entry: entry);
+			}).toList());
 
-				if (buffer.messages.length < 100) {
-					_fetchChatHistory();
-				}
-			});
+			if (buffer.messages.length < 100) {
+				_fetchChatHistory();
+			}
 		}
 
-		future.then((_) {
-			_updateBufferFocus();
-		});
+		_updateBufferFocus();
+	}
+
+	void _send(String text) async {
+		var buffer = context.read<BufferModel>();
+		var client = context.read<Client>();
+
+		var msg = IrcMessage('PRIVMSG', [buffer.name, text]);
+		client.send(msg);
+
+		if (!client.caps.enabled.contains('echo-message')) {
+			msg = IrcMessage(msg.cmd, msg.params, source: IrcSource(client.nick));
+			var entry = MessageEntry(msg, buffer.id);
+			await context.read<DB>().storeMessages([entry]);
+			if (buffer.messageHistoryLoaded) {
+				buffer.addMessages([MessageModel(entry: entry)], append: true);
+			}
+			context.read<BufferListModel>().bumpLastDeliveredTime(buffer, entry.time);
+		}
 	}
 
 	void _submitComposer() {
 		if (_composerController.text != '') {
-			var buffer = context.read<BufferModel>();
-			var client = context.read<Client>();
-
-			var msg = IrcMessage('PRIVMSG', [buffer.name, _composerController.text]);
-			client.send(msg);
-
-			if (!client.caps.enabled.contains('echo-message')) {
-				msg = IrcMessage(msg.cmd, msg.params, source: IrcSource(client.nick));
-				var entry = MessageEntry(msg, buffer.id);
-				context.read<DB>().storeMessages([entry]).then((_) {
-					if (buffer.messageHistoryLoaded) {
-						buffer.addMessages([MessageModel(entry: entry)], append: true);
-					}
-					context.read<BufferListModel>().bumpLastDeliveredTime(buffer, entry.time);
-				});
-			}
+			_send(_composerController.text);
 		}
 		_composerController.text = '';
 		_composerFocusNode.requestFocus();
