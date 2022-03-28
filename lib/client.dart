@@ -148,10 +148,10 @@ class Client {
 			_pendingNames.clear();
 			_monitored.clear();
 
-			// Don't try to auto-reconnect if we're already trying to connect
-			var connecting = _state == ClientState.connecting;
-			_setState(ClientState.disconnected);
-			if (!connecting) {
+			// Don't mutate our state or try to auto-reconnect if we're already
+			// connecting.
+			if (_state != ClientState.connecting) {
+				_setState(ClientState.disconnected);
 				_tryAutoReconnect();
 			}
 		});
