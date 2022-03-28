@@ -304,6 +304,9 @@ void _sortActions(List<_Action> actions) {
 		if (a.index != b.index) {
 			return a.index - b.index;
 		}
+		if (a is _JoinChannelAction && b is _JoinChannelAction) {
+			return b.listReply.clients - a.listReply.clients;
+		}
 		return 0;
 	});
 }
