@@ -45,7 +45,7 @@ class ConnectPageState extends State<ConnectPage> {
 	final nicknameController = TextEditingController();
 	final passwordController = TextEditingController();
 
-	void submit() {
+	void submit() async {
 		if (!formKey.currentState!.validate() || _loading) {
 			return;
 		}
@@ -69,35 +69,37 @@ class ConnectPageState extends State<ConnectPage> {
 		// sent immediately after RPL_WELCOME)
 		var clientParams = connectParamsFromServerEntry(serverEntry);
 		var client = Client(clientParams, autoReconnect: false);
-		client.connect().then((_) {
+		NetworkEntry networkEntry;
+		try {
+			await client.connect();
 			client.disconnect();
-			return db.storeServer(serverEntry);
-		}).then((serverEntry) {
-			return db.storeNetwork(NetworkEntry(server: serverEntry.id!));
-		}).then((networkEntry) {
-			var client = Client(clientParams);
-			var network = NetworkModel(serverEntry, networkEntry);
-			context.read<NetworkListModel>().add(network);
-			context.read<ClientProvider>().add(client, network);
-			client.connect();
 
-			return Navigator.pushReplacementNamed(context, BufferListPage.routeName);
-		}).catchError((Object err) {
+			await db.storeServer(serverEntry);
+			networkEntry = await db.storeNetwork(NetworkEntry(server: serverEntry.id!));
+		} on Exception catch (err) {
 			client.disconnect();
 			setState(() {
-				_error = err as Exception;
-				if (_error is IrcException) {
-					var ircErr = _error as IrcException;
-					if (ircErr.msg.cmd == 'FAIL' && ircErr.msg.params[1] == 'ACCOUNT_REQUIRED') {
+				_error = err;
+				if (err is IrcException) {
+					if (err.msg.cmd == 'FAIL' && err.msg.params[1] == 'ACCOUNT_REQUIRED') {
 						_passwordRequired = true;
 					}
 				}
 			});
-		}, test: (err) => err is Exception).whenComplete(() {
+			return;
+		} finally {
 			setState(() {
 				_loading = false;
 			});
-		});
+		}
+
+		client = Client(clientParams);
+		var network = NetworkModel(serverEntry, networkEntry);
+		context.read<NetworkListModel>().add(network);
+		context.read<ClientProvider>().add(client, network);
+		client.connect().ignore();
+
+		Navigator.pushReplacementNamed(context, BufferListPage.routeName);
 	}
 
 	@override
