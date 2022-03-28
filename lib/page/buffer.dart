@@ -52,6 +52,10 @@ class BufferPage extends StatefulWidget {
 }
 
 void _join(Client client, BufferModel buffer) async {
+	if (buffer.joined) {
+		return;
+	}
+
 	buffer.joining = true;
 	try {
 		await client.join(buffer.name);
