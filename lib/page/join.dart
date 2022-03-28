@@ -95,12 +95,11 @@ class _JoinPageState extends State<JoinPage> {
 		try {
 			await Future.wait(futures);
 		} finally {
-			if (_serial != serial) {
-				return;
+			if (_serial == serial) {
+				setState(() {
+					_loading = false;
+				});
 			}
-			setState(() {
-				_loading = false;
-			});
 		}
 	}
 
