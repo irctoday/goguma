@@ -48,7 +48,7 @@ class _JoinPageState extends State<JoinPage> {
 		});
 	}
 
-	void _search(String query) {
+	void _search(String query) async {
 		setState(() {
 			_actions = [];
 		});
@@ -92,14 +92,16 @@ class _JoinPageState extends State<JoinPage> {
 			futures.add(_searchNetworkUsers(query, network, client).then(handleActions));
 		}
 
-		Future.wait(futures).whenComplete(() {
+		try {
+			await Future.wait(futures);
+		} finally {
 			if (_serial != serial) {
 				return;
 			}
 			setState(() {
 				_loading = false;
 			});
-		});
+		}
 	}
 
 	Future<Iterable<_Action>> _searchNetworkChannels(String query, NetworkModel network, Client client) async {
