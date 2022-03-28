@@ -211,8 +211,10 @@ class ClientController {
 			case ClientState.disconnected:
 				network.state = NetworkState.offline;
 				for (var buffer in _bufferList.buffers) {
-					if (buffer.network == network && client.isChannel(buffer.name)) {
+					if (buffer.network == network) {
 						buffer.joined = false;
+						buffer.online = null;
+						buffer.away = null;
 					}
 				}
 				break;
