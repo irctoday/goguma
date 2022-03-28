@@ -124,7 +124,7 @@ class Client {
 			_log('Connection failed: ' + err.toString());
 			_setState(ClientState.disconnected);
 			_tryAutoReconnect();
-			throw err;
+			rethrow;
 		}
 
 		_log('Connection opened');
