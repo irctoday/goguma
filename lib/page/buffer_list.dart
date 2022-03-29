@@ -192,6 +192,7 @@ class _BackgroundServicePermissionBanner extends StatelessWidget {
 		required this.child,
 	}) : super(key: key);
 
+	@override
 	Widget build(BuildContext context) {
 		var clientProvider = context.read<ClientProvider>();
 		return ValueListenableBuilder<bool>(
