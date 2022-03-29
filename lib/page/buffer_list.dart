@@ -169,44 +169,65 @@ class BufferListPageState extends State<BufferListPage> {
 					),
 				],
 			),
-			body: NetworkListIndicator(networkList: networkList, child: ValueListenableBuilder<bool>(
-				valueListenable: clientProvider.needBackgroundServicePermissions,
-				builder: (context, needPermissions, child) {
-					if (!needPermissions) {
-						return child!;
-					}
-					return Column(children: [
-						MaterialBanner(
-							content: Text('This server doesn\'t support modern IRCv3 features. Goguma needs additional permissions to maintain a persistent network connection. This may increase battery usage.'),
-							actions: [
-								TextButton(
-									child: Text('DISMISS'),
-									onPressed: () {
-										clientProvider.needBackgroundServicePermissions.value = false;
-									},
-								),
-								TextButton(
-									child: Text('ALLOW'),
-									onPressed: () {
-										clientProvider.askBackgroundServicePermissions();
-									},
-								),
-							],
-						),
-						Expanded(child: child!),
-					]);
-				},
-				child: ListView.builder(
-					itemCount: buffers.length,
-					itemBuilder: (context, index) {
-						var buffer = buffers[index];
-						return _BufferItem(
-							buffer: buffer,
-							showNetworkName: bufferNames[buffer.name.toLowerCase()]! > 1,
-						);
-					},
+			body: NetworkListIndicator(
+				networkList: networkList,
+				child: _BackgroundServicePermissionBanner(
+					clientProvider: clientProvider,
+					child: ListView.builder(
+						itemCount: buffers.length,
+						itemBuilder: (context, index) {
+							var buffer = buffers[index];
+							return _BufferItem(
+								buffer: buffer,
+								showNetworkName: bufferNames[buffer.name.toLowerCase()]! > 1,
+							);
+						},
+					),
 				),
-			)),
+			),
+		);
+	}
+}
+
+class _BackgroundServicePermissionBanner extends StatelessWidget {
+	final Widget child;
+	final ClientProvider clientProvider;
+
+	const _BackgroundServicePermissionBanner({
+		Key? key,
+		required this.child,
+		required this.clientProvider,
+	}) : super(key: key);
+
+	Widget build(BuildContext context) {
+		return ValueListenableBuilder<bool>(
+			valueListenable: clientProvider.needBackgroundServicePermissions,
+			builder: (context, needPermissions, child) {
+				if (!needPermissions) {
+					return child!;
+				}
+				return Column(children: [
+					MaterialBanner(
+						content: Text('This server doesn\'t support modern IRCv3 features. Goguma needs additional permissions to maintain a persistent network connection. This may increase battery usage.'),
+						actions: [
+							TextButton(
+								child: Text('DISMISS'),
+								onPressed: () {
+									clientProvider.needBackgroundServicePermissions.value = false;
+								},
+							),
+							TextButton(
+								child: Text('ALLOW'),
+								onPressed: () {
+									clientProvider.askBackgroundServicePermissions();
+								},
+							),
+						],
+					),
+					Expanded(child: child!),
+				]);
+			},
+			child: child,
 		);
 	}
 }
