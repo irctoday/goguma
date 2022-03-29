@@ -127,7 +127,6 @@ class BufferListPageState extends State<BufferListPage> {
 		}
 
 		var networkList = context.read<NetworkListModel>();
-		var clientProvider = context.read<ClientProvider>();
 
 		return Scaffold(
 			appBar: AppBar(
@@ -172,7 +171,6 @@ class BufferListPageState extends State<BufferListPage> {
 			body: NetworkListIndicator(
 				networkList: networkList,
 				child: _BackgroundServicePermissionBanner(
-					clientProvider: clientProvider,
 					child: ListView.builder(
 						itemCount: buffers.length,
 						itemBuilder: (context, index) {
@@ -191,15 +189,14 @@ class BufferListPageState extends State<BufferListPage> {
 
 class _BackgroundServicePermissionBanner extends StatelessWidget {
 	final Widget child;
-	final ClientProvider clientProvider;
 
 	const _BackgroundServicePermissionBanner({
 		Key? key,
 		required this.child,
-		required this.clientProvider,
 	}) : super(key: key);
 
 	Widget build(BuildContext context) {
+		var clientProvider = context.read<ClientProvider>();
 		return ValueListenableBuilder<bool>(
 			valueListenable: clientProvider.needBackgroundServicePermissions,
 			builder: (context, needPermissions, child) {
