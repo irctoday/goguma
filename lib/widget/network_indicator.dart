@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../models.dart';
 import '../network_state_aggregator.dart';
 
 class NetworkListIndicator extends StatefulWidget {
 	final Widget child;
-	final NetworkListModel networkList;
 
-	const NetworkListIndicator({ Key? key, required this.child, required this.networkList }) : super(key: key);
+	const NetworkListIndicator({ Key? key, required this.child }) : super(key: key);
 
 	@override
 	_NetworkListIndicatorState createState() => _NetworkListIndicatorState();
@@ -21,7 +21,8 @@ class _NetworkListIndicatorState extends State<NetworkListIndicator> {
 	void initState() {
 		super.initState();
 
-		_networkStateAggregator = NetworkStateAggregator(widget.networkList);
+		var networkList = context.read<NetworkListModel>();
+		_networkStateAggregator = NetworkStateAggregator(networkList);
 		_networkStateAggregator.addListener(_handleNetworkStateChange);
 	}
 

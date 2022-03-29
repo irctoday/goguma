@@ -126,8 +126,6 @@ class BufferListPageState extends State<BufferListPage> {
 			}
 		}
 
-		var networkList = context.read<NetworkListModel>();
-
 		return Scaffold(
 			appBar: AppBar(
 				leading: _searchQuery != null ? CloseButton() : null,
@@ -169,7 +167,6 @@ class BufferListPageState extends State<BufferListPage> {
 				],
 			),
 			body: NetworkListIndicator(
-				networkList: networkList,
 				child: _BackgroundServicePermissionBanner(
 					child: ListView.builder(
 						itemCount: buffers.length,
