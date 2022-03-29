@@ -93,7 +93,7 @@ void main() async {
 
 	// Listen for sync requests coming from the work manager Isolate
 	syncReceivePort.listen((sendPort) {
-		_syncChatHistory(sendPort, clientProvider, networkList);
+		_syncChatHistory(sendPort as SendPort, clientProvider, networkList);
 	});
 
 	runApp(MultiProvider(
