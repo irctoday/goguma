@@ -397,6 +397,9 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 								focusNode: _composerFocusNode,
 								controller: _composerController,
 								textInputAction: TextInputAction.send,
+								minLines: 1,
+								maxLines: 5,
+								keyboardType: TextInputType.text, // disallows newlines
 							),
 							direction: AxisDirection.up,
 							hideOnEmpty: true,
