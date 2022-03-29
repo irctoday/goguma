@@ -19,7 +19,7 @@ import 'notification_controller.dart';
 const _debugWorkManager = false;
 const _resetWorkManager = false;
 
-void main() {
+void main() async {
 	var syncReceivePort = ReceivePort('main:sync');
 	IsolateNameServer.registerPortWithName(syncReceivePort.sendPort, 'main:sync');
 
@@ -32,107 +32,81 @@ void main() {
 
 	var notifController = NotificationController();
 
-	List<ServerEntry> serverEntries = [];
-	List<NetworkEntry> networkEntries = [];
-	List<BufferEntry> bufferEntries = [];
-	Map<int, int> unreadCounts = {};
-	Map<int, String> lastDeliveredTimes = {};
-	DB.open().then((db) {
-		return Future.wait([
-			db.listServers().then((entries) => serverEntries = entries),
-			db.listNetworks().then((entries) => networkEntries = entries),
-			db.listBuffers().then((entries) => bufferEntries = entries),
-			db.fetchBuffersUnreadCount().then((m) => unreadCounts = m),
-			db.fetchBuffersLastDeliveredTime().then((m) => lastDeliveredTimes = m),
-		]).then((_) => db);
-	}).then((db) {
-		var networkList = NetworkListModel();
-		var bufferList = BufferListModel();
-		var bouncerNetworkList = BouncerNetworkListModel();
-		var clientProvider = ClientProvider(
-			db: db,
-			networkList: networkList,
-			bufferList: bufferList,
-			bouncerNetworkList: bouncerNetworkList,
-			notifController: notifController,
-		);
+	var db = await DB.open();
 
-		Map<int, ServerEntry> serverMap = Map.fromEntries(serverEntries.map((entry) {
-			return MapEntry(entry.id!, entry);
-		}));
+	// Load all the data we need concurrently
+	var serverEntriesFuture = db.listServers();
+	var networkEntriesFuture = db.listNetworks();
+	var bufferEntriesFuture = db.listBuffers();
+	var unreadCountsFuture = db.fetchBuffersUnreadCount();
+	var lastDeliveredTimesFuture = db.fetchBuffersLastDeliveredTime();
 
-		for (var networkEntry in networkEntries) {
-			var serverEntry = serverMap[networkEntry.server]!;
+	var serverEntries = await serverEntriesFuture;
+	var networkEntries = await networkEntriesFuture;
+	var bufferEntries = await bufferEntriesFuture;
+	var unreadCounts = await unreadCountsFuture;
+	var lastDeliveredTimes = await lastDeliveredTimesFuture;
 
-			var network = NetworkModel(serverEntry, networkEntry);
-			networkList.add(network);
+	var networkList = NetworkListModel();
+	var bufferList = BufferListModel();
+	var bouncerNetworkList = BouncerNetworkListModel();
+	var clientProvider = ClientProvider(
+		db: db,
+		networkList: networkList,
+		bufferList: bufferList,
+		bouncerNetworkList: bouncerNetworkList,
+		notifController: notifController,
+	);
 
-			var clientParams = connectParamsFromServerEntry(serverEntry);
-			if (networkEntry.bouncerId != null) {
-				clientParams = clientParams.replaceBouncerNetId(networkEntry.bouncerId);
-			}
-			var client = Client(clientParams);
-			clientProvider.add(client, network);
+	Map<int, ServerEntry> serverMap = Map.fromEntries(serverEntries.map((entry) {
+		return MapEntry(entry.id!, entry);
+	}));
+
+	for (var networkEntry in networkEntries) {
+		var serverEntry = serverMap[networkEntry.server]!;
+
+		var network = NetworkModel(serverEntry, networkEntry);
+		networkList.add(network);
+
+		var clientParams = connectParamsFromServerEntry(serverEntry);
+		if (networkEntry.bouncerId != null) {
+			clientParams = clientParams.replaceBouncerNetId(networkEntry.bouncerId);
 		}
+		var client = Client(clientParams);
+		clientProvider.add(client, network);
+	}
 
-		for (var entry in bufferEntries) {
-			var network = networkList.networks.firstWhere((network) => network.networkId == entry.network);
-			var buffer = BufferModel(entry: entry, network: network);
-			bufferList.add(buffer);
+	for (var entry in bufferEntries) {
+		var network = networkList.networks.firstWhere((network) => network.networkId == entry.network);
+		var buffer = BufferModel(entry: entry, network: network);
+		bufferList.add(buffer);
 
-			buffer.unreadCount = unreadCounts[buffer.id] ?? 0;
-			if (lastDeliveredTimes[buffer.id] != null) {
-				bufferList.bumpLastDeliveredTime(buffer, lastDeliveredTimes[buffer.id]!);
-			}
+		buffer.unreadCount = unreadCounts[buffer.id] ?? 0;
+		if (lastDeliveredTimes[buffer.id] != null) {
+			bufferList.bumpLastDeliveredTime(buffer, lastDeliveredTimes[buffer.id]!);
 		}
+	}
 
-		for (var client in clientProvider.clients) {
-			client.connect().ignore();
-		}
+	for (var client in clientProvider.clients) {
+		client.connect().ignore();
+	}
 
-		// Listen for sync requests coming from the work manager Isolate
-		syncReceivePort.listen((sendPort) {
-			print('Starting chat history synchronization');
-
-			var autoReconnectLock = ClientAutoReconnectLock.acquire(clientProvider);
-
-			// Make sure all connected clients are alive
-			Future.wait(clientProvider.clients.map((client) {
-				client.autoReconnect = true;
-				if (client.state != ClientState.connected) {
-					return Future.value(null);
-				}
-				// Ignore errors because the client will just try reconnecting
-				return client.ping().catchError((_) => null);
-			})).then((_) {
-				return Future.wait(networkList.networks.map((network) {
-					return _waitNetworkOnline(network).catchError((Object err) {
-						throw Exception('Failed to bring network "${network.serverEntry.host}" online: $err');
-					});
-				}));
-			}).then((_) {
-				print('Finished chat history synchronization');
-				sendPort.send(true);
-			}).catchError((Object err) {
-				print('Failed chat history synchronization: $err');
-				sendPort.send(false);
-			}).whenComplete(() {
-				autoReconnectLock.release();
-			});
-		});
-
-		runApp(MultiProvider(
-			providers: [
-				Provider<DB>.value(value: db),
-				Provider<ClientProvider>.value(value: clientProvider),
-				Provider<NotificationController>.value(value: notifController),
-				ChangeNotifierProvider<NetworkListModel>.value(value: networkList),
-				ChangeNotifierProvider<BufferListModel>.value(value: bufferList),
-				ChangeNotifierProvider<BouncerNetworkListModel>.value(value: bouncerNetworkList),
-			],
-			child: App(),
-		));
+	// Listen for sync requests coming from the work manager Isolate
+	syncReceivePort.listen((sendPort) {
+		_syncChatHistory(sendPort, clientProvider, networkList);
 	});
+
+	runApp(MultiProvider(
+		providers: [
+			Provider<DB>.value(value: db),
+			Provider<ClientProvider>.value(value: clientProvider),
+			Provider<NotificationController>.value(value: notifController),
+			ChangeNotifierProvider<NetworkListModel>.value(value: networkList),
+			ChangeNotifierProvider<BufferListModel>.value(value: bufferList),
+			ChangeNotifierProvider<BouncerNetworkListModel>.value(value: bouncerNetworkList),
+		],
+		child: App(),
+	));
 }
 
 void _initWorkManager() {
@@ -145,19 +119,54 @@ void _initWorkManager() {
 	}
 }
 
+void _syncChatHistory(SendPort sendPort, ClientProvider clientProvider, NetworkListModel networkList) async {
+	print('Starting chat history synchronization');
+
+	var autoReconnectLock = ClientAutoReconnectLock.acquire(clientProvider);
+
+	try {
+		// Make sure all connected clients are alive
+		await Future.wait(clientProvider.clients.map((client) async {
+			if (client.state != ClientState.connected) {
+				return;
+			}
+
+			// Ignore errors because the client will just try reconnecting
+			try {
+				await client.ping();
+			} on Exception catch (_) {}
+		}));
+
+		await Future.wait(networkList.networks.map((network) async {
+			try {
+				await _waitNetworkOnline(network);
+			} on Exception catch (err) {
+				throw Exception('Failed to bring network "${network.serverEntry.host}" online: $err');
+			}
+		}));
+
+		print('Finished chat history synchronization');
+		sendPort.send(true);
+	} catch (err) {
+		print('Failed chat history synchronization: $err');
+		sendPort.send(false);
+	} finally {
+		autoReconnectLock.release();
+	}
+}
+
 // This function is called from a separate Isolate.
 void _dispatchWorkManager() {
-	Workmanager().executeTask((taskName, data) {
+	Workmanager().executeTask((taskName, data) async {
 		print('Executing work manager task: $taskName');
 		switch (taskName) {
 		case 'sync':
 			var receivePort = ReceivePort('work-manager:sync');
 			var sendPort = IsolateNameServer.lookupPortByName('main:sync')!;
 			sendPort.send(receivePort.sendPort);
-			return receivePort.first.then((data) {
-				receivePort.close();
-				return data as bool;
-			});
+			var data = await receivePort.first;
+			receivePort.close();
+			return data as bool;
 		default:
 			throw Exception('Unknown work manager task name: $taskName');
 		}
