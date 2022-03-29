@@ -581,7 +581,7 @@ class Client {
 	Future<ClientEndOfNames> names(String channel) async {
 		var cm = isupport.caseMapping;
 		var msg = IrcMessage('NAMES', [channel]);
-		var endMsg = _roundtripMessage(msg, (msg) {
+		var endMsg = await _roundtripMessage(msg, (msg) {
 			return msg.cmd == RPL_ENDOFNAMES && cm(msg.params[1]) == cm(channel);
 		});
 		return endMsg as ClientEndOfNames;
