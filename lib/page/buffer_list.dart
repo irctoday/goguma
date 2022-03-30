@@ -53,7 +53,7 @@ class BufferListPageState extends State<BufferListPage> {
 		_search('');
 	}
 
-	void _markAllBuffersRead(BuildContext context) {
+	void _markAllBuffersRead() {
 		var bufferList = context.read<BufferListModel>();
 		var clientProvider = context.read<ClientProvider>();
 		var db = context.read<DB>();
@@ -131,7 +131,7 @@ class BufferListPageState extends State<BufferListPage> {
 								Navigator.pushNamed(context, JoinPage.routeName);
 								break;
 							case 'mark-all-read':
-								_markAllBuffersRead(context);
+								_markAllBuffersRead();
 								break;
 							case 'settings':
 								Navigator.pushNamed(context, SettingsPage.routeName);
