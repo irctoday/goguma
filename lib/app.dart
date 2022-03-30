@@ -14,6 +14,7 @@ import 'page/buffer_details.dart';
 import 'page/buffer_list.dart';
 import 'page/connect.dart';
 import 'page/join.dart';
+import 'page/settings.dart';
 
 const _themeMode = ThemeMode.system;
 
@@ -185,6 +186,9 @@ class AppState extends State<App> with WidgetsBindingObserver {
 			break;
 		case JoinPage.routeName:
 			builder = (context) => JoinPage();
+			break;
+		case SettingsPage.routeName:
+			builder = (context) => SettingsPage();
 			break;
 		case BufferPage.routeName:
 			var buffer = settings.arguments as BufferModel;

@@ -5,9 +5,9 @@ import '../client_controller.dart';
 import '../database.dart';
 import '../models.dart';
 import '../page/join.dart';
+import '../page/settings.dart';
 import '../widget/network_indicator.dart';
 import 'buffer.dart';
-import 'connect.dart';
 
 class BufferListPage extends StatefulWidget {
 	static const routeName = '/';
@@ -89,20 +89,6 @@ class BufferListPageState extends State<BufferListPage> {
 		setState(() {});
 	}
 
-	void _logout(BuildContext context) {
-		var db = context.read<DB>();
-		var networkList = context.read<NetworkListModel>();
-
-		for (var network in networkList.networks) {
-			db.deleteNetwork(network.networkId);
-			db.deleteServer(network.serverId);
-		}
-		networkList.clear();
-		context.read<ClientProvider>().disconnectAll();
-
-		Navigator.pushReplacementNamed(context, ConnectPage.routeName);
-	}
-
 	@override
 	Widget build(BuildContext context) {
 		List<BufferModel> buffers = context.watch<BufferListModel>().buffers;
@@ -151,8 +137,8 @@ class BufferListPageState extends State<BufferListPage> {
 							case 'mark-all-read':
 								_markAllBuffersRead(context);
 								break;
-							case 'logout':
-								_logout(context);
+							case 'settings':
+								Navigator.pushNamed(context, SettingsPage.routeName);
 								break;
 							}
 						},
@@ -160,7 +146,7 @@ class BufferListPageState extends State<BufferListPage> {
 							return [
 								PopupMenuItem(child: Text('New conversation'), value: 'join'),
 								if (hasUnreadBuffer) PopupMenuItem(child: Text('Mark all as read'), value: 'mark-all-read'),
-								PopupMenuItem(child: Text('Logout'), value: 'logout'),
+								PopupMenuItem(child: Text('Settings'), value: 'settings'),
 							];
 						},
 					),
