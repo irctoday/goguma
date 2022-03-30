@@ -63,6 +63,7 @@ class Client {
 	final int _id;
 	Socket? _socket;
 	String _nick;
+	String _realname;
 	IrcSource? _serverSource;
 	ClientState _state = ClientState.disconnected;
 	final StreamController<ClientMessage> _messagesController = StreamController.broadcast(sync: true);
@@ -77,6 +78,7 @@ class Client {
 	final IrcNameMap<void> _monitored = IrcNameMap(defaultCaseMapping);
 
 	String get nick => _nick;
+	String get realname => _realname;
 	IrcSource? get serverSource => _serverSource;
 	ClientState get state => _state;
 	Stream<ClientMessage> get messages => _messagesController.stream;
@@ -86,6 +88,7 @@ class Client {
 	Client(this.params, { bool autoReconnect = true }) :
 		_id = _nextClientId++,
 		_nick = params.nick,
+		_realname = params.nick,
 		_autoReconnect = autoReconnect;
 
 	Future<void> connect() async {
@@ -287,6 +290,7 @@ class Client {
 
 	Future<void> _register() {
 		_nick = params.nick;
+		_realname = params.nick;
 
 		var caps = [..._permanentCaps];
 		if (params.bouncerNetId == null) {
@@ -414,6 +418,11 @@ class Client {
 		case 'NICK':
 			if (isMyNick(msg.source!.name)) {
 				_nick = msg.params[0];
+			}
+			break;
+		case 'SETNAME':
+			if (isMyNick(msg.source!.name)) {
+				_realname = msg.params[0];
 			}
 			break;
 		case 'PING':
