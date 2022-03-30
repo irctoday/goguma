@@ -106,9 +106,16 @@ class _NetworkItem extends AnimatedWidget {
 
 	@override
 	Widget build(BuildContext context) {
+		String subtitle;
+		if (network.bouncerNetwork != null && network.state == NetworkState.online) {
+			subtitle = _bouncerNetworkStateDescription(network.bouncerNetwork!.state);
+		} else {
+			subtitle = _networkStateDescription(network.state);
+		}
+
 		return ListTile(
 			title: Text(network.displayName),
-			subtitle: Text(_networkStateDescription(network.state)),
+			subtitle: Text(subtitle),
 			leading: Icon(Icons.hub),
 		);
 	}
@@ -125,6 +132,17 @@ String _networkStateDescription(NetworkState state) {
 	case NetworkState.synchronizing:
 		return 'Synchronizing…';
 	case NetworkState.online:
+		return 'Connected';
+	}
+}
+
+String _bouncerNetworkStateDescription(BouncerNetworkState state) {
+	switch (state) {
+	case BouncerNetworkState.disconnected:
+		return 'Bouncer disconnected from network';
+	case BouncerNetworkState.connecting:
+		return 'Bouncer connecting to network…';
+	case BouncerNetworkState.connected:
 		return 'Connected';
 	}
 }
