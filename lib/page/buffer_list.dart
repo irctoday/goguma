@@ -53,20 +53,6 @@ class BufferListPageState extends State<BufferListPage> {
 		_search('');
 	}
 
-	Widget _buildSearchField(BuildContext context) {
-		return TextField(
-			controller: _searchController,
-			autofocus: true,
-			decoration: InputDecoration(
-				hintText: 'Search...',
-				border: InputBorder.none,
-			),
-			style: TextStyle(color: Colors.white),
-			cursorColor: Colors.white,
-			onChanged: _search,
-		);
-	}
-
 	void _markAllBuffersRead(BuildContext context) {
 		var bufferList = context.read<BufferListModel>();
 		var clientProvider = context.read<ClientProvider>();
@@ -117,7 +103,17 @@ class BufferListPageState extends State<BufferListPage> {
 				leading: _searchQuery != null ? CloseButton() : null,
 				title: Builder(builder: (context) {
 					if (_searchQuery != null) {
-						return _buildSearchField(context);
+						return TextField(
+							controller: _searchController,
+							autofocus: true,
+							decoration: InputDecoration(
+								hintText: 'Search...',
+								border: InputBorder.none,
+							),
+							style: TextStyle(color: Colors.white),
+							cursorColor: Colors.white,
+							onChanged: _search,
+						);
 					} else {
 						return Text('Goguma');
 					}
