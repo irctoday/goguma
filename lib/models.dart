@@ -34,8 +34,10 @@ class NetworkModel extends ChangeNotifier {
 	NetworkState _state = NetworkState.offline;
 	String? _upstreamName;
 	BouncerNetwork? _bouncerNetwork;
+	String _nickname;
+	String _realname;
 
-	NetworkModel(this.serverEntry, this.networkEntry) {
+	NetworkModel(this.serverEntry, this.networkEntry) : _nickname = serverEntry.nick!, _realname = serverEntry.nick! {
 		assert(serverEntry.id != null);
 		assert(networkEntry.id != null);
 	}
@@ -46,6 +48,8 @@ class NetworkModel extends ChangeNotifier {
 	NetworkState get state => _state;
 	String? get upstreamName => _upstreamName;
 	BouncerNetwork? get bouncerNetwork => _bouncerNetwork;
+	String get nickname => _nickname;
+	String get realname => _realname;
 
 	String get displayName {
 		// If the user has set a custom bouncer network name, use that
@@ -75,6 +79,16 @@ class NetworkModel extends ChangeNotifier {
 
 	set bouncerNetwork(BouncerNetwork? network) {
 		_bouncerNetwork = network;
+		notifyListeners();
+	}
+
+	set nickname(String nickname) {
+		_nickname = nickname;
+		notifyListeners();
+	}
+
+	set realname(String realname) {
+		_realname = realname;
 		notifyListeners();
 	}
 }

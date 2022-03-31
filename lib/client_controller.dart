@@ -370,6 +370,11 @@ class ClientController {
 			_bufferList.get(msg.source.name, network)?.away = away;
 			break;
 		case 'NICK':
+			var cm = client.isupport.caseMapping;
+			if (cm(network.nickname) == cm(msg.source.name)) {
+				network.nickname = msg.params[0];
+			}
+
 			for (var buffer in _bufferList.buffers) {
 				if (buffer.network == network && buffer.members?.members.containsKey(msg.source.name) == true) {
 					buffer.members!.set(msg.params[0], buffer.members!.members[msg.source.name]!);
@@ -379,6 +384,11 @@ class ClientController {
 			break;
 		case 'SETNAME':
 			var realname = msg.params[0];
+
+			if (client.isMyNick(msg.source.name)) {
+				network.realname = realname;
+			}
+
 			_bufferList.get(msg.source.name, network)?.realname = realname;
 			break;
 		case RPL_TOPIC:
