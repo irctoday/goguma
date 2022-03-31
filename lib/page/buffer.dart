@@ -75,6 +75,8 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 	bool _activated = true;
 	bool _chatHistoryLoading = false;
 
+	bool _showJumpToBottom = false;
+
 	@override
 	void initState() {
 		super.initState();
@@ -139,6 +141,13 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 	void _handleScroll() {
 		if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
 			_fetchChatHistory();
+		}
+
+		var showJumpToBottom = _scrollController.position.pixels > _scrollController.position.viewportDimension;
+		if (_showJumpToBottom != showJumpToBottom) {
+			setState(() {
+				_showJumpToBottom = showJumpToBottom;
+			});
 		}
 	}
 
@@ -388,6 +397,28 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 			));
 		}
 
+		Widget? jumpToBottom;
+		if (_showJumpToBottom) {
+			jumpToBottom = Positioned(
+				right: 15,
+				bottom: 15,
+				child: FloatingActionButton(
+					mini: true,
+					tooltip: 'Jump to bottom',
+					child: const Icon(Icons.keyboard_double_arrow_down, size: 18),
+					backgroundColor: Colors.grey,
+					foregroundColor: Colors.white,
+					onPressed: () {
+						_scrollController.animateTo(
+							0,
+							duration: Duration(milliseconds: 200),
+							curve: Curves.easeInOut,
+						);
+					},
+				),
+			);
+		}
+
 		return Scaffold(
 			appBar: AppBar(
 				title: InkResponse(
@@ -438,7 +469,10 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 			),
 			body: NetworkIndicator(network: network, child: Column(children: [
 				if (joinBanner != null) joinBanner,
-				Expanded(child: msgList),
+				Expanded(child: Stack(children: [
+					msgList,
+					if (jumpToBottom != null) jumpToBottom,
+				])),
 				if (composer != null) composer,
 			])),
 		);
