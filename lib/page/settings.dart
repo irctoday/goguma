@@ -35,7 +35,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
 	@override
 	Widget build(BuildContext context) {
-		var networkList = context.read<NetworkListModel>();
+		var networkList = context.watch<NetworkListModel>();
 		var clientProvider = context.read<ClientProvider>();
 
 		NetworkModel? mainNetwork;
@@ -49,8 +49,6 @@ class _SettingsPageState extends State<SettingsPage> {
 			throw Exception('No main network found');
 		}
 
-		var client = clientProvider.get(mainNetwork);
-
 		List<Widget> networks = [];
 		for (var network in networkList.networks) {
 			if (network.networkEntry.bouncerId == null) {
@@ -59,7 +57,8 @@ class _SettingsPageState extends State<SettingsPage> {
 			networks.add(_NetworkItem(network: network));
 		}
 
-		return Scaffold(
+		var networkListenable = Listenable.merge(networkList.networks);
+		return AnimatedBuilder(animation: networkListenable, builder: (context, _) => Scaffold(
 			appBar: AppBar(
 				title: Text('Settings'),
 			),
@@ -67,14 +66,14 @@ class _SettingsPageState extends State<SettingsPage> {
 				SizedBox(height: 10),
 				ListTile(
 					title: Builder(builder: (context) => Text(
-						client.nick,
+						mainNetwork!.nickname,
 						style: DefaultTextStyle.of(context).style.apply(
 							fontSizeFactor: 1.2,
 						).copyWith(
 							fontWeight: FontWeight.bold,
 						),
 					)),
-					subtitle: isStubRealname(client.realname, client.nick) ? null : Text(client.realname),
+					subtitle: isStubRealname(mainNetwork!.realname, mainNetwork.nickname) ? null : Text(mainNetwork.realname),
 					leading: CircleAvatar(
 						radius: 40,
 						child: Icon(Icons.face, size: 32),
@@ -102,7 +101,7 @@ class _SettingsPageState extends State<SettingsPage> {
 					onTap: _logout,
 				),
 			]),
-		);
+		));
 	}
 }
 
