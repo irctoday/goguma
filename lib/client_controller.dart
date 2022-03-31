@@ -369,6 +369,14 @@ class ClientController {
 			var away = msg.params.length > 0;
 			_bufferList.get(msg.source.name, network)?.away = away;
 			break;
+		case 'NICK':
+			for (var buffer in _bufferList.buffers) {
+				if (buffer.network == network && buffer.members?.members.containsKey(msg.source.name) == true) {
+					buffer.members!.set(msg.params[0], buffer.members!.members[msg.source.name]!);
+					buffer.members!.remove(msg.source.name);
+				}
+			}
+			break;
 		case 'SETNAME':
 			var realname = msg.params[0];
 			_bufferList.get(msg.source.name, network)?.realname = realname;
