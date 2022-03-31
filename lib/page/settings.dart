@@ -7,6 +7,7 @@ import '../client_controller.dart';
 import '../database.dart';
 import '../irc.dart';
 import '../models.dart';
+import '../widget/edit_profile_dialog.dart';
 
 class SettingsPage extends StatefulWidget {
 	static const routeName = '/settings';
@@ -77,6 +78,12 @@ class _SettingsPageState extends State<SettingsPage> {
 					leading: CircleAvatar(
 						radius: 40,
 						child: Icon(Icons.face, size: 32),
+					),
+					trailing: IconButton(
+						icon: Icon(Icons.edit),
+						onPressed: () {
+							EditProfileDialog.show(context, mainNetwork!);
+						},
 					),
 				),
 				Column(children: networks),
