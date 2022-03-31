@@ -449,6 +449,10 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 								context.read<BufferListModel>().setPinned(buffer, !buffer.pinned);
 								context.read<DB>().storeBuffer(buffer.entry);
 								break;
+							case 'mute':
+								context.read<BufferListModel>().setMuted(buffer, !buffer.muted);
+								context.read<DB>().storeBuffer(buffer.entry);
+								break;
 							case 'part':
 								var client = context.read<Client>();
 								if (client.isChannel(buffer.name)) {
@@ -466,6 +470,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 							return [
 								PopupMenuItem(child: Text('Details'), value: 'details'),
 								PopupMenuItem(child: Text(buffer.pinned ? 'Unpin' : 'Pin'), value: 'pin'),
+								PopupMenuItem(child: Text(buffer.muted ? 'Unmute' : 'Mute'), value: 'mute'),
 								PopupMenuItem(child: Text('Leave'), value: 'part'),
 							];
 						},

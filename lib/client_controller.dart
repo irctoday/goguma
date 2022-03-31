@@ -602,6 +602,9 @@ class ClientController {
 	}
 
 	void _openNotifications(BufferModel buffer, List<MessageEntry> entries) async {
+		if (buffer.muted) {
+			return;
+		}
 		var needsNotification = entries.any((entry) {
 			if (buffer.lastDeliveredTime != null && buffer.lastDeliveredTime!.compareTo(entry.time) >= 0) {
 				return false;

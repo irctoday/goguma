@@ -236,6 +236,13 @@ class _BufferItem extends AnimatedWidget {
 		}
 
 		List<Widget> trailing = [];
+		if (buffer.muted) {
+			trailing.add(Icon(
+				Icons.notifications_off,
+				size: 20,
+				color: Theme.of(context).textTheme.caption!.color,
+			));
+		}
 		if (buffer.pinned) {
 			trailing.add(Icon(
 				Icons.push_pin,
@@ -247,7 +254,7 @@ class _BufferItem extends AnimatedWidget {
 			trailing.add(Container(
 				padding: EdgeInsets.all(3),
 				decoration: BoxDecoration(
-					color: Colors.red,
+					color: buffer.muted ? Theme.of(context).textTheme.caption!.color : Colors.red,
 					borderRadius: BorderRadius.circular(20),
 				),
 				constraints: BoxConstraints(minWidth: 20, minHeight: 20),

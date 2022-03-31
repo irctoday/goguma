@@ -231,11 +231,20 @@ class BufferListModel extends ChangeNotifier {
 		notifyListeners();
 	}
 
+	void setMuted(BufferModel buf, bool muted) {
+		buf.muted = muted;
+		_rebuildSorted();
+		notifyListeners();
+	}
+
 	void _rebuildSorted() {
 		var l = [..._buffers.values];
 		l.sort((a, b) {
 			if (a.pinned != b.pinned) {
 				return a.pinned ? -1 : 1;
+			}
+			if (a.muted != b.muted) {
+				return a.muted ? 1 : -1;
 			}
 			if (a.lastDeliveredTime != b.lastDeliveredTime) {
 				if (a.lastDeliveredTime == null) {
@@ -297,6 +306,7 @@ class BufferModel extends ChangeNotifier {
 	String? get lastDeliveredTime => _lastDeliveredTime;
 	bool get messageHistoryLoaded => _messageHistoryLoaded;
 	bool get pinned => entry.pinned;
+	bool get muted => entry.muted;
 
 	String? get topic => _topic;
 	bool get joining => _joining;
@@ -335,6 +345,11 @@ class BufferModel extends ChangeNotifier {
 
 	set pinned(bool pinned) {
 		entry.pinned = pinned;
+		notifyListeners();
+	}
+
+	set muted(bool muted) {
+		entry.muted = muted;
 		notifyListeners();
 	}
 
