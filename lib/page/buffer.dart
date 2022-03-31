@@ -445,6 +445,10 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 							case 'details':
 								Navigator.pushNamed(context, BufferDetailsPage.routeName, arguments: buffer);
 								break;
+							case 'pin':
+								context.read<BufferListModel>().setPinned(buffer, !buffer.pinned);
+								context.read<DB>().storeBuffer(buffer.entry);
+								break;
 							case 'part':
 								var client = context.read<Client>();
 								if (client.isChannel(buffer.name)) {
@@ -461,6 +465,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 						itemBuilder: (context) {
 							return [
 								PopupMenuItem(child: Text('Details'), value: 'details'),
+								PopupMenuItem(child: Text(buffer.pinned ? 'Unpin' : 'Pin'), value: 'pin'),
 								PopupMenuItem(child: Text('Leave'), value: 'part'),
 							];
 						},

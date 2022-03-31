@@ -225,9 +225,18 @@ class BufferListModel extends ChangeNotifier {
 		}
 	}
 
+	void setPinned(BufferModel buf, bool pinned) {
+		buf.pinned = pinned;
+		_rebuildSorted();
+		notifyListeners();
+	}
+
 	void _rebuildSorted() {
 		var l = [..._buffers.values];
 		l.sort((a, b) {
+			if (a.pinned != b.pinned) {
+				return a.pinned ? -1 : 1;
+			}
 			if (a.lastDeliveredTime != b.lastDeliveredTime) {
 				if (a.lastDeliveredTime == null) {
 					return 1;
@@ -287,6 +296,7 @@ class BufferModel extends ChangeNotifier {
 	int get unreadCount => _unreadCount;
 	String? get lastDeliveredTime => _lastDeliveredTime;
 	bool get messageHistoryLoaded => _messageHistoryLoaded;
+	bool get pinned => entry.pinned;
 
 	String? get topic => _topic;
 	bool get joining => _joining;
@@ -320,6 +330,11 @@ class BufferModel extends ChangeNotifier {
 
 	set unreadCount(int n) {
 		_unreadCount = n;
+		notifyListeners();
+	}
+
+	set pinned(bool pinned) {
+		entry.pinned = pinned;
 		notifyListeners();
 	}
 

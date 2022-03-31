@@ -235,9 +235,16 @@ class _BufferItem extends AnimatedWidget {
 			title = Text(buffer.name, overflow: TextOverflow.ellipsis);
 		}
 
-		return ListTile(
-			leading: CircleAvatar(child: Text(_initials(buffer.name))),
-			trailing: (buffer.unreadCount == 0) ? null : Container(
+		List<Widget> trailing = [];
+		if (buffer.pinned) {
+			trailing.add(Icon(
+				Icons.push_pin,
+				size: 20,
+				color: Theme.of(context).textTheme.caption!.color,
+			));
+		}
+		if (buffer.unreadCount != 0) {
+			trailing.add(Container(
 				padding: EdgeInsets.all(3),
 				decoration: BoxDecoration(
 					color: Colors.red,
@@ -249,6 +256,14 @@ class _BufferItem extends AnimatedWidget {
 					style: TextStyle(color: Colors.white, fontSize: 12),
 					textAlign: TextAlign.center,
 				),
+			));
+		}
+
+		return ListTile(
+			leading: CircleAvatar(child: Text(_initials(buffer.name))),
+			trailing: Wrap(
+				spacing: 5,
+				children: trailing,
 			),
 			title: title,
 			subtitle: subtitle == null ? null : Text(subtitle,

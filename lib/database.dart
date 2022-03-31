@@ -67,6 +67,7 @@ class BufferEntry {
 	final String name;
 	final int network;
 	String? lastReadTime;
+	bool pinned;
 
 	Map<String, Object?> toMap() {
 		return <String, Object?>{
@@ -74,16 +75,18 @@ class BufferEntry {
 			'name': name,
 			'network': network,
 			'last_read_time': lastReadTime,
+			'pinned': pinned ? 1 : 0,
 		};
 	}
 
-	BufferEntry({ required this.name, required this.network });
+	BufferEntry({ required this.name, required this.network, this.pinned = false });
 
 	BufferEntry.fromMap(Map<String, dynamic> m) :
 		id = m['id'] as int,
 		name = m['name'] as String,
 		network = m['network'] as int,
-		lastReadTime = m['last_read_time'] as String?;
+		lastReadTime = m['last_read_time'] as String?,
+		pinned = m['pinned'] == 1;
 }
 
 class MessageEntry {
@@ -176,6 +179,7 @@ class DB {
 						name TEXT NOT NULL,
 						network INTEGER NOT NULL,
 						last_read_time TEXT,
+						pinned INTEGER NOT NULL DEFAULT 0,
 						FOREIGN KEY (network) REFERENCES Network(id) ON DELETE CASCADE,
 						UNIQUE(name, network)
 					)
@@ -205,12 +209,17 @@ class DB {
 						ON Message(buffer, time);
 					''');
 				}
+				if (prevVersion < 3) {
+					batch.execute('''
+						ALTER TABLE Buffer ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0;
+					''');
+				}
 				await batch.commit();
 			},
 			onDowngrade: (_, prevVersion, newVersion) async {
 				throw Exception('Attempted to downgrade database from version $prevVersion to version $newVersion');
 			},
-			version: 2,
+			version: 3,
 		);
 		return DB._(db);
 	}
