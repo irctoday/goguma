@@ -62,6 +62,10 @@ class NotificationController {
 		_selectionsController.add(payload);
 	}
 
+	String _bufferTag(BufferModel buffer) {
+		return 'buffer:${buffer.id}';
+	}
+
 	Future<void> showDirectMessage(List<MessageEntry> entries, BufferModel buffer) async {
 		var entry = entries.last;
 
@@ -82,7 +86,7 @@ class NotificationController {
 			),
 			dateTime: entry.dateTime,
 			styleInformation: _buildMessagingStyleInfo(entries, buffer, false),
-			tag: 'buffer:${buffer.id}',
+			tag: _bufferTag(buffer),
 		);
 	}
 
@@ -106,7 +110,7 @@ class NotificationController {
 			),
 			dateTime: entry.dateTime,
 			styleInformation: _buildMessagingStyleInfo(entries, buffer, true),
-			tag: 'buffer:${buffer.id}',
+			tag: _bufferTag(buffer),
 		);
 	}
 
@@ -127,7 +131,7 @@ class NotificationController {
 	}
 
 	Future<void> cancelAllWithBuffer(BufferModel buffer) async {
-		await _cancelAllWithTag('buffer:${buffer.id}');
+		await _cancelAllWithTag(_bufferTag(buffer));
 	}
 
 	Future<void> _cancelAllWithTag(String tag) async {
