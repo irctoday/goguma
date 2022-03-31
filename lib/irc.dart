@@ -1151,7 +1151,7 @@ abstract class ChannelMode {
 
 /// Checks whether a realname is worth displaying.
 bool isStubRealname(String realname, String nickname) {
-	if (realname == nickname) {
+	if (realname.toLowerCase() == nickname.toLowerCase()) {
 		return true;
 	}
 
