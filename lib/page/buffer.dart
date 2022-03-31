@@ -297,6 +297,97 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 			canSendMessage = canSendMessage && buffer.online != false;
 		}
 		var messages = buffer.messages;
+
+		Widget? joinBanner;
+		if (isChannel && !buffer.joined && !buffer.joining) {
+			joinBanner = MaterialBanner(
+				content: Text('You have left this channel.'),
+				actions: [
+					if (isOnline) TextButton(
+						child: Text('JOIN'),
+						onPressed: () {
+							_join(client, buffer);
+						},
+					),
+				],
+			);
+		}
+
+		var msgList = ListView.builder(
+			reverse: true,
+			controller: _scrollController,
+			itemCount: messages.length,
+			itemBuilder: (context, index) {
+				var msgIndex = messages.length - index - 1;
+				var msg = messages[msgIndex];
+				var prevMsg = msgIndex > 0 ? messages[msgIndex - 1] : null;
+				var nextMsg = msgIndex + 1 < messages.length ? messages[msgIndex + 1] : null;
+
+				VoidCallback? onSwipe;
+				if (isChannel) {
+					onSwipe = () => _handleMessageSwipe(msg);
+				}
+
+				return _MessageItem(
+					key: ValueKey(msg.id),
+					msg: msg,
+					prevMsg: prevMsg,
+					nextMsg: nextMsg,
+					unreadMarkerTime: widget.unreadMarkerTime,
+					onSwipe: onSwipe,
+				);
+			},
+		);
+
+		Widget? composer;
+		if (canSendMessage) {
+			composer = Material(elevation: 15, child: Container(
+				padding: EdgeInsets.all(10),
+				child: Form(key: _composerFormKey, child: Row(children: [
+					Expanded(child: TypeAheadFormField<String>(
+						textFieldConfiguration: TextFieldConfiguration(
+							decoration: InputDecoration(
+								hintText: 'Write a message...',
+								border: InputBorder.none,
+							),
+							onSubmitted: (value) {
+								_submitComposer();
+							},
+							focusNode: _composerFocusNode,
+							controller: _composerController,
+							textInputAction: TextInputAction.send,
+							minLines: 1,
+							maxLines: 5,
+							keyboardType: TextInputType.text, // disallows newlines
+						),
+						direction: AxisDirection.up,
+						hideOnEmpty: true,
+						hideOnLoading: true,
+						// To allow to select a suggestion, type some more,
+						// then select another suggestion, without
+						// unfocusing the text field.
+						keepSuggestionsOnSuggestionSelected: true,
+						animationDuration: const Duration(milliseconds: 300),
+						debounceDuration: const Duration(milliseconds: 50),
+						itemBuilder: (context, suggestion) {
+							return ListTile(title: Text(suggestion));
+						},
+						suggestionsCallback: _generateSuggestions,
+						onSuggestionSelected: _handleSuggestionSelected,
+					)),
+					FloatingActionButton(
+						onPressed: () {
+							_submitComposer();
+						},
+						tooltip: 'Send',
+						child: Icon(Icons.send, size: 18),
+						mini: true,
+						elevation: 0,
+					),
+				])),
+			));
+		}
+
 		return Scaffold(
 			appBar: AppBar(
 				title: InkResponse(
@@ -346,87 +437,9 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 				],
 			),
 			body: NetworkIndicator(network: network, child: Column(children: [
-				if (isChannel && !buffer.joined && !buffer.joining) MaterialBanner(
-					content: Text('You have left this channel.'),
-					actions: [
-						if (isOnline) TextButton(
-							child: Text('JOIN'),
-							onPressed: () {
-								_join(client, buffer);
-							},
-						),
-					],
-				),
-				Expanded(child: ListView.builder(
-					reverse: true,
-					controller: _scrollController,
-					itemCount: messages.length,
-					itemBuilder: (context, index) {
-						var msgIndex = messages.length - index - 1;
-						var msg = messages[msgIndex];
-						var prevMsg = msgIndex > 0 ? messages[msgIndex - 1] : null;
-						var nextMsg = msgIndex + 1 < messages.length ? messages[msgIndex + 1] : null;
-
-						VoidCallback? onSwipe;
-						if (isChannel) {
-							onSwipe = () => _handleMessageSwipe(msg);
-						}
-
-						return _MessageItem(
-							key: ValueKey(msg.id),
-							msg: msg,
-							prevMsg: prevMsg,
-							nextMsg: nextMsg,
-							unreadMarkerTime: widget.unreadMarkerTime,
-							onSwipe: onSwipe,
-						);
-					},
-				)),
-				if (canSendMessage) Material(elevation: 15, child: Container(
-					padding: EdgeInsets.all(10),
-					child: Form(key: _composerFormKey, child: Row(children: [
-						Expanded(child: TypeAheadFormField<String>(
-							textFieldConfiguration: TextFieldConfiguration(
-								decoration: InputDecoration(
-									hintText: 'Write a message...',
-									border: InputBorder.none,
-								),
-								onSubmitted: (value) {
-									_submitComposer();
-								},
-								focusNode: _composerFocusNode,
-								controller: _composerController,
-								textInputAction: TextInputAction.send,
-								minLines: 1,
-								maxLines: 5,
-								keyboardType: TextInputType.text, // disallows newlines
-							),
-							direction: AxisDirection.up,
-							hideOnEmpty: true,
-							hideOnLoading: true,
-							// To allow to select a suggestion, type some more,
-							// then select another suggestion, without
-							// unfocusing the text field.
-							keepSuggestionsOnSuggestionSelected: true,
-							animationDuration: const Duration(milliseconds: 300),
-							debounceDuration: const Duration(milliseconds: 50),
-							itemBuilder: (context, suggestion) {
-								return ListTile(title: Text(suggestion));
-							},
-							suggestionsCallback: _generateSuggestions,
-							onSuggestionSelected: _handleSuggestionSelected,
-						)),
-						FloatingActionButton(
-							onPressed: () {
-								_submitComposer();
-							},
-							tooltip: 'Send',
-							child: Icon(Icons.send, size: 18),
-							mini: true,
-							elevation: 0,
-						),
-					])),
-				)),
+				if (joinBanner != null) joinBanner,
+				Expanded(child: msgList),
+				if (composer != null) composer,
 			])),
 		);
 	}
