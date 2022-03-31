@@ -788,6 +788,22 @@ class Client {
 			return false;
 		});
 	}
+
+	Future<void> setNickname(String nick) {
+		var msg = IrcMessage('NICK', [nick]);
+		var cm = isupport.caseMapping;
+		var oldNick = nick;
+		return _roundtripMessage(msg, (msg) {
+			return msg.cmd == 'NICK' && cm(msg.source.name) == cm(oldNick);
+		});
+	}
+
+	Future<void> setRealname(String realname) {
+		var msg = IrcMessage('SETNAME', [realname]);
+		return _roundtripMessage(msg, (msg) {
+			return msg.cmd == 'SETNAME' && isMyNick(msg.source.name);
+		});
+	}
 }
 
 class ClientMessage extends IrcMessage {
