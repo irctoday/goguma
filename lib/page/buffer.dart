@@ -595,7 +595,7 @@ class _MessageItem extends StatelessWidget {
 
 			// Add a fully transparent text span with the time, so that the real
 			// time text doesn't collide with the message text.
-			content.add(TextSpan(text: time, style: timeStyle.apply(color: Color(0))));
+			content.add(TextSpan(text: time, style: timeStyle.apply(color: Color(0x00000000))));
 
 			inner = Stack(children: [
 				inner,
