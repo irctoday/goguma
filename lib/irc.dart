@@ -384,7 +384,7 @@ class IrcIsupportRegistry {
 	int? _monitor;
 	String? _botMode;
 	bool _whox = false;
-	int? _topicLen;
+	int? _topicLen, _nickLen, _realnameLen;
 	List<String>? _chanModes;
 	IrcIsupportElist? _elist;
 
@@ -397,6 +397,8 @@ class IrcIsupportRegistry {
 	String? get botMode => _botMode;
 	bool get whox => _whox;
 	int? get topicLen => _topicLen;
+	int? get nickLen => _nickLen;
+	int? get realnameLen => _realnameLen;
 	List<String> get chanModes => UnmodifiableListView(_chanModes ?? ['beI', 'k', 'l', 'imnst']);
 	IrcIsupportElist? get elist => _elist;
 
@@ -428,6 +430,12 @@ class IrcIsupportRegistry {
 					break;
 				case 'NETWORK':
 					_network = null;
+					break;
+				case 'NAMELEN':
+					_realnameLen = null;
+					break;
+				case 'NICKLEN':
+					_nickLen = null;
 					break;
 				case 'PREFIX':
 					_memberships.clear();
@@ -477,6 +485,18 @@ class IrcIsupportRegistry {
 			case 'MONITOR':
 				_monitor = int.parse(v ?? '0');
 				break;
+			case 'NAMELEN':
+				if (v == null) {
+					throw Exception('Malformed ISUPPORT NAMELEN: no value');
+				}
+				_realnameLen = int.parse(v);
+				break;
+			case 'NICKLEN':
+				if (v == null) {
+					throw Exception('Malformed ISUPPORT NICKLEN: no value');
+				}
+				_nickLen = int.parse(v);
+				break;
 			case 'NETWORK':
 				_network = v;
 				break;
@@ -521,6 +541,8 @@ class IrcIsupportRegistry {
 		_botMode = null;
 		_whox = false;
 		_topicLen = null;
+		_nickLen = null;
+		_realnameLen = null;
 		_elist = null;
 	}
 }
