@@ -175,6 +175,7 @@ class NotificationController {
 				when: dateTime?.millisecondsSinceEpoch,
 				styleInformation: styleInformation,
 				tag: tag,
+				enableLights: true,
 			),
 		), payload: tag);
 	}
