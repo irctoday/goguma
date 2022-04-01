@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../client_controller.dart';
+import '../irc.dart';
 import '../models.dart';
 
 class EditProfileDialog extends StatefulWidget {
@@ -32,8 +33,13 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 
 		var client = context.read<ClientProvider>().get(widget.network);
 
+		var realname = client.realname;
+		if (isStubRealname(realname, client.nick)) {
+			realname = '';
+		}
+
 		_nicknameController = TextEditingController(text: client.nick);
-		_realnameController = TextEditingController(text: client.realname);
+		_realnameController = TextEditingController(text: realname);
 
 		_canEditRealname = client.caps.enabled.contains('setname');
 		_nicknameLen = client.isupport.nickLen;
@@ -50,10 +56,18 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 	void _submit() {
 		Navigator.pop(context);
 
+		var client = context.read<ClientProvider>().get(widget.network);
+
 		var nickname = _nicknameController.text;
 		var realname = _realnameController.text;
+		if (realname == '') {
+			if (nickname != client.nick) {
+				realname = nickname;
+			} else {
+				realname = client.realname;
+			}
+		}
 
-		var client = context.read<ClientProvider>().get(widget.network);
 		if (nickname != client.nick) {
 			client.setNickname(nickname).ignore();
 		}
