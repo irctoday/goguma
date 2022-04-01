@@ -21,6 +21,7 @@ class EditProfileDialog extends StatefulWidget {
 }
 
 class _EditProfileDialogState extends State<EditProfileDialog> {
+	final GlobalKey<FormState> _formKey = GlobalKey();
 	late final TextEditingController _nicknameController;
 	late final TextEditingController _realnameController;
 	late final bool _canEditRealname;
@@ -54,6 +55,10 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 	}
 
 	void _submit() {
+		if (!_formKey.currentState!.validate()) {
+			return;
+		}
+
 		Navigator.pop(context);
 
 		var client = context.read<ClientProvider>().get(widget.network);
@@ -80,19 +85,25 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 	Widget build(BuildContext context) {
 		return AlertDialog(
 			title: Text('Edit profile'),
-			content: Column(mainAxisSize: MainAxisSize.min, children: [
+			content: Form(key: _formKey, child: Column(mainAxisSize: MainAxisSize.min, children: [
 				TextFormField(
 					controller: _nicknameController,
 					decoration: InputDecoration(labelText: 'Nickname'),
 					autofocus: true,
 					maxLength: _nicknameLen,
+					validator: (value) {
+						if (value == null || value == '') {
+							return 'A nickname is required';
+						}
+						return null;
+					},
 				),
 				if (_canEditRealname) TextFormField(
 					controller: _realnameController,
-					decoration: InputDecoration(labelText: 'Display name'),
+					decoration: InputDecoration(labelText: 'Display name (optional)'),
 					maxLength: _realnameLen,
 				),
-			]),
+			])),
 			actions: [
 				TextButton(
 					child: Text('Cancel'),
