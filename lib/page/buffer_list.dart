@@ -268,7 +268,7 @@ class _BufferItem extends AnimatedWidget {
 
 		return ListTile(
 			leading: CircleAvatar(child: Text(_initials(buffer.name))),
-			trailing: Wrap(
+			trailing: trailing.isEmpty ? null : Wrap(
 				spacing: 5,
 				children: trailing,
 			),
