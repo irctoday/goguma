@@ -5,6 +5,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
 import 'android_le.dart';
@@ -31,6 +32,8 @@ void main() async {
 	}
 
 	var notifController = NotificationController();
+
+	var sharedPreferences = await SharedPreferences.getInstance();
 
 	var db = await DB.open();
 
@@ -101,6 +104,7 @@ void main() async {
 			Provider<DB>.value(value: db),
 			Provider<ClientProvider>.value(value: clientProvider),
 			Provider<NotificationController>.value(value: notifController),
+			Provider<SharedPreferences>.value(value: sharedPreferences),
 			ChangeNotifierProvider<NetworkListModel>.value(value: networkList),
 			ChangeNotifierProvider<BufferListModel>.value(value: bufferList),
 			ChangeNotifierProvider<BouncerNetworkListModel>.value(value: bouncerNetworkList),

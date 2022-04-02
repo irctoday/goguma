@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'connect.dart';
@@ -19,6 +20,14 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+	late bool _compact;
+
+	@override
+	void initState() {
+		super.initState();
+		_compact = context.read<SharedPreferences>().getBool('buffer_compact') ?? false;
+	}
+
 	void _logout() {
 		var db = context.read<DB>();
 		var networkList = context.read<NetworkListModel>();
@@ -86,6 +95,20 @@ class _SettingsPageState extends State<SettingsPage> {
 					),
 				),
 				Column(children: networks),
+				Divider(),
+				ListTile(
+					title: Text('Compact message list'),
+					leading: Icon(Icons.reorder),
+					trailing: Switch(
+						value: _compact,
+						onChanged: (bool c) {
+							setState(() {
+								_compact = c;
+								context.read<SharedPreferences>().setBool('buffer_compact', c);
+							});
+						},
+					),
+				),
 				Divider(),
 				ListTile(
 					title: Text('About'),

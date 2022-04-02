@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../client.dart';
 import '../client_controller.dart';
@@ -306,6 +307,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 			canSendMessage = canSendMessage && buffer.online != false;
 		}
 		var messages = buffer.messages;
+		var compact = context.read<SharedPreferences>().getBool('buffer_compact') ?? false;
 
 		Widget? joinBanner;
 		if (isChannel && !buffer.joined && !buffer.joining) {
@@ -330,6 +332,11 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 				var msgIndex = messages.length - index - 1;
 				var msg = messages[msgIndex];
 				var prevMsg = msgIndex > 0 ? messages[msgIndex - 1] : null;
+
+				if (compact) {
+					return _CompactMessageItem(msg: msg, prevMsg: prevMsg, last: msgIndex == messages.length - 1);
+				}
+
 				var nextMsg = msgIndex + 1 < messages.length ? messages[msgIndex + 1] : null;
 
 				VoidCallback? onSwipe;
@@ -485,6 +492,103 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 				])),
 				if (composer != null) composer,
 			])),
+		);
+	}
+}
+
+class _CompactMessageItem extends StatelessWidget {
+	final MessageModel msg;
+	final MessageModel? prevMsg;
+	final bool last;
+
+	const _CompactMessageItem({
+		Key? key,
+		required this.msg,
+		this.prevMsg,
+		this.last = false,
+	}) : super(key: key);
+
+	@override
+	Widget build(BuildContext context) {
+		var ircMsg = msg.msg;
+		var entry = msg.entry;
+		var sender = ircMsg.source!.name;
+		var localDateTime = entry.dateTime.toLocal();
+		var ctcp = CtcpMessage.parse(ircMsg);
+		assert(ircMsg.cmd == 'PRIVMSG' || ircMsg.cmd == 'NOTICE');
+
+		var prevIrcMsg = prevMsg?.msg;
+		var prevMsgSameSender = prevIrcMsg != null && ircMsg.source!.name == prevIrcMsg.source!.name;
+
+		var textStyle = DefaultTextStyle.of(context).style.apply(color: Theme.of(context).textTheme.bodyText1!.color);
+		var linkStyle = textStyle.apply(decoration: TextDecoration.underline);
+		TextSpan textSpan;
+
+		if (ctcp != null && ctcp.cmd == 'ACTION') {
+			textStyle = textStyle.apply(fontStyle: FontStyle.italic);
+
+			String actionText;
+			if (ctcp.cmd == 'ACTION') {
+				actionText = stripAnsiFormatting(ctcp.param ?? '');
+			} else {
+				actionText = 'has sent a CTCP "${ctcp.cmd}" command';
+			}
+
+			textSpan = linkify(actionText, textStyle: textStyle, linkStyle: linkStyle);
+		} else {
+			var body = stripAnsiFormatting(ircMsg.params[1]);
+			textSpan = linkify(body, textStyle: textStyle, linkStyle: linkStyle);
+		}
+
+		List<Widget> stack = [];
+		List<TextSpan> content = [];
+
+		if (!prevMsgSameSender) {
+			var colorSwatch = Colors.primaries[sender.hashCode % Colors.primaries.length];
+			var colorScheme = ColorScheme.fromSwatch(primarySwatch: colorSwatch);
+			var senderStyle = TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold);
+			stack.add(Positioned(
+				top: 0,
+				left: 0,
+				child: Text(sender, style: senderStyle),
+			));
+			content.add(TextSpan(
+				text: sender,
+				style: senderStyle.apply(color: Color(0x00000000)),
+			));
+		}
+
+		content.add(textSpan);
+
+		var prevEntry = prevMsg?.entry;
+		if (!prevMsgSameSender || prevEntry == null || entry.dateTime.difference(prevEntry.dateTime) > Duration(minutes: 2)) {
+			var hh = localDateTime.hour.toString().padLeft(2, '0');
+			var mm = localDateTime.minute.toString().padLeft(2, '0');
+			var timeText = '\u00A0[$hh:$mm]';
+			var timeStyle = TextStyle(color: Theme.of(context).textTheme.caption!.color);
+			stack.add(Positioned(
+				bottom: 0,
+				right: 0,
+				child: Text(timeText, style: timeStyle),
+			));
+			content.add(TextSpan(
+				text: timeText,
+				style: timeStyle.apply(color: Color(0x00000000)),
+			));
+		}
+
+		stack.add(Container(
+			margin: EdgeInsets.only(left: 4),
+			child: RichText(
+				text: TextSpan(
+					children: content,
+				),
+			),
+		));
+
+		return Container(
+			margin: EdgeInsets.only(top: prevMsgSameSender ? 0 : 2.5, bottom: last ? 10 : 0, left: 4, right: 5),
+			child: Stack(children: stack),
 		);
 	}
 }
