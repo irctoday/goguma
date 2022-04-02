@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../client_controller.dart';
+import '../database.dart';
 import '../irc.dart';
 import '../models.dart';
 
@@ -54,7 +55,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 		super.dispose();
 	}
 
-	void _submit() {
+	void _submit() async {
 		if (!_formKey.currentState!.validate()) {
 			return;
 		}
@@ -66,18 +67,21 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 		var nickname = _nicknameController.text;
 		var realname = _realnameController.text;
 		if (realname == '') {
-			if (nickname != client.nick) {
-				realname = nickname;
-			} else {
-				realname = client.realname;
-			}
+			realname = nickname;
 		}
 
 		if (nickname != client.nick) {
-			client.setNickname(nickname).ignore();
+			// Make sure the server accepts the new nickname before saving it
+			// in our DB to avoid saving a bogus nickname.
+			await client.setNickname(nickname);
+
+			var db = context.read<DB>();
+			widget.network.serverEntry.nick = nickname;
+			await db.storeServer(widget.network.serverEntry);
 		}
 		if (realname != client.realname) {
-			client.setRealname(realname).ignore();
+			await client.setRealname(realname);
+			// TODO: save it in the DB
 		}
 	}
 
