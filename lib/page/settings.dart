@@ -5,9 +5,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'connect.dart';
 import '../client_controller.dart';
 import '../database.dart';
+import '../dialog/edit_profile.dart';
 import '../irc.dart';
 import '../models.dart';
-import '../widget/edit_profile_dialog.dart';
 
 class SettingsPage extends StatefulWidget {
 	static const routeName = '/settings';

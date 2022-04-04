@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../client.dart';
+import '../dialog/edit_topic.dart';
 import '../irc.dart';
 import '../linkify.dart';
 import '../models.dart';
-import '../widget/edit_topic_dialog.dart';
 import 'buffer.dart';
 
 class BufferDetailsPage extends StatefulWidget {
