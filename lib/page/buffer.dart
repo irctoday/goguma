@@ -560,24 +560,24 @@ class _CompactMessageItem extends StatelessWidget {
 		var prevMsgSameSender = prevIrcMsg != null && ircMsg.source!.name == prevIrcMsg.source!.name;
 
 		var textStyle = TextStyle(color: Theme.of(context).textTheme.bodyText1!.color);
-		var linkStyle = textStyle.apply(decoration: TextDecoration.underline);
-		TextSpan textSpan;
 
+		List<TextSpan> textSpans;
 		if (ctcp != null && ctcp.cmd == 'ACTION') {
 			textStyle = textStyle.apply(fontStyle: FontStyle.italic);
 
-			String actionText;
 			if (ctcp.cmd == 'ACTION') {
-				actionText = stripAnsiFormatting(ctcp.param ?? '');
+				textSpans = applyAnsiFormatting(ctcp.param ?? '', textStyle);
 			} else {
-				actionText = 'has sent a CTCP "${ctcp.cmd}" command';
+				textSpans = [TextSpan(text: 'has sent a CTCP "${ctcp.cmd}" command', style: textStyle)];
 			}
-
-			textSpan = linkify(actionText, textStyle: textStyle, linkStyle: linkStyle);
 		} else {
-			var body = stripAnsiFormatting(ircMsg.params[1]);
-			textSpan = linkify(body, textStyle: textStyle, linkStyle: linkStyle);
+			textSpans = applyAnsiFormatting(ircMsg.params[1], textStyle);
 		}
+
+		textSpans = textSpans.map((span) {
+			var linkStyle = span.style!.apply(decoration: TextDecoration.underline);
+			return linkify(span.text!, textStyle: span.style!, linkStyle: linkStyle);
+		}).toList();
 
 		List<Widget> stack = [];
 		List<TextSpan> content = [];
@@ -597,7 +597,7 @@ class _CompactMessageItem extends StatelessWidget {
 			));
 		}
 
-		content.add(textSpan);
+		content.addAll(textSpans);
 
 		var prevEntry = prevMsg?.entry;
 		if (!prevMsgSameSender || prevEntry == null || entry.dateTime.difference(prevEntry.dateTime) > Duration(minutes: 2)) {
