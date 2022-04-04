@@ -269,7 +269,12 @@ class _BufferItem extends AnimatedWidget {
 			));
 		}
 
-		return ListTile(
+		// extracted from the ListTile source
+		var theme = Theme.of(context);
+		var dense = theme.listTileTheme.dense ?? false;
+		var height = (dense ? 64.0 : 72.0) + theme.visualDensity.baseSizeAdjustment.dy;
+
+		return Container(alignment: Alignment.center, height: height, child: ListTile(
 			leading: CircleAvatar(child: Text(_initials(buffer.name))),
 			trailing: trailing.isEmpty ? null : Wrap(
 				spacing: 5,
@@ -284,6 +289,6 @@ class _BufferItem extends AnimatedWidget {
 			onTap: () {
 				Navigator.pushNamed(context, BufferPage.routeName, arguments: buffer);
 			},
-		);
+		));
 	}
 }
