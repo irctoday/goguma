@@ -39,7 +39,7 @@ class _SettingsPageState extends State<SettingsPage> {
 		networkList.clear();
 		context.read<ClientProvider>().disconnectAll();
 
-		Navigator.pushReplacementNamed(context, ConnectPage.routeName);
+		Navigator.pushNamedAndRemoveUntil(context, ConnectPage.routeName, (Route<dynamic> route) => false);
 	}
 
 	@override
