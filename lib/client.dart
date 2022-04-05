@@ -498,8 +498,9 @@ class Client {
 		if (_serverSource != null && cm(name) == cm(_serverSource!.name)) {
 			return false;
 		}
-		// Dots usually indicate server names
-		return !name.contains('.') && !isChannel(name) && name != '*';
+		// A dollar is used for server-wide broadcasts. Dots usually indicate
+		// server names.
+		return !name.startsWith('\$') && !name.contains('.') && !isChannel(name) && name != '*';
 	}
 
 	void _authenticate() {
