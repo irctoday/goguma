@@ -45,7 +45,6 @@ class _SettingsPageState extends State<SettingsPage> {
 	@override
 	Widget build(BuildContext context) {
 		var networkList = context.watch<NetworkListModel>();
-		var clientProvider = context.read<ClientProvider>();
 
 		NetworkModel? mainNetwork;
 		for (var network in networkList.networks) {
