@@ -620,14 +620,17 @@ class _MessageItem extends StatelessWidget {
 		assert(ircMsg.cmd == 'PRIVMSG' || ircMsg.cmd == 'NOTICE');
 
 		var prevIrcMsg = prevMsg?.msg;
+		var prevCtcp = prevIrcMsg != null ? CtcpMessage.parse(prevIrcMsg) : null;
 		var prevEntry = prevMsg?.entry;
 		var prevMsgSameSender = prevIrcMsg != null && ircMsg.source!.name == prevIrcMsg.source!.name;
+		var prevMsgIsAction = prevCtcp != null && prevCtcp.cmd == 'ACTION';
 
 		var nextMsgSameSender = nextMsg != null && ircMsg.source!.name == nextMsg!.msg.source!.name;
 
+		var isAction = ctcp != null && ctcp.cmd == 'ACTION';
 		var showUnreadMarker = prevEntry != null && unreadMarkerTime != null && unreadMarkerTime!.compareTo(entry.time) < 0 && unreadMarkerTime!.compareTo(prevEntry.time) >= 0;
 		var showDateMarker = prevEntry == null || !_isSameDate(localDateTime, prevEntry.dateTime.toLocal());
-		var showSender = showUnreadMarker || !prevMsgSameSender;
+		var isFirstInGroup = showUnreadMarker || !prevMsgSameSender || (prevMsgIsAction != isAction);
 		var showTime = !nextMsgSameSender || nextMsg!.entry.dateTime.difference(entry.dateTime) > Duration(minutes: 2);
 
 		var unreadMarkerColor = Theme.of(context).accentColor;
@@ -639,11 +642,21 @@ class _MessageItem extends StatelessWidget {
 		//var boxColor = Theme.of(context).accentColor;
 		var boxColor = colorScheme.primary;
 		var boxAlignment = Alignment.centerLeft;
-		var textStyle = DefaultTextStyle.of(context).style.apply(color: colorScheme.onPrimary);
+		var textStyle = DefaultTextStyle.of(context).style;
+		if (!isAction) {
+			textStyle = textStyle.apply(color: colorScheme.onPrimary);
+		}
+
 		if (client.isMyNick(sender)) {
+			// Actions are displayed as if they were told by an external
+			// narrator. To preserve this effect, always show actions on the
+			// left side.
 			boxColor = Colors.grey[200]!;
-			boxAlignment = Alignment.centerRight;
-			textStyle = DefaultTextStyle.of(context).style.apply(color: boxColor.computeLuminance() > 0.5 ? Colors.black : Colors.white);
+			if (!isAction) {
+				boxAlignment = Alignment.centerRight;
+				textStyle = DefaultTextStyle.of(context).style
+					.apply(color: boxColor.computeLuminance() > 0.5 ? Colors.black : Colors.white);
+			}
 		}
 
 		const margin = 16.0;
@@ -652,7 +665,7 @@ class _MessageItem extends StatelessWidget {
 			marginBottom = 0.0;
 		}
 		var marginTop = margin;
-		if (!showSender) {
+		if (!isFirstInGroup) {
 			marginTop = margin / 4;
 		}
 
@@ -664,17 +677,22 @@ class _MessageItem extends StatelessWidget {
 		var linkStyle = textStyle.apply(decoration: TextDecoration.underline);
 
 		List<InlineSpan> content;
-		if (ctcp != null && ctcp.cmd == 'ACTION') {
-			textStyle = textStyle.apply(fontStyle: FontStyle.italic);
-
-			String actionText;
-			if (ctcp.cmd == 'ACTION') {
-				actionText = stripAnsiFormatting(ctcp.param ?? '');
-			} else {
-				actionText = 'has sent a CTCP "${ctcp.cmd}" command';
-			}
+		if (isAction) {
+			// isAction can only ever be true if we have a ctcp
+			var actionText = stripAnsiFormatting(ctcp!.param ?? '');
 
 			content = [
+				WidgetSpan(
+					child: Container(
+						width: 8.0,
+						height: 8.0,
+						margin: EdgeInsets.all(3.0),
+						decoration: BoxDecoration(
+							shape: BoxShape.circle,
+							color: boxColor,
+						),
+					),
+				),
 				senderTextSpan,
 				TextSpan(text: ' '),
 				linkify(actionText, textStyle: textStyle, linkStyle: linkStyle),
@@ -682,8 +700,8 @@ class _MessageItem extends StatelessWidget {
 		} else {
 			var body = stripAnsiFormatting(ircMsg.params[1]);
 			content = [
-				if (showSender) senderTextSpan,
-				if (showSender) TextSpan(text: '\n'),
+				if (isFirstInGroup) senderTextSpan,
+				if (isFirstInGroup) TextSpan(text: '\n'),
 				linkify(body, textStyle: textStyle, linkStyle: linkStyle),
 			];
 		}
@@ -716,20 +734,31 @@ class _MessageItem extends StatelessWidget {
 			]);
 		}
 
-		Widget bubble = Align(
-			alignment: boxAlignment,
-			child: Container(
-				decoration: BoxDecoration(
-					borderRadius: BorderRadius.circular(10),
-					color: boxColor,
+		Widget decoratedMessage;
+		if (isAction) {
+			decoratedMessage = Align(
+				alignment: boxAlignment,
+				child: Container(
+					child: inner,
 				),
-				padding: EdgeInsets.all(10),
-				child: inner,
-			),
-		);
+			);
+		} else {
+			decoratedMessage = Align(
+				alignment: boxAlignment,
+				child: Container(
+					decoration: BoxDecoration(
+						borderRadius: BorderRadius.circular(10),
+						color: boxColor,
+					),
+					padding: EdgeInsets.all(10),
+					child: inner,
+				),
+			);
+		}
+
 		if (!client.isMyNick(sender)) {
-			bubble = SwipeAction(
-				child: bubble,
+			decoratedMessage = SwipeAction(
+				child: decoratedMessage,
 				background: Align(
 					alignment: Alignment.centerLeft,
 					child: Opacity(
@@ -758,7 +787,7 @@ class _MessageItem extends StatelessWidget {
 			),
 			Container(
 				margin: EdgeInsets.only(left: margin, right: margin, top: marginTop, bottom: marginBottom),
-				child: bubble,
+				child: decoratedMessage,
 			),
 		]);
 	}
