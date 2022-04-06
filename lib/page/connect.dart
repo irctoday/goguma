@@ -11,6 +11,8 @@ import 'buffer_list.dart';
 class ConnectPage extends StatefulWidget {
 	static const routeName = '/connect';
 
+	const ConnectPage({ Key? key }) : super(key: key);
+
 	@override
 	ConnectPageState createState() => ConnectPageState();
 }

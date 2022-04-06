@@ -12,6 +12,8 @@ import 'buffer.dart';
 class BufferListPage extends StatefulWidget {
 	static const routeName = '/';
 
+	const BufferListPage({ Key? key }) : super(key: key);
+
 	@override
 	BufferListPageState createState() => BufferListPageState();
 }

@@ -11,6 +11,8 @@ import 'buffer.dart';
 class BufferDetailsPage extends StatefulWidget {
 	static const routeName = '/buffer/details';
 
+	const BufferDetailsPage({ Key? key }) : super(key: key);
+
 	@override
 	BufferDetailsPageState createState() => BufferDetailsPageState();
 }
