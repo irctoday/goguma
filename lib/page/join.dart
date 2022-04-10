@@ -220,7 +220,7 @@ class _JoinItem extends StatelessWidget {
 				leading: Icon(Icons.tag),
 				title: title,
 				subtitle: action.listReply.topic == '' ? null : Text(
-					action.listReply.topic,
+					stripAnsiFormatting(action.listReply.topic),
 					overflow: TextOverflow.fade,
 					softWrap: false,
 				),

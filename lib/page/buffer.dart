@@ -435,7 +435,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 						children: [
 							Text(buffer.name, overflow: TextOverflow.fade),
 							if (subtitle != null) Text(
-								subtitle,
+								stripAnsiFormatting(subtitle),
 								style: TextStyle(fontSize: 12.0),
 								overflow: TextOverflow.fade,
 							),

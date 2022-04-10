@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../client_controller.dart';
 import '../database.dart';
+import '../irc.dart';
 import '../models.dart';
 import '../page/join.dart';
 import '../page/settings.dart';
@@ -275,7 +276,8 @@ class _BufferItem extends AnimatedWidget {
 				children: trailing,
 			),
 			title: title,
-			subtitle: subtitle == null ? null : Text(subtitle,
+			subtitle: subtitle == null ? null : Text(
+				stripAnsiFormatting(subtitle),
 				overflow: TextOverflow.fade,
 				softWrap: false,
 			),
