@@ -140,7 +140,7 @@ class DB {
 	static Future<DB> open() async {
 		WidgetsFlutterBinding.ensureInitialized();
 
-		if (Platform.isLinux) {
+		if (Platform.isWindows || Platform.isLinux) {
 			sqfliteFfiInit();
 			databaseFactory = databaseFactoryFfi;
 		}
@@ -234,6 +234,9 @@ class DB {
 	}
 
 	static Future<String> _getBasePath() {
+		if (Platform.isWindows) {
+			return Future.value(join(Platform.environment['APPDATA']!, 'goguma'));
+		}
 		if (!Platform.isLinux) {
 			return getDatabasesPath();
 		}
