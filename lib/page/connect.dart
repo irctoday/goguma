@@ -18,26 +18,6 @@ class ConnectPage extends StatefulWidget {
 	ConnectPageState createState() => ConnectPageState();
 }
 
-Uri _parseServerUri(String rawUri) {
-	if (!rawUri.contains('://')) {
-		rawUri = 'ircs://' + rawUri;
-	}
-
-	var uri = Uri.parse(rawUri);
-	if (uri.host == '') {
-		throw FormatException('Host is required in URI');
-	}
-	switch (uri.scheme) {
-	case 'ircs':
-	case 'irc+insecure':
-		break; // supported
-	default:
-		throw FormatException('Unsupported URI scheme: ' + uri.scheme);
-	}
-
-	return uri;
-}
-
 class ConnectPageState extends State<ConnectPage> {
 	bool _loading = false;
 	Exception? _error;
@@ -53,7 +33,7 @@ class ConnectPageState extends State<ConnectPage> {
 			return;
 		}
 
-		Uri uri = _parseServerUri(serverController.text);
+		Uri uri = parseServerUri(serverController.text);
 		var serverEntry = ServerEntry(
 			host: uri.host,
 			port: uri.hasPort ? uri.port : null,
@@ -175,7 +155,7 @@ class ConnectPageState extends State<ConnectPage> {
 								return 'Required';
 							}
 							try {
-								_parseServerUri(value);
+								parseServerUri(value);
 							} on FormatException catch(e) {
 								return e.message;
 							}

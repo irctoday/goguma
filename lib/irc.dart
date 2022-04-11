@@ -262,6 +262,26 @@ String _unescapeChar(String ch) {
 	}
 }
 
+Uri parseServerUri(String rawUri) {
+	if (!rawUri.contains('://')) {
+		rawUri = 'ircs://' + rawUri;
+	}
+
+	var uri = Uri.parse(rawUri);
+	if (uri.host == '') {
+		throw FormatException('Host is required in URI');
+	}
+	switch (uri.scheme) {
+		case 'ircs':
+		case 'irc+insecure':
+			break; // supported
+		default:
+			throw FormatException('Unsupported URI scheme: ' + uri.scheme);
+	}
+
+	return uri;
+}
+
 class IrcSource {
 	final String name;
 	final String? user;
