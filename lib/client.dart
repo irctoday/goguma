@@ -19,7 +19,7 @@ class ConnectParams {
 	final int port;
 	final bool tls;
 	final String nick;
-	final String? realname;
+	final String realname;
 	final String? pass;
 	final SaslPlainCredentials? saslPlain;
 	final String? bouncerNetId;
@@ -29,21 +29,26 @@ class ConnectParams {
 		this.port = 6697,
 		this.tls = true,
 		required this.nick,
-		this.realname,
+		String? realname,
 		this.pass,
 		this.saslPlain,
 		this.bouncerNetId,
-	});
+	}) : this.realname = realname ?? nick;
 
-	ConnectParams replaceBouncerNetId(String? bouncerNetId) {
+	ConnectParams apply({
+		String? bouncerNetId,
+		String? nick,
+		String? realname,
+	}) {
 		return ConnectParams(
 			host: host,
 			port: port,
 			tls: tls,
-			nick: nick,
+			nick: nick ?? this.nick,
+			realname: realname ?? this.realname,
 			pass: pass,
 			saslPlain: saslPlain,
-			bouncerNetId: bouncerNetId,
+			bouncerNetId: bouncerNetId ?? this.bouncerNetId,
 		);
 	}
 }
@@ -74,11 +79,11 @@ var _nextClientId = 0;
 var _nextPingSerial = 0;
 
 class Client {
-	final ConnectParams params;
 	final IrcCapRegistry caps = IrcCapRegistry();
 	final IrcIsupportRegistry isupport = IrcIsupportRegistry();
 
 	final int _id;
+	ConnectParams _params;
 	Socket? _socket;
 	String _nick;
 	String _realname;
@@ -95,6 +100,7 @@ class Client {
 	Future<void> _lastListFuture = Future.value(null);
 	final IrcNameMap<void> _monitored = IrcNameMap(defaultCaseMapping);
 
+	ConnectParams get params => _params;
 	String get nick => _nick;
 	String get realname => _realname;
 	IrcSource? get serverSource => _serverSource;
@@ -103,10 +109,11 @@ class Client {
 	Stream<ClientState> get states => _statesController.stream;
 	bool get autoReconnect => _autoReconnect;
 
-	Client(this.params, { bool autoReconnect = true }) :
+	Client(ConnectParams params, { bool autoReconnect = true }) :
 		_id = _nextClientId++,
+		_params = params,
 		_nick = params.nick,
-		_realname = params.nick,
+		_realname = params.realname,
 		_autoReconnect = autoReconnect;
 
 	Future<void> connect() async {
@@ -119,21 +126,21 @@ class Client {
 
 		await _socket?.close();
 
-		_log('Connecting to ${params.host}...');
+		_log('Connecting to ${_params.host}...');
 
 		final connectTimeout = Duration(seconds: 15);
 		Future<Socket> socketFuture;
-		if (params.tls) {
+		if (_params.tls) {
 			socketFuture = SecureSocket.connect(
-				params.host,
-				params.port,
+				_params.host,
+				_params.port,
 				supportedProtocols: ['irc'],
 				timeout: connectTimeout,
 			);
 		} else {
 			socketFuture = Socket.connect(
-				params.host,
-				params.port,
+				_params.host,
+				_params.port,
 				timeout: connectTimeout,
 			);
 		}
@@ -307,11 +314,11 @@ class Client {
 	}
 
 	Future<void> _register() {
-		_nick = params.nick;
-		_realname = params.nick;
+		_nick = _params.nick;
+		_realname = _params.nick;
 
 		var caps = [..._permanentCaps];
-		if (params.bouncerNetId == null) {
+		if (_params.bouncerNetId == null) {
 			caps.add('soju.im/bouncer-networks-notify');
 		}
 
@@ -322,17 +329,17 @@ class Client {
 		// caps we support to avoid waiting for the CAP LS reply.
 
 		send(IrcMessage('CAP', ['LS', '302']));
-		if (params.pass != null) {
-			send(IrcMessage('PASS', [params.pass!]));
+		if (_params.pass != null) {
+			send(IrcMessage('PASS', [_params.pass!]));
 		}
-		send(IrcMessage('NICK', [params.nick]));
-		send(IrcMessage('USER', [params.nick, '0', '*', params.realname ?? params.nick]));
+		send(IrcMessage('NICK', [_params.nick]));
+		send(IrcMessage('USER', [_params.nick, '0', '*', _params.realname]));
 		for (var cap in caps) {
 			send(IrcMessage('CAP', ['REQ', cap]));
 		}
 		_authenticate();
-		if (params.bouncerNetId != null) {
-			send(IrcMessage('BOUNCER', ['BIND', params.bouncerNetId!]));
+		if (_params.bouncerNetId != null) {
+			send(IrcMessage('BOUNCER', ['BIND', _params.bouncerNetId!]));
 		}
 		send(IrcMessage('CAP', ['END']));
 
@@ -340,7 +347,7 @@ class Client {
 		return _waitMessage((msg) {
 			switch (msg.cmd) {
 			case RPL_WELCOME:
-				if (params.saslPlain != null && !saslSuccess) {
+				if (_params.saslPlain != null && !saslSuccess) {
 					_socket?.close();
 					throw Exception('Server doesn\'t support SASL authentication');
 				}
@@ -522,14 +529,14 @@ class Client {
 	}
 
 	void _authenticate() {
-		if (params.saslPlain == null) {
+		var creds = _params.saslPlain;
+		if (creds == null) {
 			return;
 		}
 
 		_log('Starting SASL PLAIN authentication');
 		send(IrcMessage('AUTHENTICATE', ['PLAIN']));
 
-		var creds = params.saslPlain!;
 		var payload = [0, ...utf8.encode(creds.username), 0, ...utf8.encode(creds.password)];
 		send(IrcMessage('AUTHENTICATE', [base64.encode(payload)]));
 	}
@@ -809,20 +816,22 @@ class Client {
 		});
 	}
 
-	Future<void> setNickname(String nick) {
+	Future<void> setNickname(String nick) async {
 		var msg = IrcMessage('NICK', [nick]);
 		var cm = isupport.caseMapping;
 		var oldNick = nick;
-		return _roundtripMessage(msg, (msg) {
+		await _roundtripMessage(msg, (msg) {
 			return msg.cmd == 'NICK' && cm(msg.source.name) == cm(oldNick);
 		});
+		_params = _params.apply(nick: nick);
 	}
 
-	Future<void> setRealname(String realname) {
+	Future<void> setRealname(String realname) async {
 		var msg = IrcMessage('SETNAME', [realname]);
-		return _roundtripMessage(msg, (msg) {
+		await _roundtripMessage(msg, (msg) {
 			return msg.cmd == 'SETNAME' && isMyNick(msg.source.name);
 		});
+		_params = _params.apply(realname: realname);
 	}
 }
 

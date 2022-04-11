@@ -80,7 +80,7 @@ void main() async {
 			defaultRealname: defaultRealname,
 		);
 		if (networkEntry.bouncerId != null) {
-			clientParams = clientParams.replaceBouncerNetId(networkEntry.bouncerId);
+			clientParams = clientParams.apply(bouncerNetId: networkEntry.bouncerId);
 		}
 		var client = Client(clientParams);
 		clientProvider.add(client, network);
