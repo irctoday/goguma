@@ -372,7 +372,7 @@ class Client {
 		case RPL_ENDOFNAMES:
 			var channel = msg.params[1];
 			var names = _pendingNames.remove(channel)!;
-			clientMsg = ClientEndOfNames(msg, names, isupport, batch: msgBatch);
+			clientMsg = ClientEndOfNames._(msg, names, isupport, batch: msgBatch);
 			break;
 		case 'BATCH':
 			if (msg.params[0].startsWith('-')) {
@@ -381,13 +381,13 @@ class Client {
 				if (child == null) {
 					throw FormatException('Unknown BATCH reference: $ref');
 				}
-				clientMsg = ClientEndOfBatch(msg, child, batch: msgBatch);
+				clientMsg = ClientEndOfBatch._(msg, child, batch: msgBatch);
 			} else {
-				clientMsg = ClientMessage(msg, batch: msgBatch);
+				clientMsg = ClientMessage._(msg, batch: msgBatch);
 			}
 			break;
 		default:
-			clientMsg = ClientMessage(msg, batch: msgBatch);
+			clientMsg = ClientMessage._(msg, batch: msgBatch);
 		}
 
 		msgBatch?._messages.add(clientMsg);
@@ -439,7 +439,7 @@ class Client {
 				if (_batches.containsKey(ref)) {
 					throw FormatException('Duplicate BATCH reference: $ref');
 				}
-				var batch = ClientBatch(type, params, msgBatch);
+				var batch = ClientBatch._(type, params, msgBatch);
 				_batches[ref] = batch;
 				break;
 			case '-':
@@ -530,7 +530,7 @@ class Client {
 			if (msg.cmd != 'CHATHISTORY' || msg.params[0] != 'TARGETS') {
 				throw FormatException('Expected CHATHISTORY TARGET message, got: $msg');
 			}
-			return ChatHistoryTarget(msg.params[1], msg.params[2]);
+			return ChatHistoryTarget._(msg.params[1], msg.params[2]);
 		}).toList();
 	}
 
@@ -811,7 +811,7 @@ class Client {
 class ClientMessage extends IrcMessage {
 	final ClientBatch? batch;
 
-	ClientMessage(IrcMessage msg, { this.batch }) :
+	ClientMessage._(IrcMessage msg, { this.batch }) :
 		super(msg.cmd, msg.params, tags: msg.tags, source: msg.source);
 
 	@override
@@ -831,16 +831,16 @@ class ClientMessage extends IrcMessage {
 class ClientEndOfNames extends ClientMessage {
 	final NamesReply names;
 
-	ClientEndOfNames(IrcMessage msg, List<ClientMessage> names, IrcIsupportRegistry isupport, { ClientBatch? batch }) :
+	ClientEndOfNames._(IrcMessage msg, List<ClientMessage> names, IrcIsupportRegistry isupport, { ClientBatch? batch }) :
 		this.names = NamesReply.parse(names, isupport),
-		super(msg, batch: batch);
+		super._(msg, batch: batch);
 }
 
 class ClientEndOfBatch extends ClientMessage {
 	final ClientBatch child;
 
-	ClientEndOfBatch(IrcMessage msg, this.child, { ClientBatch? batch }) :
-		super(msg, batch: batch);
+	ClientEndOfBatch._(IrcMessage msg, this.child, { ClientBatch? batch }) :
+		super._(msg, batch: batch);
 }
 
 class ClientBatch {
@@ -852,12 +852,12 @@ class ClientBatch {
 
 	UnmodifiableListView<ClientMessage> get messages => UnmodifiableListView(_messages);
 
-	ClientBatch(this.type, List<String> params, this.parent) : this.params = UnmodifiableListView(params);
+	ClientBatch._(this.type, List<String> params, this.parent) : this.params = UnmodifiableListView(params);
 }
 
 class ChatHistoryTarget {
 	final String name;
 	final String time;
 
-	ChatHistoryTarget(this.name, this.time);
+	const ChatHistoryTarget._(this.name, this.time);
 }
