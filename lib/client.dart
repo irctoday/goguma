@@ -372,7 +372,7 @@ class Client {
 		case RPL_ENDOFNAMES:
 			var channel = msg.params[1];
 			var names = _pendingNames.remove(channel)!;
-			clientMsg = ClientEndOfNames(msg, names, batch: msgBatch);
+			clientMsg = ClientEndOfNames(msg, names, isupport, batch: msgBatch);
 			break;
 		case 'BATCH':
 			if (msg.params[0].startsWith('-')) {
@@ -595,7 +595,7 @@ class Client {
 			return msg.cmd == RPL_ENDOFNAMES && cm(msg.params[1]) == cm(channel);
 		});
 		var endOfNames = endMsg as ClientEndOfNames;
-		return NamesReply.parse(endOfNames.names, isupport);
+		return endOfNames.names;
 	}
 
 	Future<List<WhoReply>> _who(String mask, Set<WhoxField> whoxFields) async {
@@ -829,10 +829,10 @@ class ClientMessage extends IrcMessage {
 }
 
 class ClientEndOfNames extends ClientMessage {
-	final UnmodifiableListView<ClientMessage> names;
+	final NamesReply names;
 
-	ClientEndOfNames(IrcMessage msg, List<ClientMessage> names, { ClientBatch? batch }) :
-		this.names = UnmodifiableListView(names),
+	ClientEndOfNames(IrcMessage msg, List<ClientMessage> names, IrcIsupportRegistry isupport, { ClientBatch? batch }) :
+		this.names = NamesReply.parse(names, isupport),
 		super(msg, batch: batch);
 }
 

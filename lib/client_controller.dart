@@ -414,8 +414,8 @@ class ClientController {
 		case RPL_ENDOFNAMES:
 			var channel = msg.params[1];
 			var endOfNames = msg as ClientEndOfNames;
+			var names = endOfNames.names;
 			var members = MemberListModel(client.isupport.caseMapping);
-			var names = NamesReply.parse(endOfNames.names, client.isupport);
 			for (var member in names.members) {
 				members.set(member.nickname, member.prefix);
 			}
