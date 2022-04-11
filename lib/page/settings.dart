@@ -147,7 +147,7 @@ class _NetworkItem extends AnimatedWidget {
 			subtitle: Text(subtitle),
 			leading: Column(
 				mainAxisAlignment: MainAxisAlignment.center,
-				children: [Icon(Icons.hub)],
+				children: const [Icon(Icons.hub)],
 			),
 		);
 	}
