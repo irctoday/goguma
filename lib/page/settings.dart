@@ -145,7 +145,10 @@ class _NetworkItem extends AnimatedWidget {
 		return ListTile(
 			title: Text(network.displayName),
 			subtitle: Text(subtitle),
-			leading: Icon(Icons.hub),
+			leading: Column(
+				mainAxisAlignment: MainAxisAlignment.center,
+				children: [Icon(Icons.hub)],
+			),
 		);
 	}
 }
