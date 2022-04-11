@@ -14,6 +14,7 @@ import 'page/buffer_details.dart';
 import 'page/buffer_list.dart';
 import 'page/connect.dart';
 import 'page/join.dart';
+import 'page/edit_network.dart';
 import 'page/settings.dart';
 
 const _themeMode = ThemeMode.system;
@@ -217,6 +218,10 @@ class AppState extends State<App> with WidgetsBindingObserver {
 					child: BufferDetailsPage(),
 				);
 			};
+			break;
+		case EditNetworkPage.routeName:
+			var network = settings.arguments as BouncerNetworkModel?;
+			builder = (context) => EditNetworkPage(network: network);
 			break;
 		default:
 			throw Exception('Unknown route ${settings.name}');

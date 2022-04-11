@@ -9,6 +9,7 @@ import '../database.dart';
 import '../dialog/edit_profile.dart';
 import '../irc.dart';
 import '../models.dart';
+import 'edit_network.dart';
 
 class SettingsPage extends StatefulWidget {
 	static const routeName = '/settings';
@@ -94,6 +95,13 @@ class _SettingsPageState extends State<SettingsPage> {
 					),
 				),
 				Column(children: networks),
+				ListTile(
+					title: Text('Add network'),
+					leading: Icon(Icons.add),
+					onTap: () {
+						Navigator.pushNamed(context, EditNetworkPage.routeName, arguments: null);
+					},
+				),
 				Divider(),
 				ListTile(
 					title: Text('Compact message list'),
@@ -138,6 +146,9 @@ class _NetworkItem extends AnimatedWidget {
 		String subtitle;
 		if (network.bouncerNetwork != null && network.state == NetworkState.online) {
 			subtitle = _bouncerNetworkStateDescription(network.bouncerNetwork!.state);
+			if (network.bouncerNetwork?.error?.isNotEmpty == true) {
+				subtitle = '$subtitle - ${network.bouncerNetwork!.error}';
+			}
 		} else {
 			subtitle = _networkStateDescription(network.state);
 		}
@@ -149,6 +160,9 @@ class _NetworkItem extends AnimatedWidget {
 				mainAxisAlignment: MainAxisAlignment.center,
 				children: const [Icon(Icons.hub)],
 			),
+			onTap: network.bouncerNetwork == null ? null : () {
+				Navigator.pushNamed(context, EditNetworkPage.routeName, arguments: network.bouncerNetwork!);
+			},
 		);
 	}
 }

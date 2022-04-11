@@ -146,7 +146,14 @@ class BouncerNetworkModel extends ChangeNotifier {
 	final String id;
 	String? _name;
 	String? _host;
+	int? _port;
+	bool? _tls;
+	String? _nickname;
+	String? _username;
+	String? _realname;
+	String? _pass;
 	BouncerNetworkState _state = BouncerNetworkState.disconnected;
+	String? _error;
 
 	BouncerNetworkModel(this.id, Map<String, String?> attrs) {
 		setAttrs(attrs);
@@ -154,7 +161,14 @@ class BouncerNetworkModel extends ChangeNotifier {
 
 	String? get name => _name;
 	String? get host => _host;
+	int? get port => _port;
+	bool? get tls => _tls;
+	String? get nickname => _nickname;
+	String? get username => _username;
+	String? get realname => _realname;
+	String? get pass => _pass;
 	BouncerNetworkState get state => _state;
+	String? get error => _error;
 
 	void setAttrs(Map<String, String?> attrs) {
 		for (var kv in attrs.entries) {
@@ -167,6 +181,27 @@ class BouncerNetworkModel extends ChangeNotifier {
 				break;
 			case 'state':
 				_state = _parseBouncerNetworkState(kv.value!);
+				break;
+			case 'error':
+				_error = kv.value;
+				break;
+			case 'port':
+				_port = kv.value != null ? int.tryParse(kv.value!) : null;
+				break;
+			case 'tls':
+				_tls = kv.value == '1';
+				break;
+			case 'nickname':
+				_nickname = kv.value;
+				break;
+			case 'username':
+				_username = kv.value;
+				break;
+			case 'realname':
+				_realname = kv.value;
+				break;
+			case 'pass':
+				_pass = kv.value;
 				break;
 			}
 		}
