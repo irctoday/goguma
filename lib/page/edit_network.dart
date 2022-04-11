@@ -26,6 +26,8 @@ class EditNetworkPageState extends State<EditNetworkPage> {
 	late final TextEditingController _realnameController;
 	late final TextEditingController _passController;
 
+	bool _expanded = false;
+
 	@override
 	void initState() {
 		super.initState();
@@ -110,6 +112,26 @@ class EditNetworkPageState extends State<EditNetworkPage> {
 
 	@override
 	Widget build(BuildContext context) {
+		List<Widget> expandedFields = [
+			TextFormField(
+				controller: _nicknameController,
+				decoration: InputDecoration(labelText: 'Nickname (optional)'),
+			),
+			TextFormField(
+				controller: _usernameController,
+				decoration: InputDecoration(labelText: 'Username (optional)'),
+			),
+			TextFormField(
+				controller: _realnameController,
+				decoration: InputDecoration(labelText: 'Realname (optional)'),
+			),
+			TextFormField(
+				obscureText: true,
+				controller: _passController,
+				decoration: InputDecoration(labelText: 'Password (optional)'),
+			),
+		];
+
 		return Scaffold(
 			appBar: AppBar(
 				title: Text(widget.network == null ? 'Add network' : 'Edit network'),
@@ -143,22 +165,23 @@ class EditNetworkPageState extends State<EditNetworkPage> {
 							return null;
 						},
 					),
-					TextFormField(
-						controller: _nicknameController,
-						decoration: InputDecoration(labelText: 'Nickname (optional)'),
-					),
-					TextFormField(
-						controller: _usernameController,
-						decoration: InputDecoration(labelText: 'Username (optional)'),
-					),
-					TextFormField(
-						controller: _realnameController,
-						decoration: InputDecoration(labelText: 'Realname (optional)'),
-					),
-					TextFormField(
-						obscureText: true,
-						controller: _passController,
-						decoration: InputDecoration(labelText: 'Password (optional)'),
+					AnimatedCrossFade(
+						duration: const Duration(milliseconds: 300),
+						firstChild: Container(
+							padding: EdgeInsets.all(10),
+							child: TextButton.icon(
+								label: Text('ADVANCED'),
+								icon: Icon(Icons.expand_more, size: 18),
+								onPressed: () {
+									setState(() {
+										_expanded = true;
+									});
+								},
+							),
+						),
+						secondChild: Column(children: expandedFields),
+						crossFadeState: !_expanded ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+						sizeCurve: Curves.easeInCirc.flipped,
 					),
 					SizedBox(height: 20),
 					FloatingActionButton.extended(
