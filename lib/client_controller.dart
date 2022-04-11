@@ -485,7 +485,7 @@ class ClientController {
 
 			// The bouncer network has been added
 
-			bouncerNetwork = BouncerNetwork(bouncerNetId, attrs);
+			bouncerNetwork = BouncerNetworkModel(bouncerNetId, attrs);
 			_bouncerNetworkList.add(bouncerNetwork);
 
 			if (childNetwork != null) {

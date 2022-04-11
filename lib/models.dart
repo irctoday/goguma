@@ -39,7 +39,7 @@ class NetworkModel extends ChangeNotifier {
 
 	NetworkState _state = NetworkState.offline;
 	String? _upstreamName;
-	BouncerNetwork? _bouncerNetwork;
+	BouncerNetworkModel? _bouncerNetwork;
 	String _nickname;
 	String _realname;
 
@@ -53,7 +53,7 @@ class NetworkModel extends ChangeNotifier {
 
 	NetworkState get state => _state;
 	String? get upstreamName => _upstreamName;
-	BouncerNetwork? get bouncerNetwork => _bouncerNetwork;
+	BouncerNetworkModel? get bouncerNetwork => _bouncerNetwork;
 	String get nickname => _nickname;
 	String get realname => _realname;
 
@@ -83,7 +83,7 @@ class NetworkModel extends ChangeNotifier {
 		notifyListeners();
 	}
 
-	set bouncerNetwork(BouncerNetwork? network) {
+	set bouncerNetwork(BouncerNetworkModel? network) {
 		_bouncerNetwork = network;
 		notifyListeners();
 	}
@@ -100,11 +100,11 @@ class NetworkModel extends ChangeNotifier {
 }
 
 class BouncerNetworkListModel extends ChangeNotifier {
-	final Map<String, BouncerNetwork> _networks = {};
+	final Map<String, BouncerNetworkModel> _networks = {};
 
-	UnmodifiableMapView<String, BouncerNetwork> get networks => UnmodifiableMapView(_networks);
+	UnmodifiableMapView<String, BouncerNetworkModel> get networks => UnmodifiableMapView(_networks);
 
-	void add(BouncerNetwork network) {
+	void add(BouncerNetworkModel network) {
 		_networks[network.id] = network;
 		notifyListeners();
 	}
@@ -140,13 +140,13 @@ BouncerNetworkState _parseBouncerNetworkState(String s) {
 /// This is different from [NetworkModel] which provides data from the
 /// point-of-view of the client. For instance, the client may be connected to
 /// the bouncer while the bouncer is disconnected from the upstream network.
-class BouncerNetwork extends ChangeNotifier {
+class BouncerNetworkModel extends ChangeNotifier {
 	final String id;
 	String? _name;
 	String? _host;
 	BouncerNetworkState _state = BouncerNetworkState.disconnected;
 
-	BouncerNetwork(this.id, Map<String, String?> attrs) {
+	BouncerNetworkModel(this.id, Map<String, String?> attrs) {
 		setAttrs(attrs);
 	}
 
