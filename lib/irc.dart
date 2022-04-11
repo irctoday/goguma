@@ -233,22 +233,35 @@ String _escapeTag(String s) {
 final _unescapeTagRegExp = RegExp(r'\\.');
 
 String _unescapeTag(String s) {
-	return s.replaceAllMapped(_unescapeTagRegExp, (match) {
-		switch (match.input) {
-		case '\\:':
-			return ';';
-		case '\\s':
-			return ' ';
-		case '\\\\':
-			return '\\';
-		case '\\r':
-			return '\r';
-		case '\\n':
-			return '\\n';
-		default:
-			return match.input[1];
+	var chars = s.split('');
+	StringBuffer out = StringBuffer();
+	for (var i = 0; i < chars.length; i++) {
+		var ch = chars[i];
+		if (ch != '\\' || i + 1 >= chars.length) {
+			out.write(ch);
+			continue;
 		}
-	});
+
+		i++;
+		ch = chars[i];
+		out.write(_unescapeChar(ch));
+	}
+	return out.toString();
+}
+
+String _unescapeChar(String ch) {
+	switch (ch) {
+	case ':':
+		return ';';
+	case 's':
+		return ' ';
+	case 'r':
+		return '\r';
+	case 'n':
+		return '\n';
+	default:
+		return ch;
+	}
 }
 
 class IrcSource {
