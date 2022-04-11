@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'database.dart';
 import 'irc.dart';
 
+// This file contains models. Models are data structures which are can be
+// listened to by UI elements so that the UI is updated whenever they change.
+
 class NetworkListModel extends ChangeNotifier {
 	final List<NetworkModel> _networks = [];
 
@@ -27,6 +30,9 @@ class NetworkListModel extends ChangeNotifier {
 
 enum NetworkState { offline, connecting, registering, synchronizing, online }
 
+/// A model representing an IRC network.
+///
+/// It's constructed from two database types: [ServerEntry] and [NetworkEntry].
 class NetworkModel extends ChangeNotifier {
 	final ServerEntry serverEntry;
 	final NetworkEntry networkEntry;
@@ -129,6 +135,11 @@ BouncerNetworkState _parseBouncerNetworkState(String s) {
 	}
 }
 
+/// A model representing an IRC network from the point-of-view of the bouncer.
+///
+/// This is different from [NetworkModel] which provides data from the
+/// point-of-view of the client. For instance, the client may be connected to
+/// the bouncer while the bouncer is disconnected from the upstream network.
 class BouncerNetwork extends ChangeNotifier {
 	final String id;
 	String? _name;
@@ -286,6 +297,10 @@ class BufferListModel extends ChangeNotifier {
 	}
 }
 
+/// A model representing a "buffer".
+///
+/// A buffer holds a list of IRC messages. It's often called a "conversation".
+/// A buffer's target can be a channel, a nickname or a server name.
 class BufferModel extends ChangeNotifier {
 	final BufferEntry entry;
 	final NetworkModel network;

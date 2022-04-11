@@ -28,6 +28,7 @@ ConnectParams connectParamsFromServerEntry(ServerEntry entry) {
 	);
 }
 
+/// A data structure which keeps track of IRC clients.
 class ClientProvider {
 	final Map<NetworkModel, ClientController> _controllers = {};
 	final StreamController<IrcException> _errorsController = StreamController.broadcast(sync: true);
@@ -161,6 +162,7 @@ class ClientProvider {
 	}
 }
 
+/// A lock which enables automatic reconnection when enabled.
 class ClientAutoReconnectLock {
 	final ClientProvider _provider;
 
@@ -181,6 +183,7 @@ class ClientAutoReconnectLock {
 	}
 }
 
+/// A helper which integrates a [Client] with app models.
 class ClientController {
 	final ClientProvider _provider;
 
