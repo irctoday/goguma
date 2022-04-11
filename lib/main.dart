@@ -51,6 +51,7 @@ void main() async {
 	var lastDeliveredTimes = await lastDeliveredTimesFuture;
 
 	var defaultNickname = sharedPreferences.getString('nickname');
+	var defaultRealname = sharedPreferences.getString('realname');
 
 	var networkList = NetworkListModel();
 	var bufferList = BufferListModel();
@@ -73,7 +74,11 @@ void main() async {
 		var network = NetworkModel(serverEntry, networkEntry);
 		networkList.add(network);
 
-		var clientParams = connectParamsFromServerEntry(serverEntry, defaultNickname ?? 'user');
+		var clientParams = connectParamsFromServerEntry(
+			serverEntry,
+			defaultNickname: defaultNickname ?? 'user',
+			defaultRealname: defaultRealname,
+		);
 		if (networkEntry.bouncerId != null) {
 			clientParams = clientParams.replaceBouncerNetId(networkEntry.bouncerId);
 		}

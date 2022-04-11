@@ -90,7 +90,8 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 		}
 		if (realname != client.realname) {
 			await client.setRealname(realname);
-			// TODO: save it in the DB
+
+			await sharedPreferences.setString('realname', realname);
 		}
 	}
 

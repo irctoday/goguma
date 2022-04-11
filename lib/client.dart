@@ -19,6 +19,7 @@ class ConnectParams {
 	final int port;
 	final bool tls;
 	final String nick;
+	final String? realname;
 	final String? pass;
 	final SaslPlainCredentials? saslPlain;
 	final String? bouncerNetId;
@@ -28,6 +29,7 @@ class ConnectParams {
 		this.port = 6697,
 		this.tls = true,
 		required this.nick,
+		this.realname,
 		this.pass,
 		this.saslPlain,
 		this.bouncerNetId,
@@ -316,7 +318,7 @@ class Client {
 			send(IrcMessage('PASS', [params.pass!]));
 		}
 		send(IrcMessage('NICK', [params.nick]));
-		send(IrcMessage('USER', [params.nick, '0', '*', params.nick]));
+		send(IrcMessage('USER', [params.nick, '0', '*', params.realname ?? params.nick]));
 		for (var cap in caps) {
 			send(IrcMessage('CAP', ['REQ', cap]));
 		}

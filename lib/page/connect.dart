@@ -70,7 +70,10 @@ class ConnectPageState extends State<ConnectPage> {
 
 		// TODO: only connect once (but be careful not to loose messages
 		// sent immediately after RPL_WELCOME)
-		var clientParams = connectParamsFromServerEntry(serverEntry, nicknameController.text);
+		var clientParams = connectParamsFromServerEntry(
+			serverEntry,
+			defaultNickname: nicknameController.text,
+		);
 		var client = Client(clientParams, autoReconnect: false);
 		NetworkEntry networkEntry;
 		try {

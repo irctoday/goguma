@@ -12,17 +12,20 @@ import 'irc.dart';
 import 'models.dart';
 import 'notification_controller.dart';
 
-ConnectParams connectParamsFromServerEntry(ServerEntry entry, String defaultNickname) {
+ConnectParams connectParamsFromServerEntry(ServerEntry entry, { required String defaultNickname, String? defaultRealname }) {
+	var nick = entry.nick ?? defaultNickname;
+
 	SaslPlainCredentials? saslPlain;
 	if (entry.saslPlainPassword != null) {
-		saslPlain = SaslPlainCredentials(entry.nick!, entry.saslPlainPassword!);
+		saslPlain = SaslPlainCredentials(nick, entry.saslPlainPassword!);
 	}
 
 	return ConnectParams(
 		host: entry.host,
 		port: entry.port ?? (entry.tls ? 6697 : 6667),
 		tls: entry.tls,
-		nick: entry.nick ?? defaultNickname,
+		nick: nick,
+		realname: defaultRealname,
 		pass: entry.pass,
 		saslPlain: saslPlain,
 	);
