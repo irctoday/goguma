@@ -235,6 +235,10 @@ class DB {
 				if (prevVersion < 5) {
 					batch.execute('''
 						ALTER TABLE Buffer ADD COLUMN topic TEXT;
+					''');
+				}
+				if (prevVersion < 6) {
+					batch.execute('''
 						ALTER TABLE Buffer ADD COLUMN realname TEXT;
 					''');
 				}
@@ -243,7 +247,7 @@ class DB {
 			onDowngrade: (_, prevVersion, newVersion) async {
 				throw Exception('Attempted to downgrade database from version $prevVersion to version $newVersion');
 			},
-			version: 5,
+			version: 6,
 		);
 		return DB._(db);
 	}
