@@ -1205,3 +1205,66 @@ class ListReply {
 		);
 	}
 }
+
+enum ChannelStatus { public, secret, private }
+
+class NamesReply {
+	final String channel;
+	final ChannelStatus status;
+	final UnmodifiableListView<NamesReplyMember> members;
+
+	NamesReply({ required this.channel, required this.status, required List<NamesReplyMember> members }) :
+		this.members = UnmodifiableListView(members);
+
+	factory NamesReply.parse(List<IrcMessage> replies, IrcIsupportRegistry isupport) {
+		assert(replies.first.cmd == RPL_NAMREPLY);
+		var symbol = replies.first.params[1];
+		var channel = replies.first.params[2];
+
+		ChannelStatus status;
+		switch (symbol) {
+		case '=':
+			status = ChannelStatus.public;
+			break;
+		case '@':
+			status = ChannelStatus.secret;
+			break;
+		case '*':
+			status = ChannelStatus.private;
+			break;
+		default:
+			throw FormatException('Unknown channel status symbol: $symbol');
+		}
+
+		var allPrefixes = isupport.memberships.map((m) => m.prefix).join('');
+		List<NamesReplyMember> members = [];
+		for (var reply in replies) {
+			assert(reply.cmd == RPL_NAMREPLY);
+			for (var raw in reply.params[3].split(' ')) {
+				if (raw == '') {
+					continue;
+				}
+				var i = 0;
+				while (i < raw.length && allPrefixes.contains(raw[i])) {
+					i++;
+				}
+				var prefix = raw.substring(0, i);
+				var nickname = raw.substring(i);
+				members.add(NamesReplyMember(nickname: nickname, prefix: prefix));
+			}
+		}
+
+		return NamesReply(
+			channel: channel,
+			status: status,
+			members: members,
+		);
+	}
+}
+
+class NamesReplyMember {
+	final String prefix;
+	final String nickname;
+
+	const NamesReplyMember({ required this.nickname, this.prefix = '' });
+}

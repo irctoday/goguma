@@ -588,13 +588,14 @@ class Client {
 		send(IrcMessage('READ', [target, 'timestamp=' + t]));
 	}
 
-	Future<ClientEndOfNames> names(String channel) async {
+	Future<NamesReply> names(String channel) async {
 		var cm = isupport.caseMapping;
 		var msg = IrcMessage('NAMES', [channel]);
 		var endMsg = await _roundtripMessage(msg, (msg) {
 			return msg.cmd == RPL_ENDOFNAMES && cm(msg.params[1]) == cm(channel);
 		});
-		return endMsg as ClientEndOfNames;
+		var endOfNames = endMsg as ClientEndOfNames;
+		return NamesReply.parse(endOfNames.names, isupport);
 	}
 
 	Future<List<WhoReply>> _who(String mask, Set<WhoxField> whoxFields) async {

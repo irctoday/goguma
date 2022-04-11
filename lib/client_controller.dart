@@ -415,20 +415,9 @@ class ClientController {
 			var channel = msg.params[1];
 			var endOfNames = msg as ClientEndOfNames;
 			var members = MemberListModel(client.isupport.caseMapping);
-			var allPrefixes = client.isupport.memberships.map((m) => m.prefix).join('');
-			for (var namreply in endOfNames.names) {
-				for (var raw in namreply.params[3].split(' ')) {
-					if (raw == '') {
-						continue;
-					}
-					var i = 0;
-					while (i < raw.length && allPrefixes.contains(raw[i])) {
-						i++;
-					}
-					var prefix = raw.substring(0, i);
-					var nick = raw.substring(i);
-					members.set(nick, prefix);
-				}
+			var names = NamesReply.parse(endOfNames.names, client.isupport);
+			for (var member in names.members) {
+				members.set(member.nickname, member.prefix);
 			}
 			_bufferList.get(channel, network)?.members = members;
 			break;
