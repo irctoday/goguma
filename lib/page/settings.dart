@@ -58,6 +58,8 @@ class _SettingsPageState extends State<SettingsPage> {
 			throw Exception('No main network found');
 		}
 
+		var mainClient = context.read<ClientProvider>().get(mainNetwork);
+
 		List<Widget> networks = [];
 		for (var network in networkList.networks) {
 			if (network.networkEntry.bouncerId == null) {
@@ -95,7 +97,7 @@ class _SettingsPageState extends State<SettingsPage> {
 					),
 				),
 				Column(children: networks),
-				ListTile(
+				if (mainClient.caps.enabled.contains('soju.im/bouncer-networks')) ListTile(
 					title: Text('Add network'),
 					leading: Icon(Icons.add),
 					onTap: () {
