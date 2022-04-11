@@ -163,6 +163,28 @@ class ClientProvider {
 			print('Failed to enable sync background service');
 		}
 	}
+
+	void fetchBufferUser(BufferModel buffer) async {
+		var client = get(buffer.network);
+		List<WhoReply> replies;
+		try {
+			replies = await client.who(buffer.name);
+		} on Exception catch (err) {
+			print('Failed to fetch WHO ${buffer.name}: $err');
+			return;
+		}
+
+		if (replies.length == 0) {
+			return; // User is offline
+		} else if (replies.length != 1) {
+			throw FormatException('Expected a single WHO reply, got ${replies.length}');
+		}
+
+		var reply = replies[0];
+		buffer.realname = reply.realname;
+		buffer.away = reply.away;
+		_db.storeBuffer(buffer.entry);
+	}
 }
 
 /// A lock which enables automatic reconnection when enabled.
@@ -287,7 +309,7 @@ class ClientController {
 					continue;
 				}
 				if (buffer.realname == null) {
-					fetchBufferUser(client, buffer);
+					_provider.fetchBufferUser(buffer);
 				}
 				l.add(buffer.name);
 			}
@@ -395,16 +417,28 @@ class ClientController {
 				network.realname = realname;
 			}
 
-			_bufferList.get(msg.source.name, network)?.realname = realname;
+			var buffer = _bufferList.get(msg.source.name, network);
+			if(buffer != null) {
+				buffer.realname = realname;
+				_db.storeBuffer(buffer.entry);
+			}
 			break;
 		case RPL_TOPIC:
 			var channel = msg.params[1];
 			var topic = msg.params[2];
-			_bufferList.get(channel, network)?.topic = topic;
+			var buffer = _bufferList.get(channel, network);
+			if (buffer != null) {
+				buffer.topic = topic;
+				_db.storeBuffer(buffer.entry);
+			}
 			break;
 		case RPL_NOTOPIC:
 			var channel = msg.params[1];
-			_bufferList.get(channel, network)?.topic = null;
+			var buffer = _bufferList.get(channel, network);
+			if (buffer != null) {
+				buffer.topic = null;
+				_db.storeBuffer(buffer.entry);
+			}
 			break;
 		case 'TOPIC':
 			var channel = msg.params[0];
@@ -412,7 +446,11 @@ class ClientController {
 			if (msg.params.length > 1) {
 				topic = msg.params[1];
 			}
-			_bufferList.get(channel, network)?.topic = topic;
+			var buffer = _bufferList.get(channel, network);
+			if (buffer != null) {
+				buffer.topic = topic;
+				_db.storeBuffer(buffer.entry);
+			}
 			break;
 		case RPL_ENDOFNAMES:
 			var channel = msg.params[1];
@@ -593,7 +631,7 @@ class ClientController {
 		_bufferList.bumpLastDeliveredTime(buf, t);
 
 		if (isNewBuffer && client.isNick(buf.name)) {
-			fetchBufferUser(client, buf);
+			_provider.fetchBufferUser(buf);
 		}
 	}
 
@@ -683,24 +721,4 @@ class ClientController {
 			await client.fetchChatHistoryBetween(target.name, from, to, max);
 		}));
 	}
-}
-
-void fetchBufferUser(Client client, BufferModel buffer) async {
-	List<WhoReply> replies;
-	try {
-		replies = await client.who(buffer.name);
-	} on Exception catch (err) {
-		print('Failed to fetch WHO ${buffer.name}: $err');
-		return;
-	}
-
-	if (replies.length == 0) {
-		return; // User is offline
-	} else if (replies.length != 1) {
-		throw FormatException('Expected a single WHO reply, got ${replies.length}');
-	}
-
-	var reply = replies[0];
-	buffer.realname = reply.realname;
-	buffer.away = reply.away;
 }

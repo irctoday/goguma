@@ -46,7 +46,7 @@ class BufferPage extends StatefulWidget {
 		if (client.isChannel(name)) {
 			_join(client, buffer);
 		} else {
-			fetchBufferUser(client, buffer);
+			clientProvider.fetchBufferUser(buffer);
 			client.monitor([name]);
 		}
 	}

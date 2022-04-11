@@ -315,13 +315,11 @@ class BufferModel extends ChangeNotifier {
 	bool focused = false;
 
 	// For channels only
-	String? _topic;
 	bool _joining = false;
 	bool _joined = false;
 	MemberListModel? _members;
 
 	// For users only
-	String? _realname;
 	bool? _online;
 	bool? _away;
 
@@ -339,7 +337,7 @@ class BufferModel extends ChangeNotifier {
 	bool get pinned => entry.pinned;
 	bool get muted => entry.muted;
 
-	String? get topic => _topic;
+	String? get topic => entry.topic;
 	bool get joining => _joining;
 	bool get joined => _joined;
 	MemberListModel? get members => _members;
@@ -348,14 +346,14 @@ class BufferModel extends ChangeNotifier {
 	bool? get away => _away;
 
 	String? get realname {
-		if (_realname == null || isStubRealname(_realname!, name)) {
+		if (entry.realname == null || isStubRealname(entry.realname!, name)) {
 			return null;
 		}
-		return _realname!;
+		return entry.realname!;
 	}
 
 	set topic(String? topic) {
-		_topic = topic;
+		entry.topic = topic;
 		notifyListeners();
 	}
 
@@ -390,7 +388,7 @@ class BufferModel extends ChangeNotifier {
 	}
 
 	set realname(String? realname) {
-		_realname = realname;
+		entry.realname = realname;
 		notifyListeners();
 	}
 

@@ -70,6 +70,9 @@ class BufferEntry {
 	bool pinned;
 	bool muted;
 
+	String? topic;
+	String? realname;
+
 	Map<String, Object?> toMap() {
 		return <String, Object?>{
 			'id': id,
@@ -78,6 +81,8 @@ class BufferEntry {
 			'last_read_time': lastReadTime,
 			'pinned': pinned ? 1 : 0,
 			'muted': muted ? 1 : 0,
+			'topic': topic,
+			'realname': realname,
 		};
 	}
 
@@ -89,7 +94,9 @@ class BufferEntry {
 		network = m['network'] as int,
 		lastReadTime = m['last_read_time'] as String?,
 		pinned = m['pinned'] == 1,
-		muted = m['muted'] == 1;
+		muted = m['muted'] == 1,
+		topic = m['topic'] as String?,
+		realname = m['realname'] as String?;
 }
 
 class MessageEntry {
@@ -184,6 +191,8 @@ class DB {
 						last_read_time TEXT,
 						pinned INTEGER NOT NULL DEFAULT 0,
 						muted INTEGER NOT NULL DEFAULT 0,
+						topic TEXT,
+						realname TEXT,
 						FOREIGN KEY (network) REFERENCES Network(id) ON DELETE CASCADE,
 						UNIQUE(name, network)
 					)
@@ -223,12 +232,18 @@ class DB {
 						ALTER TABLE Buffer ADD COLUMN muted INTEGER NOT NULL DEFAULT 0;
 					''');
 				}
+				if (prevVersion < 5) {
+					batch.execute('''
+						ALTER TABLE Buffer ADD COLUMN topic TEXT;
+						ALTER TABLE Buffer ADD COLUMN realname TEXT;
+					''');
+				}
 				await batch.commit();
 			},
 			onDowngrade: (_, prevVersion, newVersion) async {
 				throw Exception('Attempted to downgrade database from version $prevVersion to version $newVersion');
 			},
-			version: 4,
+			version: 5,
 		);
 		return DB._(db);
 	}
@@ -325,7 +340,7 @@ class DB {
 
 	Future<List<BufferEntry>> listBuffers() async {
 		var entries = await _db.rawQuery('''
-			SELECT id, name, network, last_read_time, pinned, muted FROM Buffer ORDER BY id
+			SELECT id, name, network, last_read_time, pinned, muted, topic, realname FROM Buffer ORDER BY id
 		''');
 		return entries.map((m) => BufferEntry.fromMap(m)).toList();
 	}
