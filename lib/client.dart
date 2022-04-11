@@ -36,7 +36,15 @@ class ConnectParams {
 	});
 
 	ConnectParams replaceBouncerNetId(String? bouncerNetId) {
-		return ConnectParams(host: host, port: port, tls: tls, nick: nick, pass: pass, saslPlain: saslPlain, bouncerNetId: bouncerNetId);
+		return ConnectParams(
+			host: host,
+			port: port,
+			tls: tls,
+			nick: nick,
+			pass: pass,
+			saslPlain: saslPlain,
+			bouncerNetId: bouncerNetId,
+		);
 	}
 }
 
