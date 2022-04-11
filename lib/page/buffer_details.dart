@@ -165,7 +165,7 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 		SliverList? commonChannels;
 		if (whois != null) {
 			var loggedInTitle = 'Unauthenticated';
-			var loggedInSubtitle = 'This user is logged out.';
+			var loggedInSubtitle = 'This user is not logged in.';
 			var loggedInIcon = Icons.gpp_bad;
 			if (whois.account != null) {
 				loggedInIcon = Icons.gpp_good;
