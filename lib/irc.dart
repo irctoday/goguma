@@ -230,8 +230,6 @@ String _escapeTag(String s) {
 	}).join('');
 }
 
-final _unescapeTagRegExp = RegExp(r'\\.');
-
 String _unescapeTag(String s) {
 	var chars = s.split('');
 	StringBuffer out = StringBuffer();
