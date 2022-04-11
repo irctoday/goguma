@@ -43,7 +43,9 @@ class NetworkModel extends ChangeNotifier {
 	String _nickname;
 	String _realname;
 
-	NetworkModel(this.serverEntry, this.networkEntry) : _nickname = serverEntry.nick!, _realname = serverEntry.nick! {
+	NetworkModel(this.serverEntry, this.networkEntry, String nickname, String realname) :
+			_nickname = nickname,
+			_realname = realname {
 		assert(serverEntry.id != null);
 		assert(networkEntry.id != null);
 	}

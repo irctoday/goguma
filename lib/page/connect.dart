@@ -102,7 +102,7 @@ class ConnectPageState extends State<ConnectPage> {
 		await sharedPreferences.setString('nickname', nicknameController.text);
 
 		client = Client(clientParams);
-		var network = NetworkModel(serverEntry, networkEntry);
+		var network = NetworkModel(serverEntry, networkEntry, client.nick, client.realname);
 		context.read<NetworkListModel>().add(network);
 		context.read<ClientProvider>().add(client, network);
 		client.connect().ignore();

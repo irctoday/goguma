@@ -71,9 +71,6 @@ void main() async {
 	for (var networkEntry in networkEntries) {
 		var serverEntry = serverMap[networkEntry.server]!;
 
-		var network = NetworkModel(serverEntry, networkEntry);
-		networkList.add(network);
-
 		var clientParams = connectParamsFromServerEntry(
 			serverEntry,
 			defaultNickname: defaultNickname ?? 'user',
@@ -82,6 +79,10 @@ void main() async {
 		if (networkEntry.bouncerId != null) {
 			clientParams = clientParams.apply(bouncerNetId: networkEntry.bouncerId);
 		}
+
+		var network = NetworkModel(serverEntry, networkEntry, clientParams.nick, clientParams.realname);
+		networkList.add(network);
+
 		var client = Client(clientParams);
 		clientProvider.add(client, network);
 	}

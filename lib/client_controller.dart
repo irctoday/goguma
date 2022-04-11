@@ -488,7 +488,7 @@ class ClientController {
 			var networkEntry = NetworkEntry(server: network.serverId, bouncerId: bouncerNetId);
 			return _db.storeNetwork(networkEntry).then((networkEntry) {
 				var childClient = Client(client.params.apply(bouncerNetId: bouncerNetId));
-				var childNetwork = NetworkModel(network.serverEntry, networkEntry);
+				var childNetwork = NetworkModel(network.serverEntry, networkEntry, childClient.nick, childClient.realname);
 				_networkList.add(childNetwork);
 				_provider.add(childClient, childNetwork);
 				childClient.connect();
