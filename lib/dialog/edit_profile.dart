@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../client_controller.dart';
 import '../database.dart';
@@ -63,6 +64,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 		Navigator.pop(context);
 
 		var client = context.read<ClientProvider>().get(widget.network);
+		var sharedPreferences = context.read<SharedPreferences>();
 
 		var nickname = _nicknameController.text;
 		var realname = _realnameController.text;
@@ -75,9 +77,16 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 			// in our DB to avoid saving a bogus nickname.
 			await client.setNickname(nickname);
 
-			var db = context.read<DB>();
-			widget.network.serverEntry.nick = nickname;
-			await db.storeServer(widget.network.serverEntry);
+			await sharedPreferences.setString('nickname', nickname);
+
+			// Previous versions of Goguma stored the nickname in the DB. New
+			// versions store it in SharedPreferences. Clear the DB if
+			// necessary.
+			if (widget.network.serverEntry.nick != null) {
+				var db = context.read<DB>();
+				widget.network.serverEntry.nick = null;
+				await db.storeServer(widget.network.serverEntry);
+			}
 		}
 		if (realname != client.realname) {
 			await client.setRealname(realname);

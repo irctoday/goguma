@@ -50,6 +50,8 @@ void main() async {
 	var unreadCounts = await unreadCountsFuture;
 	var lastDeliveredTimes = await lastDeliveredTimesFuture;
 
+	var defaultNickname = sharedPreferences.getString('nickname');
+
 	var networkList = NetworkListModel();
 	var bufferList = BufferListModel();
 	var bouncerNetworkList = BouncerNetworkListModel();
@@ -71,7 +73,7 @@ void main() async {
 		var network = NetworkModel(serverEntry, networkEntry);
 		networkList.add(network);
 
-		var clientParams = connectParamsFromServerEntry(serverEntry);
+		var clientParams = connectParamsFromServerEntry(serverEntry, defaultNickname ?? 'user');
 		if (networkEntry.bouncerId != null) {
 			clientParams = clientParams.replaceBouncerNetId(networkEntry.bouncerId);
 		}

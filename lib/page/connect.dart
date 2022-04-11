@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../client.dart';
 import '../client_controller.dart';
@@ -56,7 +57,6 @@ class ConnectPageState extends State<ConnectPage> {
 		var serverEntry = ServerEntry(
 			host: uri.host,
 			port: uri.hasPort ? uri.port : null,
-			nick: nicknameController.text,
 			tls: uri.scheme != 'irc+insecure',
 			saslPlainPassword: passwordController.text.isNotEmpty ? passwordController.text : null,
 		);
@@ -66,10 +66,11 @@ class ConnectPageState extends State<ConnectPage> {
 		});
 
 		var db = context.read<DB>();
+		var sharedPreferences = context.read<SharedPreferences>();
 
 		// TODO: only connect once (but be careful not to loose messages
 		// sent immediately after RPL_WELCOME)
-		var clientParams = connectParamsFromServerEntry(serverEntry);
+		var clientParams = connectParamsFromServerEntry(serverEntry, nicknameController.text);
 		var client = Client(clientParams, autoReconnect: false);
 		NetworkEntry networkEntry;
 		try {
@@ -94,6 +95,8 @@ class ConnectPageState extends State<ConnectPage> {
 				_loading = false;
 			});
 		}
+
+		await sharedPreferences.setString('nickname', nicknameController.text);
 
 		client = Client(clientParams);
 		var network = NetworkModel(serverEntry, networkEntry);

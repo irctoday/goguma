@@ -12,7 +12,7 @@ import 'irc.dart';
 import 'models.dart';
 import 'notification_controller.dart';
 
-ConnectParams connectParamsFromServerEntry(ServerEntry entry) {
+ConnectParams connectParamsFromServerEntry(ServerEntry entry, String defaultNickname) {
 	SaslPlainCredentials? saslPlain;
 	if (entry.saslPlainPassword != null) {
 		saslPlain = SaslPlainCredentials(entry.nick!, entry.saslPlainPassword!);
@@ -22,7 +22,7 @@ ConnectParams connectParamsFromServerEntry(ServerEntry entry) {
 		host: entry.host,
 		port: entry.port ?? (entry.tls ? 6697 : 6667),
 		tls: entry.tls,
-		nick: entry.nick!, // TODO: add a fallback
+		nick: entry.nick ?? defaultNickname,
 		pass: entry.pass,
 		saslPlain: saslPlain,
 	);
