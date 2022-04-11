@@ -35,13 +35,13 @@ class EditNetworkPageState extends State<EditNetworkPage> {
 		_nameController = TextEditingController(text: network?.name);
 
 		var url = network?.host ?? '';
-		if (network?.tls != false && (network?.port ?? 6697) != 6697) {
-			url = url + ':${network?.port}';
-		} else if (network?.tls == false) {
+		var defaultPort = 6697;
+		if (network?.tls == false) {
 			url = 'irc+insecure://' + url;
-			if ((network?.port ?? 6667) != 6667) {
-				url = url + ':${network?.port}';
-			}
+			defaultPort = 6667;
+		}
+		if (network?.port != null && network?.port != defaultPort) {
+			url = url + ':${network?.port}';
 		}
 
 		_urlController = TextEditingController(text: url);
