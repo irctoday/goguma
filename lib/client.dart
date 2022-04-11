@@ -11,7 +11,7 @@ class SaslPlainCredentials {
 	final String username;
 	final String password;
 
-	SaslPlainCredentials(this.username, this.password);
+	const SaslPlainCredentials(this.username, this.password);
 }
 
 class ConnectParams {
@@ -23,7 +23,15 @@ class ConnectParams {
 	final SaslPlainCredentials? saslPlain;
 	final String? bouncerNetId;
 
-	ConnectParams({ required this.host, this.port = 6697, this.tls = true, required this.nick, this.pass, this.saslPlain, this.bouncerNetId });
+	const ConnectParams({
+		required this.host,
+		this.port = 6697,
+		this.tls = true,
+		required this.nick,
+		this.pass,
+		this.saslPlain,
+		this.bouncerNetId,
+	});
 
 	ConnectParams replaceBouncerNetId(String? bouncerNetId) {
 		return ConnectParams(host: host, port: port, tls: tls, nick: nick, pass: pass, saslPlain: saslPlain, bouncerNetId: bouncerNetId);
