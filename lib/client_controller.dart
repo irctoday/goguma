@@ -185,6 +185,26 @@ class ClientProvider {
 		buffer.away = reply.away;
 		_db.storeBuffer(buffer.entry);
 	}
+
+	Future<void> fetchChatHistory(BufferModel buffer) async {
+		var controller = _controllers[buffer.network]!;
+		var client = controller.client;
+
+		String? before;
+		if (!buffer.messages.isEmpty) {
+			before = buffer.messages.first.entry.time;
+		}
+
+		var limit = 100;
+		ClientBatch batch;
+		if (before != null) {
+			batch = await client.fetchChatHistoryBefore(buffer.name, before, limit);
+		} else {
+			batch = await client.fetchChatHistoryLatest(buffer.name, null, limit);
+		}
+
+		await controller._handleChatMessages(buffer.name, batch.messages);
+	}
 }
 
 /// A lock which enables automatic reconnection when enabled.
@@ -567,19 +587,6 @@ class ClientController {
 				_bufferList.get(source.name, network)?.online = online;
 			}
 			break;
-		default:
-			if (msg is ClientEndOfBatch) {
-				return _handleBatch(msg.child);
-			}
-		}
-		return null;
-	}
-
-	Future<void>? _handleBatch(ClientBatch batch) {
-		switch (batch.type) {
-		case 'chathistory':
-			var target = batch.params[0];
-			return _handleChatMessages(target, batch.messages);
 		}
 		return null;
 	}
@@ -674,9 +681,9 @@ class ClientController {
 		}
 
 		if (client.isChannel(buffer.name)) {
-			_notifController.showHighlight(notifyEntries, buffer);
+			await _notifController.showHighlight(notifyEntries, buffer);
 		} else {
-			_notifController.showDirectMessage(notifyEntries, buffer);
+			await _notifController.showDirectMessage(notifyEntries, buffer);
 		}
 	}
 
@@ -718,7 +725,8 @@ class ClientController {
 
 		var targets = await client.fetchChatHistoryTargets(from, to);
 		await Future.wait(targets.map((target) async {
-			await client.fetchChatHistoryBetween(target.name, from, to, max);
+			var batch = await client.fetchChatHistoryBetween(target.name, from, to, max);
+			await _handleChatMessages(target.name, batch.messages);
 		}));
 	}
 }

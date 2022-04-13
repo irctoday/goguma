@@ -152,11 +152,12 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		}
 	}
 
-	void _fetchChatHistory() {
+	void _fetchChatHistory() async {
 		if (_chatHistoryLoading) {
 			return;
 		}
 
+		var clientProvider = context.read<ClientProvider>();
 		var buffer = context.read<BufferModel>();
 		var client = context.read<Client>();
 
@@ -168,20 +169,13 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 			_chatHistoryLoading = true;
 		});
 
-		var limit = 100;
-		Future<void> future;
-		if (buffer.messages.length > 0) {
-			var t = buffer.messages.first.entry.time;
-			future = client.fetchChatHistoryBefore(buffer.name, t, limit);
-		} else {
-			future = client.fetchChatHistoryLatest(buffer.name, null, limit);
-		}
-
-		future.whenComplete(() {
+		try {
+			await clientProvider.fetchChatHistory(buffer);
+		} finally {
 			setState(() {
 				_chatHistoryLoading = false;
 			});
-		}).ignore();
+		}
 	}
 
 	@override
