@@ -167,21 +167,23 @@ class EditNetworkPageState extends State<EditNetworkPage> {
 					),
 					AnimatedCrossFade(
 						duration: const Duration(milliseconds: 300),
-						firstChild: Container(
-							padding: EdgeInsets.all(10),
-							child: TextButton.icon(
-								label: Text('ADVANCED'),
-								icon: Icon(Icons.expand_more, size: 18),
-								onPressed: () {
-									setState(() {
-										_expanded = true;
-									});
-								},
-							),
+						firstChild: Row(
+							mainAxisAlignment: MainAxisAlignment.center,
+								children: [Container(
+								padding: EdgeInsets.all(10),
+								child: TextButton.icon(
+									label: Text('ADVANCED'),
+									icon: Icon(Icons.expand_more, size: 18),
+									onPressed: () {
+										setState(() {
+											_expanded = true;
+										});
+									},
+								),
+							)],
 						),
 						secondChild: Column(children: expandedFields),
 						crossFadeState: !_expanded ? CrossFadeState.showFirst : CrossFadeState.showSecond,
-						sizeCurve: Curves.easeInCirc.flipped,
 					),
 					SizedBox(height: 20),
 					FloatingActionButton.extended(
