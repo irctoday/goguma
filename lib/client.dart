@@ -234,14 +234,16 @@ class Client {
 			return;
 		}
 
+		Duration d;
 		if (DateTime.now().difference(_lastConnectTime!) > _autoReconnectDelay) {
 			_log('Reconnecting immediately');
-			connect().ignore();
-			return;
+			d = Duration.zero;
+		} else {
+			_log('Reconnecting in $_autoReconnectDelay');
+			d = _autoReconnectDelay;
 		}
 
-		_log('Reconnecting in $_autoReconnectDelay');
-		_reconnectTimer = Timer(_autoReconnectDelay, () {
+		_reconnectTimer = Timer(d, () {
 			connect().ignore();
 		});
 	}
