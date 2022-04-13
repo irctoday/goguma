@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'connect.dart';
+import '../client.dart';
 import '../client_controller.dart';
 import '../database.dart';
 import '../dialog/edit_profile.dart';
@@ -89,7 +90,7 @@ class _SettingsPageState extends State<SettingsPage> {
 						radius: 40,
 						child: Icon(Icons.face, size: 32),
 					),
-					trailing: IconButton(
+					trailing: (mainClient.state != ClientState.connected) ? null : IconButton(
 						icon: Icon(Icons.edit),
 						onPressed: () {
 							EditProfileDialog.show(context, mainNetwork!);
