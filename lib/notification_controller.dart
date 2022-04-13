@@ -78,7 +78,7 @@ class NotificationController {
 
 		await _show(
 			title: title,
-			body: stripAnsiFormatting(entry.msg.params[1]),
+			body: _getMessageBody(entry),
 			channel: _NotificationChannel(
 				id: 'privmsg',
 				name: 'Private messages',
@@ -102,7 +102,7 @@ class NotificationController {
 
 		await _show(
 			title: title,
-			body: stripAnsiFormatting(entry.msg.params[1]),
+			body: _getMessageBody(entry),
 			channel: _NotificationChannel(
 				id: 'highlight',
 				name: 'Mentions',
@@ -122,12 +122,26 @@ class NotificationController {
 			groupConversation: isChannel,
 			messages: entries.map((entry) {
 				return Message(
-					stripAnsiFormatting(entry.msg.params[1]),
+					_getMessageBody(entry),
 					entry.dateTime,
 					Person(name: entry.msg.source!.name),
 				);
 			}).toList(),
 		);
+	}
+
+	String _getMessageBody(MessageEntry entry) {
+		var sender = entry.msg.source!.name;
+		var ctcp = CtcpMessage.parse(entry.msg);
+		if (ctcp == null) {
+			return stripAnsiFormatting(entry.msg.params[1]);
+		}
+		if (ctcp.cmd == 'ACTION') {
+			var action = stripAnsiFormatting(ctcp.param ?? '');
+			return '$sender $action';
+		} else {
+			return '$sender has sent a CTCP "${ctcp.cmd}" command';
+		}
 	}
 
 	Future<void> cancelAllWithBuffer(BufferModel buffer) async {
