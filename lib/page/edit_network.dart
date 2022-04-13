@@ -169,7 +169,7 @@ class EditNetworkPageState extends State<EditNetworkPage> {
 						duration: const Duration(milliseconds: 300),
 						firstChild: Row(
 							mainAxisAlignment: MainAxisAlignment.center,
-								children: [Container(
+							children: [Container(
 								padding: EdgeInsets.all(10),
 								child: TextButton.icon(
 									label: Text('ADVANCED'),
