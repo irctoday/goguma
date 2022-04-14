@@ -3,7 +3,10 @@ description: An IRC client for mobile devices.
 
 publish_to: 'none'
 
-version: 0.1.0+1
+# Build number is the Git commit count, obtained via:
+#
+#     git rev-list --first-parent --count HEAD
+version: 0.2.0+516
 
 environment:
   sdk: '>=2.12.0 <3.0.0'
