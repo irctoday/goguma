@@ -153,7 +153,7 @@ class BufferListPageState extends State<BufferListPage> {
 			),
 			body: NetworkListIndicator(
 				child: _BackgroundServicePermissionBanner(
-					child: ListView.builder(
+					child: buffers.length == 0 ? _BufferListPlaceholder() : ListView.builder(
 						itemCount: buffers.length,
 						itemBuilder: (context, index) {
 							var buffer = buffers[index];
@@ -289,6 +289,41 @@ class _BufferItem extends AnimatedWidget {
 			onTap: () {
 				Navigator.pushNamed(context, BufferPage.routeName, arguments: buffer);
 			},
+		));
+	}
+}
+
+class _BufferListPlaceholder extends StatelessWidget {
+	_BufferListPlaceholder({ Key? key }) : super(key: key);
+
+	@override
+	Widget build(BuildContext context) {
+		// TODO: suggest to add a new network in the soju.im/bouncer-networks case
+		return Center(child: Column(
+			mainAxisAlignment: MainAxisAlignment.center,
+			children: [
+				Icon(Icons.tag, size: 100),
+				Text(
+					'Join a conversation',
+					style: Theme.of(context).textTheme.headlineSmall,
+					textAlign: TextAlign.center,
+				),
+				SizedBox(height: 15),
+				Container(
+					constraints: BoxConstraints(maxWidth: 300),
+					child: Text(
+						'Welcome to IRC! To get started, join a channel or start a discussion with a user.',
+						textAlign: TextAlign.center,
+					),
+				),
+				SizedBox(height: 15),
+				ElevatedButton(
+					child: Text('New conversation'),
+					onPressed: () {
+						Navigator.pushNamed(context, JoinPage.routeName);
+					},
+				),
+			],
 		));
 	}
 }
