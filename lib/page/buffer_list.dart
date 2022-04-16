@@ -294,7 +294,7 @@ class _BufferItem extends AnimatedWidget {
 }
 
 class _BufferListPlaceholder extends StatelessWidget {
-	_BufferListPlaceholder({ Key? key }) : super(key: key);
+	const _BufferListPlaceholder({ Key? key }) : super(key: key);
 
 	@override
 	Widget build(BuildContext context) {
