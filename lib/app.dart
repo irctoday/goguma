@@ -133,10 +133,17 @@ class AppState extends State<App> with WidgetsBindingObserver {
 		if (payload == null) {
 			return;
 		}
-		if (!payload.startsWith('buffer:')) {
+		if (payload.startsWith('buffer:')) {
+			_handleSelectBufferNotification(payload.replaceFirst('buffer:', ''));
+		} else if (payload.startsWith('invite:')) {
+			_handleSelectInviteNotification(payload.replaceFirst('invite:', ''));
+		} else {
 			throw FormatException('Invalid payload: $payload');
 		}
-		var bufferId = int.parse(payload.replaceFirst('buffer:', ''));
+	}
+
+	void _handleSelectBufferNotification(String payload) {
+		var bufferId = int.parse(payload);
 		var bufferList = context.read<BufferListModel>();
 		var buffer = bufferList.byId(bufferId);
 		if (buffer == null) {
@@ -144,6 +151,20 @@ class AppState extends State<App> with WidgetsBindingObserver {
 		}
 		var until = ModalRoute.withName(BufferListPage.routeName);
 		_navigatorKey.currentState!.pushNamedAndRemoveUntil(BufferPage.routeName, until, arguments: buffer);
+	}
+
+	void _handleSelectInviteNotification(String payload) {
+		var i = payload.indexOf(':');
+		if (i < 0) {
+			throw FormatException('Invalid invite payload: $payload');
+		}
+		var networkId = int.parse(payload.substring(0, i));
+		var channel = payload.substring(i + 1);
+
+		var networkList = context.read<NetworkListModel>();
+		var network = networkList.byId(networkId)!;
+
+		BufferPage.open(_navigatorKey.currentState!.context, channel, network);
 	}
 
 	void _handleNetworkStateChange() {

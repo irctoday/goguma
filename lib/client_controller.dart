@@ -494,6 +494,12 @@ class ClientController {
 				target = msg.source.name;
 			}
 			return _handleChatMessages(target, [msg]);
+		case 'INVITE':
+			var nickname = msg.params[0];
+			if (client.isMyNick(nickname)) {
+				_notifController.showInvite(msg, network);
+			}
+			break;
 		case 'BOUNCER':
 			if (msg.params[0] != 'NETWORK') {
 				break;

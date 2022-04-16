@@ -114,6 +114,21 @@ class NotificationController {
 		);
 	}
 
+	Future<void> showInvite(IrcMessage msg, NetworkModel network) async {
+		assert(msg.cmd == 'INVITE');
+		var channel = msg.params[1];
+
+		await _show(
+			title: '${msg.source!.name} invited you to $channel',
+			channel: _NotificationChannel(
+				id: 'invite',
+				name: 'Invitations',
+				description: 'Invitations to join a channel',
+			),
+			tag: 'invite:${network.networkEntry.id}:$channel',
+		);
+	}
+
 	MessagingStyleInformation _buildMessagingStyleInfo(List<MessageEntry> entries, BufferModel buffer, bool isChannel) {
 		// TODO: Person.key, Person.bot, Person.uri
 		return MessagingStyleInformation(

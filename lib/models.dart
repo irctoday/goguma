@@ -26,6 +26,15 @@ class NetworkListModel extends ChangeNotifier {
 		_networks.clear();
 		notifyListeners();
 	}
+
+	NetworkModel? byId(int id) {
+		for (var network in networks) {
+			if (network.networkEntry.id == id) {
+				return network;
+			}
+		}
+		return null;
+	}
 }
 
 enum NetworkState { offline, connecting, registering, synchronizing, online }
