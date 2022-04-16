@@ -198,7 +198,12 @@ class Client {
 			_socket?.close();
 		});
 
-		await _register();
+		try {
+			await _register();
+		} on Exception {
+			_socket?.close();
+			rethrow;
+		}
 	}
 
 	void _log(String s) {
@@ -350,7 +355,6 @@ class Client {
 			switch (msg.cmd) {
 			case RPL_WELCOME:
 				if (_params.saslPlain != null && !saslSuccess) {
-					_socket?.close();
 					throw Exception('Server doesn\'t support SASL authentication');
 				}
 				return true;
@@ -367,7 +371,6 @@ class Client {
 			case ERR_SASLFAIL:
 			case ERR_SASLTOOLONG:
 			case ERR_SASLABORTED:
-				_socket?.close();
 				throw IrcException(msg);
 			case RPL_SASLSUCCESS:
 				saslSuccess = true;
