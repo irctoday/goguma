@@ -248,8 +248,12 @@ class Client {
 			d = _autoReconnectDelay;
 		}
 
-		_reconnectTimer = Timer(d, () {
-			connect().ignore();
+		_reconnectTimer = Timer(d, () async {
+			try {
+				await connect();
+			} on Exception catch (err) {
+				_log('Failed to reconnect: $err');
+			}
 		});
 	}
 
