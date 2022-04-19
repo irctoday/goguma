@@ -148,12 +148,12 @@ class _NetworkItem extends AnimatedWidget {
 	Widget build(BuildContext context) {
 		String subtitle;
 		if (network.bouncerNetwork != null && network.state == NetworkState.online) {
-			subtitle = _bouncerNetworkStateDescription(network.bouncerNetwork!.state);
+			subtitle = bouncerNetworkStateDescription(network.bouncerNetwork!.state);
 			if (network.bouncerNetwork?.error?.isNotEmpty == true) {
 				subtitle = '$subtitle - ${network.bouncerNetwork!.error}';
 			}
 		} else {
-			subtitle = _networkStateDescription(network.state);
+			subtitle = networkStateDescription(network.state);
 		}
 
 		return ListTile(
@@ -167,31 +167,5 @@ class _NetworkItem extends AnimatedWidget {
 				Navigator.pushNamed(context, EditNetworkPage.routeName, arguments: network.bouncerNetwork!);
 			},
 		);
-	}
-}
-
-String _networkStateDescription(NetworkState state) {
-	switch (state) {
-	case NetworkState.offline:
-		return 'Disconnected';
-	case NetworkState.connecting:
-		return 'Connecting…';
-	case NetworkState.registering:
-		return 'Logging in…';
-	case NetworkState.synchronizing:
-		return 'Synchronizing…';
-	case NetworkState.online:
-		return 'Connected';
-	}
-}
-
-String _bouncerNetworkStateDescription(BouncerNetworkState state) {
-	switch (state) {
-	case BouncerNetworkState.disconnected:
-		return 'Bouncer disconnected from network';
-	case BouncerNetworkState.connecting:
-		return 'Bouncer connecting to network…';
-	case BouncerNetworkState.connected:
-		return 'Connected';
 	}
 }

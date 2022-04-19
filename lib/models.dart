@@ -512,3 +512,29 @@ class MemberListModel extends ChangeNotifier {
 		notifyListeners();
 	}
 }
+
+String networkStateDescription(NetworkState state) {
+	switch (state) {
+		case NetworkState.offline:
+			return 'Disconnected';
+		case NetworkState.connecting:
+			return 'Connecting…';
+		case NetworkState.registering:
+			return 'Logging in…';
+		case NetworkState.synchronizing:
+			return 'Synchronizing…';
+		case NetworkState.online:
+			return 'Connected';
+	}
+}
+
+String bouncerNetworkStateDescription(BouncerNetworkState state) {
+	switch (state) {
+		case BouncerNetworkState.disconnected:
+			return 'Bouncer disconnected from network';
+		case BouncerNetworkState.connecting:
+			return 'Bouncer connecting to network…';
+		case BouncerNetworkState.connected:
+			return 'Connected';
+	}
+}
