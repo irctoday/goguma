@@ -514,7 +514,7 @@ class _CompactMessageItem extends StatelessWidget {
 		var prevIrcMsg = prevMsg?.msg;
 		var prevMsgSameSender = prevIrcMsg != null && ircMsg.source!.name == prevIrcMsg.source!.name;
 
-		var textStyle = DefaultTextStyle.of(context).style.apply(color: Theme.of(context).textTheme.bodyText1!.color);
+		var textStyle = TextStyle(color: Theme.of(context).textTheme.bodyText1!.color);
 		var linkStyle = textStyle.apply(decoration: TextDecoration.underline);
 		TextSpan textSpan;
 
@@ -573,8 +573,8 @@ class _CompactMessageItem extends StatelessWidget {
 
 		stack.add(Container(
 			margin: EdgeInsets.only(left: 4),
-			child: RichText(
-				text: TextSpan(
+			child: Text.rich(
+				TextSpan(
 					children: content,
 				),
 			),
