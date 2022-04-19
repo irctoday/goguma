@@ -7,6 +7,7 @@ import '../irc.dart';
 import '../linkify.dart';
 import '../models.dart';
 import 'buffer.dart';
+import 'network_details.dart';
 
 class BufferDetailsPage extends StatefulWidget {
 	static const routeName = '/buffer/details';
@@ -137,6 +138,9 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 		children.add(ListTile(
 			title: Text(network.displayName),
 			leading: Icon(Icons.hub),
+			onTap: network.bouncerNetwork == null ? null : () {
+				Navigator.pushNamed(context, NetworkDetailsPage.routeName, arguments: network);
+			},
 		));
 
 		if (buffer.online == false) {

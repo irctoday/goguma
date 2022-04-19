@@ -11,6 +11,7 @@ import '../dialog/edit_profile.dart';
 import '../irc.dart';
 import '../models.dart';
 import 'edit_network.dart';
+import 'network_details.dart';
 
 class SettingsPage extends StatefulWidget {
 	static const routeName = '/settings';
@@ -164,7 +165,7 @@ class _NetworkItem extends AnimatedWidget {
 				children: const [Icon(Icons.hub)],
 			),
 			onTap: network.bouncerNetwork == null ? null : () {
-				Navigator.pushNamed(context, EditNetworkPage.routeName, arguments: network.bouncerNetwork!);
+				Navigator.pushNamed(context, NetworkDetailsPage.routeName, arguments: network);
 			},
 		);
 	}

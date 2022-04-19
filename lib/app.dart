@@ -15,6 +15,7 @@ import 'page/buffer_list.dart';
 import 'page/connect.dart';
 import 'page/join.dart';
 import 'page/edit_network.dart';
+import 'page/network_details.dart';
 import 'page/settings.dart';
 
 const _themeMode = ThemeMode.system;
@@ -243,6 +244,19 @@ class AppState extends State<App> with WidgetsBindingObserver {
 		case EditNetworkPage.routeName:
 			var network = settings.arguments as BouncerNetworkModel?;
 			builder = (context) => EditNetworkPage(network: network);
+			break;
+		case NetworkDetailsPage.routeName:
+			var network = settings.arguments as NetworkModel;
+			builder = (context) {
+				var client = context.read<ClientProvider>().get(network);
+				return MultiProvider(
+					providers: [
+						ChangeNotifierProvider<NetworkModel>.value(value: network),
+						Provider<Client>.value(value: client),
+					],
+					child: NetworkDetailsPage(),
+				);
+			};
 			break;
 		default:
 			throw Exception('Unknown route ${settings.name}');
