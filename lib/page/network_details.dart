@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../client.dart';
 import '../irc.dart';
+import '../linkify.dart';
 import '../models.dart';
 import 'buffer.dart';
 import 'edit_network.dart';
@@ -17,10 +18,45 @@ class NetworkDetailsPage extends StatefulWidget {
 }
 
 class _NetworkDetailsPageState extends State<NetworkDetailsPage> {
+	String? _motd;
+
+	@override
+	void initState() {
+		super.initState();
+		_fetchMotd();
+	}
+
+	void _fetchMotd() async {
+		var client = context.read<Client>();
+		var motd = await client.motd();
+		if (!mounted) {
+			return;
+		}
+		setState(() {
+			_motd = motd;
+		});
+	}
+
 	@override
 	Widget build(BuildContext context) {
 		var network = context.watch<NetworkModel>();
 		List<Widget> children = [];
+
+		if (_motd != null) {
+			var motd = stripAnsiFormatting(_motd!);
+			children.add(Container(
+				margin: const EdgeInsets.all(15),
+				child: Builder(builder: (context) {
+					var textStyle = DefaultTextStyle.of(context).style.apply(fontSizeFactor: 1.2);
+					var linkStyle = textStyle.apply(color: Colors.blue, decoration: TextDecoration.underline);
+					return RichText(
+						textAlign: TextAlign.center,
+						text: linkify(motd, textStyle: textStyle, linkStyle: linkStyle),
+					);
+				}),
+			));
+			children.add(Divider());
+		}
 
 		String statusTitle;
 		String? statusSubtitle;
