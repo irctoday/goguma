@@ -37,6 +37,39 @@ class _NetworkDetailsPageState extends State<NetworkDetailsPage> {
 		});
 	}
 
+	void _showDeleteDialog() {
+		var network = context.read<NetworkModel>();
+		showDialog(
+			context: context,
+			builder: (context) => AlertDialog(
+				title: Text('Delete network ${network.displayName}?'),
+				content: Text('Are you sure you want to delete this network?'),
+				actions: [
+					FlatButton(
+						child: Text('CANCEL'),
+						onPressed: () {
+							Navigator.pop(context);
+						},
+					),
+					FlatButton(
+						child: Text('DELETE'),
+						onPressed: _delete,
+					),
+				],
+			),
+		);
+	}
+
+	void _delete() {
+		var network = context.read<NetworkModel>();
+		var client = context.read<Client>();
+		var msg = IrcMessage('BOUNCER', ['DELNETWORK', network.networkId.toString()]);
+		client.send(msg);
+
+		Navigator.pop(context);
+		Navigator.pop(context);
+	}
+
 	@override
 	Widget build(BuildContext context) {
 		var network = context.watch<NetworkModel>();
@@ -120,11 +153,7 @@ class _NetworkDetailsPageState extends State<NetworkDetailsPage> {
 							IconButton(
 								icon: Icon(Icons.delete_forever),
 								tooltip: 'Delete network',
-								onPressed: () {
-									var msg = IrcMessage('BOUNCER', ['DELNETWORK', network.networkId.toString()]);
-									client.send(msg);
-									Navigator.pop(context);
-								},
+								onPressed: _showDeleteDialog,
 							),
 						],
 					),
