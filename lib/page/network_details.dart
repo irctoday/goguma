@@ -45,13 +45,13 @@ class _NetworkDetailsPageState extends State<NetworkDetailsPage> {
 				title: Text('Delete network ${network.displayName}?'),
 				content: Text('Are you sure you want to delete this network?'),
 				actions: [
-					FlatButton(
+					TextButton(
 						child: Text('CANCEL'),
 						onPressed: () {
 							Navigator.pop(context);
 						},
 					),
-					FlatButton(
+					TextButton(
 						child: Text('DELETE'),
 						onPressed: _delete,
 					),
