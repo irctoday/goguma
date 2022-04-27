@@ -117,6 +117,10 @@ class Client {
 		_autoReconnect = autoReconnect;
 
 	Future<void> connect() async {
+		if (_messagesController.isClosed) {
+			throw StateError('connect() called after disconnect()');
+		}
+
 		// Always switch to the disconnected state, because users reset their
 		// state when handling that transition.
 		_reconnectTimer?.cancel();
