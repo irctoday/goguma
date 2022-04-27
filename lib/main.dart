@@ -20,7 +20,17 @@ import 'notification_controller.dart';
 const _debugWorkManager = false;
 const _resetWorkManager = false;
 
-void main() async {
+void main() {
+	runZonedGuarded(_main, (Object error, StackTrace stack) {
+		FlutterError.reportError(FlutterErrorDetails(
+			exception: error,
+			stack: stack,
+			library: 'goguma',
+		));
+	});
+}
+
+void _main() async {
 	var syncReceivePort = ReceivePort('main:sync');
 	IsolateNameServer.registerPortWithName(syncReceivePort.sendPort, 'main:sync');
 
