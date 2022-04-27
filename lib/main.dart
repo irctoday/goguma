@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,6 +22,8 @@ const _debugWorkManager = false;
 const _resetWorkManager = false;
 
 void main() {
+	FlutterError.onError = _handleFlutterError;
+
 	runZonedGuarded(_main, (Object error, StackTrace stack) {
 		FlutterError.reportError(FlutterErrorDetails(
 			exception: error,
@@ -221,4 +224,11 @@ Future<void> _waitNetworkOnline(NetworkModel network) {
 	return completer.future.timeout(Duration(minutes: 5)).whenComplete(() {
 		network.removeListener(listener);
 	});
+}
+
+void _handleFlutterError(FlutterErrorDetails details) {
+	FlutterError.presentError(details);
+	if (kReleaseMode && !(details.exception is Exception)) {
+		exit(1);
+	}
 }
