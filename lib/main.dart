@@ -228,7 +228,7 @@ Future<void> _waitNetworkOnline(NetworkModel network) {
 
 void _handleFlutterError(FlutterErrorDetails details) {
 	FlutterError.dumpErrorToConsole(details, forceReport: true);
-	if (kReleaseMode && !(details.exception is Exception)) {
+	if (kReleaseMode && details.exception is Error) {
 		exit(1);
 	}
 }
