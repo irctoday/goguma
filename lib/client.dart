@@ -593,17 +593,19 @@ class Client {
 		return _fetchChatHistory('LATEST', target, params);
 	}
 
-	Future<void> ping() {
+	Future<void> ping() async {
 		var token = 'goguma-$_nextPingSerial';
 		var msg = IrcMessage('PING', [token]);
 		_nextPingSerial++;
 
-		return _roundtripMessage(msg, (msg) {
-			return msg.cmd == 'PONG' && msg.params[1] == token;
-		}).timeout(Duration(seconds: 15), onTimeout: () {
+		try {
+			await _roundtripMessage(msg, (msg) {
+				return msg.cmd == 'PONG' && msg.params[1] == token;
+			}).timeout(Duration(seconds: 15));
+		} on Exception {
 			_socket?.close();
-			throw TimeoutException('Ping timed out');
-		});
+			rethrow;
+		}
 	}
 
 	Future<void> fetchRead(String target) {
