@@ -504,7 +504,8 @@ class Client {
 		}
 	}
 
-	void disconnect() {
+	void dispose() {
+		_log('Destroying client');
 		_autoReconnect = false;
 		_reconnectTimer?.cancel();
 		_socket?.close();

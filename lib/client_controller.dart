@@ -73,12 +73,12 @@ class ClientProvider {
 		_controllers.remove(network);
 		_bufferList.removeByNetwork(network);
 		_networkList.remove(network);
-		client.disconnect();
+		client.dispose();
 	}
 
 	void disconnectAll() {
 		for (var cc in _controllers.values) {
-			cc.client.disconnect();
+			cc.client.dispose();
 		}
 		_controllers.clear();
 		_bufferList.clear();

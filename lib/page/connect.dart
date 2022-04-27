@@ -58,12 +58,12 @@ class ConnectPageState extends State<ConnectPage> {
 		NetworkEntry networkEntry;
 		try {
 			await client.connect();
-			client.disconnect();
+			client.dispose();
 
 			await db.storeServer(serverEntry);
 			networkEntry = await db.storeNetwork(NetworkEntry(server: serverEntry.id!));
 		} on Exception catch (err) {
-			client.disconnect();
+			client.dispose();
 			setState(() {
 				_error = err;
 				if (err is IrcException) {
