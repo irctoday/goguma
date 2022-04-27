@@ -513,7 +513,9 @@ class Client {
 	}
 
 	void send(IrcMessage msg) {
-		if (_socket == null) {
+		if (state == ClientState.disconnected) {
+			// TODO: throw SocketException.closed()
+			_log('Warning: tried to send message while connection is closed: $msg');
 			return;
 		}
 		if (kDebugMode) {
