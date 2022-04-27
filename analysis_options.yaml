@@ -11,6 +11,7 @@ analyzer:
 linter:
   rules:
     prefer_single_quotes: true
+    avoid_catches_without_on_clauses: true
     # Disabled because of IRC command constants
     constant_identifier_names: false
     # Disabled because we have so many of these

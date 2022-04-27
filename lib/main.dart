@@ -159,7 +159,7 @@ void _syncChatHistory(SendPort sendPort, ClientProvider clientProvider, NetworkL
 
 		print('Finished chat history synchronization');
 		sendPort.send(true);
-	} catch (err) {
+	} on Object catch (err) {
 		print('Failed chat history synchronization: $err');
 		sendPort.send(false);
 	} finally {

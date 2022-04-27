@@ -121,7 +121,7 @@ class _JoinPageState extends State<JoinPage> {
 		List<ListReply> replies = [];
 		try {
 			replies = await client.list(mask);
-		} catch (err) {
+		} on Exception catch (err) {
 			print('Failed to LIST channels: $err');
 		}
 
@@ -150,7 +150,7 @@ class _JoinPageState extends State<JoinPage> {
 		List<WhoReply> replies = [];
 		try {
 			replies = await client.who(query);
-		} catch (err) {
+		} on Exception catch (err) {
 			print('Failed to WHO user: $err');
 		}
 

@@ -274,8 +274,8 @@ class Client {
 			bool done;
 			try {
 				done = test(msg);
-			} catch (err) {
-				completer.completeError(err);
+			} on Object catch (err, stackTrace) {
+				completer.completeError(err, stackTrace);
 				return;
 			}
 			if (done) {
