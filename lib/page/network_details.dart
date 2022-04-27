@@ -39,7 +39,7 @@ class _NetworkDetailsPageState extends State<NetworkDetailsPage> {
 
 	void _showDeleteDialog() {
 		var network = context.read<NetworkModel>();
-		showDialog(
+		showDialog<void>(
 			context: context,
 			builder: (context) => AlertDialog(
 				title: Text('Delete network ${network.displayName}?'),
