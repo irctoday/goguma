@@ -737,6 +737,31 @@ class Client {
 		});
 	}
 
+	Future<String?> motd() async {
+		var msg = IrcMessage('MOTD', []);
+		String? motd;
+		await _roundtripMessage(msg, (msg) {
+			switch (msg.cmd) {
+			case RPL_MOTD:
+				var line = msg.params[1];
+				if (line.startsWith('- ')) {
+					line = line.substring(2);
+				}
+				if (motd == null) {
+					motd = line;
+				} else {
+					motd = motd! + '\n' + line;
+				}
+				break;
+			case RPL_ENDOFMOTD:
+			case ERR_NOMOTD:
+				return true;
+			}
+			return false;
+		});
+		return motd;
+	}
+
 	void monitor(Iterable<String> targets) {
 		var l = targets.where((name) => !_monitored.containsKey(name)).toList();
 		var limit = isupport.monitor;
