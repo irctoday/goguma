@@ -320,6 +320,9 @@ class ClientController {
 		case RPL_ENDOFMOTD:
 		case ERR_NOMOTD:
 			// These messages are used to indicate the end of the ISUPPORT list
+			if (network.state != NetworkState.registering) {
+				break;
+			}
 
 			// Send WHO commands for each user buffer we don't know the real
 			// name of
