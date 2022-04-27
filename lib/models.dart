@@ -270,6 +270,12 @@ class BufferListModel extends ChangeNotifier {
 		notifyListeners();
 	}
 
+	void removeByNetwork(NetworkModel network) {
+		_buffers.removeWhere((_, buf) => buf.network == network);
+		_rebuildSorted();
+		notifyListeners();
+	}
+
 	void clear() {
 		_buffers.clear();
 		_sorted.clear();

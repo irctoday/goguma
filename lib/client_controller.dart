@@ -68,12 +68,21 @@ class ClientProvider {
 		return _controllers[network]!.client;
 	}
 
+	void disconnect(NetworkModel network) {
+		var client = get(network);
+		_controllers.remove(network);
+		_bufferList.removeByNetwork(network);
+		_networkList.remove(network);
+		client.disconnect();
+	}
+
 	void disconnectAll() {
 		for (var cc in _controllers.values) {
 			cc.client.disconnect();
 		}
 		_controllers.clear();
 		_bufferList.clear();
+		_networkList.clear();
 	}
 
 	void _setupSync() {
@@ -529,10 +538,8 @@ class ClientController {
 					break;
 				}
 
-				var childClient = _provider.get(childNetwork);
-				childClient.disconnect();
+				_provider.disconnect(childNetwork);
 
-				_networkList.remove(childNetwork);
 				return _db.deleteNetwork(childNetwork.networkId);
 			}
 
