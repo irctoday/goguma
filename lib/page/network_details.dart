@@ -129,7 +129,6 @@ class _NetworkDetailsPageState extends State<NetworkDetailsPage> {
 			child: Text('${buffers.length} conversation$s', style: TextStyle(fontWeight: FontWeight.bold)),
 		));
 
-		var client = context.read<Client>();
 		return Scaffold(
 			body: CustomScrollView(
 				slivers: [
