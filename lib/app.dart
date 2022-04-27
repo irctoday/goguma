@@ -113,13 +113,14 @@ class AppState extends State<App> with WidgetsBindingObserver {
 	}
 
 	void _pingAll() {
-		context.read<ClientProvider>().clients.forEach((client) {
+		context.read<ClientProvider>().clients.forEach((client) async {
 			switch (client.state) {
 			case ClientState.connected:
-				client.ping().catchError((Object err) {
+				try {
+					await client.ping();
+				} on Exception catch (err) {
 					print('PING failed: $err');
-					return null;
-				});
+				}
 				break;
 			case ClientState.disconnected:
 				client.connect().ignore();
