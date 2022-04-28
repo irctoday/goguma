@@ -9,7 +9,7 @@ import 'buffer.dart';
 import 'edit_network.dart';
 
 class NetworkDetailsPage extends StatefulWidget {
-	static const routeName = '/network/details';
+	static const routeName = '/settings/network';
 
 	const NetworkDetailsPage({ Key? key }) : super(key: key);
 

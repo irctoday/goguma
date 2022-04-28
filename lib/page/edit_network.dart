@@ -6,7 +6,7 @@ import '../irc.dart';
 import '../models.dart';
 
 class EditNetworkPage extends StatefulWidget {
-	static const routeName = '/network/edit';
+	static const routeName = '/settings/network/edit';
 
 	final BouncerNetworkModel? network;
 
