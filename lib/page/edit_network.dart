@@ -34,8 +34,6 @@ class EditNetworkPageState extends State<EditNetworkPage> {
 
 		var network = widget.network;
 
-		_nameController = TextEditingController(text: network?.name);
-
 		var url = network?.host ?? '';
 		var defaultPort = 6697;
 		if (network?.tls == false) {
@@ -46,6 +44,12 @@ class EditNetworkPageState extends State<EditNetworkPage> {
 			url = url + ':${network?.port}';
 		}
 
+		var name = network?.name;
+		if (name == network?.host) {
+			name = null;
+		}
+
+		_nameController = TextEditingController(text: name);
 		_urlController = TextEditingController(text: url);
 		_nicknameController = TextEditingController(text:  network?.nickname);
 		_usernameController = TextEditingController(text: network?.username);
@@ -114,6 +118,10 @@ class EditNetworkPageState extends State<EditNetworkPage> {
 	Widget build(BuildContext context) {
 		List<Widget> expandedFields = [
 			TextFormField(
+				controller: _nameController,
+				decoration: InputDecoration(labelText: 'Network name (optional)'),
+			),
+			TextFormField(
 				controller: _nicknameController,
 				decoration: InputDecoration(labelText: 'Nickname (optional)'),
 			),
@@ -139,16 +147,6 @@ class EditNetworkPageState extends State<EditNetworkPage> {
 			body: Form(
 				key: _formKey,
 				child: Container(padding: EdgeInsets.all(10), child: Column(children: [
-					TextFormField(
-						controller: _nameController,
-						decoration: InputDecoration(labelText: 'Name'),
-						validator: (value) {
-							if (value!.isEmpty) {
-								return 'Required';
-							}
-							return null;
-						},
-					),
 					TextFormField(
 						keyboardType: TextInputType.url,
 						controller: _urlController,
