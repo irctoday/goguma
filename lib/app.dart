@@ -123,7 +123,11 @@ class AppState extends State<App> with WidgetsBindingObserver {
 				}
 				break;
 			case ClientState.disconnected:
-				client.connect().ignore();
+				try {
+					await client.connect();
+				} on Exception catch (err) {
+					print('Reconnect failed: $err');
+				}
 				break;
 			default:
 				break;
