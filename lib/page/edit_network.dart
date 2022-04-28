@@ -123,12 +123,12 @@ class EditNetworkPageState extends State<EditNetworkPage> {
 			),
 			TextFormField(
 				controller: _realnameController,
-				decoration: InputDecoration(labelText: 'Realname (optional)'),
+				decoration: InputDecoration(labelText: 'Display name (optional)'),
 			),
 			TextFormField(
 				obscureText: true,
 				controller: _passController,
-				decoration: InputDecoration(labelText: 'Password (optional)'),
+				decoration: InputDecoration(labelText: 'Server password (optional)'),
 			),
 		];
 
