@@ -1,6 +1,6 @@
 # [goguma]
 
-[![builds.sr.ht status](https://builds.sr.ht/~emersion/goguma/commits.svg)](https://builds.sr.ht/~emersion/goguma/commits?)
+[![builds.sr.ht status](https://builds.sr.ht/~emersion/goguma/commits/master.svg)](https://builds.sr.ht/~emersion/goguma/commits/master?)
 
 An IRC client for mobile devices.
 
@@ -68,7 +68,7 @@ Copyright (C) 2021 The goguma Contributors
 
 [goguma]: https://sr.ht/~emersion/goguma/
 [fdroid-nightly]: https://fdroid.emersion.fr/#goguma-nightly
-[android-ci]: https://builds.sr.ht/~emersion/goguma/commits/android
+[android-ci]: https://builds.sr.ht/~emersion/goguma/commits/android/master
 [mailing list]: https://lists.sr.ht/~emersion/goguma-dev
 [issue tracker]: https://todo.sr.ht/~emersion/goguma
 [#emersion on Libera Chat]: ircs://irc.libera.chat/#emersion
