@@ -514,7 +514,7 @@ class Client {
 	}
 
 	void send(IrcMessage msg) {
-		if (state == ClientState.disconnected) {
+		if (_socket == null) {
 			// TODO: throw SocketException.closed()
 			_log('Warning: tried to send message while connection is closed: $msg');
 			return;
@@ -522,7 +522,7 @@ class Client {
 		if (kDebugMode) {
 			_log('-> ' + msg.toString());
 		}
-		return _socket!.write(msg.toString() + '\r\n');
+		_socket!.write(msg.toString() + '\r\n');
 	}
 
 	bool isChannel(String name) {
