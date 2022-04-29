@@ -262,7 +262,7 @@ class Client {
 	}
 
 	Future<ClientMessage> _waitMessage(bool Function(ClientMessage msg) test) {
-		if (state == ClientState.disconnected) {
+		if (state != ClientState.connected) {
 			return Future.error(Exception('Disconnected from server'));
 		}
 
