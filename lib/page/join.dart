@@ -68,7 +68,7 @@ class _JoinPageState extends State<JoinPage> {
 		// filter the local results list
 
 		void handleActions(Iterable<_Action> actions) {
-			if (_serial != serial) {
+			if (_serial != serial || !mounted) {
 				return;
 			}
 			setState(() {
@@ -95,7 +95,7 @@ class _JoinPageState extends State<JoinPage> {
 		try {
 			await Future.wait(futures);
 		} finally {
-			if (_serial == serial) {
+			if (_serial == serial && mounted) {
 				setState(() {
 					_loading = false;
 				});
