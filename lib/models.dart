@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 import 'package:flutter/material.dart';
 
@@ -360,6 +361,7 @@ class BufferModel extends ChangeNotifier {
 	String? _lastDeliveredTime;
 	bool _messageHistoryLoaded = false;
 	List<MessageModel> _messages = [];
+	Map<String, Timer> _typing = {};
 
 	// Kept in sync by BufferPageState
 	bool focused = false;
@@ -480,6 +482,25 @@ class BufferModel extends ChangeNotifier {
 		_lastDeliveredTime = t;
 		notifyListeners();
 		return true;
+	}
+
+	List<String> get typing {
+		var typing = _typing.keys.toList();
+		typing.sort();
+		return typing;
+	}
+
+	void setTyping(String member, bool typing) {
+		_typing[member]?.cancel();
+		if (typing) {
+			_typing[member] = Timer(Duration(seconds: 6), () {
+				_typing.remove(member);
+				notifyListeners();
+			});
+		} else {
+			_typing.remove(member);
+		}
+		notifyListeners();
 	}
 }
 

@@ -450,7 +450,7 @@ class ClientController {
 			}
 
 			var buffer = _bufferList.get(msg.source.name, network);
-			if(buffer != null) {
+			if (buffer != null) {
 				buffer.realname = realname;
 				_db.storeBuffer(buffer.entry);
 			}
@@ -496,6 +496,7 @@ class ClientController {
 			break;
 		case 'PRIVMSG':
 		case 'NOTICE':
+		case 'TAGMSG':
 			var target = msg.params[0];
 			if (msg.batchByType('chathistory') != null) {
 				break;
@@ -504,6 +505,13 @@ class ClientController {
 			// messages, "$xxx" for server-wide broadcasts
 			if (!client.isChannel(target) && !client.isMyNick(msg.source.name)) {
 				target = msg.source.name;
+			}
+			if (msg.cmd == 'TAGMSG') {
+				var typing = msg.tags['+typing'];
+				if (typing != null && !client.isMyNick(msg.source.name)) {
+					_bufferList.get(target, network)?.setTyping(msg.source.name, typing == 'active');
+				}
+				break;
 			}
 			return _handleChatMessages(target, [msg]);
 		case 'INVITE':

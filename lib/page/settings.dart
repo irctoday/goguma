@@ -24,11 +24,13 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
 	late bool _compact;
+	late bool _typing;
 
 	@override
 	void initState() {
 		super.initState();
 		_compact = context.read<SharedPreferences>().getBool('buffer_compact') ?? false;
+		_typing = context.read<SharedPreferences>().getBool('typing_indicator') ?? false;
 	}
 
 	void _logout() {
@@ -116,6 +118,19 @@ class _SettingsPageState extends State<SettingsPage> {
 							setState(() {
 								_compact = c;
 								context.read<SharedPreferences>().setBool('buffer_compact', c);
+							});
+						},
+					),
+				),
+				ListTile(
+					title: Text('Send & display typing indicators'),
+					leading: Icon(Icons.border_color),
+					trailing: Switch(
+						value: _typing,
+						onChanged: (bool c) {
+							setState(() {
+								_typing = c;
+								context.read<SharedPreferences>().setBool('typing_indicator', c);
 							});
 						},
 					),

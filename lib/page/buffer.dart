@@ -78,6 +78,8 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 
 	bool _showJumpToBottom = false;
 
+	DateTime? _ownTyping;
+
 	@override
 	void initState() {
 		super.initState();
@@ -111,6 +113,8 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		var buffer = context.read<BufferModel>();
 		var client = context.read<Client>();
 
+		_setOwnTyping(false);
+
 		var msg = IrcMessage('PRIVMSG', [buffer.name, text]);
 		client.send(msg);
 
@@ -122,6 +126,18 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 				buffer.addMessages([MessageModel(entry: entry)], append: true);
 			}
 			context.read<BufferListModel>().bumpLastDeliveredTime(buffer, entry.time);
+		}
+	}
+
+	void _sendTypingStatus() {
+		var buffer = context.read<BufferModel>();
+		var client = context.read<Client>();
+
+		var active = _composerController.text != '';
+		var notify = _setOwnTyping(active);
+		if (notify) {
+			var msg = IrcMessage('TAGMSG', [buffer.name], tags: {'+typing': active ? 'active' : 'done'});
+			client.send(msg);
 		}
 	}
 
@@ -176,6 +192,21 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 				_chatHistoryLoading = false;
 			});
 		}
+	}
+
+	bool _setOwnTyping(bool active) {
+		bool notify;
+		var time = DateTime.now();
+		if (!active) {
+			notify = _ownTyping != null && _ownTyping!.add(Duration(seconds: 6)).isAfter(time);
+			_ownTyping = null;
+		} else {
+			notify = _ownTyping == null || _ownTyping!.add(Duration(seconds: 3)).isBefore(time);
+			if (notify) {
+				_ownTyping = time;
+			}
+		}
+		return notify;
 	}
 
 	@override
@@ -302,6 +333,17 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		}
 		var messages = buffer.messages;
 		var compact = context.read<SharedPreferences>().getBool('buffer_compact') ?? false;
+		var showTyping = context.read<SharedPreferences>().getBool('typing_indicator') ?? false;
+		if (!client.caps.enabled.contains('message-tags')) {
+			showTyping = false;
+		}
+
+		if (canSendMessage && showTyping) {
+			var typingNicks = buffer.typing;
+			if (typingNicks.isNotEmpty) {
+				subtitle = typingNicks.join(', ') + ' ${typingNicks.length > 1 ? 'are' : 'is'} typing...';
+			}
+		}
 
 		Widget? joinBanner;
 		if (isChannel && !buffer.joined && !buffer.joining) {
@@ -360,6 +402,9 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 								hintText: 'Write a message...',
 								border: InputBorder.none,
 							),
+							onChanged: showTyping ? (value) {
+								_sendTypingStatus();
+							} : null,
 							onSubmitted: (value) {
 								_submitComposer();
 							},
