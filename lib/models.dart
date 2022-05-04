@@ -361,7 +361,7 @@ class BufferModel extends ChangeNotifier {
 	String? _lastDeliveredTime;
 	bool _messageHistoryLoaded = false;
 	List<MessageModel> _messages = [];
-	Map<String, Timer> _typing = {};
+	final Map<String, Timer> _typing = {};
 
 	// Kept in sync by BufferPageState
 	bool focused = false;
