@@ -672,7 +672,7 @@ class _MessageItem extends StatelessWidget {
 		var isFirstInGroup = showUnreadMarker || !prevMsgSameSender || (prevMsgIsAction != isAction);
 		var showTime = !nextMsgSameSender || nextMsg!.entry.dateTime.difference(entry.dateTime) > Duration(minutes: 2);
 
-		var unreadMarkerColor = Theme.of(context).accentColor;
+		var unreadMarkerColor = Theme.of(context).colorScheme.secondary;
 		var eventColor = DefaultTextStyle.of(context).style.color!.withOpacity(0.5);
 
 		var colorSwatch = Colors.primaries[sender.hashCode % Colors.primaries.length];
