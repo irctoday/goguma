@@ -675,27 +675,24 @@ class _MessageItem extends StatelessWidget {
 		var unreadMarkerColor = Theme.of(context).colorScheme.secondary;
 		var eventColor = DefaultTextStyle.of(context).style.color!.withOpacity(0.5);
 
-		var colorSwatch = Colors.primaries[sender.hashCode % Colors.primaries.length];
-		var colorScheme = ColorScheme.fromSwatch(primarySwatch: colorSwatch);
-
-		//var boxColor = Theme.of(context).accentColor;
-		var boxColor = colorScheme.primary;
+		var boxColor = Colors.primaries[sender.hashCode % Colors.primaries.length].shade500;
 		var boxAlignment = Alignment.centerLeft;
 		var textStyle = DefaultTextStyle.of(context).style;
-		if (!isAction) {
-			textStyle = textStyle.apply(color: colorScheme.onPrimary);
-		}
 
 		if (client.isMyNick(sender)) {
 			// Actions are displayed as if they were told by an external
 			// narrator. To preserve this effect, always show actions on the
 			// left side.
-			boxColor = Colors.grey[200]!;
+			boxColor = Colors.grey.shade200;
 			if (!isAction) {
 				boxAlignment = Alignment.centerRight;
-				textStyle = DefaultTextStyle.of(context).style
-					.apply(color: boxColor.computeLuminance() > 0.5 ? Colors.black : Colors.white);
 			}
+		}
+
+		if (!isAction) {
+			textStyle = DefaultTextStyle.of(context).style.apply(
+				color: boxColor.computeLuminance() > 0.5 ? Colors.black : Colors.white,
+			);
 		}
 
 		const margin = 16.0;
