@@ -687,27 +687,20 @@ class ClientController {
 		if (buffer.muted) {
 			return;
 		}
-		var needsNotification = entries.any((entry) {
+		entries = entries.where((entry) {
 			if (buffer.lastDeliveredTime != null && buffer.lastDeliveredTime!.compareTo(entry.time) >= 0) {
 				return false;
 			}
 			return _shouldNotifyMessage(entry);
-		});
-		if (!needsNotification) {
-			return;
-		}
-
-		var unread = await _db.listUnreadMessages(buffer.id);
-		var notifyEntries = unread.where(_shouldNotifyMessage).toList();
-
-		if (notifyEntries.isEmpty) {
+		}).toList();
+		if (entries.isEmpty) {
 			return;
 		}
 
 		if (client.isChannel(buffer.name)) {
-			await _notifController.showHighlight(notifyEntries, buffer);
+			await _notifController.showHighlight(entries, buffer);
 		} else {
-			await _notifController.showDirectMessage(notifyEntries, buffer);
+			await _notifController.showDirectMessage(entries, buffer);
 		}
 	}
 

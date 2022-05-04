@@ -19,8 +19,10 @@ class _NotificationChannel {
 class _ActiveNotification {
 	final int id;
 	final String tag;
+	final String title;
+	final MessagingStyleInformation? messagingStyleInfo;
 
-	_ActiveNotification(this.id, this.tag);
+	_ActiveNotification(this.id, this.tag, this.title, this.messagingStyleInfo);
 }
 
 class NotificationController {
@@ -38,24 +40,43 @@ class NotificationController {
 
 		var androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 		if (androidPlugin != null) {
-			var activeNotifs = await androidPlugin.getActiveNotifications();
-			for (var notif in activeNotifs ?? <ActiveNotification>[]) {
-				if (notif.tag != null) {
-					_active.add(_ActiveNotification(notif.id, notif.tag!));
+			try {
+				var activeNotifs = await androidPlugin.getActiveNotifications();
+				if (activeNotifs != null) {
+					_populateActive(androidPlugin, activeNotifs);
 				}
-				if (_nextId <= notif.id) {
-					_nextId = notif.id + 1;
-				}
+			} on Exception catch (err) {
+				print('Failed to list active notifications: $err');
 			}
-
-			var launchDetails = await _plugin.getNotificationAppLaunchDetails();
-			if (launchDetails == null || !launchDetails.didNotificationLaunchApp) {
-				return null;
-			}
-			return launchDetails.payload;
 		}
 
-		return null;
+		var launchDetails = await _plugin.getNotificationAppLaunchDetails();
+		if (launchDetails == null || !launchDetails.didNotificationLaunchApp) {
+			return null;
+		}
+		return launchDetails.payload;
+	}
+
+	void _populateActive(AndroidFlutterLocalNotificationsPlugin androidPlugin, List<ActiveNotification> activeNotifs) async {
+		for (var notif in activeNotifs) {
+			if (_nextId <= notif.id) {
+				_nextId = notif.id + 1;
+			}
+
+			if (notif.tag == null || notif.title == null) {
+				print('Found an active notification without a tag or title');
+				continue;
+			}
+
+			MessagingStyleInformation? messagingStyleInfo;
+			try {
+				messagingStyleInfo = await androidPlugin.getActiveNotificationMessagingStyle(notif.id, tag: notif.tag);
+			} on Exception catch (err) {
+				print('Failed to get active notification messagign style: $err');
+			}
+
+			_active.add(_ActiveNotification(notif.id, notif.tag!, notif.title!, messagingStyleInfo));
+		}
 	}
 
 	void _handleSelectNotification(String? payload) {
@@ -67,14 +88,19 @@ class NotificationController {
 	}
 
 	Future<void> showDirectMessage(List<MessageEntry> entries, BufferModel buffer) async {
-		var entry = entries.last;
+		var entry = entries.first;
+		String tag = _bufferTag(buffer);
+		_ActiveNotification? replace = _getActiveWithTag(tag);
 
 		String title;
-		if (entries.length == 1) {
+		if (replace == null) {
 			title = 'New message from ${entry.msg.source!.name}';
 		} else {
-			title = '${entries.length} messages from ${entry.msg.source!.name}';
+			title = _incrementTitleCount(replace.title, entries.length, ' messages from ${entry.msg.source!.name}');
 		}
+
+		List<Message> messages = replace?.messagingStyleInfo?.messages ?? [];
+		messages.addAll(entries.map(_buildMessage));
 
 		await _show(
 			title: title,
@@ -85,20 +111,25 @@ class NotificationController {
 				description: 'Private messages sent directly to you',
 			),
 			dateTime: entry.dateTime,
-			styleInformation: _buildMessagingStyleInfo(entries, buffer, false),
+			messagingStyleInfo: _buildMessagingStyleInfo(messages, buffer, false),
 			tag: _bufferTag(buffer),
 		);
 	}
 
 	Future<void> showHighlight(List<MessageEntry> entries, BufferModel buffer) async {
-		var entry = entries.last;
+		var entry = entries.first;
+		String tag = _bufferTag(buffer);
+		_ActiveNotification? replace = _getActiveWithTag(tag);
 
 		String title;
-		if (entries.length == 1) {
+		if (replace == null) {
 			title = '${entry.msg.source!.name} mentionned you in ${buffer.name}';
 		} else {
-			title = '${entries.length} mentions in ${buffer.name}';
+			title = _incrementTitleCount(replace.title, entries.length, ' mentions in ${buffer.name}');
 		}
+
+		List<Message> messages = replace?.messagingStyleInfo?.messages ?? [];
+		messages.addAll(entries.map(_buildMessage));
 
 		await _show(
 			title: title,
@@ -109,7 +140,7 @@ class NotificationController {
 				description: 'Messages mentionning your nickname in a channel',
 			),
 			dateTime: entry.dateTime,
-			styleInformation: _buildMessagingStyleInfo(entries, buffer, true),
+			messagingStyleInfo: _buildMessagingStyleInfo(messages, buffer, true),
 			tag: _bufferTag(buffer),
 		);
 	}
@@ -129,19 +160,32 @@ class NotificationController {
 		);
 	}
 
-	MessagingStyleInformation _buildMessagingStyleInfo(List<MessageEntry> entries, BufferModel buffer, bool isChannel) {
+	String _incrementTitleCount(String title, int incr, String suffix) {
+		int total;
+		if (!title.endsWith(suffix)) {
+			total = 1;
+		} else {
+			total = int.parse(title.substring(0, title.length - suffix.length));
+		}
+		total += incr;
+		return '$total$suffix';
+	}
+
+	MessagingStyleInformation _buildMessagingStyleInfo(List<Message> messages, BufferModel buffer, bool isChannel) {
 		// TODO: Person.key, Person.bot, Person.uri
 		return MessagingStyleInformation(
 			Person(name: buffer.name),
 			conversationTitle: buffer.name,
 			groupConversation: isChannel,
-			messages: entries.map((entry) {
-				return Message(
-					_getMessageBody(entry),
-					entry.dateTime,
-					Person(name: entry.msg.source!.name),
-				);
-			}).toList(),
+			messages: messages,
+		);
+	}
+
+	Message _buildMessage(MessageEntry entry) {
+		return Message(
+			_getMessageBody(entry),
+			entry.dateTime,
+			Person(name: entry.msg.source!.name),
 		);
 	}
 
@@ -177,22 +221,24 @@ class NotificationController {
 		await Future.wait(futures);
 	}
 
+	_ActiveNotification? _getActiveWithTag(String tag) {
+		for (var notif in _active) {
+			if (notif.tag == tag) {
+				return notif;
+			}
+		}
+		return null;
+	}
+
 	Future<void> _show({
 		required String title,
 		String? body,
 		required _NotificationChannel channel,
 		required String tag,
 		DateTime? dateTime,
-		StyleInformation? styleInformation,
+		MessagingStyleInformation? messagingStyleInfo,
 	}) async {
-		_ActiveNotification? replace;
-		for (var notif in _active) {
-			if (notif.tag == tag) {
-				replace = notif;
-				break;
-			}
-		}
-
+		_ActiveNotification? replace = _getActiveWithTag(tag);
 		int id;
 		if (replace != null) {
 			_active.remove(replace);
@@ -200,7 +246,7 @@ class NotificationController {
 		} else {
 			id = _nextId++;
 		}
-		_active.add(_ActiveNotification(id, tag));
+		_active.add(_ActiveNotification(id, tag, title, messagingStyleInfo));
 
 		await _plugin.show(id, title, body, NotificationDetails(
 			linux: LinuxNotificationDetails(
@@ -212,7 +258,7 @@ class NotificationController {
 				priority: Priority.high,
 				category: 'msg',
 				when: dateTime?.millisecondsSinceEpoch,
-				styleInformation: styleInformation,
+				styleInformation: messagingStyleInfo,
 				tag: tag,
 				enableLights: true,
 			),
