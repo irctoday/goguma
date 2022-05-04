@@ -193,7 +193,13 @@ class NotificationController {
 			}
 		}
 
-		var id = replace?.id ?? _nextId++;
+		int id;
+		if (replace != null) {
+			_active.remove(replace);
+			id = replace.id;
+		} else {
+			id = _nextId++;
+		}
 		_active.add(_ActiveNotification(id, tag));
 
 		await _plugin.show(id, title, body, NotificationDetails(
