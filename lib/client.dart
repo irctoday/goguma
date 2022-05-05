@@ -33,7 +33,7 @@ class ConnectParams {
 		this.pass,
 		this.saslPlain,
 		this.bouncerNetId,
-	}) : this.realname = realname ?? nick;
+	}) : realname = realname ?? nick;
 
 	ConnectParams apply({
 		String? bouncerNetId,
@@ -902,7 +902,7 @@ class ClientEndOfNames extends ClientMessage {
 	final NamesReply names;
 
 	ClientEndOfNames._(IrcMessage msg, List<ClientMessage> names, IrcIsupportRegistry isupport, { ClientBatch? batch }) :
-		this.names = NamesReply.parse(names, isupport),
+		names = NamesReply.parse(names, isupport),
 		super._(msg, batch: batch);
 }
 
@@ -922,7 +922,8 @@ class ClientBatch {
 
 	UnmodifiableListView<ClientMessage> get messages => UnmodifiableListView(_messages);
 
-	ClientBatch._(this.type, List<String> params, this.parent) : this.params = UnmodifiableListView(params);
+	ClientBatch._(this.type, List<String> params, this.parent) :
+		params = UnmodifiableListView(params);
 }
 
 class ChatHistoryTarget {

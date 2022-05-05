@@ -224,7 +224,7 @@ class BufferKey {
 	final NetworkModel network;
 
 	BufferKey(String name, this.network, CaseMapping cm) :
-		this.name = cm(name);
+		name = cm(name);
 
 	BufferKey.fromBuffer(BufferModel buffer, CaseMapping cm) :
 		name = cm(buffer.name),

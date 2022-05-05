@@ -84,9 +84,12 @@ class IrcMessage {
 	final String cmd;
 	final UnmodifiableListView<String> params;
 
-	IrcMessage(this.cmd, List<String> params, { Map<String, String?> tags = const {}, this.source }) :
-		this.tags = UnmodifiableMapView(tags),
-		this.params = UnmodifiableListView(params);
+	IrcMessage(this.cmd, List<String> params, {
+		Map<String, String?> tags = const {},
+		this.source,
+	}) :
+		tags = UnmodifiableMapView(tags),
+		params = UnmodifiableListView(params);
 
 	static IrcMessage parse(String s) {
 		while (s.endsWith('\n') || s.endsWith('\r')) {
@@ -718,7 +721,7 @@ class CtcpMessage {
 	final String? param;
 
 	CtcpMessage(String cmd, [ this.param ]) :
-		this.cmd = cmd.toUpperCase();
+		cmd = cmd.toUpperCase();
 
 	static CtcpMessage? parse(IrcMessage msg) {
 		if (msg.cmd != 'PRIVMSG' && msg.cmd != 'NOTICE') {
@@ -1247,7 +1250,7 @@ class NamesReply {
 	final UnmodifiableListView<NamesReplyMember> members;
 
 	NamesReply({ required this.channel, required this.status, required List<NamesReplyMember> members }) :
-		this.members = UnmodifiableListView(members);
+		members = UnmodifiableListView(members);
 
 	factory NamesReply.parse(List<IrcMessage> replies, IrcIsupportRegistry isupport) {
 		assert(replies.first.cmd == RPL_NAMREPLY);
