@@ -18,4 +18,6 @@ linter:
     # TODO: get rid of them
     prefer_const_constructors: false
     prefer_is_empty: false
+    prefer_is_not_empty: false
+    prefer_is_not_operator: false
     avoid_print: false
