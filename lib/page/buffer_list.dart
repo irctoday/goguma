@@ -72,7 +72,7 @@ class _BufferListPageState extends State<BufferListPage> {
 			db.storeBuffer(buffer.entry);
 
 			var client = clientProvider.get(buffer.network);
-			client.setRead(buffer.name, buffer.lastDeliveredTime!);
+			client.setReadMarker(buffer.name, buffer.lastDeliveredTime!);
 		}
 
 		// Re-compute hasUnreadBuffer

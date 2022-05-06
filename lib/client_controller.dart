@@ -386,10 +386,10 @@ class ClientController {
 			List<Future<void>> syncFutures = [];
 
 			// Query latest READ status for user targets
-			if (client.caps.enabled.contains('soju.im/read')) {
+			if (client.supportsReadMarker()) {
 				for (var buffer in _bufferList.buffers) {
 					if (buffer.network == network && !client.isChannel(buffer.name)) {
-						syncFutures.add(client.fetchRead(buffer.name));
+						syncFutures.add(client.fetchReadMarker(buffer.name));
 					}
 				}
 			}
@@ -620,6 +620,7 @@ class ClientController {
 				_provider.add(childClient, childNetwork);
 				childClient.connect();
 			});
+		case 'MARKREAD':
 		case 'READ':
 			var target = msg.params[0];
 			var bound = msg.params[1];
@@ -628,7 +629,7 @@ class ClientController {
 				break;
 			}
 			if (!bound.startsWith('timestamp=')) {
-				throw FormatException('Invalid READ bound: $msg');
+				throw FormatException('Invalid MARKREAD bound: $msg');
 			}
 			var time = bound.replaceFirst('timestamp=', '');
 
@@ -701,7 +702,7 @@ class ClientController {
 		} else if (buf.entry.lastReadTime == null || buf.entry.lastReadTime!.compareTo(t) < 0) {
 			buf.entry.lastReadTime = t;
 			_db.storeBuffer(buf.entry);
-			client.setRead(buf.name, buf.entry.lastReadTime!);
+			client.setReadMarker(buf.name, buf.entry.lastReadTime!);
 		}
 
 		_bufferList.bumpLastDeliveredTime(buf, t);

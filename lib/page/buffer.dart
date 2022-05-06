@@ -264,7 +264,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 
 			var client = context.read<Client>();
 			if (buffer.entry.lastReadTime != null && client.state != ClientState.disconnected) {
-				client.setRead(buffer.name, buffer.entry.lastReadTime!);
+				client.setReadMarker(buffer.name, buffer.entry.lastReadTime!);
 			}
 		}
 		buffer.unreadCount = 0;
