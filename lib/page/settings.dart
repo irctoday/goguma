@@ -140,7 +140,7 @@ class _SettingsPageState extends State<SettingsPage> {
 					title: Text('About'),
 					leading: Icon(Icons.info),
 					onTap: () {
-						launchUrl(Uri.parse('https://sr.ht/~emersion/goguma/'));
+						launchUrl(Uri.parse('https://sr.ht/~emersion/goguma/'), mode: LaunchMode.externalApplication);
 					},
 				),
 				ListTile(

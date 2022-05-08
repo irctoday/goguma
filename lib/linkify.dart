@@ -11,7 +11,7 @@ TextSpan linkify(String text, { required TextStyle textStyle, required TextStyle
 	return buildTextSpan(
 		elements,
 		onOpen: (link) {
-			launchUrl(Uri.parse(link.url));
+			launchUrl(Uri.parse(link.url), mode: LaunchMode.externalApplication);
 		},
 		style: textStyle,
 		linkStyle: linkStyle,
