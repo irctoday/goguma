@@ -10,8 +10,11 @@ TextSpan linkify(String text, { required TextStyle textStyle, required TextStyle
 	));
 	return buildTextSpan(
 		elements,
-		onOpen: (link) {
-			launchUrl(Uri.parse(link.url), mode: LaunchMode.externalApplication);
+		onOpen: (link) async {
+			bool ok = await launchUrl(Uri.parse(link.url), mode: LaunchMode.externalApplication);
+			if (!ok) {
+				throw Exception('Failed to launch URL: ${link.url}');
+			}
 		},
 		style: textStyle,
 		linkStyle: linkStyle,
