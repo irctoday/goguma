@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../ansi.dart';
 import '../client_controller.dart';
 import '../database.dart';
-import '../irc.dart';
 import '../models.dart';
 import '../page/join.dart';
 import '../page/settings.dart';

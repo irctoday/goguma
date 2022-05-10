@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'buffer.dart';
+import '../ansi.dart';
 import '../irc.dart';
 import '../client.dart';
 import '../client_controller.dart';

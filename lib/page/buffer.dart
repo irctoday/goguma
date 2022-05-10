@@ -5,6 +5,7 @@ import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../ansi.dart';
 import '../client.dart';
 import '../client_controller.dart';
 import '../database.dart';

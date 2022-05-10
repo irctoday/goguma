@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import 'ansi.dart';
 import 'database.dart';
 import 'irc.dart';
 import 'models.dart';

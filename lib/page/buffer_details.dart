@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../ansi.dart';
 import '../client.dart';
 import '../dialog/edit_topic.dart';
 import '../irc.dart';
