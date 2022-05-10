@@ -118,7 +118,7 @@ class Client {
 
 	Future<void> connect() async {
 		if (_messagesController.isClosed) {
-			throw StateError('connect() called after disconnect()');
+			throw StateError('connect() called after dispose()');
 		}
 
 		// Always switch to the disconnected state, because users reset their
@@ -505,6 +505,9 @@ class Client {
 	}
 
 	void dispose() {
+		if (_messagesController.isClosed) {
+			throw StateError('dispose() called twice');
+		}
 		_log('Destroying client');
 		_autoReconnect = false;
 		_reconnectTimer?.cancel();
