@@ -146,6 +146,7 @@ void _initWorkManager() {
 
 void _syncChatHistory(SendPort sendPort, ClientProvider clientProvider, NetworkListModel networkList) async {
 	print('Starting chat history synchronization');
+	sendPort.send(null); // send an ACK
 
 	var autoReconnectLock = ClientAutoReconnectLock.acquire(clientProvider);
 
@@ -189,6 +190,11 @@ void _dispatchWorkManager() {
 			var receivePort = ReceivePort('work-manager:sync');
 			var sendPort = IsolateNameServer.lookupPortByName('main:sync')!;
 			sendPort.send(receivePort.sendPort);
+
+			// Wait for an ACK
+			await receivePort.first.timeout(const Duration(seconds: 5));
+
+			// Wait for the result
 			var data = await receivePort.first;
 			receivePort.close();
 			return data as bool;
