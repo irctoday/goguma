@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../client.dart';
 import '../client_controller.dart';
 import '../database.dart';
 import '../irc.dart';
 import '../models.dart';
+import '../prefs.dart';
 import 'buffer_list.dart';
 
 class ConnectPage extends StatefulWidget {
@@ -46,7 +46,7 @@ class ConnectPageState extends State<ConnectPage> {
 		});
 
 		var db = context.read<DB>();
-		var sharedPreferences = context.read<SharedPreferences>();
+		var prefs = context.read<Prefs>();
 
 		// TODO: only connect once (but be careful not to loose messages
 		// sent immediately after RPL_WELCOME)
@@ -79,7 +79,7 @@ class ConnectPageState extends State<ConnectPage> {
 			});
 		}
 
-		await sharedPreferences.setString('nickname', nicknameController.text);
+		prefs.nickname = nicknameController.text;
 
 		client = Client(clientParams);
 		var network = NetworkModel(serverEntry, networkEntry, client.nick, client.realname);

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'connect.dart';
@@ -10,6 +9,7 @@ import '../database.dart';
 import '../dialog/edit_profile.dart';
 import '../irc.dart';
 import '../models.dart';
+import '../prefs.dart';
 import 'edit_network.dart';
 import 'network_details.dart';
 
@@ -29,8 +29,10 @@ class _SettingsPageState extends State<SettingsPage> {
 	@override
 	void initState() {
 		super.initState();
-		_compact = context.read<SharedPreferences>().getBool('buffer_compact') ?? false;
-		_typing = context.read<SharedPreferences>().getBool('typing_indicator') ?? false;
+
+		var prefs = context.read<Prefs>();
+		_compact = prefs.bufferCompact;
+		_typing = prefs.typingIndicator;
 	}
 
 	void _logout() {
@@ -114,10 +116,10 @@ class _SettingsPageState extends State<SettingsPage> {
 					leading: Icon(Icons.reorder),
 					trailing: Switch(
 						value: _compact,
-						onChanged: (bool c) {
+						onChanged: (bool enabled) {
+							context.read<Prefs>().bufferCompact = enabled;
 							setState(() {
-								_compact = c;
-								context.read<SharedPreferences>().setBool('buffer_compact', c);
+								_compact = enabled;
 							});
 						},
 					),
@@ -127,10 +129,10 @@ class _SettingsPageState extends State<SettingsPage> {
 					leading: Icon(Icons.border_color),
 					trailing: Switch(
 						value: _typing,
-						onChanged: (bool c) {
+						onChanged: (bool enabled) {
+							context.read<Prefs>().typingIndicator = enabled;
 							setState(() {
-								_typing = c;
-								context.read<SharedPreferences>().setBool('typing_indicator', c);
+								_typing = enabled;
 							});
 						},
 					),

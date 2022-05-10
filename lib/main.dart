@@ -6,7 +6,6 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
 import 'android_le.dart';
@@ -16,6 +15,7 @@ import 'client_controller.dart';
 import 'database.dart';
 import 'models.dart';
 import 'notification_controller.dart';
+import 'prefs.dart';
 
 // Debugging knobs for work manager.
 const _debugWorkManager = false;
@@ -45,9 +45,7 @@ void _main() async {
 	}
 
 	var notifController = NotificationController();
-
-	var sharedPreferences = await SharedPreferences.getInstance();
-
+	var prefs = await Prefs.load();
 	var db = await DB.open();
 
 	// Load all the data we need concurrently
@@ -62,9 +60,6 @@ void _main() async {
 	var bufferEntries = await bufferEntriesFuture;
 	var unreadCounts = await unreadCountsFuture;
 	var lastDeliveredTimes = await lastDeliveredTimesFuture;
-
-	var defaultNickname = sharedPreferences.getString('nickname');
-	var defaultRealname = sharedPreferences.getString('realname');
 
 	var networkList = NetworkListModel();
 	var bufferList = BufferListModel();
@@ -86,8 +81,8 @@ void _main() async {
 
 		var clientParams = connectParamsFromServerEntry(
 			serverEntry,
-			defaultNickname: defaultNickname ?? 'user',
-			defaultRealname: defaultRealname,
+			defaultNickname: prefs.nickname,
+			defaultRealname: prefs.realname,
 		);
 		if (networkEntry.bouncerId != null) {
 			clientParams = clientParams.apply(bouncerNetId: networkEntry.bouncerId);
@@ -125,7 +120,7 @@ void _main() async {
 			Provider<DB>.value(value: db),
 			Provider<ClientProvider>.value(value: clientProvider),
 			Provider<NotificationController>.value(value: notifController),
-			Provider<SharedPreferences>.value(value: sharedPreferences),
+			Provider<Prefs>.value(value: prefs),
 			ChangeNotifierProvider<NetworkListModel>.value(value: networkList),
 			ChangeNotifierProvider<BufferListModel>.value(value: bufferList),
 			ChangeNotifierProvider<BouncerNetworkListModel>.value(value: bouncerNetworkList),

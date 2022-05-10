@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../ansi.dart';
 import '../client.dart';
@@ -13,6 +12,7 @@ import '../irc.dart';
 import '../linkify.dart';
 import '../models.dart';
 import '../notification_controller.dart';
+import '../prefs.dart';
 import '../widget/network_indicator.dart';
 import '../widget/swipe_action.dart';
 import 'buffer_details.dart';
@@ -321,8 +321,10 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 	@override
 	Widget build(BuildContext context) {
 		var client = context.read<Client>();
+		var prefs = context.read<Prefs>();
 		var buffer = context.watch<BufferModel>();
 		var network = context.watch<NetworkModel>();
+
 		var subtitle = buffer.topic ?? buffer.realname;
 		var isOnline = network.state == NetworkState.synchronizing || network.state == NetworkState.online;
 		var canSendMessage = isOnline;
@@ -333,8 +335,9 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 			canSendMessage = canSendMessage && buffer.online != false;
 		}
 		var messages = buffer.messages;
-		var compact = context.read<SharedPreferences>().getBool('buffer_compact') ?? false;
-		var showTyping = context.read<SharedPreferences>().getBool('typing_indicator') ?? false;
+
+		var compact = prefs.bufferCompact;
+		var showTyping = prefs.typingIndicator;
 		if (!client.caps.enabled.contains('message-tags')) {
 			showTyping = false;
 		}

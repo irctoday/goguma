@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../client_controller.dart';
 import '../database.dart';
 import '../irc.dart';
 import '../models.dart';
+import '../prefs.dart';
 
 class EditProfileDialog extends StatefulWidget {
 	final NetworkModel network;
@@ -64,7 +64,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 		Navigator.pop(context);
 
 		var client = context.read<ClientProvider>().get(widget.network);
-		var sharedPreferences = context.read<SharedPreferences>();
+		var prefs = context.read<Prefs>();
 
 		var nickname = _nicknameController.text;
 		var realname = _realnameController.text;
@@ -77,7 +77,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 			// in our DB to avoid saving a bogus nickname.
 			await client.setNickname(nickname);
 
-			await sharedPreferences.setString('nickname', nickname);
+			prefs.nickname = nickname;
 
 			// Previous versions of Goguma stored the nickname in the DB. New
 			// versions store it in SharedPreferences. Clear the DB if
@@ -91,7 +91,11 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 		if (realname != client.realname) {
 			await client.setRealname(realname);
 
-			await sharedPreferences.setString('realname', realname);
+			if (realname != nickname) {
+				prefs.realname = realname;
+			} else {
+				prefs.realname = null;
+			}
 		}
 	}
 
