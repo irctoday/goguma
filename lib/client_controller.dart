@@ -67,7 +67,7 @@ class ClientProvider {
 		_notifController = notifController;
 
 	void add(Client client, NetworkModel network) {
-		_controllers[network] = ClientController(this, client, network);
+		_controllers[network] = ClientController._(this, client, network);
 	}
 
 	Client get(NetworkModel network) {
@@ -261,13 +261,10 @@ class ClientController {
 	BouncerNetworkListModel get _bouncerNetworkList => _provider._bouncerNetworkList;
 	NotificationController get _notifController => _provider._notifController;
 
-	ClientController(ClientProvider provider, Client client, NetworkModel network) :
-			_provider = provider,
-			_client = client,
-			_network = network {
+	ClientController._(this._provider, this._client, this._network) {
 		assert(client.state == ClientState.disconnected);
 
-		client.autoReconnect = !provider._autoReconnectLocks.isEmpty;
+		client.autoReconnect = !_provider._autoReconnectLocks.isEmpty;
 
 		client.states.listen((state) {
 			switch (state) {
