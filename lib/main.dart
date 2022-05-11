@@ -18,7 +18,7 @@ import 'notification_controller.dart';
 import 'prefs.dart';
 
 // Debugging knobs for work manager.
-const _debugWorkManager = false;
+const _debugWorkManager = bool.fromEnvironment('debugWorkManager', defaultValue: false);
 
 void main() {
 	FlutterError.onError = _handleFlutterError;
