@@ -179,24 +179,37 @@ void _syncChatHistory(SendPort sendPort, ClientProvider clientProvider, NetworkL
 // This function is called from a separate Isolate.
 void _dispatchWorkManager() {
 	Workmanager().executeTask((taskName, data) async {
-		print('Executing work manager task: $taskName');
-		switch (taskName) {
-		case 'sync':
-			var receivePort = ReceivePort('work-manager:sync');
-			var sendPort = IsolateNameServer.lookupPortByName('main:sync')!;
-			sendPort.send(receivePort.sendPort);
-
-			// Wait for an ACK
-			await receivePort.first.timeout(const Duration(seconds: 5));
-
-			// Wait for the result
-			var data = await receivePort.first;
-			receivePort.close();
-			return data as bool;
-		default:
-			throw Exception('Unknown work manager task name: $taskName');
+		try {
+			print('Executing work manager task: $taskName');
+			switch (taskName) {
+			case 'sync':
+				return await _handleWorkManagerSync();
+			default:
+				throw Exception('Unknown work manager task name: $taskName');
+			}
+		} on Object catch (error, stack) {
+			FlutterError.reportError(FlutterErrorDetails(
+				exception: error,
+				stack: stack,
+				library: 'workmanager',
+			));
+			return false;
 		}
 	});
+}
+
+Future<bool> _handleWorkManagerSync() async {
+	var receivePort = ReceivePort('work-manager:sync');
+	var sendPort = IsolateNameServer.lookupPortByName('main:sync')!;
+	sendPort.send(receivePort.sendPort);
+
+	// Wait for an ACK
+	await receivePort.first.timeout(const Duration(seconds: 5));
+
+	// Wait for the result
+	var data = await receivePort.first;
+	receivePort.close();
+	return data as bool;
 }
 
 Future<void> _waitNetworkOnline(NetworkModel network) {
