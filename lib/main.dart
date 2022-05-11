@@ -79,11 +79,7 @@ void _main() async {
 	for (var networkEntry in networkEntries) {
 		var serverEntry = serverMap[networkEntry.server]!;
 
-		var clientParams = connectParamsFromServerEntry(
-			serverEntry,
-			defaultNickname: prefs.nickname,
-			defaultRealname: prefs.realname,
-		);
+		var clientParams = connectParamsFromServerEntry(serverEntry, prefs);
 		if (networkEntry.bouncerId != null) {
 			clientParams = clientParams.apply(bouncerNetId: networkEntry.bouncerId);
 		}

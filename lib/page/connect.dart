@@ -48,12 +48,11 @@ class ConnectPageState extends State<ConnectPage> {
 		var db = context.read<DB>();
 		var prefs = context.read<Prefs>();
 
+		prefs.nickname = nicknameController.text;
+
 		// TODO: only connect once (but be careful not to loose messages
 		// sent immediately after RPL_WELCOME)
-		var clientParams = connectParamsFromServerEntry(
-			serverEntry,
-			defaultNickname: nicknameController.text,
-		);
+		var clientParams = connectParamsFromServerEntry(serverEntry, prefs);
 		var client = Client(clientParams, autoReconnect: false);
 		NetworkEntry networkEntry;
 		try {
@@ -78,8 +77,6 @@ class ConnectPageState extends State<ConnectPage> {
 				_loading = false;
 			});
 		}
-
-		prefs.nickname = nicknameController.text;
 
 		client = Client(clientParams);
 		var network = NetworkModel(serverEntry, networkEntry, client.nick, client.realname);

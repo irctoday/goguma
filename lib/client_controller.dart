@@ -11,9 +11,10 @@ import 'database.dart';
 import 'irc.dart';
 import 'models.dart';
 import 'notification_controller.dart';
+import 'prefs.dart';
 
-ConnectParams connectParamsFromServerEntry(ServerEntry entry, { required String defaultNickname, String? defaultRealname }) {
-	var nick = entry.nick ?? defaultNickname;
+ConnectParams connectParamsFromServerEntry(ServerEntry entry, Prefs prefs) {
+	var nick = entry.nick ?? prefs.nickname;
 
 	SaslPlainCredentials? saslPlain;
 	if (entry.saslPlainPassword != null) {
@@ -25,7 +26,7 @@ ConnectParams connectParamsFromServerEntry(ServerEntry entry, { required String 
 		port: entry.port ?? (entry.tls ? 6697 : 6667),
 		tls: entry.tls,
 		nick: nick,
-		realname: defaultRealname,
+		realname: prefs.realname,
 		pass: entry.pass,
 		saslPlain: saslPlain,
 	);
