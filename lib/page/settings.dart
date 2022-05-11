@@ -25,6 +25,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
 	late bool _compact;
 	late bool _typing;
+	late bool _linkPreview;
 
 	@override
 	void initState() {
@@ -33,6 +34,7 @@ class _SettingsPageState extends State<SettingsPage> {
 		var prefs = context.read<Prefs>();
 		_compact = prefs.bufferCompact;
 		_typing = prefs.typingIndicator;
+		_linkPreview = prefs.linkPreview;
 	}
 
 	void _showLogoutDialog() {
@@ -159,6 +161,18 @@ class _SettingsPageState extends State<SettingsPage> {
 						context.read<Prefs>().typingIndicator = enabled;
 						setState(() {
 							_typing = enabled;
+						});
+					},
+				),
+				if (!_compact) SwitchListTile(
+					title: Text('Display link previews'),
+					subtitle: Text('Retrieve link previews directly from websites for messages you receive. Privacy-conscious users may want to leave this off.'),
+					secondary: Icon(Icons.preview),
+					value: _linkPreview,
+					onChanged: (bool enabled) {
+						context.read<Prefs>().linkPreview = enabled;
+						setState(() {
+							_linkPreview = enabled;
 						});
 					},
 				),

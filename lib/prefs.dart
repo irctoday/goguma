@@ -8,6 +8,7 @@ const _typingIndicatorKey = 'typing_indicator';
 const _nicknameKey = 'nickname';
 const _realnameKey = 'realname';
 const _pushProviderKey = 'push_provider';
+const _linkPreviewKey = 'link_preview';
 
 class Prefs {
 	final SharedPreferences _prefs;
@@ -28,6 +29,7 @@ class Prefs {
 	String get nickname => _prefs.getString(_nicknameKey) ?? 'user';
 	String? get realname => _prefs.getString(_realnameKey);
 	String? get pushProvider => _prefs.getString(_pushProviderKey);
+	bool get linkPreview => _prefs.getBool(_linkPreviewKey) ?? false;
 
 	set bufferCompact(bool enabled) {
 		_prefs.setBool(_bufferCompactKey, enabled);
@@ -55,5 +57,9 @@ class Prefs {
 
 	set pushProvider(String? provider) {
 		_setOptionalString(_pushProviderKey, provider);
+	}
+
+	set linkPreview(bool enabled) {
+		_prefs.setBool(_linkPreviewKey, enabled);
 	}
 }

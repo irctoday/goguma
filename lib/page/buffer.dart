@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../ansi.dart';
 import '../client.dart';
@@ -9,6 +10,7 @@ import '../client_controller.dart';
 import '../database.dart';
 import '../irc.dart';
 import '../linkify.dart';
+import '../link_preview.dart';
 import '../models.dart';
 import '../notification_controller.dart';
 import '../prefs.dart';
@@ -512,9 +514,42 @@ class _MessageItem extends StatelessWidget {
 		this.onSwipe
 	}) : super(key: key);
 
+	Widget _buildLinkPreview(LinkPreviewer linkPreviewer, String text, Alignment alignment) {
+		return FutureBuilder<List<PhotoPreview>>(
+			future: linkPreviewer.previewText(text),
+			builder: (context, snapshot) {
+				var previews = snapshot.data;
+				if (previews == null || previews.isEmpty) {
+					return Container();
+				}
+				// TODO: support multiple previews
+				var preview = previews.first;
+				return Align(alignment: alignment, child: Container(
+					margin: EdgeInsets.only(top: 5),
+					child: ClipRRect(
+						borderRadius: BorderRadius.circular(10),
+						child: InkWell(
+							onTap: () {
+								launchUrl(preview.url, mode: LaunchMode.externalApplication);
+							},
+							child: Image.network(
+								preview.url.toString(),
+								width: 250,
+								height: 250,
+								fit: BoxFit.cover,
+								filterQuality: FilterQuality.medium,
+							),
+						),
+					),
+				));
+			},
+		);
+	}
+
 	@override
 	Widget build(BuildContext context) {
 		var client = context.read<Client>();
+		var prefs = context.read<Prefs>();
 
 		var ircMsg = msg.msg;
 		var entry = msg.entry;
@@ -578,6 +613,7 @@ class _MessageItem extends StatelessWidget {
 		var linkStyle = textStyle.apply(decoration: TextDecoration.underline);
 
 		List<InlineSpan> content;
+		Widget? linkPreview;
 		if (isAction) {
 			// isAction can only ever be true if we have a ctcp
 			var actionText = stripAnsiFormatting(ctcp!.param ?? '');
@@ -605,6 +641,11 @@ class _MessageItem extends StatelessWidget {
 				if (isFirstInGroup) TextSpan(text: '\n'),
 				linkify(context, body, textStyle: textStyle, linkStyle: linkStyle),
 			];
+
+			if (prefs.linkPreview) {
+				var linkPreviewer = context.read<LinkPreviewer>();
+				linkPreview = _buildLinkPreview(linkPreviewer, body, boxAlignment);
+			}
 		}
 
 		Widget inner = SelectableText.rich(TextSpan(
@@ -693,7 +734,10 @@ class _MessageItem extends StatelessWidget {
 			),
 			Container(
 				margin: EdgeInsets.only(left: margin, right: margin, top: marginTop, bottom: marginBottom),
-				child: decoratedMessage,
+				child: Column(children: [
+					decoratedMessage,
+					if (linkPreview != null) linkPreview,
+				]),
 			),
 		]);
 	}

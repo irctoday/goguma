@@ -15,6 +15,7 @@ import 'client.dart';
 import 'client_controller.dart';
 import 'database.dart';
 import 'irc.dart';
+import 'link_preview.dart';
 import 'models.dart';
 import 'notification_controller.dart';
 import 'prefs.dart';
@@ -127,6 +128,10 @@ void main() async {
 			ChangeNotifierProvider<NetworkListModel>.value(value: networkList),
 			ChangeNotifierProvider<BufferListModel>.value(value: bufferList),
 			ChangeNotifierProvider<BouncerNetworkListModel>.value(value: bouncerNetworkList),
+			Provider<LinkPreviewer>(
+				create: (context) => LinkPreviewer(),
+				dispose: (context, linkPreviewer) => linkPreviewer.dispose(),
+			),
 		],
 		child: App(initialUri: initialUri),
 	));

@@ -7,6 +7,19 @@ import 'package:url_launcher/url_launcher.dart';
 import 'client.dart';
 import 'models.dart';
 
+List<LinkifyElement> extractLinks(String text, [NetworkModel? network]) {
+
+	var linkifiers = [
+		_UrlLinkifier(),
+		EmailLinkifier(),
+		if (network != null) _IrcChannelLinkifier(network.uri.toString()),
+	];
+	return lnk.linkify(text, linkifiers: linkifiers, options: lnk.LinkifyOptions(
+		humanize: false,
+		defaultToHttps: true,
+	));
+}
+
 TextSpan linkify(BuildContext context, String text, {
 	required TextStyle textStyle,
 	required TextStyle linkStyle,
@@ -23,15 +36,7 @@ TextSpan linkify(BuildContext context, String text, {
 		// ignore
 	}
 
-	var linkifiers = [
-		_UrlLinkifier(),
-		EmailLinkifier(),
-		if (network != null) _IrcChannelLinkifier(network.uri.toString()),
-	];
-	var elements = lnk.linkify(text, linkifiers: linkifiers, options: lnk.LinkifyOptions(
-		humanize: false,
-		defaultToHttps: true,
-	));
+	var elements = extractLinks(text, network);
 	return buildTextSpan(
 		elements,
 		onOpen: (link) async {
