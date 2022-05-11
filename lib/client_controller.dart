@@ -53,7 +53,13 @@ class ClientProvider {
 	Stream<IrcException> get errors => _errorsController.stream;
 	Stream<NetworkModel> get networkStates => _networkStatesController.stream;
 
-	ClientProvider({ required DB db, required NetworkListModel networkList, required BufferListModel bufferList, required BouncerNetworkListModel bouncerNetworkList, required NotificationController notifController }) :
+	ClientProvider({
+		required DB db,
+		required NetworkListModel networkList,
+		required BufferListModel bufferList,
+		required BouncerNetworkListModel bouncerNetworkList,
+		required NotificationController notifController,
+	}) :
 		_db = db,
 		_networkList = networkList,
 		_bufferList = bufferList,
