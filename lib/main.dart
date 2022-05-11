@@ -48,6 +48,55 @@ void _main() async {
 	var prefs = await Prefs.load();
 	var db = await DB.open();
 
+	var networkList = NetworkListModel();
+	var bufferList = BufferListModel();
+	var bouncerNetworkList = BouncerNetworkListModel();
+	var clientProvider = ClientProvider(
+		db: db,
+		networkList: networkList,
+		bufferList: bufferList,
+		bouncerNetworkList: bouncerNetworkList,
+		notifController: notifController,
+	);
+
+	await _initModels(
+		db: db,
+		prefs: prefs,
+		clientProvider: clientProvider,
+		networkList: networkList,
+		bufferList: bufferList,
+	);
+
+	for (var client in clientProvider.clients) {
+		client.connect().ignore();
+	}
+
+	// Listen for sync requests coming from the work manager Isolate
+	syncReceivePort.listen((sendPort) {
+		_syncChatHistory(sendPort as SendPort, clientProvider, networkList);
+	});
+
+	runApp(MultiProvider(
+		providers: [
+			Provider<DB>.value(value: db),
+			Provider<ClientProvider>.value(value: clientProvider),
+			Provider<NotificationController>.value(value: notifController),
+			Provider<Prefs>.value(value: prefs),
+			ChangeNotifierProvider<NetworkListModel>.value(value: networkList),
+			ChangeNotifierProvider<BufferListModel>.value(value: bufferList),
+			ChangeNotifierProvider<BouncerNetworkListModel>.value(value: bouncerNetworkList),
+		],
+		child: App(),
+	));
+}
+
+Future<void> _initModels({
+	required DB db,
+	required Prefs prefs,
+	required ClientProvider clientProvider,
+	required NetworkListModel networkList,
+	required BufferListModel bufferList,
+}) async {
 	// Load all the data we need concurrently
 	var serverEntriesFuture = db.listServers();
 	var networkEntriesFuture = db.listNetworks();
@@ -60,17 +109,6 @@ void _main() async {
 	var bufferEntries = await bufferEntriesFuture;
 	var unreadCounts = await unreadCountsFuture;
 	var lastDeliveredTimes = await lastDeliveredTimesFuture;
-
-	var networkList = NetworkListModel();
-	var bufferList = BufferListModel();
-	var bouncerNetworkList = BouncerNetworkListModel();
-	var clientProvider = ClientProvider(
-		db: db,
-		networkList: networkList,
-		bufferList: bufferList,
-		bouncerNetworkList: bouncerNetworkList,
-		notifController: notifController,
-	);
 
 	Map<int, ServerEntry> serverMap = Map.fromEntries(serverEntries.map((entry) {
 		return MapEntry(entry.id!, entry);
@@ -101,28 +139,6 @@ void _main() async {
 			bufferList.bumpLastDeliveredTime(buffer, lastDeliveredTimes[buffer.id]!);
 		}
 	}
-
-	for (var client in clientProvider.clients) {
-		client.connect().ignore();
-	}
-
-	// Listen for sync requests coming from the work manager Isolate
-	syncReceivePort.listen((sendPort) {
-		_syncChatHistory(sendPort as SendPort, clientProvider, networkList);
-	});
-
-	runApp(MultiProvider(
-		providers: [
-			Provider<DB>.value(value: db),
-			Provider<ClientProvider>.value(value: clientProvider),
-			Provider<NotificationController>.value(value: notifController),
-			Provider<Prefs>.value(value: prefs),
-			ChangeNotifierProvider<NetworkListModel>.value(value: networkList),
-			ChangeNotifierProvider<BufferListModel>.value(value: bufferList),
-			ChangeNotifierProvider<BouncerNetworkListModel>.value(value: bouncerNetworkList),
-		],
-		child: App(),
-	));
 }
 
 void _initWorkManager() {
