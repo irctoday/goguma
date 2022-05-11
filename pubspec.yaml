@@ -28,6 +28,7 @@ dependencies:
   flutter_background: ^1.1.0
   connectivity_plus: ^2.2.1
   flutter_typeahead: ^3.2.4
+  shared_preferences_android: ^2.0.12
 
 dev_dependencies:
   flutter_lints: ^1.0.4
