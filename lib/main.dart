@@ -19,7 +19,6 @@ import 'prefs.dart';
 
 // Debugging knobs for work manager.
 const _debugWorkManager = false;
-const _resetWorkManager = false;
 
 void main() {
 	FlutterError.onError = _handleFlutterError;
@@ -38,7 +37,7 @@ void _main() async {
 	IsolateNameServer.registerPortWithName(syncReceivePort.sendPort, 'main:sync');
 
 	WidgetsFlutterBinding.ensureInitialized();
-	_initWorkManager();
+	await _initWorkManager();
 
 	if (Platform.isAndroid) {
 		trustIsrgRootX1();
@@ -72,8 +71,15 @@ void _main() async {
 	}
 
 	// Listen for sync requests coming from the work manager Isolate
-	syncReceivePort.listen((sendPort) {
-		_syncChatHistory(sendPort as SendPort, clientProvider, networkList);
+	syncReceivePort.listen((data) async {
+		var sendPort = data as SendPort;
+		try {
+			await _syncChatHistory(clientProvider, networkList);
+			sendPort.send(true);
+		} on Object {
+			sendPort.send(false);
+			rethrow;
+		}
 	});
 
 	runApp(MultiProvider(
@@ -141,17 +147,18 @@ Future<void> _initModels({
 	}
 }
 
-void _initWorkManager() {
+Future<void> _initWorkManager() async {
 	if (!Platform.isAndroid) {
 		return;
 	}
-	Workmanager().initialize(_dispatchWorkManager, isInDebugMode: _debugWorkManager);
-	if (_resetWorkManager && WidgetsBinding.instance!.lifecycleState == AppLifecycleState.resumed) {
-		Workmanager().cancelAll();
-	}
+
+	await Workmanager().initialize(_dispatchWorkManager, isInDebugMode: _debugWorkManager);
+
+	// Terminate any currently running sync job
+	await Workmanager().cancelAll();
 }
 
-void _syncChatHistory(SendPort sendPort, ClientProvider clientProvider, NetworkListModel networkList) async {
+Future<void> _syncChatHistory(ClientProvider clientProvider, NetworkListModel networkList) async {
 	print('Starting chat history synchronization');
 
 	var autoReconnectLock = ClientAutoReconnectLock.acquire(clientProvider);
@@ -178,10 +185,9 @@ void _syncChatHistory(SendPort sendPort, ClientProvider clientProvider, NetworkL
 		}));
 
 		print('Finished chat history synchronization');
-		sendPort.send(true);
 	} on Object catch (err) {
 		print('Failed chat history synchronization: $err');
-		sendPort.send(false);
+		rethrow;
 	} finally {
 		autoReconnectLock.release();
 	}
@@ -191,10 +197,14 @@ void _syncChatHistory(SendPort sendPort, ClientProvider clientProvider, NetworkL
 void _dispatchWorkManager() {
 	Workmanager().executeTask((taskName, data) async {
 		try {
+			WidgetsFlutterBinding.ensureInitialized();
+
 			print('Executing work manager task: $taskName');
+
 			switch (taskName) {
 			case 'sync':
-				return await _handleWorkManagerSync();
+				await _handleWorkManagerSync();
+				return true;
 			default:
 				throw Exception('Unknown work manager task name: $taskName');
 			}
@@ -209,14 +219,63 @@ void _dispatchWorkManager() {
 	});
 }
 
-Future<bool> _handleWorkManagerSync() async {
-	var receivePort = ReceivePort('work-manager:sync');
-	var sendPort = IsolateNameServer.lookupPortByName('main:sync')!;
-	sendPort.send(receivePort.sendPort);
+Future<void> _handleWorkManagerSync() async {
+	// If the main Isolate is running, delegate synchronization
+	var sendPort = IsolateNameServer.lookupPortByName('main:sync');
+	if (sendPort != null) {
+		var receivePort = ReceivePort('work-manager:sync');
+		sendPort.send(receivePort.sendPort);
 
-	var data = await receivePort.first;
-	receivePort.close();
-	return data as bool;
+		var data = await receivePort.first;
+		receivePort.close();
+		var ok = data as bool;
+		if (!ok) {
+			throw Exception('Chat history sync failed');
+		}
+		return;
+	}
+
+	// Otherwise we do the synchronization ourselves
+
+	if (Platform.isAndroid) {
+		trustIsrgRootX1();
+	}
+
+	var notifController = NotificationController();
+	var prefs = await Prefs.load();
+	var db = await DB.open();
+
+	var networkList = NetworkListModel();
+	var bufferList = BufferListModel();
+	var bouncerNetworkList = BouncerNetworkListModel();
+	var clientProvider = ClientProvider(
+		db: db,
+		networkList: networkList,
+		bufferList: bufferList,
+		bouncerNetworkList: bouncerNetworkList,
+		notifController: notifController,
+		enableSync: false,
+	);
+
+	await _initModels(
+		db: db,
+		prefs: prefs,
+		clientProvider: clientProvider,
+		networkList: networkList,
+		bufferList: bufferList,
+	);
+
+	for (var client in clientProvider.clients) {
+		client.connect().ignore();
+	}
+
+	try {
+		await _syncChatHistory(clientProvider, networkList);
+	} finally {
+		for (var client in clientProvider.clients) {
+			client.dispose();
+		}
+	}
 }
 
 Future<void> _waitNetworkOnline(NetworkModel network) {

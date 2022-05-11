@@ -44,6 +44,7 @@ class ClientProvider {
 	final BufferListModel _bufferList;
 	final BouncerNetworkListModel _bouncerNetworkList;
 	final NotificationController _notifController;
+	final bool _enableSync;
 
 	final ValueNotifier<bool> needBackgroundServicePermissions = ValueNotifier(false);
 
@@ -60,12 +61,14 @@ class ClientProvider {
 		required BufferListModel bufferList,
 		required BouncerNetworkListModel bouncerNetworkList,
 		required NotificationController notifController,
+		bool enableSync = true,
 	}) :
 		_db = db,
 		_networkList = networkList,
 		_bufferList = bufferList,
 		_bouncerNetworkList = bouncerNetworkList,
-		_notifController = notifController;
+		_notifController = notifController,
+		_enableSync = enableSync;
 
 	void add(Client client, NetworkModel network) {
 		_controllers[network] = ClientController._(this, client, network);
@@ -93,7 +96,7 @@ class ClientProvider {
 	}
 
 	void _setupSync() {
-		if (!Platform.isAndroid) {
+		if (!Platform.isAndroid || !_enableSync) {
 			return;
 		}
 
