@@ -51,7 +51,12 @@ class NotificationController {
 			}
 		}
 
-		var launchDetails = await _plugin.getNotificationAppLaunchDetails();
+		NotificationAppLaunchDetails? launchDetails;
+		try {
+			launchDetails = await _plugin.getNotificationAppLaunchDetails();
+		} on UnimplementedError {
+			// Ignore
+		}
 		if (launchDetails == null || !launchDetails.didNotificationLaunchApp) {
 			return null;
 		}
