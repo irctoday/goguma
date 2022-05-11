@@ -28,14 +28,15 @@ tasks:
       ln -s ~/keystore.jks android/keystore.jks
   - build: |
       cd goguma
-      flutter build apk --build-number="$(git rev-list --first-parent --count HEAD)"
+      build_number="$(git rev-list --first-parent --count origin/master)"
+      flutter build apk --build-number="$build_number"
   - analyze: |
       cd goguma
       flutter analyze --no-fatal-infos
   - deploy: |
       cd goguma
       [ "$(git rev-parse origin/master)" = "$(git rev-parse HEAD)" ] || complete-build
-      build_number="$(git rev-list --first-parent --count HEAD)"
+      build_number="$(git rev-list --first-parent --count origin/master)"
       ssh_opts="-o StrictHostKeyChecking=no"
       scp $ssh_opts build/app/outputs/flutter-apk/app-release.apk deploy@emersion.fr:fdroid-goguma-nightly/repo/goguma-"$build_number".apk
       ssh $ssh_opts deploy@emersion.fr "cd fdroid-goguma-nightly && (ls -t repo/*.apk | tail -n +5 | xargs -r rm --) && fdroid update"
