@@ -840,6 +840,6 @@ bool _isSameDate(DateTime a, DateTime b) {
 String _formatDate(DateTime dt) {
 	var yyyy = dt.year.toString().padLeft(4, '0');
 	var mm = dt.month.toString().padLeft(2, '0');
-	var dd = dt.month.toString().padLeft(2, '0');
+	var dd = dt.day.toString().padLeft(2, '0');
 	return '$yyyy-$mm-$dd';
 }
