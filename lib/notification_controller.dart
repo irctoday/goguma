@@ -8,6 +8,7 @@ import 'irc.dart';
 import 'models.dart';
 
 var _nextId = 1;
+const _maxId = 0x7FFFFFFF; // 2^31 - 1
 
 class _NotificationChannel {
 	final String id;
@@ -67,6 +68,7 @@ class NotificationController {
 		for (var notif in activeNotifs) {
 			if (_nextId <= notif.id) {
 				_nextId = notif.id + 1;
+				_nextId = _nextId % _maxId;
 			}
 
 			if (notif.tag == null || notif.title == null) {
@@ -251,6 +253,7 @@ class NotificationController {
 			id = replace.id;
 		} else {
 			id = _nextId++;
+			_nextId = _nextId % _maxId;
 		}
 		_active.add(_ActiveNotification(id, tag, title, messagingStyleInfo));
 
