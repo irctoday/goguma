@@ -19,7 +19,7 @@ class EditProfileDialog extends StatefulWidget {
 	const EditProfileDialog({ Key? key, required this.network }) : super(key: key);
 
 	@override
-	_EditProfileDialogState createState() => _EditProfileDialogState();
+	State<EditProfileDialog> createState() => _EditProfileDialogState();
 }
 
 class _EditProfileDialogState extends State<EditProfileDialog> {

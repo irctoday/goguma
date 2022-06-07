@@ -15,7 +15,7 @@ class NetworkDetailsPage extends StatefulWidget {
 	const NetworkDetailsPage({ Key? key }) : super(key: key);
 
 	@override
-	_NetworkDetailsPageState createState() => _NetworkDetailsPageState();
+	State<NetworkDetailsPage> createState() => _NetworkDetailsPageState();
 }
 
 class _NetworkDetailsPageState extends State<NetworkDetailsPage> {

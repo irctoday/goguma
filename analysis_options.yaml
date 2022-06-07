@@ -22,5 +22,4 @@ linter:
     prefer_is_not_operator: false
     avoid_print: false
     prefer_interpolation_to_compose_strings: false
-    library_private_types_in_public_api: false
     sort_child_properties_last: false

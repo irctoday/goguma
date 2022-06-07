@@ -10,7 +10,7 @@ class NetworkListIndicator extends StatefulWidget {
 	const NetworkListIndicator({ Key? key, required this.child }) : super(key: key);
 
 	@override
-	_NetworkListIndicatorState createState() => _NetworkListIndicatorState();
+	State<NetworkListIndicator> createState() => _NetworkListIndicatorState();
 }
 
 class _NetworkListIndicatorState extends State<NetworkListIndicator> {
@@ -56,7 +56,7 @@ class NetworkIndicator extends StatefulWidget {
 	const NetworkIndicator({ Key? key, required this.child, required this.network }) : super(key: key);
 
 	@override
-	_NetworkIndicatorState createState() => _NetworkIndicatorState();
+	State<NetworkIndicator> createState() => _NetworkIndicatorState();
 }
 
 class _NetworkIndicatorState extends State<NetworkIndicator> {
