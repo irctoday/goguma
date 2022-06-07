@@ -47,6 +47,8 @@ class ConnectPageState extends State<ConnectPage> {
 
 		var db = context.read<DB>();
 		var prefs = context.read<Prefs>();
+		var networkList = context.read<NetworkListModel>();
+		var clientProvider = context.read<ClientProvider>();
 
 		prefs.nickname = nicknameController.text;
 
@@ -80,11 +82,13 @@ class ConnectPageState extends State<ConnectPage> {
 
 		client = Client(clientParams);
 		var network = NetworkModel(serverEntry, networkEntry, client.nick, client.realname);
-		context.read<NetworkListModel>().add(network);
-		context.read<ClientProvider>().add(client, network);
+		networkList.add(network);
+		clientProvider.add(client, network);
 		client.connect().ignore();
 
-		Navigator.pushReplacementNamed(context, BufferListPage.routeName);
+		if (mounted) {
+			Navigator.pushReplacementNamed(context, BufferListPage.routeName);
+		}
 	}
 
 	@override

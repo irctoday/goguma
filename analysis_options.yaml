@@ -23,5 +23,4 @@ linter:
     avoid_print: false
     prefer_interpolation_to_compose_strings: false
     library_private_types_in_public_api: false
-    use_build_context_synchronously: false
     sort_child_properties_last: false

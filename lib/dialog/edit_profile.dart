@@ -65,6 +65,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 
 		var client = context.read<ClientProvider>().get(widget.network);
 		var prefs = context.read<Prefs>();
+		var db = context.read<DB>();
 
 		var nickname = _nicknameController.text;
 		var realname = _realnameController.text;
@@ -83,7 +84,6 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 			// versions store it in SharedPreferences. Clear the DB if
 			// necessary.
 			if (widget.network.serverEntry.nick != null) {
-				var db = context.read<DB>();
 				widget.network.serverEntry.nick = null;
 				await db.storeServer(widget.network.serverEntry);
 			}

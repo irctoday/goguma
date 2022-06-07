@@ -32,6 +32,7 @@ class BufferPage extends StatefulWidget {
 		var bufferList = context.read<BufferListModel>();
 		var clientProvider = context.read<ClientProvider>();
 		var client = clientProvider.get(network);
+		var navigator = Navigator.of(context);
 
 		var buffer = bufferList.get(name, network);
 		if (buffer == null) {
@@ -41,8 +42,10 @@ class BufferPage extends StatefulWidget {
 			bufferList.add(buffer);
 		}
 
+		// TODO: this is racy if the user has navigated away since the
+		// BufferPage.open() call
 		var until = ModalRoute.withName(BufferListPage.routeName);
-		Navigator.pushNamedAndRemoveUntil(context, routeName, until, arguments: buffer);
+		navigator.pushNamedAndRemoveUntil(routeName, until, arguments: buffer);
 
 		if (client.isChannel(name)) {
 			_join(client, buffer);
@@ -113,6 +116,8 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 	void _send(String text) async {
 		var buffer = context.read<BufferModel>();
 		var client = context.read<Client>();
+		var db = context.read<DB>();
+		var bufferList = context.read<BufferListModel>();
 
 		_setOwnTyping(false);
 
@@ -122,11 +127,11 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		if (!client.caps.enabled.contains('echo-message')) {
 			msg = IrcMessage(msg.cmd, msg.params, source: IrcSource(client.nick));
 			var entry = MessageEntry(msg, buffer.id);
-			await context.read<DB>().storeMessages([entry]);
+			await db.storeMessages([entry]);
 			if (buffer.messageHistoryLoaded) {
 				buffer.addMessages([MessageModel(entry: entry)], append: true);
 			}
-			context.read<BufferListModel>().bumpLastDeliveredTime(buffer, entry.time);
+			bufferList.bumpLastDeliveredTime(buffer, entry.time);
 		}
 	}
 
@@ -270,6 +275,8 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 	Future<Iterable<String>> _generateSuggestions(String text) async {
 		var buffer = context.read<BufferModel>();
 		var client = context.read<Client>();
+		var bufferList = context.read<BufferListModel>();
+
 		if (buffer.members == null && client.isChannel(buffer.name)) {
 			await client.names(buffer.name);
 		}
@@ -288,7 +295,6 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		}
 
 		if (client.isChannel(pattern)) {
-			var bufferList = context.read<BufferListModel>();
 			return bufferList.buffers.where((buffer) {
 				return buffer.name.toLowerCase().startsWith(pattern);
 			}).map((buffer) => buffer.name).take(10);
