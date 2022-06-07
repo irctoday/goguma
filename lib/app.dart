@@ -40,9 +40,9 @@ class AppState extends State<App> with WidgetsBindingObserver {
 	@override
 	void initState() {
 		super.initState();
-		WidgetsBinding.instance!.addObserver(this);
+		WidgetsBinding.instance.addObserver(this);
 
-		var state = WidgetsBinding.instance!.lifecycleState;
+		var state = WidgetsBinding.instance.lifecycleState;
 		if (state == AppLifecycleState.resumed || state == null) {
 			_enableAutoReconnect();
 			_enablePingTimer();
@@ -71,7 +71,7 @@ class AppState extends State<App> with WidgetsBindingObserver {
 
 	@override
 	void dispose() {
-		WidgetsBinding.instance!.removeObserver(this);
+		WidgetsBinding.instance.removeObserver(this);
 		_pingTimer?.cancel();
 		_autoReconnectLock?.release();
 		_clientErrorSub.cancel();

@@ -85,7 +85,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 	void initState() {
 		super.initState();
 
-		WidgetsBinding.instance!.addObserver(this);
+		WidgetsBinding.instance.addObserver(this);
 
 		_scrollController.addListener(_handleScroll);
 
@@ -216,7 +216,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		_composerController.dispose();
 		_scrollController.removeListener(_handleScroll);
 		_scrollController.dispose();
-		WidgetsBinding.instance!.removeObserver(this);
+		WidgetsBinding.instance.removeObserver(this);
 		super.dispose();
 	}
 
@@ -242,7 +242,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 
 	void _updateBufferFocus() {
 		var buffer = context.read<BufferModel>();
-		var state = WidgetsBinding.instance!.lifecycleState ?? AppLifecycleState.resumed;
+		var state = WidgetsBinding.instance.lifecycleState ?? AppLifecycleState.resumed;
 		buffer.focused = state == AppLifecycleState.resumed && _activated;
 		if (buffer.focused) {
 			_markRead();
