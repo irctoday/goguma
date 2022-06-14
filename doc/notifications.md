@@ -7,6 +7,16 @@ enforce multiple restrictions for background apps to save battery power.
 Goguma will open notifications for new messages even if the app is in the
 background. Depending on the server, Goguma will pick a different strategy.
 
+## Servers supporting webpush
+
+If a server supports the [`soju.im/webpush`][webpush] extension, Goguma will
+use it to subscribe to important messages (typically direct messages and
+highlights). Notifications should be instantaneous.
+
+When running on a device with Google Services available, Goguma may use the
+Google infrastructure to deliver notifications. Notification payloads are
+end-to-end encrypted.
+
 ## Servers supporting chathistory
 
 If all configured servers support the IRCv3 [chathistory] extension, Goguma
@@ -15,8 +25,7 @@ will setup a periodic background job to poll for new messages (via
 battery status allows it.
 
 Android may pause or kill Goguma between the periodic checks, so notifications
-may not be instantaneous. The plan to fix this is to implement
-[push notifications][web-push-rfc].
+may not be instantaneous.
 
 Note, some manufacturers have a flawed WorkManager implementation, and may not
 wake up Goguma after the user has dismissed it from the recent apps or after
@@ -32,6 +41,6 @@ power from the battery.
 Goguma will ask additional permissions to achieve this. When enabled, a
 persistent notification will be displayed.
 
+[webpush]: https://git.sr.ht/~emersion/soju/tree/master/item/doc/ext/webpush.md
 [chathistory]: https://ircv3.net/specs/extensions/chathistory
 [workmanager]: https://pub.dev/packages/workmanager
-[web-push-rfc]: https://github.com/ircv3/ircv3-specifications/pull/471
