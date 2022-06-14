@@ -110,11 +110,14 @@ class ClientProvider {
 		var useWorkManager = clients.every((client) {
 			return client.caps.enabled.contains('draft/chathistory') || client.state != ClientState.connected;
 		});
-		_setupWorkManagerSync(useWorkManager);
+		var usePush = clients.every((client) {
+			return client.caps.enabled.contains('soju.im/webpush') || client.state != ClientState.connected;
+		});
+		_setupWorkManagerSync(useWorkManager, usePush);
 		_setupBackgroundServiceSync(!useWorkManager);
 	}
 
-	void _setupWorkManagerSync(bool enable) {
+	void _setupWorkManagerSync(bool enable, bool lowFreq) {
 		if (enable == _workManagerSyncEnabled) {
 			return;
 		}
@@ -126,12 +129,17 @@ class ClientProvider {
 			return;
 		}
 
-		print('Enabling sync work manager');
+		var freq = Duration(minutes: 15);
+		if (lowFreq) {
+			freq = Duration(hours: 4);
+		}
+
+		print('Enabling sync work manager (frequency: $freq)');
 		Workmanager().registerPeriodicTask('sync', 'sync',
-			frequency: Duration(minutes: 15),
+			frequency: freq,
 			tag: 'sync',
-			existingWorkPolicy: ExistingWorkPolicy.keep,
-			initialDelay: Duration(minutes: 15),
+			existingWorkPolicy: ExistingWorkPolicy.replace,
+			initialDelay: freq,
 			constraints: Constraints(networkType: NetworkType.connected),
 		);
 	}
