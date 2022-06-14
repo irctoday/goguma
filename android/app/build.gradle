@@ -51,6 +51,7 @@ android {
         applicationId "fr.emersion.goguma"
         if (project.hasProperty('firebase')) {
             minSdkVersion 19
+            versionNameSuffix '-firebase'
         } else {
             minSdkVersion flutter.minSdkVersion
         }
