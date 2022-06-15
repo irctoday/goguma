@@ -109,7 +109,7 @@ class ClientProvider {
 		var useWorkManager = clients.every((client) {
 			return client.caps.enabled.contains('draft/chathistory') || client.state != ClientState.connected;
 		});
-		var usePush = clients.every((client) {
+		var usePush = isFirebaseSupported() && clients.every((client) {
 			return client.caps.enabled.contains('soju.im/webpush') || client.state != ClientState.connected;
 		});
 		_setupWorkManagerSync(useWorkManager, usePush);
