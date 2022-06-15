@@ -62,11 +62,14 @@ Future<void> initFirebaseMessaging() async {
 	await Firebase.initializeApp(options: firebaseOptions!);
 
 	if (!FirebaseMessaging.instance.isSupported()) {
+		print('Firebase messaging is not supported');
 		return;
 	}
 
 	FirebaseMessaging.onBackgroundMessage(_handleFirebaseMessage);
 	FirebaseMessaging.onMessage.listen(_handleFirebaseMessage);
+
+	print('Firebase messaging initialized');
 }
 
 // This function may called from a separate Isolate

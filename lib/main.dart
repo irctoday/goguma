@@ -39,7 +39,11 @@ void _main() async {
 
 	WidgetsFlutterBinding.ensureInitialized();
 	await _initWorkManager();
-	await initFirebaseMessaging();
+	try {
+		await initFirebaseMessaging();
+	} on Exception catch (err) {
+		print('Warning: failed to initialize Firebase: $err');
+	}
 
 	if (Platform.isAndroid) {
 		trustIsrgRootX1();
