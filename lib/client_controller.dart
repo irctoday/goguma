@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
 
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_background/flutter_background.dart';
 import 'package:workmanager/workmanager.dart';
@@ -823,6 +822,6 @@ class ClientController {
 	}
 
 	bool _isPushSupported() {
-		return client.caps.enabled.contains('soju.im/webpush') && Platform.isAndroid && FirebaseMessaging.instance.isSupported();
+		return client.caps.enabled.contains('soju.im/webpush') && isFirebaseSupported();
 	}
 }

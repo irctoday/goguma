@@ -12,6 +12,7 @@ import 'notification_controller.dart';
 import 'prefs.dart';
 import 'webpush.dart';
 
+bool _supported = false;
 FirebaseOptions? firebaseOptions;
 
 final _gatewayEndpoint = Uri.parse(
@@ -66,10 +67,19 @@ Future<void> initFirebaseMessaging() async {
 		return;
 	}
 
+	// Workaround: isSupported() may return false on devices without Play Services:
+	// https://github.com/firebase/flutterfire/issues/8917
+	await FirebaseMessaging.instance.getToken();
+
 	FirebaseMessaging.onBackgroundMessage(_handleFirebaseMessage);
 	FirebaseMessaging.onMessage.listen(_handleFirebaseMessage);
 
 	print('Firebase messaging initialized');
+	_supported = true;
+}
+
+bool isFirebaseSupported() {
+	return _supported;
 }
 
 // This function may called from a separate Isolate
