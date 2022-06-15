@@ -877,6 +877,15 @@ class CtcpMessage {
 	CtcpMessage(String cmd, [ this.param ]) :
 		cmd = cmd.toUpperCase();
 
+	String format() {
+		var s = '\x01$cmd';
+		if (param != null) {
+			s += ' $param';
+		}
+		s += '\x01';
+		return s;
+	}
+
 	static CtcpMessage? parse(IrcMessage msg) {
 		if (msg.cmd != 'PRIVMSG' && msg.cmd != 'NOTICE') {
 			return null;

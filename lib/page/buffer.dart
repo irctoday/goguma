@@ -80,6 +80,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 
 	bool _activated = true;
 	bool _chatHistoryLoading = false;
+	bool _composerHasCommand = false;
 
 	bool _showJumpToBottom = false;
 
@@ -150,6 +151,45 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		}
 	}
 
+	void _submitCommand(String text) {
+		String cmd;
+		String? param;
+		var i = text.indexOf(' ');
+		if (i >= 0) {
+			cmd = text.substring(0, i);
+			param = text.substring(i + 1);
+		} else {
+			cmd = text;
+		}
+
+		switch (cmd.toLowerCase()) {
+		case 'me':
+			_send(CtcpMessage('ACTION', param).format());
+			break;
+		default:
+			ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+				content: Text('Command not found'),
+			));
+			break;
+		}
+	}
+
+	void _submitText(String text) {
+		if (!_composerHasCommand) {
+			_send(text);
+			return;
+		}
+
+		assert(text.startsWith('/'));
+		assert(!text.contains('\n'));
+
+		if (text.startsWith('//')) {
+			_send(text.substring(1));
+		} else {
+			_submitCommand(text.substring(1));
+		}
+	}
+
 	void _sendTypingStatus() {
 		var buffer = context.read<BufferModel>();
 		var client = context.read<Client>();
@@ -180,9 +220,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 						child: Text('SEND'),
 						onPressed: () {
 							Navigator.pop(context);
-							_send(text);
-							_composerController.text = '';
-							_composerFocusNode.requestFocus();
+							_submitComposer(confirmed: true);
 						},
 					),
 				],
@@ -190,7 +228,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		);
 	}
 
-	void _submitComposer() {
+	void _submitComposer({ bool confirmed = false }) {
 		// Remove empty lines at start and end of the text (can happen when
 		// pasting text)
 		var lines = _composerController.text.split('\n');
@@ -203,16 +241,19 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		var text = lines.join('\n');
 
 		var lineCount = 1 + '\n'.allMatches(text).length;
-		if (lineCount > 3) {
+		if (lineCount > 3 && !confirmed) {
 			_showConfirmSendDialog(text);
 			return;
 		}
 
 		if (_composerController.text != '') {
-			_send(text);
+			_submitText(text);
 		}
 		_composerController.text = '';
 		_composerFocusNode.requestFocus();
+		setState(() {
+			_composerHasCommand = false;
+		});
 	}
 
 	void _handleMessageSwipe(MessageModel msg) {
@@ -222,6 +263,9 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 			_composerController.selection = TextSelection.collapsed(offset: _composerController.text.length);
 		}
 		_composerFocusNode.requestFocus();
+		setState(() {
+			_composerHasCommand = false;
+		});
 	}
 
 	void _handleScroll() {
@@ -344,6 +388,13 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 			await client.names(buffer.name);
 		}
 
+		if (text.startsWith('/') && !text.contains(' ')) {
+			text = text.toLowerCase();
+			return ['/me'].where((cmd) {
+				return cmd.startsWith(text);
+			});
+		}
+
 		String pattern;
 		var i = text.lastIndexOf(' ');
 		if (i >= 0) {
@@ -357,20 +408,23 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 			return [];
 		}
 
+		Iterable<String> result;
 		if (client.isChannel(pattern)) {
-			return bufferList.buffers.where((buffer) {
-				return buffer.name.toLowerCase().startsWith(pattern);
-			}).map((buffer) => buffer.name).take(10);
+			result = bufferList.buffers.map((buffer) => buffer.name);
 		} else {
-			var members = buffer.members;
-			if (members == null) {
-				return [];
-			}
-
-			return members.members.keys.where((name) {
-				return name.toLowerCase().startsWith(pattern);
-			}).take(10);
+			result = buffer.members?.members.keys ?? [];
 		}
+
+		return result.where((name) {
+			return name.toLowerCase().startsWith(pattern);
+		}).take(10).map((name) {
+			if (name.startsWith('/')) {
+				// Insert a zero-width space to ensure this doesn't end up
+				// being executed as a command
+				return '\u200B$name';
+			}
+			return name;
+		});
 	}
 
 	void _handleSuggestionSelected(String suggestion) {
@@ -379,6 +433,8 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		var i = text.lastIndexOf(' ');
 		if (i >= 0) {
 			_composerController.text = text.substring(0, i + 1) + suggestion + ' ';
+		} else if (suggestion.startsWith('/')) { // command
+			_composerController.text = suggestion + ' ';
 		} else {
 			_composerController.text = suggestion + ': ';
 		}
@@ -467,6 +523,17 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 
 		Widget? composer;
 		if (canSendMessage) {
+			var fab = FloatingActionButton(
+				onPressed: () {
+					_submitComposer();
+				},
+				tooltip: _composerHasCommand ? 'Execute' : 'Send',
+				child: Icon(_composerHasCommand ? Icons.done : Icons.send, size: 18),
+				backgroundColor: _composerHasCommand ? Colors.red : null,
+				mini: true,
+				elevation: 0,
+			);
+
 			composer = Material(elevation: 15, child: Container(
 				padding: EdgeInsets.all(10),
 				child: Form(key: _composerFormKey, child: Row(children: [
@@ -476,9 +543,15 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 								hintText: 'Write a message...',
 								border: InputBorder.none,
 							),
-							onChanged: showTyping ? (value) {
-								_sendTypingStatus();
-							} : null,
+							onChanged: (value) {
+								if (showTyping) {
+									_sendTypingStatus();
+								}
+
+								setState(() {
+									_composerHasCommand = value.startsWith('/') && !value.contains('\n');
+								});
+							},
 							onSubmitted: (value) {
 								_submitComposer();
 							},
@@ -504,15 +577,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 						suggestionsCallback: _generateSuggestions,
 						onSuggestionSelected: _handleSuggestionSelected,
 					)),
-					FloatingActionButton(
-						onPressed: () {
-							_submitComposer();
-						},
-						tooltip: 'Send',
-						child: Icon(Icons.send, size: 18),
-						mini: true,
-						elevation: 0,
-					),
+					fab,
 				])),
 			));
 		}
