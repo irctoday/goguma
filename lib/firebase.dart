@@ -67,7 +67,7 @@ Future<void> initFirebaseMessaging() async {
 		return;
 	}
 
-	// Workaround: isSupported() may return false on devices without Play Services:
+	// Workaround: isSupported() may return true on devices without Play Services:
 	// https://github.com/firebase/flutterfire/issues/8917
 	await FirebaseMessaging.instance.getToken();
 
