@@ -99,8 +99,19 @@ class BufferDetailsPageState extends State<BufferDetailsPage> {
 		var client = context.read<Client>();
 
 		var canEditTopic = false;
-		if (client.state == ClientState.connected && buffer.members != null) {
-			var membership = buffer.members!.members[client.nick] ?? '';
+		if (client.state == ClientState.connected) {
+			var membership = '';
+			if (buffer.members != null) {
+				membership = buffer.members!.members[client.nick] ?? '';
+			} else if (_members != null) {
+				var cm = client.isupport.caseMapping;
+				for (var who in _members!) {
+					if (cm(who.nickname) == cm(client.nick)) {
+						membership = who.membershipPrefix ?? '';
+						break;
+					}
+				}
+			}
 			for (var prefix in <String>['~', '@', '%']) {
 				if (membership.contains(prefix)) {
 					canEditTopic = true;
