@@ -143,14 +143,14 @@ class _NetworkDetailsPageState extends State<NetworkDetailsPage> {
 							centerTitle: true,
 						),
 						actions: [
-							IconButton(
+							if (network.bouncerNetwork != null) IconButton(
 								icon: Icon(Icons.edit),
 								tooltip: 'Edit network',
 								onPressed: () {
 									Navigator.pushNamed(context, EditNetworkPage.routeName, arguments: network.bouncerNetwork!);
 								},
 							),
-							IconButton(
+							if (network.bouncerNetwork != null) IconButton(
 								icon: Icon(Icons.delete_forever),
 								tooltip: 'Delete network',
 								onPressed: _showDeleteDialog,
