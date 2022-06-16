@@ -6,6 +6,7 @@ import '../client_controller.dart';
 import '../database.dart';
 import '../models.dart';
 import '../page/join.dart';
+import '../page/edit_network.dart';
 import '../page/settings.dart';
 import '../widget/network_indicator.dart';
 import 'buffer.dart';
@@ -296,15 +297,31 @@ class _BufferItem extends AnimatedWidget {
 class _BufferListPlaceholder extends StatelessWidget {
 	const _BufferListPlaceholder({ Key? key }) : super(key: key);
 
+	bool _suggestNewNetwork(BuildContext context) {
+		var clientProvider = context.read<ClientProvider>();
+		if (clientProvider.clients.length != 1) {
+			return false;
+		}
+
+		var client = clientProvider.clients.first;
+		return client.caps.enabled.contains('soju.im/bouncer-networks') && client.params.bouncerNetId == null;
+	}
+
 	@override
 	Widget build(BuildContext context) {
-		// TODO: suggest to add a new network in the soju.im/bouncer-networks case
+		var suggestNewNetwork = _suggestNewNetwork(context);
+
+		var getStarted = 'join a channel or start a discussion with a user';
+		if (suggestNewNetwork) {
+			getStarted = 'join a network';
+		}
+
 		return Center(child: Column(
 			mainAxisAlignment: MainAxisAlignment.center,
 			children: [
-				Icon(Icons.tag, size: 100),
+				Icon(suggestNewNetwork ? Icons.hub : Icons.tag, size: 100),
 				Text(
-					'Join a conversation',
+					suggestNewNetwork ? 'Join a network' : 'Join a conversation',
 					style: Theme.of(context).textTheme.headlineSmall,
 					textAlign: TextAlign.center,
 				),
@@ -312,15 +329,19 @@ class _BufferListPlaceholder extends StatelessWidget {
 				Container(
 					constraints: BoxConstraints(maxWidth: 300),
 					child: Text(
-						'Welcome to IRC! To get started, join a channel or start a discussion with a user.',
+						'Welcome to IRC! To get started, $getStarted.',
 						textAlign: TextAlign.center,
 					),
 				),
 				SizedBox(height: 15),
 				ElevatedButton(
-					child: Text('New conversation'),
+					child: Text(suggestNewNetwork ? 'New network' : 'New conversation'),
 					onPressed: () {
-						Navigator.pushNamed(context, JoinPage.routeName);
+						if (suggestNewNetwork) {
+							Navigator.pushNamed(context, EditNetworkPage.routeName);
+						} else {
+							Navigator.pushNamed(context, JoinPage.routeName);
+						}
 					},
 				),
 			],

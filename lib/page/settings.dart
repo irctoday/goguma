@@ -107,7 +107,7 @@ class _SettingsPageState extends State<SettingsPage> {
 					title: Text('Add network'),
 					leading: Icon(Icons.add),
 					onTap: () {
-						Navigator.pushNamed(context, EditNetworkPage.routeName, arguments: null);
+						Navigator.pushNamed(context, EditNetworkPage.routeName);
 					},
 				),
 				Divider(),
