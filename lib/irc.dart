@@ -412,62 +412,46 @@ class IrcCapRegistry {
 final defaultCaseMapping = _caseMappingByName('rfc1459')!;
 
 class IrcIsupportRegistry {
-	String? _network;
+	Map<String, String?> _raw = {};
 	CaseMapping? _caseMapping;
-	String? _chanTypes;
-	String? _bouncerNetId;
 	final List<IrcIsupportMembership> _memberships = [];
 	int? _monitor;
-	String? _botMode;
-	bool _whox = false;
 	int? _topicLen, _nickLen, _realnameLen;
 	List<String>? _chanModes;
 	IrcIsupportElist? _elist;
-	String? _vapid;
 
-	String? get network => _network;
-	String get chanTypes => _chanTypes ?? '';
+	String? get network => _raw['NETWORK'];
+	String get chanTypes => _raw['CHANTYPES'] ?? '';
 	CaseMapping get caseMapping => _caseMapping ?? defaultCaseMapping;
-	String? get bouncerNetId => _bouncerNetId;
+	String? get bouncerNetId => _raw['BOUNCER_NETID'];
 	UnmodifiableListView<IrcIsupportMembership> get memberships => UnmodifiableListView(_memberships);
 	int? get monitor => _monitor;
-	String? get botMode => _botMode;
-	bool get whox => _whox;
+	String? get botMode => _raw['BOT'];
+	bool get whox => _raw.containsKey('WHOX');
 	int? get topicLen => _topicLen;
 	int? get nickLen => _nickLen;
 	int? get realnameLen => _realnameLen;
 	List<String> get chanModes => UnmodifiableListView(_chanModes ?? ['beI', 'k', 'l', 'imnst']);
 	IrcIsupportElist? get elist => _elist;
-	String? get vapid => _vapid;
+	String? get vapid => _raw['VAPID'];
 
 	void parse(List<String> tokens) {
 		for (var tok in tokens) {
 			if (tok.startsWith('-')) {
 				var k = tok.substring(1).toUpperCase();
+				_raw.remove(k);
 				switch (k) {
-				case 'BOUNCER_NETID':
-					_bouncerNetId = null;
-					break;
-				case 'BOT':
-					_botMode = null;
-					break;
 				case 'CASEMAPPING':
 					_caseMapping = null;
 					break;
 				case 'CHANMODES':
 					_chanModes = null;
 					break;
-				case 'CHANTYPES':
-					_chanTypes = null;
-					break;
 				case 'ELIST':
 					_elist = null;
 					break;
 				case 'MONITOR':
 					_monitor = null;
-					break;
-				case 'NETWORK':
-					_network = null;
 					break;
 				case 'NAMELEN':
 					_realnameLen = null;
@@ -480,12 +464,6 @@ class IrcIsupportRegistry {
 					break;
 				case 'TOPIC':
 					_topicLen = null;
-					break;
-				case 'VAPID':
-					_vapid = null;
-					break;
-				case 'WHOX':
-					_whox = false;
 					break;
 				}
 				continue;
@@ -500,13 +478,9 @@ class IrcIsupportRegistry {
 				v = v.replaceAll('\\x20', ' ').replaceAll('\\x5C', '\\').replaceAll('\\x3D', '=');
 			}
 
+			_raw[k] = v;
+
 			switch (k.toUpperCase()) {
-			case 'BOUNCER_NETID':
-				_bouncerNetId = v;
-				break;
-			case 'BOT':
-				_botMode = v;
-				break;
 			case 'CASEMAPPING':
 				_caseMapping = _caseMappingByName(v ?? '');
 				break;
@@ -516,9 +490,6 @@ class IrcIsupportRegistry {
 					throw FormatException('Malformed ISUPPORT CHANMODES value: $v');
 				}
 				_chanModes = l;
-				break;
-			case 'CHANTYPES':
-				_chanTypes = v ?? '';
 				break;
 			case 'ELIST':
 				_elist = IrcIsupportElist.parse(v ?? '');
@@ -537,9 +508,6 @@ class IrcIsupportRegistry {
 					throw Exception('Malformed ISUPPORT NICKLEN: no value');
 				}
 				_nickLen = int.parse(v);
-				break;
-			case 'NETWORK':
-				_network = v;
 				break;
 			case 'PREFIX':
 				_memberships.clear();
@@ -565,30 +533,19 @@ class IrcIsupportRegistry {
 				}
 				_topicLen = int.parse(v);
 				break;
-			case 'VAPID':
-				_vapid = v;
-				break;
-			case 'WHOX':
-				_whox = true;
-				break;
 			}
 		}
 	}
 
 	void clear() {
-		_network = null;
+		_raw = {};
 		_caseMapping = null;
-		_chanTypes = null;
-		_bouncerNetId = null;
 		_memberships.clear();
 		_monitor = null;
-		_botMode = null;
-		_whox = false;
 		_topicLen = null;
 		_nickLen = null;
 		_realnameLen = null;
 		_elist = null;
-		_vapid = null;
 	}
 }
 
