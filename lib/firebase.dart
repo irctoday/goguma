@@ -149,7 +149,7 @@ Future<void> _handleFirebaseMessage(RemoteMessage message) async {
 		target = msg.source!.name;
 	}
 
-	var bufferEntry = await _fetchBuffer(db, target, sub.network);
+	var bufferEntry = await _fetchBuffer(db, target, networkEntry);
 	if (bufferEntry == null) {
 		bufferEntry = BufferEntry(name: target, network: sub.network);
 		await db.storeBuffer(bufferEntry);
@@ -162,8 +162,7 @@ Future<void> _handleFirebaseMessage(RemoteMessage message) async {
 	var notifController = NotificationController();
 	await notifController.initialize();
 
-	// TODO: use a cached CHANTYPES instead
-	var isChannel = target.startsWith('#');
+	var isChannel = target.length > 0 && networkEntry.isupport.chanTypes.contains(target[0]);
 	if (isChannel) {
 		notifController.showHighlight([msgEntry], buffer);
 	} else {
@@ -191,13 +190,11 @@ Future<ServerEntry?> _fetchServer(DB db, int id) async {
 	return null;
 }
 
-Future<BufferEntry?> _fetchBuffer(DB db, String name, int networkId) async {
-	// TODO: use a cached CASEMAPPING instead
-	var cm = defaultCaseMapping;
-
+Future<BufferEntry?> _fetchBuffer(DB db, String name, NetworkEntry network) async {
+	var cm = network.isupport.caseMapping;
 	var entries = await db.listBuffers();
 	for (var entry in entries) {
-		if (entry.network == networkId && cm(entry.name) == cm(name)) {
+		if (entry.network == network.id && cm(entry.name) == cm(name)) {
 			return entry;
 		}
 	}
