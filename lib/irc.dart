@@ -497,7 +497,7 @@ class IrcIsupportRegistry {
 			if (i >= 0) {
 				k = tok.substring(0, i);
 				v = tok.substring(i + 1);
-				v = v.replaceAll('\\x20', '').replaceAll('\\x5C', '').replaceAll('\\x3D', '');
+				v = v.replaceAll('\\x20', ' ').replaceAll('\\x5C', '\\').replaceAll('\\x3D', '=');
 			}
 
 			switch (k.toUpperCase()) {
