@@ -547,6 +547,20 @@ class IrcIsupportRegistry {
 		_realnameLen = null;
 		_elist = null;
 	}
+
+	List<String> format() {
+		List<String> l = [];
+		for (var entry in _raw.entries) {
+			if (entry.value == null) {
+				l.add(entry.key);
+			} else {
+				// Note, clients are expected to handle '=' correctly
+				var v = entry.value!.replaceAll(' ', '\\x20').replaceAll('\\', '\\x5C');
+				l.add('${entry.key}=$v');
+			}
+		}
+		return l;
+	}
 }
 
 class IrcIsupportMembership {
