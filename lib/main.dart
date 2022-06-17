@@ -137,7 +137,7 @@ Future<void> _initModels({
 		var network = NetworkModel(serverEntry, networkEntry, clientParams.nick, clientParams.realname);
 		networkList.add(network);
 
-		var client = Client(clientParams);
+		var client = Client(clientParams, isupport: networkEntry.isupport);
 		clientProvider.add(client, network);
 	}
 

@@ -81,7 +81,7 @@ var _nextPingSerial = 0;
 
 class Client {
 	final IrcCapRegistry caps = IrcCapRegistry();
-	final IrcIsupportRegistry isupport = IrcIsupportRegistry();
+	final IrcIsupportRegistry isupport;
 
 	final int _id;
 	ConnectParams _params;
@@ -110,12 +110,16 @@ class Client {
 	Stream<ClientState> get states => _statesController.stream;
 	bool get autoReconnect => _autoReconnect;
 
-	Client(ConnectParams params, { bool autoReconnect = true }) :
+	Client(ConnectParams params, {
+		bool autoReconnect = true,
+		IrcIsupportRegistry? isupport,
+	}) :
 		_id = _nextClientId++,
 		_params = params,
 		_nick = params.nick,
 		_realname = params.realname,
-		_autoReconnect = autoReconnect;
+		_autoReconnect = autoReconnect,
+		isupport = isupport ?? IrcIsupportRegistry();
 
 	Future<void> connect() async {
 		if (_messagesController.isClosed) {
@@ -176,7 +180,6 @@ class Client {
 
 			_socket = null;
 			caps.clear();
-			isupport.clear();
 			_batches.clear();
 			_pendingNames.clear();
 			_monitored.clear();
@@ -449,8 +452,12 @@ class Client {
 			_log('Registration complete');
 			_serverSource = msg.source;
 			_nick = msg.params[0];
+			isupport.clear();
 			break;
 		case RPL_ISUPPORT:
+			// TODO: during connection registration, accumulate ISUPPORT into
+			// a pending registry, then atomically apply it on
+			// ENDOFMOTD/ERR_NOMOTD
 			isupport.parse(msg.params.sublist(1, msg.params.length - 1));
 			_monitored.setCaseMapping(isupport.caseMapping);
 			break;

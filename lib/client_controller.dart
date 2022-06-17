@@ -342,6 +342,9 @@ class ClientController {
 				network.bouncerNetwork = null;
 			}
 			_bufferList.setCaseMapping(client.isupport.caseMapping);
+
+			network.networkEntry.isupport = client.isupport;
+			_db.storeNetwork(network.networkEntry);
 			break;
 		case RPL_ENDOFMOTD:
 		case ERR_NOMOTD:

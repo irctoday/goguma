@@ -46,12 +46,16 @@ class NetworkEntry {
 	int? id;
 	final int server;
 	String? bouncerId;
+	String? _rawIsupport;
+
+	IrcIsupportRegistry? _isupport;
 
 	Map<String, Object?> toMap() {
 		return <String, Object?>{
 			'id': id,
 			'server': server,
 			'bouncer_id': bouncerId,
+			'isupport': _rawIsupport,
 		};
 	}
 
@@ -60,7 +64,21 @@ class NetworkEntry {
 	NetworkEntry.fromMap(Map<String, dynamic> m) :
 		id = m['id'] as int,
 		server = m['server'] as int,
-		bouncerId = m['bouncer_id'] as String?;
+		bouncerId = m['bouncer_id'] as String?,
+		_rawIsupport = m['isupport'] as String?;
+
+	IrcIsupportRegistry get isupport {
+		if (_rawIsupport != null && _isupport == null) {
+			_isupport = IrcIsupportRegistry();
+			_isupport!.parse(_rawIsupport!.split(' '));
+		}
+		return _isupport ?? IrcIsupportRegistry();
+	}
+
+	set isupport(IrcIsupportRegistry isupport) {
+		_isupport = isupport;
+		_rawIsupport = isupport.format().join(' ');
+	}
 }
 
 class BufferEntry {
@@ -231,6 +249,7 @@ class DB {
 						id INTEGER PRIMARY KEY,
 						server INTEGER NOT NULL,
 						bouncer_id TEXT,
+						isupport TEXT,
 						FOREIGN KEY (server) REFERENCES Server(id) ON DELETE CASCADE,
 						UNIQUE(server, bouncer_id)
 					)
@@ -324,12 +343,17 @@ class DB {
 						);
 					''');
 				}
+				if (prevVersion < 8) {
+					batch.execute('''
+						ALTER TABLE Network ADD COLUMN isupport TEXT;
+					''');
+				}
 				await batch.commit();
 			},
 			onDowngrade: (_, prevVersion, newVersion) async {
 				throw Exception('Attempted to downgrade database from version $prevVersion to version $newVersion');
 			},
-			version: 7,
+			version: 8,
 		);
 		return DB._(db);
 	}
@@ -385,7 +409,7 @@ class DB {
 
 	Future<List<NetworkEntry>> listNetworks() async {
 		var entries = await _db.rawQuery('''
-			SELECT id, server, bouncer_id FROM Network ORDER BY id
+			SELECT id, server, bouncer_id, isupport FROM Network ORDER BY id
 		''');
 		return entries.map((m) => NetworkEntry.fromMap(m)).toList();
 	}

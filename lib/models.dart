@@ -58,6 +58,7 @@ class NetworkModel extends ChangeNotifier {
 			_realname = realname {
 		assert(serverEntry.id != null);
 		assert(networkEntry.id != null);
+		_upstreamName = networkEntry.isupport.network;
 	}
 
 	int get serverId => serverEntry.id!;

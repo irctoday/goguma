@@ -263,7 +263,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 			context.read<DB>().storeBuffer(buffer.entry);
 
 			var client = context.read<Client>();
-			if (buffer.entry.lastReadTime != null) {
+			if (buffer.entry.lastReadTime != null && client.state != ClientState.disconnected) {
 				client.setRead(buffer.name, buffer.entry.lastReadTime!);
 			}
 		}
@@ -356,11 +356,11 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		}
 
 		Widget? joinBanner;
-		if (isChannel && !buffer.joined && !buffer.joining) {
+		if (isOnline && isChannel && !buffer.joined && !buffer.joining) {
 			joinBanner = MaterialBanner(
 				content: Text('You have left this channel.'),
 				actions: [
-					if (isOnline) TextButton(
+					TextButton(
 						child: Text('JOIN'),
 						onPressed: () {
 							_join(client, buffer);
@@ -527,7 +527,7 @@ class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 								PopupMenuItem(child: Text('Details'), value: 'details'),
 								PopupMenuItem(child: Text(buffer.pinned ? 'Unpin' : 'Pin'), value: 'pin'),
 								PopupMenuItem(child: Text(buffer.muted ? 'Unmute' : 'Mute'), value: 'mute'),
-								PopupMenuItem(child: Text('Leave'), value: 'part'),
+								if (isOnline) PopupMenuItem(child: Text('Leave'), value: 'part'),
 							];
 						},
 					),
