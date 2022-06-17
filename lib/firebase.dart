@@ -142,10 +142,9 @@ Future<void> _handleFirebaseMessage(RemoteMessage message) async {
 	var realname = prefs.realname ?? nickname;
 	var network = NetworkModel(serverEntry, networkEntry, nickname, realname);
 
-	// TODO: use a cached CASEMAPPING instead
-	var cm = defaultCaseMapping;
 	var target = msg.params[0];
-	if (cm(target) == cm(nickname)) {
+	var isChannel = target.length > 0 && networkEntry.isupport.chanTypes.contains(target[0]);
+	if (!isChannel) {
 		target = msg.source!.name;
 	}
 
@@ -162,7 +161,6 @@ Future<void> _handleFirebaseMessage(RemoteMessage message) async {
 	var notifController = NotificationController();
 	await notifController.initialize();
 
-	var isChannel = target.length > 0 && networkEntry.isupport.chanTypes.contains(target[0]);
 	if (isChannel) {
 		notifController.showHighlight([msgEntry], buffer);
 	} else {
