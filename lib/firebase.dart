@@ -117,12 +117,6 @@ Future<void> _handleFirebaseMessage(RemoteMessage message) async {
 
 	print('Decrypted push message payload: $msg');
 
-	// TODO: cancel existing notifications on READ
-	if (msg.cmd != 'PRIVMSG' && msg.cmd != 'NOTICE') {
-		print('Ignoring ${msg.cmd} message');
-		return;
-	}
-
 	var networkEntry = await _fetchNetwork(db, sub.network);
 	if (networkEntry == null) {
 		throw Exception('Got push message for an unknown network #${sub.network}');
@@ -142,29 +136,41 @@ Future<void> _handleFirebaseMessage(RemoteMessage message) async {
 	var realname = prefs.realname ?? nickname;
 	var network = NetworkModel(serverEntry, networkEntry, nickname, realname);
 
-	var target = msg.params[0];
-	var isChannel = target.length > 0 && networkEntry.isupport.chanTypes.contains(target[0]);
-	if (!isChannel) {
-		target = msg.source!.name;
-	}
-
-	var bufferEntry = await _fetchBuffer(db, target, networkEntry);
-	if (bufferEntry == null) {
-		bufferEntry = BufferEntry(name: target, network: sub.network);
-		await db.storeBuffer(bufferEntry);
-	}
-
-	var buffer = BufferModel(entry: bufferEntry, network: network);
-
-	var msgEntry = MessageEntry(msg, bufferEntry.id!);
-
 	var notifController = NotificationController();
 	await notifController.initialize();
 
-	if (isChannel) {
-		notifController.showHighlight([msgEntry], buffer);
-	} else {
-		notifController.showDirectMessage([msgEntry], buffer);
+	// TODO: cancel existing notifications on READ
+	switch (msg.cmd) {
+	case 'PRIVMSG':
+	case 'NOTICE':
+		var target = msg.params[0];
+		var isChannel = target.length > 0 && networkEntry.isupport.chanTypes.contains(target[0]);
+		if (!isChannel) {
+			target = msg.source!.name;
+		}
+
+		var bufferEntry = await _fetchBuffer(db, target, networkEntry);
+		if (bufferEntry == null) {
+			bufferEntry = BufferEntry(name: target, network: sub.network);
+			await db.storeBuffer(bufferEntry);
+		}
+
+		var buffer = BufferModel(entry: bufferEntry, network: network);
+
+		var msgEntry = MessageEntry(msg, bufferEntry.id!);
+
+		if (isChannel) {
+			notifController.showHighlight([msgEntry], buffer);
+		} else {
+			notifController.showDirectMessage([msgEntry], buffer);
+		}
+		break;
+	case 'INVITE':
+		notifController.showInvite(msg, network);
+		break;
+	default:
+		print('Ignoring ${msg.cmd} message');
+		return;
 	}
 }
 
