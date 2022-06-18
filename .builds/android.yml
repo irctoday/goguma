@@ -1,6 +1,5 @@
 image: archlinux
 packages:
-  - android-platform
   - android-sdk
   - android-sdk-build-tools
   - android-sdk-cmdline-tools-latest
