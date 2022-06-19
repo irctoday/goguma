@@ -91,15 +91,11 @@ Future<void> _handleFirebaseMessage(RemoteMessage message) async {
 	var vapidKey = message.data['vapid_key'] as String?;
 
 	var db = await DB.open();
-	var subs = await db.listWebPushSubscriptions();
-	var sub = subs.firstWhere((sub) {
-		// data['endpoint'] is typically missing the hostname
-		var subEndpointUri = Uri.parse(sub.endpoint);
-		var msgEndpointUri = subEndpointUri.resolveUri(endpoint);
-		return subEndpointUri == msgEndpointUri;
-	});
 
-	if (sub.vapidKey != vapidKey) {
+	var sub = await _fetchWebPushSubscription(db, endpoint);
+	if (sub == null) {
+		throw Exception('Got push message for an unknown endpoint: $endpoint');
+	} else if (sub.vapidKey != vapidKey) {
 		throw Exception('VAPID public key mismatch');
 	}
 
@@ -172,6 +168,19 @@ Future<void> _handleFirebaseMessage(RemoteMessage message) async {
 		print('Ignoring ${msg.cmd} message');
 		return;
 	}
+}
+
+Future<WebPushSubscription?> _fetchWebPushSubscription(DB db, Uri endpoint) async {
+	var entries = await db.listWebPushSubscriptions();
+	for (var entry in entries) {
+		// data['endpoint'] is typically missing the hostname
+		var subEndpointUri = Uri.parse(entry.endpoint);
+		var msgEndpointUri = subEndpointUri.resolveUri(endpoint);
+		if (subEndpointUri == msgEndpointUri) {
+			return entry;
+		}
+	}
+	return null;
 }
 
 Future<NetworkEntry?> _fetchNetwork(DB db, int id) async {
