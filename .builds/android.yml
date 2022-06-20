@@ -30,8 +30,11 @@ tasks:
       flutter pub run tool/gen_firebase_options.dart ~/google-services.json lib/firebase_options.dart
   - build: |
       cd goguma
+      tag="$(git describe --abbrev=0)"
+      hash="$(git rev-parse --short=12 HEAD)"
+      build_name="${tag#v}-dev+$hash.firebase"
       build_number="$(git rev-list --first-parent --count origin/master)"
-      flutter build apk --build-number="$build_number" --target=lib/main_firebase.dart --android-project-arg=firebase=true
+      flutter build apk --build-name="$build_name" --build-number="$build_number" --target=lib/main_firebase.dart --android-project-arg=firebase=true
   - analyze: |
       cd goguma
       flutter analyze --no-fatal-infos
