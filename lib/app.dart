@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:app_links/app_links.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -38,7 +39,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 	late StreamSubscription<void> _clientErrorSub;
 	late StreamSubscription<void> _connectivitySub;
 	late StreamSubscription<void> _notifSelectionSub;
-	late StreamSubscription<void> _appLinksSub;
+	StreamSubscription<void>? _appLinksSub;
 	late NetworkStateAggregator _networkStateAggregator;
 
 	@override
@@ -72,8 +73,10 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		_networkStateAggregator = NetworkStateAggregator(networkList);
 		_networkStateAggregator.addListener(_handleNetworkStateChange);
 
-		var appLinks = context.read<AppLinks>();
-		_appLinksSub = appLinks.uriLinkStream.listen(_handleAppLink);
+		if (Platform.isAndroid) {
+			var appLinks = context.read<AppLinks>();
+			_appLinksSub = appLinks.uriLinkStream.listen(_handleAppLink);
+		}
 	}
 
 	@override
@@ -84,7 +87,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		_clientErrorSub.cancel();
 		_connectivitySub.cancel();
 		_notifSelectionSub.cancel();
-		_appLinksSub.cancel();
+		_appLinksSub?.cancel();
 		_networkStateAggregator.removeListener(_handleNetworkStateChange);
 		_networkStateAggregator.dispose();
 		super.dispose();

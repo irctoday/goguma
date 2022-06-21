@@ -51,7 +51,10 @@ void _main() async {
 	}
 
 	var appLinks = AppLinks();
-	var initialUri = await appLinks.getInitialAppLink();
+	Uri? initialUri;
+	if (Platform.isAndroid) {
+		initialUri = await appLinks.getInitialAppLink();
+	}
 
 	var notifController = NotificationController();
 	var prefs = await Prefs.load();
