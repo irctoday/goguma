@@ -17,7 +17,7 @@ import 'page/buffer_details.dart';
 import 'page/buffer_list.dart';
 import 'page/connect.dart';
 import 'page/join.dart';
-import 'page/edit_network.dart';
+import 'page/edit_bouncer_network.dart';
 import 'page/network_details.dart';
 import 'page/settings.dart';
 
@@ -268,7 +268,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		}
 
 		// TODO: handle channel/user in URI
-		navigatorState.pushNamed(EditNetworkPage.routeName, arguments: uri);
+		navigatorState.pushNamed(EditBouncerNetworkPage.routeName, arguments: uri);
 	}
 
 	void _confirmOpenBuffer(NetworkModel network, String target) async {
@@ -358,7 +358,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 				);
 			};
 			break;
-		case EditNetworkPage.routeName:
+		case EditBouncerNetworkPage.routeName:
 			BouncerNetworkModel? network;
 			IrcUri? initialUri;
 			if (settings.arguments is BouncerNetworkModel) {
@@ -366,9 +366,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 			} else if (settings.arguments is IrcUri) {
 				initialUri = settings.arguments as IrcUri;
 			} else {
-				throw ArgumentError.value(settings.arguments, null, 'EditNetworkPage only accepts a BouncerNetworkModel or Uri argument');
+				throw ArgumentError.value(settings.arguments, null, 'EditBouncerNetworkPage only accepts a BouncerNetworkModel or Uri argument');
 			}
-			builder = (context) => EditNetworkPage(network: network, initialUri: initialUri);
+			builder = (context) => EditBouncerNetworkPage(network: network, initialUri: initialUri);
 			break;
 		case NetworkDetailsPage.routeName:
 			var network = settings.arguments as NetworkModel;

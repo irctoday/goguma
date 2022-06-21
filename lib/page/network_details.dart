@@ -7,7 +7,7 @@ import '../irc.dart';
 import '../linkify.dart';
 import '../models.dart';
 import 'buffer.dart';
-import 'edit_network.dart';
+import 'edit_bouncer_network.dart';
 
 class NetworkDetailsPage extends StatefulWidget {
 	static const routeName = '/settings/network';
@@ -147,7 +147,7 @@ class _NetworkDetailsPageState extends State<NetworkDetailsPage> {
 								icon: Icon(Icons.edit),
 								tooltip: 'Edit network',
 								onPressed: () {
-									Navigator.pushNamed(context, EditNetworkPage.routeName, arguments: network.bouncerNetwork!);
+									Navigator.pushNamed(context, EditBouncerNetworkPage.routeName, arguments: network.bouncerNetwork!);
 								},
 							),
 							if (network.bouncerNetwork != null) IconButton(

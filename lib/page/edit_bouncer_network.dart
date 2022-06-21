@@ -5,19 +5,19 @@ import '../client_controller.dart';
 import '../irc.dart';
 import '../models.dart';
 
-class EditNetworkPage extends StatefulWidget {
-	static const routeName = '/settings/network/edit';
+class EditBouncerNetworkPage extends StatefulWidget {
+	static const routeName = '/settings/network/edit-bouncer';
 
 	final BouncerNetworkModel? network;
 	final IrcUri? initialUri;
 
-	const EditNetworkPage({ Key? key, this.network, this.initialUri }) : super(key: key);
+	const EditBouncerNetworkPage({ Key? key, this.network, this.initialUri }) : super(key: key);
 
 	@override
-	EditNetworkPageState createState() => EditNetworkPageState();
+	EditBouncerNetworkPageState createState() => EditBouncerNetworkPageState();
 }
 
-class EditNetworkPageState extends State<EditNetworkPage> {
+class EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
 	final GlobalKey<FormState> _formKey = GlobalKey();
 
 	late final TextEditingController _nameController;

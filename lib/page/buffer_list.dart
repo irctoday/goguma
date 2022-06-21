@@ -6,7 +6,7 @@ import '../client_controller.dart';
 import '../database.dart';
 import '../models.dart';
 import '../page/join.dart';
-import '../page/edit_network.dart';
+import '../page/edit_bouncer_network.dart';
 import '../page/settings.dart';
 import '../widget/network_indicator.dart';
 import 'buffer.dart';
@@ -338,7 +338,7 @@ class _BufferListPlaceholder extends StatelessWidget {
 					child: Text(suggestNewNetwork ? 'New network' : 'New conversation'),
 					onPressed: () {
 						if (suggestNewNetwork) {
-							Navigator.pushNamed(context, EditNetworkPage.routeName);
+							Navigator.pushNamed(context, EditBouncerNetworkPage.routeName);
 						} else {
 							Navigator.pushNamed(context, JoinPage.routeName);
 						}

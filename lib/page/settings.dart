@@ -10,7 +10,7 @@ import '../dialog/edit_profile.dart';
 import '../irc.dart';
 import '../models.dart';
 import '../prefs.dart';
-import 'edit_network.dart';
+import 'edit_bouncer_network.dart';
 import 'network_details.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -107,7 +107,7 @@ class _SettingsPageState extends State<SettingsPage> {
 					title: Text('Add network'),
 					leading: Icon(Icons.add),
 					onTap: () {
-						Navigator.pushNamed(context, EditNetworkPage.routeName);
+						Navigator.pushNamed(context, EditBouncerNetworkPage.routeName);
 					},
 				),
 				Divider(),
