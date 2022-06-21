@@ -62,7 +62,10 @@ class _SettingsPageState extends State<SettingsPage> {
 			}
 		}
 		if (mainNetwork == null) {
-			throw Exception('No main network found');
+			// This can happen when logging out: the settings page is still
+			// being displayed because of a fade-out animation but we no longer
+			// have any network configured.
+			return Container();
 		}
 
 		var mainClient = context.read<ClientProvider>().get(mainNetwork);
