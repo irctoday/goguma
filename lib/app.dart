@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:app_links/app_links.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -21,7 +22,9 @@ import 'page/settings.dart';
 const _themeMode = ThemeMode.system;
 
 class App extends StatefulWidget {
-	const App({ Key? key }) : super(key: key);
+	final Uri? initialUri;
+
+	const App({ Key? key, this.initialUri }) : super(key: key);
 
 	@override
 	State<App> createState() => _AppState();
@@ -35,6 +38,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 	late StreamSubscription<void> _clientErrorSub;
 	late StreamSubscription<void> _connectivitySub;
 	late StreamSubscription<void> _notifSelectionSub;
+	late StreamSubscription<void> _appLinksSub;
 	late NetworkStateAggregator _networkStateAggregator;
 
 	@override
@@ -67,6 +71,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		var networkList = context.read<NetworkListModel>();
 		_networkStateAggregator = NetworkStateAggregator(networkList);
 		_networkStateAggregator.addListener(_handleNetworkStateChange);
+
+		var appLinks = context.read<AppLinks>();
+		_appLinksSub = appLinks.uriLinkStream.listen(_handleAppLink);
 	}
 
 	@override
@@ -77,6 +84,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		_clientErrorSub.cancel();
 		_connectivitySub.cancel();
 		_notifSelectionSub.cancel();
+		_appLinksSub.cancel();
 		_networkStateAggregator.removeListener(_handleNetworkStateChange);
 		_networkStateAggregator.dispose();
 		super.dispose();
@@ -203,11 +211,57 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		));
 	}
 
+	void _handleAppLink(Uri uri) {
+		var networkList = context.read<NetworkListModel>();
+		var clientProvider = context.read<ClientProvider>();
+		var navigatorState = _navigatorKey.currentState!;
+
+		if (networkList.networks.isEmpty) {
+			navigatorState.pushReplacementNamed(ConnectPage.routeName, arguments: uri);
+			return;
+		}
+
+		// TODO: handle channel/user in URI
+		// TOOD: also match port
+
+		NetworkModel? network;
+		for (var net in networkList.networks) {
+			if (net.serverEntry.host == uri.host) {
+				network = net;
+				break;
+			}
+
+			// TODO: this doesn't work while offline or connecting
+			if (net.bouncerNetwork != null && net.bouncerNetwork!.host == uri.host) {
+				network = net;
+				break;
+			}
+		}
+		if (network != null) {
+			navigatorState.pushNamed(NetworkDetailsPage.routeName, arguments: network);
+			return;
+		}
+
+		bool hasBouncer = false;
+		for (var client in clientProvider.clients) {
+			if (client.caps.enabled.contains('soju.im/bouncer-networks')) {
+				hasBouncer = true;
+				break;
+			}
+		}
+		if (!hasBouncer) {
+			throw Exception('Adding new networks without a bouncer is not yet supported');
+		}
+
+		navigatorState.pushNamed(EditNetworkPage.routeName, arguments: uri);
+	}
+
 	Route<dynamic>? _handleGenerateRoute(RouteSettings settings) {
 		WidgetBuilder builder;
 		switch (settings.name) {
 		case ConnectPage.routeName:
-			builder = (context) => ConnectPage();
+			var uri = settings.arguments as Uri?;
+			builder = (context) => ConnectPage(initialUri: uri);
 			break;
 		case BufferListPage.routeName:
 			builder = (context) => BufferListPage();
@@ -247,8 +301,16 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 			};
 			break;
 		case EditNetworkPage.routeName:
-			var network = settings.arguments as BouncerNetworkModel?;
-			builder = (context) => EditNetworkPage(network: network);
+			BouncerNetworkModel? network;
+			Uri? initialUri;
+			if (settings.arguments is BouncerNetworkModel) {
+				network = settings.arguments as BouncerNetworkModel;
+			} else if (settings.arguments is Uri) {
+				initialUri = settings.arguments as Uri;
+			} else {
+				throw ArgumentError.value(settings.arguments, null, 'EditNetworkPage only accepts a BouncerNetworkModel or Uri argument');
+			}
+			builder = (context) => EditNetworkPage(network: network, initialUri: initialUri);
 			break;
 		case NetworkDetailsPage.routeName:
 			var network = settings.arguments as NetworkModel;
@@ -273,7 +335,10 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		if (initialRoute == ConnectPage.routeName) {
 			// Prevent the default implementation from generating routes for
 			// both '/' and '/connect'
-			return [_handleGenerateRoute(RouteSettings(name: initialRoute))!];
+			return [_handleGenerateRoute(RouteSettings(
+				name: initialRoute,
+				arguments: widget.initialUri,
+			))!];
 		} else {
 			return Navigator.defaultGenerateInitialRoutes(_navigatorKey.currentState!, initialRoute);
 		}
@@ -287,6 +352,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		if (networkList.networks.isEmpty) {
 			initialRoute = ConnectPage.routeName;
 		} else {
+			// TODO: use widget.initialUri if any
 			initialRoute = BufferListPage.routeName;
 		}
 

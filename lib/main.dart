@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
 
+import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -49,6 +50,9 @@ void _main() async {
 		trustIsrgRootX1();
 	}
 
+	var appLinks = AppLinks();
+	var initialUri = await appLinks.getInitialAppLink();
+
 	var notifController = NotificationController();
 	var prefs = await Prefs.load();
 	var db = await DB.open();
@@ -94,11 +98,12 @@ void _main() async {
 			Provider<ClientProvider>.value(value: clientProvider),
 			Provider<NotificationController>.value(value: notifController),
 			Provider<Prefs>.value(value: prefs),
+			Provider<AppLinks>.value(value: appLinks),
 			ChangeNotifierProvider<NetworkListModel>.value(value: networkList),
 			ChangeNotifierProvider<BufferListModel>.value(value: bufferList),
 			ChangeNotifierProvider<BouncerNetworkListModel>.value(value: bouncerNetworkList),
 		],
-		child: App(),
+		child: App(initialUri: initialUri),
 	));
 }
 

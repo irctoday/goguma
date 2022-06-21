@@ -37,6 +37,7 @@ dependencies:
       ref: cbd72d4bffb1334e0b57565d258ca93f9ae8375e
   firebase_core: ^1.13.1
   firebase_messaging: ^11.2.8
+  app_links: ^3.2.0
 
 dev_dependencies:
   flutter_lints: ^2.0.1
