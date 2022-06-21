@@ -42,7 +42,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
 		for (var network in networkList.networks) {
 			db.deleteNetwork(network.networkId);
-			db.deleteServer(network.serverId);
 		}
 		networkList.clear();
 		bouncerNetworkList.clear();
