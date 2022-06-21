@@ -24,10 +24,10 @@ class App extends StatefulWidget {
 	const App({ Key? key }) : super(key: key);
 
 	@override
-	AppState createState() => AppState();
+	State<App> createState() => _AppState();
 }
 
-class AppState extends State<App> with WidgetsBindingObserver {
+class _AppState extends State<App> with WidgetsBindingObserver {
 	Timer? _pingTimer;
 	ClientAutoReconnectLock? _autoReconnectLock;
 	final GlobalKey<NavigatorState> _navigatorKey = GlobalKey(debugLabel: 'main-navigator');
