@@ -103,14 +103,6 @@ class _EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
 
 		var client = context.read<ClientProvider>().get(mainNetwork);
 
-		var params = <String>[];
-		if (widget.network == null) {
-			params.add('ADDNETWORK');
-		} else {
-			params.add('CHANGENETWORK');
-			params.add(widget.network!.id);
-		}
-
 		Uri uri = parseServerUri(_urlController.text);
 		var attrs = {
 			'name': _nameController.text,
@@ -123,9 +115,11 @@ class _EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
 			'pass': _passController.text,
 		};
 
-		params.add(formatIrcTags(attrs));
-		var msg = IrcMessage('BOUNCER', params);
-		client.send(msg);
+		if (widget.network == null) {
+			client.addBouncerNetwork(attrs);
+		} else {
+			client.changeBouncerNetwork(widget.network!.id, attrs);
+		}
 	}
 
 	@override

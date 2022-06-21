@@ -904,6 +904,21 @@ class Client {
 			return msg.cmd == 'WEBPUSH' && msg.params[0] == 'UNREGISTER' && msg.params[1] == endpoint;
 		});
 	}
+
+	Future<String> addBouncerNetwork(Map<String, String?> attrs) async {
+		var cmd = IrcMessage('BOUNCER', ['ADDNETWORK', formatIrcTags(attrs)]);
+		var reply = await _roundtripMessage(cmd, (reply) {
+			return reply.cmd == 'BOUNCER' && reply.params[0] == 'ADDNETWORK';
+		});
+		return reply.params[1];
+	}
+
+	Future<void> changeBouncerNetwork(String id, Map<String, String?> attrs) async {
+		var cmd = IrcMessage('BOUNCER', ['CHANGENETWORK', id, formatIrcTags(attrs)]);
+		await _roundtripMessage(cmd, (reply) {
+			return reply.cmd == 'BOUNCER' && reply.params[0] == 'CHANGENETWORK' && reply.params[1] == id;
+		});
+	}
 }
 
 class ClientMessage extends IrcMessage {
