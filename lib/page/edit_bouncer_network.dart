@@ -210,7 +210,7 @@ class _EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
 						crossFadeState: !_expanded ? CrossFadeState.showFirst : CrossFadeState.showSecond,
 					),
 					SizedBox(height: 20),
-					if (_loading) FloatingActionButton.extended(
+					if (!_loading) FloatingActionButton.extended(
 						onPressed: _submit,
 						label: Text(widget.network == null ? 'Add' : 'Save'),
 					),
