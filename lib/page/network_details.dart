@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../ansi.dart';
 import '../client.dart';
-import '../irc.dart';
 import '../linkify.dart';
 import '../models.dart';
 import 'buffer.dart';

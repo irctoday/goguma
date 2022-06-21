@@ -168,7 +168,6 @@ class _EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
 		var completer = Completer<NetworkModel>();
 
 		void handleNetworkListChange() {
-			NetworkModel? network;
 			for (var net in networkList.networks) {
 				if (net.networkEntry.bouncerId == bouncerNetID) {
 					completer.complete(net);
