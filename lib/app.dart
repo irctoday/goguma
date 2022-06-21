@@ -218,6 +218,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 	void _handleAppLink(String uriStr) {
 		var networkList = context.read<NetworkListModel>();
 		var clientProvider = context.read<ClientProvider>();
+		var bufferList = context.read<BufferListModel>();
 		var navigatorState = _navigatorKey.currentState!;
 
 		var uri = IrcUri.parse(uriStr);
@@ -227,9 +228,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 			return;
 		}
 
-		// TODO: handle channel/user in URI
-		// TOOD: also match port
-
+		// TODO: also match port
 		NetworkModel? network;
 		for (var net in networkList.networks) {
 			if (net.serverEntry.host == uri.host) {
@@ -244,7 +243,16 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 			}
 		}
 		if (network != null) {
-			navigatorState.pushNamed(NetworkDetailsPage.routeName, arguments: network);
+			if (uri.entity != null) {
+				var buffer = bufferList.get(uri.entity!.name, network);
+				if (buffer != null) {
+					navigatorState.pushNamed(BufferPage.routeName, arguments: buffer);
+				} else {
+					_confirmOpenBuffer(network, uri.entity!.name);
+				}
+			} else {
+				navigatorState.pushNamed(NetworkDetailsPage.routeName, arguments: network);
+			}
 			return;
 		}
 
@@ -259,7 +267,51 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 			throw Exception('Adding new networks without a bouncer is not yet supported');
 		}
 
+		// TODO: handle channel/user in URI
 		navigatorState.pushNamed(EditNetworkPage.routeName, arguments: uri);
+	}
+
+	void _confirmOpenBuffer(NetworkModel network, String target) async {
+		var client = context.read<ClientProvider>().get(network);
+
+		Widget content;
+		if (client.isNick(target)) {
+			content = Text.rich(TextSpan(children: [
+				TextSpan(text: 'Do you want to start a conversation with the user '),
+				TextSpan(text: target, style: TextStyle(fontWeight: FontWeight.bold)),
+				TextSpan(text: '?'),
+			]));
+		} else if (client.isChannel(target)) {
+			content = Text.rich(TextSpan(children: [
+				TextSpan(text: 'Do you want to join the channel '),
+				TextSpan(text: target, style: TextStyle(fontWeight: FontWeight.bold)),
+				TextSpan(text: '?'),
+			]));
+		} else {
+			throw Exception('Cannot open buffer "$target": neither a nick nor a channel');
+		}
+
+		showDialog<void>(context: _navigatorKey.currentState!.overlay!.context, builder: (context) {
+			return AlertDialog(
+				title: const Text('New conversation'),
+				content: content,
+				actions: [
+					TextButton(
+						onPressed: () {
+							Navigator.pop(context);
+						},
+						child: const Text('Cancel'),
+					),
+					TextButton(
+						onPressed: () {
+							Navigator.pop(context);
+							BufferPage.open(context, target, network);
+						},
+						child: const Text('Start conversation'),
+					),
+				],
+			);
+		});
 	}
 
 	Route<dynamic>? _handleGenerateRoute(RouteSettings settings) {
