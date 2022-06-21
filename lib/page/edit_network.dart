@@ -10,7 +10,7 @@ class EditNetworkPage extends StatefulWidget {
 
 	final BouncerNetworkModel? network;
 
-	const EditNetworkPage({ Key? key, required this.network }) : super(key: key);
+	const EditNetworkPage({ Key? key, this.network }) : super(key: key);
 
 	@override
 	EditNetworkPageState createState() => EditNetworkPageState();
