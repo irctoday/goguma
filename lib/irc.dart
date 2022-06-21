@@ -277,11 +277,11 @@ Uri parseServerUri(String rawUri) {
 		throw FormatException('Host is required in URI');
 	}
 	switch (uri.scheme) {
-		case 'ircs':
-		case 'irc+insecure':
-			break; // supported
-		default:
-			throw FormatException('Unsupported URI scheme: ' + uri.scheme);
+	case 'ircs':
+	case 'irc+insecure':
+		break; // supported
+	default:
+		throw FormatException('Unsupported URI scheme: ' + uri.scheme);
 	}
 
 	return uri;
