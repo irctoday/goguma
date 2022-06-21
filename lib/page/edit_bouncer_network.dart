@@ -14,10 +14,10 @@ class EditBouncerNetworkPage extends StatefulWidget {
 	const EditBouncerNetworkPage({ Key? key, this.network, this.initialUri }) : super(key: key);
 
 	@override
-	EditBouncerNetworkPageState createState() => EditBouncerNetworkPageState();
+	State<EditBouncerNetworkPage> createState() => _EditBouncerNetworkPageState();
 }
 
-class EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
+class _EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
 	final GlobalKey<FormState> _formKey = GlobalKey();
 
 	late final TextEditingController _nameController;
