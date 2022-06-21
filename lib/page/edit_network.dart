@@ -9,7 +9,7 @@ class EditNetworkPage extends StatefulWidget {
 	static const routeName = '/settings/network/edit';
 
 	final BouncerNetworkModel? network;
-	final Uri? initialUri;
+	final IrcUri? initialUri;
 
 	const EditNetworkPage({ Key? key, this.network, this.initialUri }) : super(key: key);
 
@@ -41,9 +41,7 @@ class EditNetworkPageState extends State<EditNetworkPage> {
 		var network = widget.network;
 		if (initialUri != null) {
 			host = initialUri.host;
-			if (initialUri.hasPort) {
-				port = initialUri.port;
-			}
+			port = initialUri.port;
 		} else if (network != null) {
 			host = network.host;
 			port = network.port;

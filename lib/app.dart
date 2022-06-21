@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import 'client.dart';
 import 'client_controller.dart';
+import 'irc.dart';
 import 'models.dart';
 import 'network_state_aggregator.dart';
 import 'notification_controller.dart';
@@ -23,7 +24,7 @@ import 'page/settings.dart';
 const _themeMode = ThemeMode.system;
 
 class App extends StatefulWidget {
-	final Uri? initialUri;
+	final IrcUri? initialUri;
 
 	const App({ Key? key, this.initialUri }) : super(key: key);
 
@@ -75,7 +76,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 
 		if (Platform.isAndroid) {
 			var appLinks = context.read<AppLinks>();
-			_appLinksSub = appLinks.uriLinkStream.listen(_handleAppLink);
+			_appLinksSub = appLinks.stringLinkStream.listen(_handleAppLink);
 		}
 	}
 
@@ -214,10 +215,12 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		));
 	}
 
-	void _handleAppLink(Uri uri) {
+	void _handleAppLink(String uriStr) {
 		var networkList = context.read<NetworkListModel>();
 		var clientProvider = context.read<ClientProvider>();
 		var navigatorState = _navigatorKey.currentState!;
+
+		var uri = IrcUri.parse(uriStr);
 
 		if (networkList.networks.isEmpty) {
 			navigatorState.pushReplacementNamed(ConnectPage.routeName, arguments: uri);
@@ -263,7 +266,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		WidgetBuilder builder;
 		switch (settings.name) {
 		case ConnectPage.routeName:
-			var uri = settings.arguments as Uri?;
+			var uri = settings.arguments as IrcUri?;
 			builder = (context) => ConnectPage(initialUri: uri);
 			break;
 		case BufferListPage.routeName:
@@ -305,11 +308,11 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 			break;
 		case EditNetworkPage.routeName:
 			BouncerNetworkModel? network;
-			Uri? initialUri;
+			IrcUri? initialUri;
 			if (settings.arguments is BouncerNetworkModel) {
 				network = settings.arguments as BouncerNetworkModel;
-			} else if (settings.arguments is Uri) {
-				initialUri = settings.arguments as Uri;
+			} else if (settings.arguments is IrcUri) {
+				initialUri = settings.arguments as IrcUri;
 			} else {
 				throw ArgumentError.value(settings.arguments, null, 'EditNetworkPage only accepts a BouncerNetworkModel or Uri argument');
 			}

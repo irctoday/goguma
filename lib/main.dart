@@ -15,6 +15,7 @@ import 'client.dart';
 import 'client_controller.dart';
 import 'database.dart';
 import 'firebase.dart';
+import 'irc.dart';
 import 'models.dart';
 import 'notification_controller.dart';
 import 'prefs.dart';
@@ -51,9 +52,12 @@ void _main() async {
 	}
 
 	var appLinks = AppLinks();
-	Uri? initialUri;
+	IrcUri? initialUri;
 	if (Platform.isAndroid) {
-		initialUri = await appLinks.getInitialAppLink();
+		var initialUriStr = await appLinks.getInitialAppLinkString();
+		if (initialUriStr != null) {
+			initialUri = IrcUri.parse(initialUriStr);
+		}
 	}
 
 	var notifController = NotificationController();

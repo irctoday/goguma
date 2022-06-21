@@ -12,7 +12,7 @@ import 'buffer_list.dart';
 class ConnectPage extends StatefulWidget {
 	static const routeName = '/connect';
 
-	final Uri? initialUri;
+	final IrcUri? initialUri;
 
 	const ConnectPage({ Key? key, this.initialUri }) : super(key: key);
 
@@ -39,24 +39,18 @@ class ConnectPageState extends State<ConnectPage> {
 		}
 	}
 
-	void _populateFromUri(Uri uri) {
-		// Note: we intentionally upgrade irc:// URIs to TLS here
-		switch (uri.scheme) {
-		case 'irc':
-		case 'ircs':
-			break; // supported
-		default:
-			throw FormatException('Unsupported URI scheme: ' + uri.scheme);
+	void _populateFromUri(IrcUri uri) {
+		var server = '';
+		if (uri.host != null) {
+			server = uri.host!;
 		}
-
-		var server = uri.host;
-		if (uri.hasPort) {
+		if (uri.port != null) {
 			server += ':${uri.port}';
 		}
 		serverController.text = server;
 
-		if (uri.userInfo != '') {
-			nicknameController.text = uri.userInfo.split(':')[0];
+		if (uri.auth != null) {
+			nicknameController.text = uri.auth!.username;
 		}
 	}
 
