@@ -28,6 +28,7 @@ class _EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
 	late final TextEditingController _passController;
 
 	bool _expanded = false;
+	bool _loading = false;
 
 	@override
 	void initState() {
@@ -82,11 +83,9 @@ class _EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
 	}
 
 	void _submit() async {
-		if (!_formKey.currentState!.validate()) {
+		if (!_formKey.currentState!.validate() || _loading) {
 			return;
 		}
-
-		Navigator.pop(context);
 
 		var networkList = context.read<NetworkListModel>();
 
@@ -115,10 +114,29 @@ class _EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
 			'pass': _passController.text,
 		};
 
-		if (widget.network == null) {
-			client.addBouncerNetwork(attrs);
-		} else {
-			client.changeBouncerNetwork(widget.network!.id, attrs);
+		setState(() {
+			_loading = true;
+		});
+
+		try {
+			if (widget.network == null) {
+				await client.addBouncerNetwork(attrs);
+			} else {
+				await client.changeBouncerNetwork(widget.network!.id, attrs);
+			}
+
+			if (mounted) {
+				Navigator.pop(context);
+			}
+		} on Exception catch (err) {
+			// TODO: surface the error to the user
+			print('Failed to save network: $err');
+
+			if (mounted) {
+				setState(() {
+					_loading = false;
+				});
+			}
 		}
 	}
 
@@ -192,7 +210,7 @@ class _EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
 						crossFadeState: !_expanded ? CrossFadeState.showFirst : CrossFadeState.showSecond,
 					),
 					SizedBox(height: 20),
-					FloatingActionButton.extended(
+					if (_loading) FloatingActionButton.extended(
 						onPressed: _submit,
 						label: Text(widget.network == null ? 'Add' : 'Save'),
 					),
