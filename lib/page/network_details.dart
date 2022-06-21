@@ -65,7 +65,8 @@ class _NetworkDetailsPageState extends State<NetworkDetailsPage> {
 		var network = context.read<NetworkModel>();
 		var client = context.read<Client>();
 
-		client.send(IrcMessage('BOUNCER', ['DELNETWORK', network.bouncerNetwork!.id]));
+		// TODO: use main client for this
+		client.deleteBouncerNetwork(network.bouncerNetwork!.id);
 
 		Navigator.pop(context);
 		Navigator.pop(context);

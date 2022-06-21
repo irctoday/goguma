@@ -919,6 +919,13 @@ class Client {
 			return reply.cmd == 'BOUNCER' && reply.params[0] == 'CHANGENETWORK' && reply.params[1] == id;
 		});
 	}
+
+	Future<void> deleteBouncerNetwork(String id) async {
+		var cmd = IrcMessage('BOUNCER', ['DELNETWORK', id]);
+		await _roundtripMessage(cmd, (reply) {
+			return reply.cmd == 'BOUNCER' && reply.params[0] == 'DELNETWORK' && reply.params[1] == id;
+		});
+	}
 }
 
 class ClientMessage extends IrcMessage {
