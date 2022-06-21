@@ -273,12 +273,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		if (initialRoute == ConnectPage.routeName) {
 			// Prevent the default implementation from generating routes for
 			// both '/' and '/connect'
-			return [
-				MaterialPageRoute(
-					builder: (context) => ConnectPage(),
-					settings: RouteSettings(name: initialRoute),
-				),
-			];
+			return [_handleGenerateRoute(RouteSettings(name: initialRoute))!];
 		} else {
 			return Navigator.defaultGenerateInitialRoutes(_navigatorKey.currentState!, initialRoute);
 		}
