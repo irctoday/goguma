@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
-import 'package:flutter/material.dart';
+
+import 'package:flutter/foundation.dart';
 
 import 'database.dart';
 import 'irc.dart';
@@ -241,7 +242,7 @@ class BufferKey {
 
 	@override
 	int get hashCode {
-		return hashValues(name, network);
+		return Object.hash(name, network);
 	}
 }
 
