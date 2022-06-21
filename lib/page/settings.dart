@@ -38,12 +38,14 @@ class _SettingsPageState extends State<SettingsPage> {
 	void _logout() {
 		var db = context.read<DB>();
 		var networkList = context.read<NetworkListModel>();
+		var bouncerNetworkList = context.read<BouncerNetworkListModel>();
 
 		for (var network in networkList.networks) {
 			db.deleteNetwork(network.networkId);
 			db.deleteServer(network.serverId);
 		}
 		networkList.clear();
+		bouncerNetworkList.clear();
 		context.read<ClientProvider>().disconnectAll();
 
 		Navigator.pushNamedAndRemoveUntil(context, ConnectPage.routeName, (Route<dynamic> route) => false);
