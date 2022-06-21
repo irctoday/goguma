@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../client_controller.dart';
 import '../irc.dart';
 import '../models.dart';
+import 'buffer.dart';
 
 class EditBouncerNetworkPage extends StatefulWidget {
 	static const routeName = '/settings/network/edit-bouncer';
@@ -27,6 +30,7 @@ class _EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
 	late final TextEditingController _realnameController;
 	late final TextEditingController _passController;
 
+	bool _autoOpenBuffer = true;
 	bool _expanded = false;
 	bool _loading = false;
 
@@ -88,6 +92,7 @@ class _EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
 		}
 
 		var networkList = context.read<NetworkListModel>();
+		var navigatorState = Navigator.of(context);
 
 		NetworkModel? mainNetwork;
 		for (var network in networkList.networks) {
@@ -118,10 +123,12 @@ class _EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
 			_loading = true;
 		});
 
+		String bouncerNetId;
 		try {
 			if (widget.network == null) {
-				await client.addBouncerNetwork(attrs);
+				bouncerNetId = await client.addBouncerNetwork(attrs);
 			} else {
+				bouncerNetId = widget.network!.id;
 				await client.changeBouncerNetwork(widget.network!.id, attrs);
 			}
 
@@ -137,7 +144,62 @@ class _EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
 					_loading = false;
 				});
 			}
+
+			return;
 		}
+
+		var entity = widget.initialUri?.entity;
+		if (entity == null || !_autoOpenBuffer) {
+			return;
+		}
+
+		try {
+			var network = await _waitForNetwork(bouncerNetId);
+			await _waitNetworkOnline(network);
+			// TODO: show a spinner until we reach this point
+			BufferPage.open(navigatorState.context, entity.name, network);
+		} on Exception catch (err) {
+			print('Failed to auto-open buffer "${entity.name}": $err');
+		}
+	}
+
+	Future<NetworkModel> _waitForNetwork(String bouncerNetID) {
+		var networkList = context.read<NetworkListModel>();
+		var completer = Completer<NetworkModel>();
+
+		void handleNetworkListChange() {
+			NetworkModel? network;
+			for (var net in networkList.networks) {
+				if (net.networkEntry.bouncerId == bouncerNetID) {
+					completer.complete(net);
+					break;
+				}
+			}
+		}
+
+		networkList.addListener(handleNetworkListChange);
+		handleNetworkListChange();
+
+		return completer.future.timeout(const Duration(seconds: 30)).whenComplete(() {
+			networkList.removeListener(handleNetworkListChange);
+		});
+	}
+
+	Future<void> _waitNetworkOnline(NetworkModel network) {
+		var completer = Completer<void>();
+
+		void handleNetworkChange() {
+			if (network.state == NetworkState.online) {
+				completer.complete();
+			}
+		}
+
+		network.addListener(handleNetworkChange);
+		handleNetworkChange();
+
+		return completer.future.timeout(const Duration(seconds: 30)).whenComplete(() {
+			network.removeListener(handleNetworkChange);
+		});
 	}
 
 	@override
@@ -166,6 +228,43 @@ class _EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
 			),
 		];
 
+		Widget? openBuffer;
+		var entity = widget.initialUri?.entity;
+		if (entity != null) {
+			String content;
+			switch (entity.type) {
+			case IrcUriEntityType.channel:
+				content = 'Join the channel ${entity.name}';
+				break;
+			case IrcUriEntityType.user:
+				content = 'Start a conversation with ${entity.name}';
+				break;
+			}
+
+			// TODO: for some reason without this the colors have bad contrast?
+			var color = Theme.of(context).colorScheme.primaryContainer;
+
+			openBuffer = InkWell(
+				onTap: () {
+					setState(() {
+						_autoOpenBuffer = !_autoOpenBuffer;
+					});
+				},
+				child: Row(children: [
+					Checkbox(
+						value: _autoOpenBuffer,
+						activeColor: color,
+						onChanged: (newValue) {
+							setState(() {
+								_autoOpenBuffer = newValue!;
+							});
+						},
+					),
+					Expanded(child: Text(content)),
+				]),
+			);
+		}
+
 		return Scaffold(
 			appBar: AppBar(
 				title: Text(widget.network == null ? 'Add network' : 'Edit network'),
@@ -189,6 +288,8 @@ class _EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
 							return null;
 						},
 					),
+					SizedBox(height: 10),
+					if (openBuffer != null) openBuffer,
 					AnimatedCrossFade(
 						duration: const Duration(milliseconds: 300),
 						firstChild: Row(
