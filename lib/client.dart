@@ -53,28 +53,36 @@ class ConnectParams {
 	}
 }
 
+Set<String> _getDefaultCaps(ConnectParams params) {
+	var caps = {
+		'away-notify',
+		'batch',
+		'echo-message',
+		'message-tags',
+		'multi-prefix',
+		'sasl',
+		'server-time',
+		'setname',
+
+		'draft/chathistory',
+		'draft/extended-monitor',
+
+		'soju.im/bouncer-networks',
+		'soju.im/no-implicit-names',
+		'soju.im/read',
+		'soju.im/webpush',
+	};
+
+	if (params.bouncerNetId == null) {
+		caps.add('soju.im/bouncer-networks-notify');
+	}
+
+	return caps;
+}
+
 enum ClientState { disconnected, connecting, connected }
 
 const _autoReconnectDelay = Duration(seconds: 10);
-
-const _permanentCaps = [
-	'away-notify',
-	'batch',
-	'echo-message',
-	'message-tags',
-	'multi-prefix',
-	'sasl',
-	'server-time',
-	'setname',
-
-	'draft/chathistory',
-	'draft/extended-monitor',
-
-	'soju.im/bouncer-networks',
-	'soju.im/no-implicit-names',
-	'soju.im/read',
-	'soju.im/webpush',
-];
 
 var _nextClientId = 0;
 var _nextPingSerial = 0;
@@ -84,6 +92,7 @@ class Client {
 	final IrcIsupportRegistry isupport;
 
 	final int _id;
+	final Set<String> _requestCaps;
 	ConnectParams _params;
 	Socket? _socket;
 	String _nick;
@@ -113,9 +122,11 @@ class Client {
 	Client(ConnectParams params, {
 		bool autoReconnect = true,
 		IrcIsupportRegistry? isupport,
+		Set<String>? requestCaps,
 	}) :
 		_id = _nextClientId++,
 		_params = params,
+		_requestCaps = requestCaps ?? _getDefaultCaps(params),
 		_nick = params.nick,
 		_realname = params.realname,
 		_autoReconnect = autoReconnect,
@@ -336,11 +347,6 @@ class Client {
 		_nick = _params.nick;
 		_realname = _params.nick;
 
-		var caps = [..._permanentCaps];
-		if (_params.bouncerNetId == null) {
-			caps.add('soju.im/bouncer-networks-notify');
-		}
-
 		// Here we're trying to minimize the number of roundtrips as much as
 		// possible, because (1) we'll reconnect very regularly and (2) mobile
 		// networks can be pretty spotty. So we send in bulk all of the
@@ -353,7 +359,7 @@ class Client {
 		}
 		send(IrcMessage('NICK', [_params.nick]));
 		send(IrcMessage('USER', [_params.nick, '0', '*', _params.realname]));
-		for (var cap in caps) {
+		for (var cap in _requestCaps) {
 			send(IrcMessage('CAP', ['REQ', cap]));
 		}
 		_authenticate();
@@ -442,7 +448,7 @@ class Client {
 				break;
 			}
 
-			for (var cap in _permanentCaps) {
+			for (var cap in _requestCaps) {
 				if (caps.available.containsKey(cap) && !caps.enabled.contains(cap)) {
 					send(IrcMessage('CAP', ['REQ', cap]));
 				}
