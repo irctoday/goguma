@@ -90,7 +90,7 @@ class ConnectPageState extends State<ConnectPage> {
 		// TODO: only connect once (but be careful not to loose messages
 		// sent immediately after RPL_WELCOME)
 		var clientParams = connectParamsFromServerEntry(serverEntry, prefs);
-		var client = Client(clientParams, autoReconnect: false);
+		var client = Client(clientParams, autoReconnect: false, requestCaps: {'sasl'});
 		NetworkEntry networkEntry;
 		try {
 			await client.connect();
