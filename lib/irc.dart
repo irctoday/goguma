@@ -472,6 +472,33 @@ class IrcException implements Exception {
 	}
 }
 
+Map<String, String?> parseAvailableIrcCaps(String caps) {
+	var m = <String, String?>{};
+	if (caps == '') {
+		return m;
+	}
+	for (var s in caps.split(' ')) {
+		var i = s.indexOf('=');
+		String k = s;
+		String? v;
+		if (i >= 0) {
+			k = s.substring(0, i);
+			v = s.substring(i + 1);
+		}
+		m[k.toLowerCase()] = v;
+	}
+	return m;
+}
+
+String formatAvailableIrcCaps(Map<String, String?> caps) {
+	return caps.entries.map((entry) {
+		if (entry.value == null) {
+			return entry.key;
+		}
+		return '${entry.key}=${entry.value}';
+	}).join(' ');
+}
+
 class IrcCapRegistry {
 	final Map<String, String?> _available = {};
 	final Set<String> _enabled = {};
@@ -516,16 +543,7 @@ class IrcCapRegistry {
 	}
 
 	void _addAvailable(String caps) {
-		for (var s in caps.split(' ')) {
-			var i = s.indexOf('=');
-			String k = s;
-			String? v;
-			if (i >= 0) {
-				k = s.substring(0, i);
-				v = s.substring(i + 1);
-			}
-			_available[k.toLowerCase()] = v;
-		}
+		_available.addAll(parseAvailableIrcCaps(caps));
 	}
 
 	void clear() {
