@@ -132,7 +132,7 @@ class Client {
 		_autoReconnect = autoReconnect,
 		isupport = isupport ?? IrcIsupportRegistry();
 
-	Future<void> connect() async {
+	Future<void> connect({ bool register = true }) async {
 		if (_messagesController.isClosed) {
 			throw StateError('connect() called after dispose()');
 		}
@@ -217,11 +217,13 @@ class Client {
 			_socket?.close();
 		});
 
-		try {
-			await _register();
-		} on Exception {
-			_socket?.close();
-			rethrow;
+		if (register) {
+			try {
+				await _register();
+			} on Exception {
+				_socket?.close();
+				rethrow;
+			}
 		}
 	}
 
