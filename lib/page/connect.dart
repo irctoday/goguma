@@ -24,6 +24,8 @@ class ConnectPageState extends State<ConnectPage> {
 	bool _loading = false;
 	Exception? _error;
 	bool _passwordRequired = false;
+	bool _passwordUnsupported = false;
+	Client? _fetchCapsClient;
 
 	final formKey = GlobalKey<FormState>();
 	final serverController = TextEditingController();
@@ -54,18 +56,25 @@ class ConnectPageState extends State<ConnectPage> {
 		}
 	}
 
-	void submit() async {
-		if (!formKey.currentState!.validate() || _loading) {
-			return;
-		}
-
+	ServerEntry _generateServerEntry() {
 		Uri uri = parseServerUri(serverController.text);
-		var serverEntry = ServerEntry(
+		return ServerEntry(
 			host: uri.host,
 			port: uri.hasPort ? uri.port : null,
 			tls: uri.scheme != 'irc+insecure',
 			saslPlainPassword: passwordController.text.isNotEmpty ? passwordController.text : null,
 		);
+	}
+
+	void submit() async {
+		if (!formKey.currentState!.validate() || _loading) {
+			return;
+		}
+
+		_fetchCapsClient?.dispose();
+		_fetchCapsClient = null;
+
+		var serverEntry = _generateServerEntry();
 
 		setState(() {
 			_loading = true;
@@ -117,8 +126,69 @@ class ConnectPageState extends State<ConnectPage> {
 		}
 	}
 
+	void _handleServerFocusChange(bool hasFocus) async {
+		if (hasFocus || serverController.text.isEmpty) {
+			return;
+		}
+
+		var serverText = serverController.text;
+
+		Map<String, String?> availableCaps;
+		try {
+			availableCaps = await _fetchAvailableCaps();
+		} on Exception catch (err) {
+			if (serverText != serverController.text) {
+				return;
+			}
+			print('Failed to fetch server caps: $err');
+			setState(() {
+				_error = err;
+			});
+			return;
+		}
+
+		if (serverText != serverController.text) {
+			return;
+		}
+
+		setState(() {
+			_error = null;
+			_passwordUnsupported = !availableCaps.containsKey('sasl');
+			_passwordRequired = availableCaps.containsKey('soju.im/account-required');
+		});
+	}
+
+	Future<Map<String, String?>> _fetchAvailableCaps() async {
+		_fetchCapsClient?.dispose();
+		_fetchCapsClient = null;
+
+		var serverEntry = _generateServerEntry();
+		var prefs = context.read<Prefs>();
+		var clientParams = connectParamsFromServerEntry(serverEntry, prefs);
+		var client = Client(clientParams, autoReconnect: false, requestCaps: {});
+		_fetchCapsClient = client;
+		Map<String, String?> availableCaps;
+		try {
+			await client.connect(register: false);
+			availableCaps = await client.fetchAvailableCaps();
+		} on IrcException catch (err) {
+			if (err.msg.cmd == ERR_UNKNOWNCOMMAND) {
+				availableCaps = {};
+			} else {
+				rethrow;
+			}
+		} finally {
+			client.dispose();
+			if (_fetchCapsClient == client) {
+				_fetchCapsClient = null;
+			}
+		}
+		return availableCaps;
+	}
+
 	@override
 	void dispose() {
+		_fetchCapsClient?.dispose();
 		serverController.dispose();
 		nicknameController.dispose();
 		passwordController.dispose();
@@ -168,7 +238,7 @@ class ConnectPageState extends State<ConnectPage> {
 			body: Form(
 				key: formKey,
 				child: Container(padding: EdgeInsets.all(10), child: Column(children: [
-					TextFormField(
+					Focus(onFocusChange: _handleServerFocusChange, child: TextFormField(
 						keyboardType: TextInputType.url,
 						decoration: InputDecoration(
 							labelText: 'Server',
@@ -177,6 +247,12 @@ class ConnectPageState extends State<ConnectPage> {
 						controller: serverController,
 						autofocus: true,
 						onEditingComplete: () => focusNode.nextFocus(),
+						onChanged: (value) {
+							setState(() {
+								_passwordUnsupported = false;
+								_passwordRequired = false;
+							});
+						},
 						validator: (value) {
 							if (value!.isEmpty) {
 								return 'Required';
@@ -188,7 +264,7 @@ class ConnectPageState extends State<ConnectPage> {
 							}
 							return null;
 						},
-					),
+					)),
 					TextFormField(
 						decoration: InputDecoration(
 							labelText: 'Nickname',
@@ -200,7 +276,7 @@ class ConnectPageState extends State<ConnectPage> {
 							return (value!.isEmpty) ? 'Required' : null;
 						},
 					),
-					TextFormField(
+					if (!_passwordUnsupported) TextFormField(
 						obscureText: true,
 						decoration: InputDecoration(
 							labelText: _passwordRequired ? 'Password' : 'Password (optional)',
