@@ -156,6 +156,10 @@ class ConnectPageState extends State<ConnectPage> {
 			_passwordUnsupported = !availableCaps.containsKey('sasl');
 			_passwordRequired = availableCaps.containsKey('soju.im/account-required');
 		});
+
+		if (!_passwordUnsupported) {
+			passwordController.text = '';
+		}
 	}
 
 	Future<Map<String, String?>> _fetchAvailableCaps() async {
