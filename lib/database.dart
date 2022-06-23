@@ -362,12 +362,11 @@ class DB {
 		if (Platform.isWindows) {
 			return Future.value(join(Platform.environment['APPDATA']!, 'goguma'));
 		}
-		if (!Platform.isLinux) {
-			return getDatabasesPath();
+		if (Platform.isLinux) {
+			var xdgDataHome = Platform.environment['XDG_DATA_HOME'] ?? join(Platform.environment['HOME']!, '.local', 'share');
+			return Future.value(join(xdgDataHome, 'goguma'));
 		}
-
-		var xdgDataHome = Platform.environment['XDG_DATA_HOME'] ?? join(Platform.environment['HOME']!, '.local', 'share');
-		return Future.value(join(xdgDataHome, 'goguma'));
+		return getDatabasesPath();
 	}
 
 	Future<void> close() {
