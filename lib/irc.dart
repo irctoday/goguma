@@ -491,6 +491,7 @@ class IrcAvailableCapRegistry {
 		}
 	}
 
+	@override
 	String toString() {
 		return _raw.entries.map((entry) {
 			if (entry.value == null) {
