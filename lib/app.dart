@@ -230,7 +230,6 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 
 	void _handleAppLink(String uriStr) {
 		var networkList = context.read<NetworkListModel>();
-		var clientProvider = context.read<ClientProvider>();
 		var bufferList = context.read<BufferListModel>();
 		var navigatorState = _navigatorKey.currentState!;
 
