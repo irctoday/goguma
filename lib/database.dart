@@ -46,9 +46,11 @@ class NetworkEntry {
 	int? id;
 	final int server;
 	String? bouncerId;
+	String? _rawBouncerUri;
 	String? _rawIsupport;
 	String? _rawCaps;
 
+	IrcUri? _bouncerUri;
 	IrcIsupportRegistry? _isupport;
 	IrcAvailableCapRegistry? _caps;
 
@@ -57,19 +59,23 @@ class NetworkEntry {
 			'id': id,
 			'server': server,
 			'bouncer_id': bouncerId,
+			'bouncer_uri': _rawBouncerUri,
 			'isupport': _rawIsupport,
 			'caps': _rawCaps,
 		};
 	}
 
-	NetworkEntry({ required this.server, this.bouncerId });
+	NetworkEntry({ required this.server, this.bouncerId, IrcUri? bouncerUri }) {
+		this.bouncerUri = bouncerUri;
+	}
 
 	NetworkEntry.fromMap(Map<String, dynamic> m) :
 		id = m['id'] as int,
 		server = m['server'] as int,
 		bouncerId = m['bouncer_id'] as String?,
+		_rawBouncerUri = m['bouncer_uri'] as String?,
 		_rawIsupport = m['isupport'] as String?,
-		_rawCaps = m['caps'];
+		_rawCaps = m['caps'] as String?;
 
 	IrcIsupportRegistry get isupport {
 		if (_rawIsupport != null && _isupport == null) {
@@ -95,6 +101,18 @@ class NetworkEntry {
 	set caps(IrcAvailableCapRegistry caps) {
 		_caps = caps;
 		_rawCaps = caps.toString();
+	}
+
+	IrcUri? get bouncerUri {
+		if (_rawBouncerUri != null && _bouncerUri == null) {
+			_bouncerUri = IrcUri.parse(_rawBouncerUri!);
+		}
+		return _bouncerUri;
+	}
+
+	set bouncerUri(IrcUri? uri) {
+		_bouncerUri = uri;
+		_rawBouncerUri = uri?.toString();
 	}
 }
 
@@ -266,6 +284,7 @@ class DB {
 						id INTEGER PRIMARY KEY,
 						server INTEGER NOT NULL,
 						bouncer_id TEXT,
+						bouncer_uri TEXT,
 						isupport TEXT,
 						caps TEXT,
 						FOREIGN KEY (server) REFERENCES Server(id) ON DELETE CASCADE,
@@ -371,12 +390,17 @@ class DB {
 						ALTER TABLE Network ADD COLUMN caps TEXT;
 					''');
 				}
+				if (prevVersion < 10) {
+					batch.execute('''
+						ALTER TABLE Network ADD COLUMN bouncer_uri TEXT;
+					''');
+				}
 				await batch.commit();
 			},
 			onDowngrade: (_, prevVersion, newVersion) async {
 				throw Exception('Attempted to downgrade database from version $prevVersion to version $newVersion');
 			},
-			version: 9,
+			version: 10,
 		);
 		return DB._(db);
 	}
@@ -431,7 +455,7 @@ class DB {
 
 	Future<List<NetworkEntry>> listNetworks() async {
 		var entries = await _db.rawQuery('''
-			SELECT id, server, bouncer_id, isupport, caps
+			SELECT id, server, bouncer_id, bouncer_uri, isupport, caps
 			FROM Network ORDER BY id
 		''');
 		return entries.map((m) => NetworkEntry.fromMap(m)).toList();

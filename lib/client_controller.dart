@@ -588,6 +588,10 @@ class ClientController {
 			if (bouncerNetwork != null) {
 				// The bouncer network has been updated
 				bouncerNetwork.setAttrs(attrs);
+				if (childNetwork != null) {
+					childNetwork.networkEntry.bouncerUri = _uriFromBouncerNetworkModel(bouncerNetwork);
+					return _db.storeNetwork(childNetwork.networkEntry);
+				}
 				break;
 			}
 
@@ -597,11 +601,18 @@ class ClientController {
 			_bouncerNetworkList.add(bouncerNetwork);
 
 			if (childNetwork != null) {
+				// This is the first time we see this bouncer network for this
+				// session, but we've saved it in the DB
 				childNetwork.bouncerNetwork = bouncerNetwork;
-				break;
+				childNetwork.networkEntry.bouncerUri = _uriFromBouncerNetworkModel(bouncerNetwork);
+				return _db.storeNetwork(childNetwork.networkEntry);
 			}
 
-			var networkEntry = NetworkEntry(server: network.serverId, bouncerId: bouncerNetId);
+			var networkEntry = NetworkEntry(
+				server: network.serverId,
+				bouncerId: bouncerNetId,
+				bouncerUri: _uriFromBouncerNetworkModel(bouncerNetwork),
+			);
 			return _db.storeNetwork(networkEntry).then((networkEntry) {
 				var childClient = Client(client.params.apply(bouncerNetId: bouncerNetId));
 				var childNetwork = NetworkModel(network.serverEntry, networkEntry, childClient.nick, childClient.realname);
@@ -837,4 +848,16 @@ class ClientController {
 	bool _isPushSupported() {
 		return client.caps.enabled.contains('soju.im/webpush') && isFirebaseSupported();
 	}
+}
+
+IrcUri? _uriFromBouncerNetworkModel(BouncerNetworkModel bouncerNetwork) {
+	if (bouncerNetwork.host == null) {
+		return null;
+	}
+
+	// TODO: also include bouncerNetwork.tls
+	return IrcUri(
+		host: bouncerNetwork.host!,
+		port: bouncerNetwork.port,
+	);
 }
