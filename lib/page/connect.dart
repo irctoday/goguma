@@ -66,7 +66,7 @@ class ConnectPageState extends State<ConnectPage> {
 		);
 	}
 
-	void submit() async {
+	void _submit() async {
 		if (!formKey.currentState!.validate() || _loading) {
 			return;
 		}
@@ -289,7 +289,7 @@ class ConnectPageState extends State<ConnectPage> {
 						controller: passwordController,
 						onFieldSubmitted: (_) {
 							focusNode.unfocus();
-							submit();
+							_submit();
 						},
 						validator: (value) {
 							return (_passwordRequired && value!.isEmpty) ? 'Required' : null;
@@ -299,7 +299,7 @@ class ConnectPageState extends State<ConnectPage> {
 					_loading
 						? CircularProgressIndicator()
 						: FloatingActionButton.extended(
-							onPressed: submit,
+							onPressed: _submit,
 							label: Text('Connect'),
 						),
 				])),
