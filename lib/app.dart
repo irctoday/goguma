@@ -265,8 +265,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		}
 
 		bool hasBouncer = false;
-		for (var client in clientProvider.clients) {
-			if (client.caps.enabled.contains('soju.im/bouncer-networks')) {
+		for (var net in networkList.networks) {
+			if (net.networkEntry.caps.containsKey('soju.im/bouncer-networks')) {
 				hasBouncer = true;
 				break;
 			}
