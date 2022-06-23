@@ -17,7 +17,7 @@ class BufferListPage extends StatefulWidget {
 	const BufferListPage({ Key? key }) : super(key: key);
 
 	@override
-	BufferListPageState createState() => BufferListPageState();
+	State<BufferListPage> createState() => _BufferListPageState();
 }
 
 String _initials(String name) {
@@ -31,7 +31,7 @@ String _initials(String name) {
 	return '';
 }
 
-class BufferListPageState extends State<BufferListPage> {
+class _BufferListPageState extends State<BufferListPage> {
 	String? _searchQuery;
 	final TextEditingController _searchController = TextEditingController();
 
