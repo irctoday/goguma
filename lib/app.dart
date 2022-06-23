@@ -33,6 +33,7 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> with WidgetsBindingObserver {
+	late final String _initialRoute;
 	Timer? _pingTimer;
 	ClientAutoReconnectLock? _autoReconnectLock;
 	final GlobalKey<NavigatorState> _navigatorKey = GlobalKey(debugLabel: 'main-navigator');
@@ -77,6 +78,13 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		if (Platform.isAndroid) {
 			var appLinks = context.read<AppLinks>();
 			_appLinksSub = appLinks.stringLinkStream.listen(_handleAppLink);
+		}
+
+		if (networkList.networks.isEmpty) {
+			_initialRoute = ConnectPage.routeName;
+		} else {
+			// TODO: use widget.initialUri if any
+			_initialRoute = BufferListPage.routeName;
 		}
 	}
 
@@ -404,22 +412,12 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 
 	@override
 	Widget build(BuildContext context) {
-		var networkList = context.read<NetworkListModel>();
-
-		String initialRoute;
-		if (networkList.networks.isEmpty) {
-			initialRoute = ConnectPage.routeName;
-		} else {
-			// TODO: use widget.initialUri if any
-			initialRoute = BufferListPage.routeName;
-		}
-
 		return MaterialApp(
 			title: 'Goguma',
 			theme: ThemeData(primarySwatch: Colors.indigo),
 			darkTheme: ThemeData(brightness: Brightness.dark, colorSchemeSeed: Colors.indigo),
 			themeMode: _themeMode,
-			initialRoute: initialRoute,
+			initialRoute: _initialRoute,
 			onGenerateRoute: _handleGenerateRoute,
 			onGenerateInitialRoutes: _handleGenerateInitialRoutes,
 			navigatorKey: _navigatorKey,
