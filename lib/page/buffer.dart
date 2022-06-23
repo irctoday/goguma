@@ -26,7 +26,7 @@ class BufferPage extends StatefulWidget {
 	const BufferPage({ Key? key, this.unreadMarkerTime }) : super(key: key);
 
 	@override
-	BufferPageState createState() => BufferPageState();
+	State<BufferPage> createState() => _BufferPageState();
 
 	static void open(BuildContext context, String name, NetworkModel network) async {
 		var bufferList = context.read<BufferListModel>();
@@ -71,7 +71,7 @@ void _join(Client client, BufferModel buffer) async {
 	}
 }
 
-class BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
+class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 	final _composerFocusNode = FocusNode();
 	final _composerFormKey = GlobalKey<FormState>();
 	final _composerController = TextEditingController();
