@@ -360,9 +360,10 @@ class IrcUri {
 
 		IrcUriEntity? entity;
 		if (s != '') {
-			// TODO: consider using PREFIX ISUPPORT here
-			type ??= s[0] == '#' ? IrcUriEntityType.channel : IrcUriEntityType.user;
-			entity = IrcUriEntity(Uri.decodeComponent(s), type);
+			// TODO: consider using PREFIX ISUPPORT here, if available
+			var name = Uri.decodeComponent(s);
+			type ??= name.startsWith('#') ? IrcUriEntityType.channel : IrcUriEntityType.user;
+			entity = IrcUriEntity(name, type);
 		}
 
 		return IrcUri(
