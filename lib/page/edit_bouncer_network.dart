@@ -96,7 +96,7 @@ class _EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
 
 		NetworkModel? mainNetwork;
 		for (var network in networkList.networks) {
-			if (network.networkEntry.bouncerId == null) {
+			if (network.networkEntry.caps.containsKey('soju.im/bouncer-networks')) {
 				mainNetwork = network;
 				break;
 			}
