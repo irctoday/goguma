@@ -16,10 +16,10 @@ class BufferDetailsPage extends StatefulWidget {
 	const BufferDetailsPage({ Key? key }) : super(key: key);
 
 	@override
-	BufferDetailsPageState createState() => BufferDetailsPageState();
+	State<BufferDetailsPage> createState() => _BufferDetailsPageState();
 }
 
-class BufferDetailsPageState extends State<BufferDetailsPage> {
+class _BufferDetailsPageState extends State<BufferDetailsPage> {
 	Whois? _whois;
 
 	List<WhoReply>? _members;
