@@ -83,8 +83,13 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		if (networkList.networks.isEmpty) {
 			_initialRoute = ConnectPage.routeName;
 		} else {
-			// TODO: use widget.initialUri if any
 			_initialRoute = BufferListPage.routeName;
+
+			if (widget.initialUri != null) {
+				Timer(const Duration(), () {
+					_handleAppLink(widget.initialUri.toString());
+				});
+			}
 		}
 	}
 
