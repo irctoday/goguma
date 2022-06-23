@@ -275,7 +275,6 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 			throw Exception('Adding new networks without a bouncer is not yet supported');
 		}
 
-		// TODO: handle channel/user in URI
 		navigatorState.pushNamed(EditBouncerNetworkPage.routeName, arguments: uri);
 	}
 
