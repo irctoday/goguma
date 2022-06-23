@@ -244,8 +244,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 				break;
 			}
 
-			// TODO: this doesn't work while offline or connecting
-			if (net.bouncerNetwork != null && net.bouncerNetwork!.host == uri.host) {
+			var bouncerUri = net.networkEntry.bouncerUri;
+			if (bouncerUri != null && bouncerUri.host == uri.host) {
 				network = net;
 				break;
 			}
