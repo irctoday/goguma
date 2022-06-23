@@ -5,8 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 TextSpan linkify(String text, { required TextStyle textStyle, required TextStyle linkStyle }) {
 	var linkifiers = const [
-		...lnk.defaultLinkifiers,
-		_IrcUriLinkifier(),
+		_UrlLinkifier(),
+		EmailLinkifier(),
 	];
 	var elements = lnk.linkify(text, linkifiers: linkifiers, options: lnk.LinkifyOptions(
 		humanize: false,
@@ -25,8 +25,8 @@ TextSpan linkify(String text, { required TextStyle textStyle, required TextStyle
 	);
 }
 
-class _IrcUriLinkifier extends Linkifier {
-	const _IrcUriLinkifier();
+class _UrlLinkifier extends Linkifier {
+	const _UrlLinkifier();
 
 	@override
 	List<LinkifyElement> parse(List<LinkifyElement> elements, LinkifyOptions options) {
@@ -43,9 +43,12 @@ class _IrcUriLinkifier extends Linkifier {
 
 	void _parseText(List<LinkifyElement> out, String text) {
 		while (text != '') {
-			var i = text.indexOf('irc://');
-			if (i < 0) {
-				i = text.indexOf('ircs://');
+			var i = -1;
+			for (var proto in ['http', 'https', 'irc', 'ircs']) {
+				i = text.indexOf(proto + '://');
+				if (i >= 0) {
+					break;
+				}
 			}
 			if (i < 0) {
 				out.add(TextElement(text));
