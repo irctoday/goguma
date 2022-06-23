@@ -472,38 +472,70 @@ class IrcException implements Exception {
 	}
 }
 
-Map<String, String?> parseAvailableIrcCaps(String caps) {
-	var m = <String, String?>{};
-	if (caps == '') {
-		return m;
-	}
-	for (var s in caps.split(' ')) {
-		var i = s.indexOf('=');
-		String k = s;
-		String? v;
-		if (i >= 0) {
-			k = s.substring(0, i);
-			v = s.substring(i + 1);
-		}
-		m[k.toLowerCase()] = v;
-	}
-	return m;
-}
+class IrcAvailableCapRegistry {
+	final Map<String, String?> _raw = {};
 
-String formatAvailableIrcCaps(Map<String, String?> caps) {
-	return caps.entries.map((entry) {
-		if (entry.value == null) {
-			return entry.key;
+	void parse(String caps) {
+		if (caps == '') {
+			return;
 		}
-		return '${entry.key}=${entry.value}';
-	}).join(' ');
+		for (var s in caps.split(' ')) {
+			var i = s.indexOf('=');
+			String k = s;
+			String? v;
+			if (i >= 0) {
+				k = s.substring(0, i);
+				v = s.substring(i + 1);
+			}
+			_raw[k.toLowerCase()] = v;
+		}
+	}
+
+	String toString() {
+		return _raw.entries.map((entry) {
+			if (entry.value == null) {
+				return entry.key;
+			}
+			return '${entry.key}=${entry.value}';
+		}).join(' ');
+	}
+
+	void clear() {
+		_raw.clear();
+	}
+
+	bool containsKey(String name) {
+		return _raw.containsKey(name);
+	}
+
+	int? get chatHistory {
+		if (!_raw.containsKey('draft/chathistory')) {
+			return null;
+		}
+		var v = _raw['draft/chathistory'] ?? '0';
+		return int.parse(v);
+	}
+
+	bool containsSasl(String mech) {
+		if (!_raw.containsKey('sasl')) {
+			return false;
+		}
+		var v = _raw['sasl'];
+		if (v == null) {
+			// SASL is supported, but we don't know which mechanisms are
+			// supported
+			return true;
+		}
+		return v.toUpperCase().split(',').contains(mech.toUpperCase());
+	}
+
+	bool get accountRequired => containsKey('soju.im/account-required');
 }
 
 class IrcCapRegistry {
-	final Map<String, String?> _available = {};
+	final IrcAvailableCapRegistry available = IrcAvailableCapRegistry();
 	final Set<String> _enabled = {};
 
-	UnmodifiableMapView<String, String?> get available => UnmodifiableMapView(_available);
 	UnmodifiableSetView<String> get enabled => UnmodifiableSetView(_enabled);
 
 	void parse(IrcMessage msg) {
@@ -513,15 +545,15 @@ class IrcCapRegistry {
 		var params = msg.params.sublist(2);
 		switch (subcommand) {
 		case 'LS':
-			_addAvailable(params[params.length - 1]);
+			available.parse(params[params.length - 1]);
 			break;
 		case 'NEW':
-			_addAvailable(params[0]);
+			available.parse(params[0]);
 			break;
 		case 'DEL':
 			for (var cap in params[0].split(' ')) {
 				cap = cap.toLowerCase();
-				_available.remove(cap);
+				available._raw.remove(cap);
 				_enabled.remove(cap);
 			}
 			break;
@@ -542,20 +574,8 @@ class IrcCapRegistry {
 		}
 	}
 
-	void _addAvailable(String caps) {
-		_available.addAll(parseAvailableIrcCaps(caps));
-	}
-
 	void clear() {
-		_available.clear();
-	}
-
-	int? get chatHistory {
-		if (!available.containsKey('draft/chathistory')) {
-			return null;
-		}
-		var v = available['draft/chathistory'] ?? '0';
-		return int.parse(v);
+		available.clear();
 	}
 }
 

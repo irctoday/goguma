@@ -133,7 +133,7 @@ class _ConnectPageState extends State<ConnectPage> {
 
 		var serverText = serverController.text;
 
-		Map<String, String?> availableCaps;
+		IrcAvailableCapRegistry availableCaps;
 		try {
 			availableCaps = await _fetchAvailableCaps();
 		} on Exception catch (err) {
@@ -153,8 +153,8 @@ class _ConnectPageState extends State<ConnectPage> {
 
 		setState(() {
 			_error = null;
-			_passwordUnsupported = !availableCaps.containsKey('sasl');
-			_passwordRequired = availableCaps.containsKey('soju.im/account-required');
+			_passwordUnsupported = !availableCaps.containsSasl('PLAIN');
+			_passwordRequired = availableCaps.accountRequired;
 		});
 
 		if (!_passwordUnsupported) {
@@ -162,7 +162,7 @@ class _ConnectPageState extends State<ConnectPage> {
 		}
 	}
 
-	Future<Map<String, String?>> _fetchAvailableCaps() async {
+	Future<IrcAvailableCapRegistry> _fetchAvailableCaps() async {
 		_fetchCapsClient?.dispose();
 		_fetchCapsClient = null;
 
@@ -171,13 +171,13 @@ class _ConnectPageState extends State<ConnectPage> {
 		var clientParams = connectParamsFromServerEntry(serverEntry, prefs);
 		var client = Client(clientParams, autoReconnect: false, requestCaps: {});
 		_fetchCapsClient = client;
-		Map<String, String?> availableCaps;
+		IrcAvailableCapRegistry availableCaps;
 		try {
 			await client.connect(register: false);
 			availableCaps = await client.fetchAvailableCaps();
 		} on IrcException catch (err) {
 			if (err.msg.cmd == ERR_UNKNOWNCOMMAND) {
-				availableCaps = {};
+				availableCaps = IrcAvailableCapRegistry();
 			} else {
 				rethrow;
 			}

@@ -576,14 +576,14 @@ class Client {
 		send(IrcMessage('AUTHENTICATE', [base64.encode(payload)]));
 	}
 
-	Future<Map<String, String?>> fetchAvailableCaps() async {
+	Future<IrcAvailableCapRegistry> fetchAvailableCaps() async {
 		var cmd = IrcMessage('CAP', ['LS', '302']);
-		var caps = <String, String?>{};
+		var caps = IrcAvailableCapRegistry();
 		await _roundtripMessage(cmd, (reply) {
 			if (reply.cmd != 'CAP' || reply.params[1] != 'LS') {
 				return false;
 			}
-			caps.addAll(parseAvailableIrcCaps(reply.params[reply.params.length - 1]));
+			caps.parse(reply.params[reply.params.length - 1]);
 			return reply.params[2] != '*';
 		});
 		return caps;

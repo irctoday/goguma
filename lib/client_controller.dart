@@ -764,7 +764,7 @@ class ClientController {
 			return;
 		}
 
-		var max = client.caps.chatHistory!;
+		var max = client.caps.available.chatHistory!;
 		if (max == 0) {
 			max = 1000;
 		}
