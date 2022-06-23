@@ -786,7 +786,7 @@ class ClientController {
 		var subs = await _db.listWebPushSubscriptions();
 		var vapidKey = client.isupport.vapid;
 
-		WebPushSubscription? oldSub;
+		WebPushSubscriptionEntry? oldSub;
 		for (var sub in subs) {
 			if (sub.network == network.networkId) {
 				oldSub = sub;
@@ -811,7 +811,7 @@ class ClientController {
 		var endpoint = await createFirebaseSubscription(vapidKey);
 		var webPush = await WebPush.generate();
 		var config = await webPush.exportPrivateKeys();
-		var newSub = WebPushSubscription(
+		var newSub = WebPushSubscriptionEntry(
 			network: network.networkId,
 			endpoint: endpoint,
 			vapidKey: vapidKey,

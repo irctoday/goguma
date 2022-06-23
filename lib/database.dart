@@ -158,7 +158,7 @@ class MessageEntry {
 	}
 }
 
-class WebPushSubscription {
+class WebPushSubscriptionEntry {
 	int? id;
 	final int network;
 	final String endpoint;
@@ -181,7 +181,7 @@ class WebPushSubscription {
 		};
 	}
 
-	WebPushSubscription({
+	WebPushSubscriptionEntry({
 		required this.network,
 		required this.endpoint,
 		required this.p256dhPrivateKey,
@@ -191,7 +191,7 @@ class WebPushSubscription {
 	}) :
 		createdAt = DateTime.now();
 
-	WebPushSubscription.fromMap(Map<String, dynamic> m) :
+	WebPushSubscriptionEntry.fromMap(Map<String, dynamic> m) :
 		id = m['id'] as int,
 		network = m['network'] as int,
 		endpoint = m['endpoint'] as String,
@@ -519,16 +519,16 @@ class DB {
 		});
 	}
 
-	Future<List<WebPushSubscription>> listWebPushSubscriptions() async {
+	Future<List<WebPushSubscriptionEntry>> listWebPushSubscriptions() async {
 		var entries = await _db.rawQuery('''
 			SELECT id, network, endpoint, vapid_key, p256dh_public_key,
 				p256dh_private_key, auth_key, created_at
 			FROM WebPushSubscription
 		''');
-		return entries.map((m) => WebPushSubscription.fromMap(m)).toList();
+		return entries.map((m) => WebPushSubscriptionEntry.fromMap(m)).toList();
 	}
 
-	Future<void> storeWebPushSubscription(WebPushSubscription entry) async {
+	Future<void> storeWebPushSubscription(WebPushSubscriptionEntry entry) async {
 		if (entry.id == null) {
 			entry.id = await _db.insert('WebPushSubscription', entry.toMap());
 		} else {

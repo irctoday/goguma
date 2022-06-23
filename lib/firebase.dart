@@ -170,7 +170,7 @@ Future<void> _handleFirebaseMessage(RemoteMessage message) async {
 	}
 }
 
-Future<WebPushSubscription?> _fetchWebPushSubscription(DB db, Uri endpoint) async {
+Future<WebPushSubscriptionEntry?> _fetchWebPushSubscription(DB db, Uri endpoint) async {
 	var entries = await db.listWebPushSubscriptions();
 	for (var entry in entries) {
 		// data['endpoint'] is typically missing the hostname
