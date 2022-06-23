@@ -47,8 +47,10 @@ class NetworkEntry {
 	final int server;
 	String? bouncerId;
 	String? _rawIsupport;
+	String? _rawCaps;
 
 	IrcIsupportRegistry? _isupport;
+	IrcAvailableCapRegistry? _caps;
 
 	Map<String, Object?> toMap() {
 		return <String, Object?>{
@@ -56,6 +58,7 @@ class NetworkEntry {
 			'server': server,
 			'bouncer_id': bouncerId,
 			'isupport': _rawIsupport,
+			'caps': _rawCaps,
 		};
 	}
 
@@ -65,7 +68,8 @@ class NetworkEntry {
 		id = m['id'] as int,
 		server = m['server'] as int,
 		bouncerId = m['bouncer_id'] as String?,
-		_rawIsupport = m['isupport'] as String?;
+		_rawIsupport = m['isupport'] as String?,
+		_rawCaps = m['caps'];
 
 	IrcIsupportRegistry get isupport {
 		if (_rawIsupport != null && _isupport == null) {
@@ -78,6 +82,19 @@ class NetworkEntry {
 	set isupport(IrcIsupportRegistry isupport) {
 		_isupport = isupport;
 		_rawIsupport = isupport.format().join(' ');
+	}
+
+	IrcAvailableCapRegistry get caps {
+		if (_rawCaps != null && _caps == null) {
+			_caps = IrcAvailableCapRegistry();
+			_caps!.parse(_rawCaps!);
+		}
+		return _caps ?? IrcAvailableCapRegistry();
+	}
+
+	set caps(IrcAvailableCapRegistry caps) {
+		_caps = caps;
+		_rawCaps = caps.toString();
 	}
 }
 
@@ -250,6 +267,7 @@ class DB {
 						server INTEGER NOT NULL,
 						bouncer_id TEXT,
 						isupport TEXT,
+						caps TEXT,
 						FOREIGN KEY (server) REFERENCES Server(id) ON DELETE CASCADE,
 						UNIQUE(server, bouncer_id)
 					)
@@ -348,12 +366,17 @@ class DB {
 						ALTER TABLE Network ADD COLUMN isupport TEXT;
 					''');
 				}
+				if (prevVersion < 9) {
+					batch.execute('''
+						ALTER TABLE Network ADD COLUMN caps TEXT;
+					''');
+				}
 				await batch.commit();
 			},
 			onDowngrade: (_, prevVersion, newVersion) async {
 				throw Exception('Attempted to downgrade database from version $prevVersion to version $newVersion');
 			},
-			version: 8,
+			version: 9,
 		);
 		return DB._(db);
 	}
@@ -408,7 +431,8 @@ class DB {
 
 	Future<List<NetworkEntry>> listNetworks() async {
 		var entries = await _db.rawQuery('''
-			SELECT id, server, bouncer_id, isupport FROM Network ORDER BY id
+			SELECT id, server, bouncer_id, isupport, caps
+			FROM Network ORDER BY id
 		''');
 		return entries.map((m) => NetworkEntry.fromMap(m)).toList();
 	}

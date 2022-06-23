@@ -346,6 +346,16 @@ class ClientController {
 			network.networkEntry.isupport = client.isupport;
 			_db.storeNetwork(network.networkEntry);
 			break;
+		case 'CAP':
+			switch (msg.params[1].toUpperCase()) {
+			case 'LS':
+			case 'NEW':
+			case 'DEL':
+				network.networkEntry.caps = client.caps.available;
+				_db.storeNetwork(network.networkEntry);
+				break;
+			}
+			break;
 		case RPL_ENDOFMOTD:
 		case ERR_NOMOTD:
 			// These messages are used to indicate the end of the ISUPPORT list
