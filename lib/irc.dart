@@ -387,6 +387,7 @@ class IrcUri {
 		if (host != null) {
 			s += host!;
 		}
+		s += '/';
 		if (port != null && port != 6697) {
 			s += ':$port';
 		}
