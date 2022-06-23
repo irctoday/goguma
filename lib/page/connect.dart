@@ -17,10 +17,10 @@ class ConnectPage extends StatefulWidget {
 	const ConnectPage({ Key? key, this.initialUri }) : super(key: key);
 
 	@override
-	ConnectPageState createState() => ConnectPageState();
+	State<ConnectPage> createState() => _ConnectPageState();
 }
 
-class ConnectPageState extends State<ConnectPage> {
+class _ConnectPageState extends State<ConnectPage> {
 	bool _loading = false;
 	Exception? _error;
 	bool _passwordRequired = false;
