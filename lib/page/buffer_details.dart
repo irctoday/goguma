@@ -117,9 +117,16 @@ class _BufferDetailsPageState extends State<BufferDetailsPage> {
 					}
 				}
 			}
-			for (var prefix in <String>['~', '@', '%']) {
-				if (membership.contains(prefix)) {
+
+			var editTopicMemberships = const [
+				IrcIsupportMembership.founder,
+				IrcIsupportMembership.op,
+				IrcIsupportMembership.halfop,
+			];
+			for (var ms in editTopicMemberships) {
+				if (membership.contains(ms.prefix)) {
 					canEditTopic = true;
+					break;
 				}
 			}
 		}
@@ -329,21 +336,15 @@ String? _membershipDescription(String membership) {
 	if (membership == '') {
 		return null;
 	}
+	var m = {
+		IrcIsupportMembership.founder.prefix: 'founder',
+		IrcIsupportMembership.protected.prefix: 'protected',
+		IrcIsupportMembership.op.prefix: 'operator',
+		IrcIsupportMembership.halfop.prefix: 'halfop',
+		IrcIsupportMembership.voice.prefix: 'voice',
+	};
 	return membership.split('').map((prefix) {
-		switch (prefix) {
-		case '~':
-			return 'founder';
-		case '&':
-			return 'protected';
-		case '@':
-			return 'operator';
-		case '%':
-			return 'halfop';
-		case '+':
-			return 'voice';
-		default:
-			return prefix;
-		}
+		return m[prefix] ?? prefix;
 	}).join(', ');
 }
 
