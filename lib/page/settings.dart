@@ -115,31 +115,27 @@ class _SettingsPageState extends State<SettingsPage> {
 					},
 				),
 				Divider(),
-				ListTile(
+				SwitchListTile(
 					title: Text('Compact message list'),
-					leading: Icon(Icons.reorder),
-					trailing: Switch(
-						value: _compact,
-						onChanged: (bool enabled) {
-							context.read<Prefs>().bufferCompact = enabled;
-							setState(() {
-								_compact = enabled;
-							});
-						},
-					),
+					secondary: Icon(Icons.reorder),
+					value: _compact,
+					onChanged: (bool enabled) {
+						context.read<Prefs>().bufferCompact = enabled;
+						setState(() {
+							_compact = enabled;
+						});
+					},
 				),
-				ListTile(
+				SwitchListTile(
 					title: Text('Send & display typing indicators'),
-					leading: Icon(Icons.border_color),
-					trailing: Switch(
-						value: _typing,
-						onChanged: (bool enabled) {
-							context.read<Prefs>().typingIndicator = enabled;
-							setState(() {
-								_typing = enabled;
-							});
-						},
-					),
+					secondary: Icon(Icons.border_color),
+					value: _typing,
+					onChanged: (bool enabled) {
+						context.read<Prefs>().typingIndicator = enabled;
+						setState(() {
+							_typing = enabled;
+						});
+					},
 				),
 				Divider(),
 				ListTile(
