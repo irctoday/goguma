@@ -25,6 +25,7 @@ class _BufferDetailsPageState extends State<BufferDetailsPage> {
 	List<WhoReply>? _members;
 	bool? _inviteOnly;
 	bool? _protectedTopic;
+	bool? _moderated;
 
 	@override
 	void initState() {
@@ -91,6 +92,7 @@ class _BufferDetailsPageState extends State<BufferDetailsPage> {
 		setState(() {
 			_inviteOnly = modes.contains(ChannelMode.inviteOnly);
 			_protectedTopic = modes.contains(ChannelMode.protectedTopic);
+			_moderated = modes.contains(ChannelMode.moderated);
 			_members = whoReplies;
 		});
 	}
@@ -177,6 +179,13 @@ class _BufferDetailsPageState extends State<BufferDetailsPage> {
 				title: Text('Invite-only'),
 				subtitle: Text('Only invited users can join this channel.'),
 				leading: Icon(Icons.shield),
+			));
+		}
+		if (_moderated == true) {
+			children.add(ListTile(
+				title: Text('Moderated'),
+				subtitle: Text('Only privileged users can send messages.'),
+				leading: Icon(Icons.forum),
 			));
 		}
 
