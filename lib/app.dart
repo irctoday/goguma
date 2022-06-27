@@ -376,7 +376,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 				network = settings.arguments as BouncerNetworkModel;
 			} else if (settings.arguments is IrcUri) {
 				initialUri = settings.arguments as IrcUri;
-			} else {
+			} else if (settings.arguments != null) {
 				throw ArgumentError.value(settings.arguments, null, 'EditBouncerNetworkPage only accepts a BouncerNetworkModel or Uri argument');
 			}
 			builder = (context) => EditBouncerNetworkPage(network: network, initialUri: initialUri);
