@@ -53,6 +53,7 @@ class NetworkModel extends ChangeNotifier {
 	BouncerNetworkModel? _bouncerNetwork;
 	String _nickname;
 	String _realname;
+	String? _account;
 
 	NetworkModel(this.serverEntry, this.networkEntry, String nickname, String realname) :
 			_nickname = nickname,
@@ -70,6 +71,7 @@ class NetworkModel extends ChangeNotifier {
 	BouncerNetworkModel? get bouncerNetwork => _bouncerNetwork;
 	String get nickname => _nickname;
 	String get realname => _realname;
+	String? get account => _account;
 
 	String get displayName {
 		// If the user has set a custom bouncer network name, use that
@@ -109,6 +111,11 @@ class NetworkModel extends ChangeNotifier {
 
 	set realname(String realname) {
 		_realname = realname;
+		notifyListeners();
+	}
+
+	set account(String? account) {
+		_account = account;
 		notifyListeners();
 	}
 }

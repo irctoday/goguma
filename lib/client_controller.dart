@@ -489,6 +489,13 @@ class ClientController {
 				_db.storeBuffer(buffer.entry);
 			}
 			break;
+		case RPL_LOGGEDIN:
+			var account = msg.params[2];
+			network.account = account;
+			break;
+		case RPL_LOGGEDOUT:
+			network.account = null;
+			break;
 		case RPL_TOPIC:
 			var channel = msg.params[1];
 			var topic = msg.params[2];

@@ -74,6 +74,8 @@ class _NetworkDetailsPageState extends State<NetworkDetailsPage> {
 	@override
 	Widget build(BuildContext context) {
 		var network = context.watch<NetworkModel>();
+		var client = context.read<Client>();
+
 		List<Widget> children = [];
 
 		if (_motd != null) {
@@ -107,6 +109,22 @@ class _NetworkDetailsPageState extends State<NetworkDetailsPage> {
 			title: Text(statusTitle),
 			subtitle: statusSubtitle == null ? null : Text(statusSubtitle),
 		));
+
+		if (client.caps.enabled.contains('sasl') && network.state == NetworkState.online) {
+			if (network.account != null) {
+				children.add(ListTile(
+					leading: Icon(Icons.gpp_good),
+					title: Text('Authenticated'),
+					subtitle: Text('You are logged in with the account "${network.account}" on this network.'),
+				));
+			} else {
+				children.add(ListTile(
+					leading: Icon(Icons.gpp_bad),
+					title: Text('Unauthenticated'),
+					subtitle: Text('You are not logged in with an account on this network.'),
+				));
+			}
+		}
 
 		var buffers = context.watch<BufferListModel>().buffers.where((buffer) => buffer.network == network).toList();
 
