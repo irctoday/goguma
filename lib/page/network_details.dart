@@ -5,6 +5,7 @@ import '../ansi.dart';
 import '../client.dart';
 import '../linkify.dart';
 import '../models.dart';
+import '../dialog/authenticate.dart';
 import 'buffer.dart';
 import 'edit_bouncer_network.dart';
 
@@ -122,6 +123,12 @@ class _NetworkDetailsPageState extends State<NetworkDetailsPage> {
 					leading: Icon(Icons.gpp_bad),
 					title: Text('Unauthenticated'),
 					subtitle: Text('You are not logged in with an account on this network.'),
+					trailing: ElevatedButton(
+						onPressed: () {
+							AuthenticateDialog.show(context, network);
+						},
+						child: Text('LOG IN'),
+					),
 				));
 			}
 		}
