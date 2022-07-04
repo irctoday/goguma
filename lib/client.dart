@@ -571,10 +571,26 @@ class Client {
 		}
 
 		_log('Starting SASL PLAIN authentication');
-		send(IrcMessage('AUTHENTICATE', ['PLAIN']));
+		authWithPlain(creds.username, creds.password).ignore();
+	}
 
-		var payload = [0, ...utf8.encode(creds.username), 0, ...utf8.encode(creds.password)];
-		send(IrcMessage('AUTHENTICATE', [base64.encode(payload)]));
+	Future<void> authWithPlain(String username, String password) async {
+		send(IrcMessage('AUTHENTICATE', ['PLAIN']));
+		var payload = [0, ...utf8.encode(username), 0, ...utf8.encode(password)];
+		var cmd = IrcMessage('AUTHENTICATE', [base64.encode(payload)]);
+		await _roundtripMessage(cmd, (reply) {
+			switch (reply.cmd) {
+			case RPL_SASLSUCCESS:
+				return true;
+			case ERR_SASLFAIL:
+			case ERR_SASLTOOLONG:
+			case ERR_SASLABORTED:
+			case ERR_SASLALREADY:
+				throw IrcException(reply);
+			default:
+				return false;
+			}
+		}).timeout(Duration(seconds: 30));
 	}
 
 	Future<IrcAvailableCapRegistry> fetchAvailableCaps() async {
