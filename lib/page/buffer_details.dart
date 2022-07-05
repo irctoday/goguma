@@ -145,7 +145,7 @@ class _BufferDetailsPageState extends State<BufferDetailsPage> {
 					var linkStyle = textStyle.apply(color: Colors.blue, decoration: TextDecoration.underline);
 					return RichText(
 						textAlign: TextAlign.center,
-						text: linkify(topic, textStyle: textStyle, linkStyle: linkStyle),
+						text: linkify(context, topic, textStyle: textStyle, linkStyle: linkStyle),
 					);
 				}),
 			));

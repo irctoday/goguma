@@ -118,6 +118,13 @@ class NetworkModel extends ChangeNotifier {
 		_account = account;
 		notifyListeners();
 	}
+
+	IrcUri get uri {
+		return networkEntry.bouncerUri ?? IrcUri(
+			host: serverEntry.host,
+			port: serverEntry.port,
+		);
+	}
 }
 
 class BouncerNetworkListModel extends ChangeNotifier {

@@ -586,7 +586,7 @@ class _CompactMessageItem extends StatelessWidget {
 
 		textSpans = textSpans.map((span) {
 			var linkStyle = span.style!.apply(decoration: TextDecoration.underline);
-			return linkify(span.text!, textStyle: span.style!, linkStyle: linkStyle);
+			return linkify(context, span.text!, textStyle: span.style!, linkStyle: linkStyle);
 		}).toList();
 
 		List<Widget> stack = [];
@@ -741,14 +741,14 @@ class _MessageItem extends StatelessWidget {
 				),
 				senderTextSpan,
 				TextSpan(text: ' '),
-				linkify(actionText, textStyle: textStyle, linkStyle: linkStyle),
+				linkify(context, actionText, textStyle: textStyle, linkStyle: linkStyle),
 			];
 		} else {
 			var body = stripAnsiFormatting(ircMsg.params[1]);
 			content = [
 				if (isFirstInGroup) senderTextSpan,
 				if (isFirstInGroup) TextSpan(text: '\n'),
-				linkify(body, textStyle: textStyle, linkStyle: linkStyle),
+				linkify(context, body, textStyle: textStyle, linkStyle: linkStyle),
 			];
 		}
 
