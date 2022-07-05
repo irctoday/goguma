@@ -385,10 +385,11 @@ class ClientController {
 
 			List<Future<void>> syncFutures = [];
 
-			// Query latest READ status for user targets
+			// Query latest read marker for user targets which have unread
+			// messages (another client might have marked these as read).
 			if (client.supportsReadMarker()) {
 				for (var buffer in _bufferList.buffers) {
-					if (buffer.network == network && !client.isChannel(buffer.name)) {
+					if (buffer.network == network && !client.isChannel(buffer.name) && buffer.unreadCount > 0) {
 						syncFutures.add(client.fetchReadMarker(buffer.name));
 					}
 				}
@@ -800,7 +801,18 @@ class ClientController {
 
 		var targets = await client.fetchChatHistoryTargets(from, to);
 		await Future.wait(targets.map((target) async {
+			// Query read marker if this is a user (ie, we haven't received the
+			// read marker as part of an auto-JOIN) and we haven't queried it
+			// already (we don't have an opened buffer or the buffer has no
+			// unread messages).
+			Future<void>? readMarkerFuture;
+			var buffer = _bufferList.get(target.name, network);
+			if (client.supportsReadMarker() && !client.isChannel(target.name) && (buffer == null || buffer.unreadCount == 0)) {
+				readMarkerFuture = client.fetchReadMarker(target.name);
+			}
+
 			var batch = await client.fetchChatHistoryBetween(target.name, from, to, max);
+			await readMarkerFuture;
 			await _handleChatMessages(target.name, batch.messages);
 		}));
 	}
