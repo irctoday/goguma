@@ -102,15 +102,16 @@ class ClientProvider {
 			return;
 		}
 
-		if (clients.where((client) => client.state == ClientState.connected).isEmpty) {
+		var registeredClients = clients.where((client) => client.registered).toList();
+		if (registeredClients.isEmpty) {
 			return;
 		}
 
-		var useWorkManager = clients.every((client) {
-			return client.caps.enabled.contains('draft/chathistory') || client.state != ClientState.connected;
+		var useWorkManager = registeredClients.every((client) {
+			return client.caps.enabled.contains('draft/chathistory');
 		});
-		var usePush = isFirebaseSupported() && clients.every((client) {
-			return client.caps.enabled.contains('soju.im/webpush') || client.state != ClientState.connected;
+		var usePush = isFirebaseSupported() && registeredClients.every((client) {
+			return client.caps.enabled.contains('soju.im/webpush');
 		});
 		_setupWorkManagerSync(useWorkManager, usePush);
 		_setupBackgroundServiceSync(!useWorkManager);
@@ -331,9 +332,6 @@ class ClientController {
 		}
 
 		switch (msg.cmd) {
-		case RPL_WELCOME:
-			_provider._setupSync();
-			break;
 		case RPL_ISUPPORT:
 			network.upstreamName = client.isupport.network;
 			if (client.isupport.bouncerNetId != null) {
@@ -362,6 +360,8 @@ class ClientController {
 			if (network.state != NetworkState.registering) {
 				break;
 			}
+
+			_provider._setupSync();
 
 			// Send WHO commands for each user buffer we don't know the real
 			// name of

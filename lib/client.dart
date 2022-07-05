@@ -100,6 +100,7 @@ class Client {
 	String _realname;
 	IrcSource? _serverSource;
 	ClientState _state = ClientState.disconnected;
+	bool _registered = false;
 	final StreamController<ClientMessage> _messagesController = StreamController.broadcast(sync: true);
 	final StreamController<ClientState> _statesController = StreamController.broadcast(sync: true);
 	Timer? _reconnectTimer;
@@ -116,6 +117,7 @@ class Client {
 	String get realname => _realname;
 	IrcSource? get serverSource => _serverSource;
 	ClientState get state => _state;
+	bool get registered => _registered;
 	Stream<ClientMessage> get messages => _messagesController.stream;
 	Stream<ClientState> get states => _statesController.stream;
 	bool get autoReconnect => _autoReconnect;
@@ -191,6 +193,7 @@ class Client {
 			_log('Connection closed');
 
 			_socket = null;
+			_registered = false;
 			caps.clear();
 			_batches.clear();
 			_pendingNames.clear();
@@ -458,7 +461,6 @@ class Client {
 			}
 			break;
 		case RPL_WELCOME:
-			_log('Registration complete');
 			_serverSource = msg.source;
 			_nick = msg.params[0];
 			isupport.clear();
@@ -469,6 +471,14 @@ class Client {
 			// ENDOFMOTD/ERR_NOMOTD
 			isupport.parse(msg.params.sublist(1, msg.params.length - 1));
 			_monitored.setCaseMapping(isupport.caseMapping);
+			break;
+		case RPL_ENDOFMOTD:
+		case ERR_NOMOTD:
+			if (_registered) {
+				break;
+			}
+			_log('Registration complete');
+			_registered = true;
 			break;
 		case 'NICK':
 			if (isMyNick(msg.source!.name)) {
