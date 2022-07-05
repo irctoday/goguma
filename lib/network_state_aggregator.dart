@@ -44,7 +44,7 @@ class NetworkStateAggregator extends ChangeNotifier {
 		NetworkState aggregateState = NetworkState.online;
 		NetworkModel? faultyNetwork;
 		for (var network in _networkList.networks) {
-			if (_networkStateToInt(network.state) < _networkStateToInt(aggregateState)) {
+			if (network.state.index < aggregateState.index) {
 				aggregateState = network.state;
 				faultyNetwork = network;
 			}
@@ -54,21 +54,6 @@ class NetworkStateAggregator extends ChangeNotifier {
 			_state = aggregateState;
 			_faultyNetwork = faultyNetwork;
 			notifyListeners();
-		}
-	}
-
-	int _networkStateToInt(NetworkState state) {
-		switch (state) {
-		case NetworkState.offline:
-			return 0;
-		case NetworkState.connecting:
-			return 1;
-		case NetworkState.registering:
-			return 2;
-		case NetworkState.synchronizing:
-			return 3;
-		case NetworkState.online:
-			return 4;
 		}
 	}
 
