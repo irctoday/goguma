@@ -199,23 +199,23 @@ class _BufferDetailsPageState extends State<BufferDetailsPage> {
 		var whois = _whois;
 		SliverList? commonChannels;
 		if (whois != null) {
-			var loggedInTitle = 'Unauthenticated';
-			var loggedInSubtitle = 'This user is not logged in.';
-			var loggedInIcon = Icons.gpp_bad;
 			if (whois.account != null) {
-				loggedInIcon = Icons.gpp_good;
-				loggedInSubtitle = 'This user is logged in with the account ${whois.account}.';
-				if (whois.account == whois.nickname) {
-					loggedInTitle = 'Authenticated';
-				} else {
+				var loggedInTitle = 'Authenticated';
+				if (whois.account != whois.nickname) {
 					loggedInTitle = 'Authenticated as ${whois.account}';
 				}
+				children.add(ListTile(
+					title: Text(loggedInTitle),
+					subtitle: Text('This user is logged in with the account "${whois.account}".'),
+					leading: Icon(Icons.gpp_good),
+				));
+			} else if (client.caps.available.containsKey('sasl')) {
+				children.add(ListTile(
+					title: Text('Unauthenticated'),
+					subtitle: Text('This user is not logged in.'),
+					leading: Icon(Icons.gpp_bad),
+				));
 			}
-			children.add(ListTile(
-				title: Text(loggedInTitle),
-				subtitle: Text(loggedInSubtitle),
-				leading: Icon(loggedInIcon),
-			));
 
 			if (whois.op) {
 				children.add(ListTile(
