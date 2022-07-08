@@ -52,7 +52,7 @@ class _NetworkDetailsPageState extends State<NetworkDetailsPage> {
 							Navigator.pop(context);
 						},
 					),
-					TextButton(
+					ElevatedButton(
 						child: Text('DELETE'),
 						onPressed: _delete,
 					),
