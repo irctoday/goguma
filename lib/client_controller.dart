@@ -678,7 +678,7 @@ class ClientController {
 
 		var buf = _bufferList.get(target, network);
 		var isNewBuffer = false;
-		if (!client.isChannel(target)) {
+		if (buf == null && !client.isChannel(target)) {
 			isNewBuffer = true;
 			buf = await _createBuffer(target);
 		}
