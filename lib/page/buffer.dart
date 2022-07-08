@@ -121,17 +121,27 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 
 		_setOwnTyping(false);
 
-		var msg = IrcMessage('PRIVMSG', [buffer.name, text]);
-		client.send(msg);
+		List<IrcMessage> messages = [];
+		for (var line in text.split('\n')) {
+			var msg = IrcMessage('PRIVMSG', [buffer.name, line]);
+			client.send(msg);
+			messages.add(msg);
+		}
 
 		if (!client.caps.enabled.contains('echo-message')) {
-			msg = IrcMessage(msg.cmd, msg.params, source: IrcSource(client.nick));
-			var entry = MessageEntry(msg, buffer.id);
-			await db.storeMessages([entry]);
-			if (buffer.messageHistoryLoaded) {
-				buffer.addMessages([MessageModel(entry: entry)], append: true);
+			List<MessageEntry> entries = [];
+			List<MessageModel> models = [];
+			for (var msg in messages) {
+				msg = IrcMessage(msg.cmd, msg.params, source: IrcSource(client.nick));
+				var entry = MessageEntry(msg, buffer.id);
+				entries.add(entry);
+				models.add(MessageModel(entry: entry));
 			}
-			bufferList.bumpLastDeliveredTime(buffer, entry.time);
+			await db.storeMessages(entries);
+			if (buffer.messageHistoryLoaded) {
+				buffer.addMessages(models, append: true);
+			}
+			bufferList.bumpLastDeliveredTime(buffer, entries.last.time);
 		}
 	}
 
@@ -147,9 +157,55 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		}
 	}
 
+	void _showConfirmSendDialog(String text) {
+		var network = context.read<NetworkModel>();
+		var lineCount = 1 + '\n'.allMatches(text).length;
+		showDialog<void>(
+			context: context,
+			builder: (context) => AlertDialog(
+				title: Text('Multiple messages'),
+				content: Text('You are about to send $lineCount messages because you composed multiple lines of text. Are you sure?'),
+				actions: [
+					TextButton(
+						child: Text('CANCEL'),
+						onPressed: () {
+							Navigator.pop(context);
+						},
+					),
+					ElevatedButton(
+						child: Text('SEND'),
+						onPressed: () {
+							Navigator.pop(context);
+							_send(text);
+							_composerController.text = '';
+							_composerFocusNode.requestFocus();
+						},
+					),
+				],
+			),
+		);
+	}
+
 	void _submitComposer() {
+		// Remove empty lines at start and end of the text (can happen when
+		// pasting text)
+		var lines = _composerController.text.split('\n');
+		while (!lines.isEmpty && lines.first.trim() == '') {
+			lines = lines.sublist(1);
+		}
+		while (!lines.isEmpty && lines.last.trim() == '') {
+			lines = lines.sublist(0, lines.length - 1);
+		}
+		var text = lines.join('\n');
+
+		var lineCount = 1 + '\n'.allMatches(text).length;
+		if (lineCount > 3) {
+			_showConfirmSendDialog(text);
+			return;
+		}
+
 		if (_composerController.text != '') {
-			_send(_composerController.text);
+			_send(text);
 		}
 		_composerController.text = '';
 		_composerFocusNode.requestFocus();
