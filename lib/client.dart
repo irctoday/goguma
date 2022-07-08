@@ -584,9 +584,8 @@ class Client {
 		authWithPlain(creds.username, creds.password).ignore();
 	}
 
-	Future<void> authWithPlain(String username, String password) async {
-		send(IrcMessage('AUTHENTICATE', ['PLAIN']));
-		var payload = [0, ...utf8.encode(username), 0, ...utf8.encode(password)];
+	Future<void> _roundtripSasl(String mechanism, List<int> payload) async {
+		send(IrcMessage('AUTHENTICATE', [mechanism]));
 		var cmd = IrcMessage('AUTHENTICATE', [base64.encode(payload)]);
 		await _roundtripMessage(cmd, (reply) {
 			switch (reply.cmd) {
@@ -601,6 +600,16 @@ class Client {
 				return false;
 			}
 		}).timeout(Duration(seconds: 30));
+	}
+
+	Future<void> authWithPlain(String username, String password) async {
+		var payload = [0, ...utf8.encode(username), 0, ...utf8.encode(password)];
+		await _roundtripSasl('PLAIN', payload);
+	}
+
+	Future<void> authWithAnonymous(String trace) async {
+		var payload = utf8.encode(trace);
+		await _roundtripSasl('ANONYMOUS', payload);
 	}
 
 	Future<IrcAvailableCapRegistry> fetchAvailableCaps() async {

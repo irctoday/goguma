@@ -72,6 +72,35 @@ class _NetworkDetailsPageState extends State<NetworkDetailsPage> {
 		Navigator.pop(context);
 	}
 
+	void _showLogoutDialog() {
+		var network = context.read<NetworkModel>();
+		showDialog<void>(
+			context: context,
+			builder: (context) => AlertDialog(
+				title: Text('Log out from ${network.displayName}?'),
+				content: Text('Are you sure you want to log out from this network?'),
+				actions: [
+					TextButton(
+						child: Text('CANCEL'),
+						onPressed: () {
+							Navigator.pop(context);
+						},
+					),
+					ElevatedButton(
+						child: Text('LOG OUT'),
+						onPressed: _logout,
+					),
+				],
+			),
+		);
+	}
+
+	void _logout() {
+		var client = context.read<Client>();
+		client.authWithAnonymous(client.nick);
+		Navigator.pop(context);
+	}
+
 	@override
 	Widget build(BuildContext context) {
 		var network = context.watch<NetworkModel>();
@@ -113,10 +142,19 @@ class _NetworkDetailsPageState extends State<NetworkDetailsPage> {
 
 		if (client.caps.enabled.contains('sasl') && network.state == NetworkState.online) {
 			if (network.account != null) {
+				Widget? trailing;
+				if (client.caps.available.containsSasl('ANONYMOUS')) {
+					trailing = ElevatedButton(
+						onPressed: _showLogoutDialog,
+						child: Text('LOG OUT'),
+					);
+				}
+
 				children.add(ListTile(
 					leading: Icon(Icons.gpp_good),
 					title: Text('Authenticated'),
 					subtitle: Text('You are logged in with the account "${network.account}" on this network.'),
+					trailing: trailing,
 				));
 			} else {
 				children.add(ListTile(
