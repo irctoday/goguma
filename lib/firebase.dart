@@ -164,6 +164,30 @@ Future<void> _handleFirebaseMessage(RemoteMessage message) async {
 	case 'INVITE':
 		notifController.showInvite(msg, network);
 		break;
+	case 'MARKREAD':
+		var target = msg.params[0];
+		var bound = msg.params[1];
+		if (bound == '*') {
+			break;
+		}
+		if (!bound.startsWith('timestamp=')) {
+			throw FormatException('Invalid MARKREAD bound: $msg');
+		}
+		var time = bound.replaceFirst('timestamp=', '');
+
+		var bufferEntry = await _fetchBuffer(db, target, networkEntry);
+		if (bufferEntry == null) {
+			break;
+		}
+		if (bufferEntry.lastReadTime != null && time.compareTo(bufferEntry.lastReadTime!) <= 0) {
+			break;
+		}
+
+		// TODO: don't clear notifications whose timestamp is after the read
+		// marker
+		var buffer = BufferModel(entry: bufferEntry, network: network);
+		notifController.cancelAllWithBuffer(buffer);
+		break;
 	default:
 		print('Ignoring ${msg.cmd} message');
 		return;
