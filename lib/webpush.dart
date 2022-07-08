@@ -87,7 +87,15 @@ class WebPush {
 		var nonce = await hkdfSecretKey.deriveBits(_nonceSize * 8, Hash.sha256, salt, info);
 
 		var aesSecretKey = await AesGcmSecretKey.importRawKey(contentEncryptionKeyBytes);
-		var cleartext = await aesSecretKey.decryptBytes(body, nonce, tagLength: _contentEncryptionKeySize * 8);
+		Uint8List cleartext;
+		try {
+			cleartext = await aesSecretKey.decryptBytes(body, nonce, tagLength: _contentEncryptionKeySize * 8);
+		} on OperationError catch (err, stack) {
+			// Turn the Error into an Exception to avoid crashing
+			print('Failed to decrypt Web Push payload: $err');
+			print('Stack:\n$stack');
+			throw Exception('$err');
+		}
 
 		var paddingIndex = cleartext.lastIndexOf(_paddingDelimiter);
 		if (paddingIndex < 0) {
