@@ -153,9 +153,7 @@ class Client {
 
 		await _socket?.close();
 
-		if (params == null) {
-			params = _params;
-		}
+		params ??= _params;
 		_log('Connecting to ${params.host}...');
 
 		final connectTimeout = Duration(seconds: 15);

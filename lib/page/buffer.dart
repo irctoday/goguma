@@ -158,7 +158,6 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 	}
 
 	void _showConfirmSendDialog(String text) {
-		var network = context.read<NetworkModel>();
 		var lineCount = 1 + '\n'.allMatches(text).length;
 		showDialog<void>(
 			context: context,
@@ -213,7 +212,6 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 
 	void _handleMessageSwipe(MessageModel msg) {
 		var prefix = '${msg.msg.source!.name}: ';
-		var text = _composerController.text;
 		if (!_composerController.text.startsWith(prefix)) {
 			_composerController.text = '${msg.msg.source!.name}: ${_composerController.text}';
 			_composerController.selection = TextSelection.collapsed(offset: _composerController.text.length);

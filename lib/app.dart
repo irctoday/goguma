@@ -63,7 +63,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		var clientProvider = context.read<ClientProvider>();
 		_clientErrorSub = clientProvider.errors.listen((err) {
 			SnackBarAction? action;
-			if (err is IrcException && err.msg.cmd == ERR_SASLFAIL) {
+			if (err.msg.cmd == ERR_SASLFAIL) {
 				// TODO: pass NetworkModel to _updateCredentials
 				// TODO: also handle FAIL ACCOUNT_REQUIRED
 				action = SnackBarAction(

@@ -5,7 +5,6 @@ import '../client.dart';
 import '../client_controller.dart';
 import '../database.dart';
 import '../models.dart';
-import '../prefs.dart';
 
 class AuthenticateDialog extends StatefulWidget {
 	final NetworkModel network;
@@ -49,7 +48,6 @@ class _AuthenticateDialogState extends State<AuthenticateDialog> {
 		});
 
 		var db = context.read<DB>();
-		var prefs = context.read<Prefs>();
 		var networkList = context.read<NetworkListModel>();
 		var clientProvider = context.read<ClientProvider>();
 		var username = _usernameController.text;
