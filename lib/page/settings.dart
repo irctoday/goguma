@@ -35,6 +35,31 @@ class _SettingsPageState extends State<SettingsPage> {
 		_typing = prefs.typingIndicator;
 	}
 
+	void _showLogoutDialog() {
+		showDialog<void>(
+			context: context,
+			builder: (context) => AlertDialog(
+				title: Text('Log out'),
+				content: Text('Are you sure you want to log out?'),
+				actions: [
+					TextButton(
+						child: Text('CANCEL'),
+						onPressed: () {
+							Navigator.pop(context);
+						},
+					),
+					ElevatedButton(
+						child: Text('LOG OUT'),
+						onPressed: () {
+							Navigator.pop(context);
+							_logout();
+						},
+					),
+				],
+			),
+		);
+	}
+
 	void _logout() {
 		var db = context.read<DB>();
 		var networkList = context.read<NetworkListModel>();
@@ -149,7 +174,7 @@ class _SettingsPageState extends State<SettingsPage> {
 					title: Text('Logout'),
 					leading: Icon(Icons.logout, color: Colors.red),
 					textColor: Colors.red,
-					onTap: _logout,
+					onTap: _showLogoutDialog,
 				),
 			]),
 		));
