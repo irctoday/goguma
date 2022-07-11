@@ -366,16 +366,19 @@ class ClientController {
 
 			_provider._setupSync();
 
-			// Send WHO commands for each user buffer we don't know the real
-			// name of
+			// Send WHO commands for each recent user buffer
+			var now = DateTime.now();
+			var limit = const Duration(days: 5);
 			List<String> l = [];
 			for (var buffer in _bufferList.buffers) {
 				if (buffer.network != network || !client.isNick(buffer.name)) {
 					continue;
 				}
-				if (buffer.realname == null) {
-					_provider.fetchBufferUser(buffer);
+				var t = buffer.lastDeliveredTime;
+				if (t != null && now.difference(DateTime.parse(t)) > limit) {
+					continue;
 				}
+				_provider.fetchBufferUser(buffer);
 				l.add(buffer.name);
 			}
 			if (client.isupport.monitor != null) {
