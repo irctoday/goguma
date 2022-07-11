@@ -83,7 +83,7 @@ class _AuthenticateDialogState extends State<AuthenticateDialog> {
 			Navigator.pop(context);
 
 			if (widget.network.networkEntry.bouncerId == null) {
-				// TODO: also save SASL username
+				widget.network.serverEntry.saslPlainUsername = username;
 				widget.network.serverEntry.saslPlainPassword = password;
 				db.storeServer(widget.network.serverEntry);
 			}

@@ -58,11 +58,13 @@ class _ConnectPageState extends State<ConnectPage> {
 
 	ServerEntry _generateServerEntry() {
 		Uri uri = parseServerUri(serverController.text);
+		var useSaslPlain = !passwordController.text.isEmpty;
 		return ServerEntry(
 			host: uri.host,
 			port: uri.hasPort ? uri.port : null,
 			tls: uri.scheme != 'irc+insecure',
-			saslPlainPassword: passwordController.text.isNotEmpty ? passwordController.text : null,
+			saslPlainUsername: useSaslPlain ? nicknameController.text : null,
+			saslPlainPassword: useSaslPlain ? passwordController.text : null,
 		);
 	}
 

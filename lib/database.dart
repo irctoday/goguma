@@ -16,6 +16,7 @@ class ServerEntry {
 	bool tls;
 	String? nick;
 	String? pass;
+	String? saslPlainUsername;
 	String? saslPlainPassword;
 
 	Map<String, Object?> toMap() {
@@ -26,11 +27,20 @@ class ServerEntry {
 			'tls': tls ? 1 : 0,
 			'nick': nick,
 			'pass': pass,
+			'sasl_plain_username': saslPlainUsername,
 			'sasl_plain_password': saslPlainPassword,
 		};
 	}
 
-	ServerEntry({ required this.host, this.port, this.tls = true, this.nick, this.pass, this.saslPlainPassword });
+	ServerEntry({
+		required this.host,
+		this.port,
+		this.tls = true,
+		this.nick,
+		this.pass,
+		this.saslPlainUsername,
+		this.saslPlainPassword,
+	});
 
 	ServerEntry.fromMap(Map<String, dynamic> m) :
 		id = m['id'] as int,
@@ -39,6 +49,7 @@ class ServerEntry {
 		tls = m['tls'] != 0,
 		nick = m['nick'] as String?,
 		pass = m['pass'] as String?,
+		saslPlainUsername = m['sasl_plain_username'] as String?,
 		saslPlainPassword = m['sasl_plain_password'] as String?;
 }
 
@@ -276,6 +287,7 @@ class DB {
 						tls INTEGER NOT NULL DEFAULT 1,
 						nick TEXT,
 						pass TEXT,
+						sasl_plain_username TEXT,
 						sasl_plain_password TEXT
 					)
 				''');
@@ -395,12 +407,17 @@ class DB {
 						ALTER TABLE Network ADD COLUMN bouncer_uri TEXT;
 					''');
 				}
+				if (prevVersion < 11) {
+					batch.execute('''
+						ALTER TABLE Server ADD COLUMN sasl_plain_username TEXT;
+					''');
+				}
 				await batch.commit();
 			},
 			onDowngrade: (_, prevVersion, newVersion) async {
 				throw Exception('Attempted to downgrade database from version $prevVersion to version $newVersion');
 			},
-			version: 10,
+			version: 11,
 		);
 		return DB._(db);
 	}
@@ -433,7 +450,7 @@ class DB {
 
 	Future<List<ServerEntry>> listServers() async {
 		var entries = await _db.rawQuery('''
-			SELECT id, host, port, tls, nick, pass, sasl_plain_password
+			SELECT id, host, port, tls, nick, pass, sasl_plain_username, sasl_plain_password
 			FROM Server ORDER BY id
 		''');
 		return entries.map((m) => ServerEntry.fromMap(m)).toList();

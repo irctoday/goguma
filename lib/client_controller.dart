@@ -20,7 +20,7 @@ ConnectParams connectParamsFromServerEntry(ServerEntry entry, Prefs prefs) {
 
 	SaslPlainCredentials? saslPlain;
 	if (entry.saslPlainPassword != null) {
-		saslPlain = SaslPlainCredentials(nick, entry.saslPlainPassword!);
+		saslPlain = SaslPlainCredentials(entry.saslPlainUsername ?? nick, entry.saslPlainPassword!);
 	}
 
 	return ConnectParams(
