@@ -84,6 +84,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		var networkList = context.read<NetworkListModel>();
 		_networkStateAggregator = NetworkStateAggregator(networkList);
 		_networkStateAggregator.addListener(_handleNetworkStateChange);
+		_handleNetworkStateChange();
 
 		if (Platform.isAndroid) {
 			var appLinks = context.read<AppLinks>();
