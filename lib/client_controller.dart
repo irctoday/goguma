@@ -332,6 +332,9 @@ class ClientController {
 		}
 
 		switch (msg.cmd) {
+		case RPL_WELCOME:
+			network.nickname = client.nick;
+			break;
 		case RPL_ISUPPORT:
 			network.upstreamName = client.isupport.network;
 			if (client.isupport.bouncerNetId != null) {
