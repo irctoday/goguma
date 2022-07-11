@@ -14,7 +14,6 @@ class NetworkListIndicator extends StatefulWidget {
 }
 
 class _NetworkListIndicatorState extends State<NetworkListIndicator> {
-	final _refreshIndicatorKey = GlobalKey<_RefreshIndicatorState>();
 	late final NetworkStateAggregator _networkStateAggregator;
 
 	@override
@@ -23,78 +22,64 @@ class _NetworkListIndicatorState extends State<NetworkListIndicator> {
 
 		var networkList = context.read<NetworkListModel>();
 		_networkStateAggregator = NetworkStateAggregator(networkList);
-		_networkStateAggregator.addListener(_handleNetworkStateChange);
 	}
 
 	@override
 	void dispose() {
-		_networkStateAggregator.removeListener(_handleNetworkStateChange);
 		_networkStateAggregator.dispose();
 		super.dispose();
 	}
 
-	void _handleNetworkStateChange() {
-		var state = _networkStateAggregator.state;
-		var loading = state != NetworkState.offline && state != NetworkState.online;
-		_refreshIndicatorKey.currentState!.setLoading(loading);
-	}
-
 	@override
 	Widget build(BuildContext context) {
-		return _RefreshIndicator(
-			key: _refreshIndicatorKey,
-			semanticsLabel: 'Synchronizing…',
+		return AnimatedBuilder(
+			animation: _networkStateAggregator,
+			builder: (context, child) {
+				var state = _networkStateAggregator.state;
+				var loading = state != NetworkState.offline && state != NetworkState.online;
+				return _RefreshIndicator(
+					loading: loading,
+					semanticsLabel: 'Synchronizing…',
+					child: child!,
+				);
+			},
 			child: widget.child,
 		);
 	}
 }
 
-class NetworkIndicator extends StatefulWidget {
+class NetworkIndicator extends AnimatedWidget {
 	final Widget child;
 	final NetworkModel network;
 
-	const NetworkIndicator({ Key? key, required this.child, required this.network }) : super(key: key);
-
-	@override
-	State<NetworkIndicator> createState() => _NetworkIndicatorState();
-}
-
-class _NetworkIndicatorState extends State<NetworkIndicator> {
-	final _refreshIndicatorKey = GlobalKey<_RefreshIndicatorState>();
-
-	@override
-	void initState() {
-		super.initState();
-		widget.network.addListener(_handleNetworkChange);
-	}
-
-	@override
-	void dispose() {
-		widget.network.removeListener(_handleNetworkChange);
-		super.dispose();
-	}
-
-	void _handleNetworkChange() {
-		var state = widget.network.state;
-		var loading = state != NetworkState.offline && state != NetworkState.online;
-		_refreshIndicatorKey.currentState!.setLoading(loading);
-	}
+	const NetworkIndicator({
+		Key? key,
+		required this.child,
+		required this.network,
+	}) : super(key: key, listenable: network);
 
 	@override
 	Widget build(BuildContext context) {
+		var loading = network.state != NetworkState.offline && network.state != NetworkState.online;
 		return _RefreshIndicator(
-			key: _refreshIndicatorKey,
+			loading: loading,
 			semanticsLabel: 'Synchronizing…',
-			child: widget.child,
+			child: child,
 		);
 	}
 }
 
 class _RefreshIndicator extends StatefulWidget {
 	final Widget child;
+	final bool loading;
 	final String? semanticsLabel;
 
-	const _RefreshIndicator({ Key? key, required this.child, this.semanticsLabel }) : super(key: key);
+	const _RefreshIndicator({
+		Key? key,
+		required this.child,
+		required this.loading,
+		this.semanticsLabel,
+	}) : super(key: key);
 
 	@override
 	_RefreshIndicatorState createState() => _RefreshIndicatorState();
@@ -111,6 +96,8 @@ class _RefreshIndicatorState extends State<_RefreshIndicator> with SingleTickerP
 
 		_scaleController = AnimationController(vsync: this, duration: Duration(milliseconds: 200));
 		_scale = _scaleController.drive(Tween<double>(begin: 0.0, end: 1.0));
+
+		_setLoading(widget.loading);
 	}
 
 	@override
@@ -119,7 +106,13 @@ class _RefreshIndicatorState extends State<_RefreshIndicator> with SingleTickerP
 		super.dispose();
 	}
 
-	void setLoading(bool loading) {
+	@override
+	void didUpdateWidget(_RefreshIndicator oldWidget) {
+		super.didUpdateWidget(oldWidget);
+		_setLoading(widget.loading);
+	}
+
+	void _setLoading(bool loading) {
 		if (_loading == loading) {
 			return;
 		}
