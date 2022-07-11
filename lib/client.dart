@@ -39,6 +39,7 @@ class ConnectParams {
 		String? bouncerNetId,
 		String? nick,
 		String? realname,
+		SaslPlainCredentials? saslPlain,
 	}) {
 		return ConnectParams(
 			host: host,
@@ -47,7 +48,7 @@ class ConnectParams {
 			nick: nick ?? this.nick,
 			realname: realname ?? this.realname,
 			pass: pass,
-			saslPlain: saslPlain,
+			saslPlain: saslPlain ?? this.saslPlain,
 			bouncerNetId: bouncerNetId ?? this.bouncerNetId,
 		);
 	}
@@ -135,9 +136,12 @@ class Client {
 		_autoReconnect = autoReconnect,
 		isupport = isupport ?? IrcIsupportRegistry();
 
-	Future<void> connect({ bool register = true }) async {
+	Future<void> connect({ bool register = true, ConnectParams? params }) async {
 		if (_messagesController.isClosed) {
 			throw StateError('connect() called after dispose()');
+		}
+		if (params != null && !register) {
+			throw ArgumentError('connect() called with params and register = false');
 		}
 
 		// Always switch to the disconnected state, because users reset their
@@ -149,21 +153,24 @@ class Client {
 
 		await _socket?.close();
 
-		_log('Connecting to ${_params.host}...');
+		if (params == null) {
+			params = _params;
+		}
+		_log('Connecting to ${params.host}...');
 
 		final connectTimeout = Duration(seconds: 15);
 		Future<Socket> socketFuture;
-		if (_params.tls) {
+		if (params.tls) {
 			socketFuture = SecureSocket.connect(
-				_params.host,
-				_params.port,
+				params.host,
+				params.port,
 				supportedProtocols: ['irc'],
 				timeout: connectTimeout,
 			);
 		} else {
 			socketFuture = Socket.connect(
-				_params.host,
-				_params.port,
+				params.host,
+				params.port,
 				timeout: connectTimeout,
 			);
 		}
@@ -223,7 +230,8 @@ class Client {
 
 		if (register) {
 			try {
-				await _register();
+				await _register(params);
+				_params = params;
 			} on Exception {
 				_socket?.close();
 				rethrow;
@@ -349,9 +357,9 @@ class Client {
 		return endOfBatch.child;
 	}
 
-	Future<void> _register() {
-		_nick = _params.nick;
-		_realname = _params.nick;
+	Future<void> _register(ConnectParams params) {
+		_nick = params.nick;
+		_realname = params.nick;
 
 		// Here we're trying to minimize the number of roundtrips as much as
 		// possible, because (1) we'll reconnect very regularly and (2) mobile
@@ -360,17 +368,21 @@ class Client {
 		// caps we support to avoid waiting for the CAP LS reply.
 
 		send(IrcMessage('CAP', ['LS', '302']));
-		if (_params.pass != null) {
-			send(IrcMessage('PASS', [_params.pass!]));
+		if (params.pass != null) {
+			send(IrcMessage('PASS', [params.pass!]));
 		}
-		send(IrcMessage('NICK', [_params.nick]));
-		send(IrcMessage('USER', [_params.nick, '0', '*', _params.realname]));
+		send(IrcMessage('NICK', [params.nick]));
+		send(IrcMessage('USER', [params.nick, '0', '*', params.realname]));
 		for (var cap in _requestCaps) {
 			send(IrcMessage('CAP', ['REQ', cap]));
 		}
-		_authenticate();
-		if (_params.bouncerNetId != null) {
-			send(IrcMessage('BOUNCER', ['BIND', _params.bouncerNetId!]));
+		if (params.saslPlain != null) {
+			var creds = params.saslPlain!;
+			_log('Starting SASL PLAIN authentication');
+			authWithPlain(creds.username, creds.password).ignore();
+		}
+		if (params.bouncerNetId != null) {
+			send(IrcMessage('BOUNCER', ['BIND', params.bouncerNetId!]));
 		}
 		send(IrcMessage('CAP', ['END']));
 
@@ -378,7 +390,7 @@ class Client {
 		return _waitMessage((msg) {
 			switch (msg.cmd) {
 			case RPL_WELCOME:
-				if (_params.saslPlain != null && !saslSuccess) {
+				if (params.saslPlain != null && !saslSuccess) {
 					throw Exception('Server doesn\'t support SASL authentication');
 				}
 				return true;
@@ -572,16 +584,6 @@ class Client {
 		// A dollar is used for server-wide broadcasts. Dots usually indicate
 		// server names.
 		return !name.startsWith('\$') && !name.contains('.') && !isChannel(name) && name != '*';
-	}
-
-	void _authenticate() {
-		var creds = _params.saslPlain;
-		if (creds == null) {
-			return;
-		}
-
-		_log('Starting SASL PLAIN authentication');
-		authWithPlain(creds.username, creds.password).ignore();
 	}
 
 	Future<void> _roundtripSasl(String mechanism, List<int> payload) async {

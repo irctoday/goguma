@@ -5,6 +5,7 @@ import '../client.dart';
 import '../client_controller.dart';
 import '../database.dart';
 import '../models.dart';
+import '../prefs.dart';
 
 class AuthenticateDialog extends StatefulWidget {
 	final NetworkModel network;
@@ -35,7 +36,7 @@ class _AuthenticateDialogState extends State<AuthenticateDialog> {
 	void initState() {
 		super.initState();
 
-		_usernameController = TextEditingController(text: _client.nick);
+		_usernameController = TextEditingController(text: _client.params.saslPlain?.username ?? _client.nick);
 	}
 
 	void _submit() async {
@@ -48,12 +49,23 @@ class _AuthenticateDialogState extends State<AuthenticateDialog> {
 		});
 
 		var db = context.read<DB>();
+		var prefs = context.read<Prefs>();
+		var networkList = context.read<NetworkListModel>();
+		var clientProvider = context.read<ClientProvider>();
 		var username = _usernameController.text;
 		var password = _passwordController.text;
 
+		var client = _client;
+		var creds = SaslPlainCredentials(username, password);
+
 		Exception? error;
 		try {
-			await _client.authWithPlain(username, password);
+			if (widget.network.networkEntry.bouncerId == null && client.state != ClientState.connected) {
+				var clientParams = client.params.apply(saslPlain: creds);
+				await client.connect(params: clientParams);
+			} else {
+				await client.authWithPlain(username, password);
+			}
 		} on Exception catch (err) {
 			error = err;
 		}
@@ -74,6 +86,17 @@ class _AuthenticateDialogState extends State<AuthenticateDialog> {
 				// TODO: also save SASL username
 				widget.network.serverEntry.saslPlainPassword = password;
 				db.storeServer(widget.network.serverEntry);
+			}
+
+			// Reconnect all child networks
+			for (var network in networkList.networks) {
+				if (network.serverEntry != widget.network.serverEntry || network == widget.network) {
+					continue;
+				}
+
+				var client = clientProvider.get(network);
+				var clientParams = client.params.apply(saslPlain: creds);
+				client.connect(params: clientParams).ignore();
 			}
 		}
 	}

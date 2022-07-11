@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import 'client.dart';
 import 'client_controller.dart';
+import 'dialog/authenticate.dart';
 import 'irc.dart';
 import 'models.dart';
 import 'network_state_aggregator.dart';
@@ -61,7 +62,16 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 
 		var clientProvider = context.read<ClientProvider>();
 		_clientErrorSub = clientProvider.errors.listen((err) {
-			var snackBar = SnackBar(content: Text(err.toString()));
+			SnackBarAction? action;
+			if (err is IrcException && err.msg.cmd == ERR_SASLFAIL) {
+				// TODO: pass NetworkModel to _updateCredentials
+				// TODO: also handle FAIL ACCOUNT_REQUIRED
+				action = SnackBarAction(
+					label: 'UPDATE PASSWORD',
+					onPressed: _updateCredentials,
+				);
+			}
+			var snackBar = SnackBar(content: Text(err.toString()), action: action);
 			_scaffoldMessengerKey.currentState?.showSnackBar(snackBar);
 		});
 
@@ -323,6 +333,23 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 				],
 			);
 		});
+	}
+
+	void _updateCredentials() {
+		var networkList = context.read<NetworkListModel>();
+
+		NetworkModel? mainNetwork;
+		for (var network in networkList.networks) {
+			if (network.networkEntry.bouncerId == null) {
+				mainNetwork = network;
+				break;
+			}
+		}
+		if (mainNetwork == null) {
+			throw Exception('No main network found');
+		}
+
+		AuthenticateDialog.show(_navigatorKey.currentState!.context, mainNetwork);
 	}
 
 	Route<dynamic>? _handleGenerateRoute(RouteSettings settings) {
