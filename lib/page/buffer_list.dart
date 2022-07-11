@@ -79,6 +79,16 @@ class _BufferListPageState extends State<BufferListPage> {
 		setState(() {});
 	}
 
+	bool _shouldSuggestNewNetwork() {
+		var clientProvider = context.read<ClientProvider>();
+		if (clientProvider.clients.length != 1) {
+			return false;
+		}
+
+		var client = clientProvider.clients.first;
+		return client.caps.enabled.contains('soju.im/bouncer-networks') && client.params.bouncerNetId == null;
+	}
+
 	@override
 	Widget build(BuildContext context) {
 		List<BufferModel> buffers = context.watch<BufferListModel>().buffers;
@@ -100,6 +110,52 @@ class _BufferListPageState extends State<BufferListPage> {
 			if (buffer.unreadCount > 0) {
 				hasUnreadBuffer = true;
 			}
+		}
+
+		Widget body;
+		if (buffers.length == 0) {
+			if (_searchQuery != null) {
+				body = _BufferListPlaceholder(
+					icon: Icons.search,
+					title: 'No search result',
+					subtitle: 'No conversation matches the search query.',
+				);
+			} else if (_shouldSuggestNewNetwork()) {
+				body = _BufferListPlaceholder(
+					icon: Icons.hub,
+					title: 'Join a network',
+					subtitle: 'Welcome to IRC! To get started, join a network.',
+					trailing: ElevatedButton(
+						child: Text('New network'),
+						onPressed: () {
+							Navigator.pushNamed(context, EditBouncerNetworkPage.routeName);
+						},
+					),
+				);
+			} else {
+				body = _BufferListPlaceholder(
+					icon: Icons.tag,
+					title: 'Join a conversation',
+					subtitle: 'Welcome to IRC! To get started, join a channel or start a discussion with a user.',
+					trailing: ElevatedButton(
+						child: Text('New conversation'),
+						onPressed: () {
+							Navigator.pushNamed(context, JoinPage.routeName);
+						},
+					),
+				);
+			}
+		} else {
+			body = ListView.builder(
+				itemCount: buffers.length,
+				itemBuilder: (context, index) {
+					var buffer = buffers[index];
+					return _BufferItem(
+						buffer: buffer,
+						showNetworkName: bufferNames[buffer.name.toLowerCase()]! > 1,
+					);
+				},
+			);
 		}
 
 		return Scaffold(
@@ -153,18 +209,7 @@ class _BufferListPageState extends State<BufferListPage> {
 				],
 			),
 			body: NetworkListIndicator(
-				child: _BackgroundServicePermissionBanner(
-					child: buffers.length == 0 ? _BufferListPlaceholder() : ListView.builder(
-						itemCount: buffers.length,
-						itemBuilder: (context, index) {
-							var buffer = buffers[index];
-							return _BufferItem(
-								buffer: buffer,
-								showNetworkName: bufferNames[buffer.name.toLowerCase()]! > 1,
-							);
-						},
-					),
-				),
+				child: _BackgroundServicePermissionBanner(child: body)
 			),
 		);
 	}
@@ -270,7 +315,7 @@ class _BufferItem extends AnimatedWidget {
 			));
 		}
 
-		// extracted from the ListTile source
+		// extracted from the ListTile sourceIconData
 		var theme = Theme.of(context);
 		var dense = theme.listTileTheme.dense ?? false;
 		var height = (dense ? 64.0 : 72.0) + theme.visualDensity.baseSizeAdjustment.dy;
@@ -295,33 +340,27 @@ class _BufferItem extends AnimatedWidget {
 }
 
 class _BufferListPlaceholder extends StatelessWidget {
-	const _BufferListPlaceholder({ Key? key }) : super(key: key);
+	final IconData icon;
+	final String title;
+	final String subtitle;
+	final Widget? trailing;
 
-	bool _suggestNewNetwork(BuildContext context) {
-		var clientProvider = context.read<ClientProvider>();
-		if (clientProvider.clients.length != 1) {
-			return false;
-		}
-
-		var client = clientProvider.clients.first;
-		return client.caps.enabled.contains('soju.im/bouncer-networks') && client.params.bouncerNetId == null;
-	}
+	const _BufferListPlaceholder({
+		Key? key,
+		required this.icon,
+		required this.title,
+		required this.subtitle,
+		this.trailing,
+	}) : super(key: key);
 
 	@override
 	Widget build(BuildContext context) {
-		var suggestNewNetwork = _suggestNewNetwork(context);
-
-		var getStarted = 'join a channel or start a discussion with a user';
-		if (suggestNewNetwork) {
-			getStarted = 'join a network';
-		}
-
 		return Center(child: Column(
 			mainAxisAlignment: MainAxisAlignment.center,
 			children: [
-				Icon(suggestNewNetwork ? Icons.hub : Icons.tag, size: 100),
+				Icon(icon, size: 100),
 				Text(
-					suggestNewNetwork ? 'Join a network' : 'Join a conversation',
+					title,
 					style: Theme.of(context).textTheme.headlineSmall,
 					textAlign: TextAlign.center,
 				),
@@ -329,21 +368,12 @@ class _BufferListPlaceholder extends StatelessWidget {
 				Container(
 					constraints: BoxConstraints(maxWidth: 300),
 					child: Text(
-						'Welcome to IRC! To get started, $getStarted.',
+						subtitle,
 						textAlign: TextAlign.center,
 					),
 				),
 				SizedBox(height: 15),
-				ElevatedButton(
-					child: Text(suggestNewNetwork ? 'New network' : 'New conversation'),
-					onPressed: () {
-						if (suggestNewNetwork) {
-							Navigator.pushNamed(context, EditBouncerNetworkPage.routeName);
-						} else {
-							Navigator.pushNamed(context, JoinPage.routeName);
-						}
-					},
-				),
+				if (trailing != null) trailing!,
 			],
 		));
 	}
