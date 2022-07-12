@@ -9,6 +9,7 @@ const RPL_MYINFO = '004';
 const RPL_ISUPPORT = '005';
 const RPL_TRYAGAIN = '263';
 const RPL_WHOISCERTFP = '276';
+const RPL_AWAY = '301';
 const RPL_WHOISREGNICK = '307';
 const RPL_WHOISUSER = '311';
 const RPL_WHOISSERVER = '312';
@@ -949,6 +950,7 @@ class Whois {
 	final Map<String, String> channels;
 	final String? account;
 	final bool secureConnection;
+	final String? away;
 	final bool bot;
 
 	const Whois({
@@ -961,6 +963,7 @@ class Whois {
 		this.channels = const {},
 		this.account,
 		this.secureConnection = false,
+		this.away,
 		this.bot = false,
 	});
 
@@ -973,6 +976,7 @@ class Whois {
 		Map<String, String> channels = {};
 		String? account;
 		bool secureConnection = false;
+		String? away;
 		bool bot = false;
 
 		for (var msg in replies) {
@@ -1010,6 +1014,9 @@ class Whois {
 			case RPL_WHOISSECURE:
 				secureConnection = true;
 				break;
+			case RPL_AWAY:
+				away = msg.params[2];
+				break;
 			case RPL_WHOISBOT:
 				bot = true;
 				break;
@@ -1037,6 +1044,7 @@ class Whois {
 			channels: channels,
 			account: account,
 			secureConnection: secureConnection,
+			away: away,
 			bot: bot,
 		);
 	}
