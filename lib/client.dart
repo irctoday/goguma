@@ -883,21 +883,33 @@ class Client {
 		}
 	}
 
-	Future<void> join(String name) {
-		// TODO: support for multiple channels
+	Future<void> join(List<String> names) async {
+		if (names.isEmpty) {
+			return;
+		}
+
 		var cm = isupport.caseMapping;
-		var msg = IrcMessage('JOIN', [name]);
-		return _roundtripMessage(msg, (msg) {
-			switch (msg.cmd) {
+		// TODO: split into multiple JOIN messages if too long
+		var req = IrcMessage('JOIN', [names.join(',')]);
+		Set<String> outstanding = { ...names.map(cm) };
+		await _roundtripMessage(req, (reply) {
+			switch (reply.cmd) {
 			case ERR_NOSUCHCHANNEL:
 			case ERR_TOOMANYCHANNELS:
 			case ERR_BADCHANNELKEY:
 			case ERR_BANNEDFROMCHAN:
 			case ERR_CHANNELISFULL:
 			case ERR_INVITEONLYCHAN:
-				throw IrcException(msg);
+				if (!outstanding.contains(cm(reply.params[1]))) {
+					break;
+				}
+				throw IrcException(reply);
 			case 'JOIN':
-				return isMyNick(msg.source.name) && cm(msg.params[0]) == cm(name);
+				if (!isMyNick(reply.source.name)) {
+					break;
+				}
+				outstanding.remove(cm(reply.params[0]));
+				return outstanding.isEmpty;
 			}
 			return false;
 		});

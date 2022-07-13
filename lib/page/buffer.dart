@@ -63,7 +63,7 @@ void _join(Client client, BufferModel buffer) async {
 
 	buffer.joining = true;
 	try {
-		await client.join(buffer.name);
+		await client.join([buffer.name]);
 	} on IrcException catch (err) {
 		print('Failed to join "${buffer.name}": $err');
 	} finally {
