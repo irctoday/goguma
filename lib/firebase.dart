@@ -173,7 +173,7 @@ Future<void> _handleFirebaseMessage(RemoteMessage message) async {
 		if (!bound.startsWith('timestamp=')) {
 			throw FormatException('Invalid MARKREAD bound: $msg');
 		}
-		var time = bound.replaceFirst('timestamp=', '');
+		//var time = bound.replaceFirst('timestamp=', '');
 
 		var bufferEntry = await _fetchBuffer(db, target, networkEntry);
 		if (bufferEntry == null) {
