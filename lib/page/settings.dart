@@ -97,7 +97,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
 		List<Widget> networks = [];
 		for (var network in networkList.networks) {
-			if (network.networkEntry.bouncerId == null) {
+			if (network.networkEntry.caps.containsKey('soju.im/bouncer-networks') && network.networkEntry.bouncerId == null) {
 				continue;
 			}
 			networks.add(_NetworkItem(network: network));
@@ -206,7 +206,7 @@ class _NetworkItem extends AnimatedWidget {
 				mainAxisAlignment: MainAxisAlignment.center,
 				children: const [Icon(Icons.hub)],
 			),
-			onTap: network.bouncerNetwork == null ? null : () {
+			onTap: () {
 				Navigator.pushNamed(context, NetworkDetailsPage.routeName, arguments: network);
 			},
 		);
