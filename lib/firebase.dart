@@ -179,9 +179,10 @@ Future<void> _handleFirebaseMessage(RemoteMessage message) async {
 		if (bufferEntry == null) {
 			break;
 		}
-		if (bufferEntry.lastReadTime != null && time.compareTo(bufferEntry.lastReadTime!) <= 0) {
-			break;
-		}
+
+		// TODO: we should check lastReadTime here, but we might be racing
+		// against the main Isolate, which also receives MARKREAD via the TCP
+		// connection and isn't aware about notifications opened via push
 
 		// TODO: don't clear notifications whose timestamp is after the read
 		// marker
