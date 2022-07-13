@@ -369,7 +369,7 @@ class ClientController {
 			// Send WHO commands for each recent user buffer
 			var now = DateTime.now();
 			var limit = const Duration(days: 5);
-			List<String> l = [];
+			List<String> nicks = [];
 			for (var buffer in _bufferList.buffers) {
 				if (buffer.network != network || !client.isNick(buffer.name)) {
 					continue;
@@ -379,10 +379,10 @@ class ClientController {
 					continue;
 				}
 				_provider.fetchBufferUser(buffer);
-				l.add(buffer.name);
+				nicks.add(buffer.name);
 			}
 			if (client.isupport.monitor != null) {
-				client.monitor(l);
+				client.monitor(nicks);
 			}
 
 			if (client.caps.enabled.contains('soju.im/webpush')) {
@@ -390,6 +390,18 @@ class ClientController {
 			}
 
 			List<Future<void>> syncFutures = [];
+
+			// TODO: use a different cap, see:
+			// https://github.com/ircv3/ircv3-ideas/issues/91
+			if (!client.caps.enabled.contains('soju.im/bouncer-networks')) {
+				List<String> channels = [];
+				for (var buffer in _bufferList.buffers) {
+					if (buffer.network == network && client.isChannel(buffer.name)) {
+						channels.add(buffer.name);
+					}
+				}
+				syncFutures.add(client.join(channels));
+			}
 
 			// Query latest read marker for user targets which have unread
 			// messages (another client might have marked these as read).
