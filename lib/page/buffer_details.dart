@@ -153,8 +153,9 @@ class _BufferDetailsPageState extends State<BufferDetailsPage> {
 		}
 
 		if (buffer.realname != null) {
+			var realname = stripAnsiFormatting(buffer.realname!);
 			children.add(ListTile(
-				title: Text(buffer.realname!),
+				title: Text(realname),
 				leading: Icon(Icons.person),
 			));
 		}
@@ -277,7 +278,7 @@ class _BufferDetailsPageState extends State<BufferDetailsPage> {
 					var membership = _membershipDescription(member.membershipPrefix ?? '');
 					String? realname;
 					if (!isStubRealname(member.realname, member.nickname)) {
-						realname = member.realname;
+						realname = stripAnsiFormatting(member.realname);
 					}
 					return ListTile(
 						leading: CircleAvatar(child: Text(_initials(member.nickname))),
