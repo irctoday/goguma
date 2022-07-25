@@ -105,6 +105,10 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 				return MessageModel(entry: entry);
 			}).toList());
 
+			if (!mounted) {
+				return;
+			}
+
 			if (buffer.messages.length < 100) {
 				_fetchChatHistory();
 			}
