@@ -152,6 +152,9 @@ Future<void> _handleFirebaseMessage(RemoteMessage message) async {
 		}
 
 		var buffer = BufferModel(entry: bufferEntry, network: network);
+		if (buffer.muted) {
+			break;
+		}
 
 		var msgEntry = MessageEntry(msg, bufferEntry.id!);
 
