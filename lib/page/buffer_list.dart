@@ -34,6 +34,7 @@ String _initials(String name) {
 class _BufferListPageState extends State<BufferListPage> {
 	String? _searchQuery;
 	final TextEditingController _searchController = TextEditingController();
+	final _listKey = GlobalKey();
 
 	@override
 	void dispose() {
@@ -147,6 +148,7 @@ class _BufferListPageState extends State<BufferListPage> {
 			}
 		} else {
 			body = ListView.builder(
+				key: _listKey,
 				itemCount: buffers.length,
 				itemBuilder: (context, index) {
 					var buffer = buffers[index];

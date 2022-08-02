@@ -76,6 +76,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 	final _composerFormKey = GlobalKey<FormState>();
 	final _composerController = TextEditingController();
 	final _scrollController = ScrollController();
+	final _listKey = GlobalKey();
 
 	bool _activated = true;
 	bool _chatHistoryLoading = false;
@@ -433,6 +434,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		}
 
 		var msgList = ListView.builder(
+			key: _listKey,
 			reverse: true,
 			controller: _scrollController,
 			itemCount: messages.length,
