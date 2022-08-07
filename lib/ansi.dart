@@ -127,13 +127,24 @@ List<TextSpan> applyAnsiFormatting(String s, TextStyle base) {
 				bgColor = bg == 99 ? null : Color(colorHexCodes[bg]);
 			}
 			break;
+		case '\x04': // hex color
+			fgColor = _parseHexColorCode(s.substring(i + 1));
+			if (fgColor == null) {
+				bgColor = null;
+				break;
+			}
+			i += 6;
+			if (s.length > i + 1 && s[i + 1] == ',') {
+				var color = _parseHexColorCode(s.substring(i + 2));
+				if (color != null) {
+					bgColor = color;
+					i += 7;
+				}
+			}
+			break;
 		case '\x11': // monospace
 		case '\x1E': // strike-through
 		case '\x16': // reverse color
-			// ignore, rarely used
-			break;
-		case '\x04': // hex color
-			i += 6;
 			// ignore, rarely used
 			break;
 		default:
@@ -145,4 +156,20 @@ List<TextSpan> applyAnsiFormatting(String s, TextStyle base) {
 
 bool _isDigit(String ch) {
 	return '0'.codeUnits.first <= ch.codeUnits.first && ch.codeUnits.first <= '9'.codeUnits.first;
+}
+
+Color? _parseHexColorCode(String s) {
+	if (s.length < 6) {
+		return null;
+	}
+	s = s.substring(0, 6);
+	if (s[0] == '+' || s[0] == '-') {
+		// disallow color codes starting with a sign
+		return null;
+	}
+	var color = int.tryParse(s, radix: 16);
+	if (color == null) {
+		return null;
+	}
+	return Color(color | 0xFF000000);
 }
