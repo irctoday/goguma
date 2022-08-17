@@ -121,7 +121,9 @@ class _JoinPageState extends State<JoinPage> {
 
 		List<ListReply> replies = [];
 		try {
-			replies = await client.list(mask);
+			// Use a pretty strict timeout here: it's annoying for users to
+			// wait forever before being able to join a channel
+			replies = await client.list(mask).timeout(const Duration(seconds: 10));
 		} on Exception catch (err) {
 			print('Failed to LIST channels: $err');
 		}
