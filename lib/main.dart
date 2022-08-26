@@ -14,14 +14,16 @@ import 'app.dart';
 import 'client.dart';
 import 'client_controller.dart';
 import 'database.dart';
-import 'firebase.dart';
 import 'irc.dart';
 import 'models.dart';
 import 'notification_controller.dart';
 import 'prefs.dart';
+import 'push.dart';
 
 // Debugging knobs for work manager.
 const _debugWorkManager = bool.fromEnvironment('debugWorkManager', defaultValue: false);
+
+Future<PushController> Function()? initPush;
 
 void main() {
 	FlutterError.onError = _handleFlutterError;
@@ -41,10 +43,14 @@ void _main() async {
 
 	WidgetsFlutterBinding.ensureInitialized();
 	await _initWorkManager();
-	try {
-		await initFirebaseMessaging();
-	} on Exception catch (err) {
-		print('Warning: failed to initialize Firebase: $err');
+
+	PushController? pushController;
+	if (initPush != null) {
+		try {
+			pushController = await initPush!();
+		} on Exception catch (err) {
+			print('Warning: failed to initialize push controller: $err');
+		}
 	}
 
 	if (Platform.isAndroid) {
@@ -73,6 +79,7 @@ void _main() async {
 		bufferList: bufferList,
 		bouncerNetworkList: bouncerNetworkList,
 		notifController: notifController,
+		pushController: pushController,
 	);
 
 	await _initModels(

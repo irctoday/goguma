@@ -8,11 +8,11 @@ import 'package:workmanager/workmanager.dart';
 
 import 'client.dart';
 import 'database.dart';
-import 'firebase.dart';
 import 'irc.dart';
 import 'models.dart';
 import 'notification_controller.dart';
 import 'prefs.dart';
+import 'push.dart';
 import 'webpush.dart';
 
 ConnectParams connectParamsFromServerEntry(ServerEntry entry, Prefs prefs) {
@@ -47,6 +47,7 @@ class ClientProvider {
 	final BouncerNetworkListModel _bouncerNetworkList;
 	final NotificationController _notifController;
 	final bool _enableSync;
+	final PushController? _pushController;
 
 	final ValueNotifier<bool> needBackgroundServicePermissions = ValueNotifier(false);
 
@@ -64,13 +65,15 @@ class ClientProvider {
 		required BouncerNetworkListModel bouncerNetworkList,
 		required NotificationController notifController,
 		bool enableSync = true,
+		PushController? pushController,
 	}) :
 		_db = db,
 		_networkList = networkList,
 		_bufferList = bufferList,
 		_bouncerNetworkList = bouncerNetworkList,
 		_notifController = notifController,
-		_enableSync = enableSync;
+		_enableSync = enableSync,
+		_pushController = pushController;
 
 	void add(Client client, NetworkModel network) {
 		_controllers[network] = ClientController._(this, client, network);
@@ -110,7 +113,7 @@ class ClientProvider {
 		var useWorkManager = registeredClients.every((client) {
 			return client.caps.enabled.contains('draft/chathistory');
 		});
-		var usePush = isFirebaseSupported() && registeredClients.every((client) {
+		var usePush = _pushController != null && registeredClients.every((client) {
 			return client.caps.enabled.contains('soju.im/webpush');
 		});
 		_setupWorkManagerSync(useWorkManager, usePush);
@@ -867,7 +870,7 @@ class ClientController {
 			await _db.deleteWebPushSubscription(oldSub.id!);
 		}
 
-		var endpoint = await createFirebaseSubscription(vapidKey);
+		var endpoint = await _provider._pushController!.createSubscription(vapidKey);
 		var webPush = await WebPush.generate();
 		var config = await webPush.exportPrivateKeys();
 		var newSub = WebPushSubscriptionEntry(
@@ -884,7 +887,7 @@ class ClientController {
 	}
 
 	bool _isPushSupported() {
-		return client.caps.enabled.contains('soju.im/webpush') && isFirebaseSupported();
+		return client.caps.enabled.contains('soju.im/webpush') && _provider._pushController != null;
 	}
 }
 

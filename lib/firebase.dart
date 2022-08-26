@@ -10,76 +10,76 @@ import 'irc.dart';
 import 'models.dart';
 import 'notification_controller.dart';
 import 'prefs.dart';
+import 'push.dart';
 import 'webpush.dart';
-
-bool _supported = false;
-FirebaseOptions? firebaseOptions;
 
 final _gatewayEndpoint = Uri.parse(
 	String.fromEnvironment('pushgardenEndpoint', defaultValue: 'https://pushgarden.emersion.fr')
 );
 
-Future<String> createFirebaseSubscription(String? vapidKey) async {
-	var token = await FirebaseMessaging.instance.getToken();
-	var client = HttpClient();
-	try {
-		var url = _gatewayEndpoint.resolve('/firebase/${firebaseOptions!.projectId}/subscribe?token=$token');
-		var req = await client.postUrl(url);
-		req.headers.contentType = ContentType('application', 'webpush-options+json', charset: 'utf-8');
-		req.write(json.encode({
-			'vapid': vapidKey,
-		}));
-		var resp = await req.close();
-		if (resp.statusCode ~/ 100 != 2) {
-			throw Exception('HTTP error ${resp.statusCode}');
+class FirebasePushController extends PushController {
+	final FirebaseOptions options;
+
+	FirebasePushController._(this.options);
+
+	static Future<FirebasePushController> init(FirebaseOptions options) async {
+		if (!Platform.isAndroid) {
+			throw Exception('Firebase is only supported on Android');
 		}
 
-		// TODO: parse subscription resource URL as well
+		await Firebase.initializeApp(options: options);
 
-		String? pushLink;
-		for (var rawLink in resp.headers['Link'] ?? <String>[]) {
-			var link = HeaderValue.parse(rawLink);
-			if (link.parameters['rel'] == 'urn:ietf:params:push') {
-				pushLink = link.value;
-				break;
+		if (!FirebaseMessaging.instance.isSupported()) {
+			throw Exception('Firebase messaging is unsupported on this platform');
+		}
+
+		// Workaround: isSupported() may return true on devices without Play Services:
+		// https://github.com/firebase/flutterfire/issues/8917
+		await FirebaseMessaging.instance.getToken();
+
+		FirebaseMessaging.onBackgroundMessage(_handleFirebaseMessage);
+		FirebaseMessaging.onMessage.listen(_handleFirebaseMessage);
+
+		print('Firebase messaging initialized');
+		return FirebasePushController._(options);
+	}
+
+	@override
+	Future<String> createSubscription(String? vapidKey) async {
+		var token = await FirebaseMessaging.instance.getToken();
+		var client = HttpClient();
+		try {
+			var url = _gatewayEndpoint.resolve('/firebase/${options.projectId}/subscribe?token=$token');
+			var req = await client.postUrl(url);
+			req.headers.contentType = ContentType('application', 'webpush-options+json', charset: 'utf-8');
+			req.write(json.encode({
+				'vapid': vapidKey,
+			}));
+			var resp = await req.close();
+			if (resp.statusCode ~/ 100 != 2) {
+				throw Exception('HTTP error ${resp.statusCode}');
 			}
+
+			// TODO: parse subscription resource URL as well
+
+			String? pushLink;
+			for (var rawLink in resp.headers['Link'] ?? <String>[]) {
+				var link = HeaderValue.parse(rawLink);
+				if (link.parameters['rel'] == 'urn:ietf:params:push') {
+					pushLink = link.value;
+					break;
+				}
+			}
+
+			if (pushLink == null || !pushLink.startsWith('<') || !pushLink.endsWith('>')) {
+				throw FormatException('No valid urn:ietf:params:push Link found');
+			}
+			var pushUrl = pushLink.substring(1, pushLink.length - 1);
+			return _gatewayEndpoint.resolve(pushUrl).toString();
+		} finally {
+			client.close();
 		}
-
-		if (pushLink == null || !pushLink.startsWith('<') || !pushLink.endsWith('>')) {
-			throw FormatException('No valid urn:ietf:params:push Link found');
-		}
-		var pushUrl = pushLink.substring(1, pushLink.length - 1);
-		return _gatewayEndpoint.resolve(pushUrl).toString();
-	} finally {
-		client.close();
 	}
-}
-
-Future<void> initFirebaseMessaging() async {
-	if (!Platform.isAndroid || firebaseOptions == null) {
-		return;
-	}
-
-	await Firebase.initializeApp(options: firebaseOptions!);
-
-	if (!FirebaseMessaging.instance.isSupported()) {
-		print('Firebase messaging is not supported');
-		return;
-	}
-
-	// Workaround: isSupported() may return true on devices without Play Services:
-	// https://github.com/firebase/flutterfire/issues/8917
-	await FirebaseMessaging.instance.getToken();
-
-	FirebaseMessaging.onBackgroundMessage(_handleFirebaseMessage);
-	FirebaseMessaging.onMessage.listen(_handleFirebaseMessage);
-
-	print('Firebase messaging initialized');
-	_supported = true;
-}
-
-bool isFirebaseSupported() {
-	return _supported;
 }
 
 // This function may called from a separate Isolate
