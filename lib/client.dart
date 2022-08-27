@@ -700,7 +700,7 @@ class Client {
 		var msg = IrcMessage(_markReadCmd, [target]);
 		var cm = isupport.caseMapping;
 		return _roundtripMessage(msg, (msg) {
-			return msg.cmd == _markReadCmd && isMyNick(msg.source.name) && cm(msg.params[0]) == cm(target);
+			return msg.cmd == _markReadCmd && cm(msg.params[0]) == cm(target);
 		}).timeout(Duration(seconds: 15));
 	}
 
