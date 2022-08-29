@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:provider/provider.dart';
 
 import '../ansi.dart';
@@ -13,6 +12,7 @@ import '../linkify.dart';
 import '../models.dart';
 import '../notification_controller.dart';
 import '../prefs.dart';
+import '../widget/composer.dart';
 import '../widget/network_indicator.dart';
 import '../widget/swipe_action.dart';
 import 'buffer_details.dart';
@@ -72,19 +72,14 @@ void _join(Client client, BufferModel buffer) async {
 }
 
 class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
-	final _composerFocusNode = FocusNode();
-	final _composerFormKey = GlobalKey<FormState>();
-	final _composerController = TextEditingController();
 	final _scrollController = ScrollController();
 	final _listKey = GlobalKey();
+	final GlobalKey<ComposerState> _composerKey = GlobalKey();
 
 	bool _activated = true;
 	bool _chatHistoryLoading = false;
-	bool _composerHasCommand = false;
 
 	bool _showJumpToBottom = false;
-
-	DateTime? _ownTyping;
 
 	@override
 	void initState() {
@@ -119,153 +114,9 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		_updateBufferFocus();
 	}
 
-	void _send(String text) async {
-		var buffer = context.read<BufferModel>();
-		var client = context.read<Client>();
-		var db = context.read<DB>();
-		var bufferList = context.read<BufferListModel>();
-
-		_setOwnTyping(false);
-
-		List<IrcMessage> messages = [];
-		for (var line in text.split('\n')) {
-			var msg = IrcMessage('PRIVMSG', [buffer.name, line]);
-			client.send(msg);
-			messages.add(msg);
-		}
-
-		if (!client.caps.enabled.contains('echo-message')) {
-			List<MessageEntry> entries = [];
-			List<MessageModel> models = [];
-			for (var msg in messages) {
-				msg = IrcMessage(msg.cmd, msg.params, source: IrcSource(client.nick));
-				var entry = MessageEntry(msg, buffer.id);
-				entries.add(entry);
-				models.add(MessageModel(entry: entry));
-			}
-			await db.storeMessages(entries);
-			if (buffer.messageHistoryLoaded) {
-				buffer.addMessages(models, append: true);
-			}
-			bufferList.bumpLastDeliveredTime(buffer, entries.last.time);
-		}
-	}
-
-	void _submitCommand(String text) {
-		String cmd;
-		String? param;
-		var i = text.indexOf(' ');
-		if (i >= 0) {
-			cmd = text.substring(0, i);
-			param = text.substring(i + 1);
-		} else {
-			cmd = text;
-		}
-
-		switch (cmd.toLowerCase()) {
-		case 'me':
-			_send(CtcpMessage('ACTION', param).format());
-			break;
-		default:
-			ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-				content: Text('Command not found'),
-			));
-			break;
-		}
-	}
-
-	void _submitText(String text) {
-		if (!_composerHasCommand) {
-			_send(text);
-			return;
-		}
-
-		assert(text.startsWith('/'));
-		assert(!text.contains('\n'));
-
-		if (text.startsWith('//')) {
-			_send(text.substring(1));
-		} else {
-			_submitCommand(text.substring(1));
-		}
-	}
-
-	void _sendTypingStatus() {
-		var buffer = context.read<BufferModel>();
-		var client = context.read<Client>();
-
-		var active = _composerController.text != '';
-		var notify = _setOwnTyping(active);
-		if (notify) {
-			var msg = IrcMessage('TAGMSG', [buffer.name], tags: {'+typing': active ? 'active' : 'done'});
-			client.send(msg);
-		}
-	}
-
-	void _showConfirmSendDialog(String text) {
-		var lineCount = 1 + '\n'.allMatches(text).length;
-		showDialog<void>(
-			context: context,
-			builder: (context) => AlertDialog(
-				title: Text('Multiple messages'),
-				content: Text('You are about to send $lineCount messages because you composed multiple lines of text. Are you sure?'),
-				actions: [
-					TextButton(
-						child: Text('CANCEL'),
-						onPressed: () {
-							Navigator.pop(context);
-						},
-					),
-					ElevatedButton(
-						child: Text('SEND'),
-						onPressed: () {
-							Navigator.pop(context);
-							_submitComposer(confirmed: true);
-						},
-					),
-				],
-			),
-		);
-	}
-
-	void _submitComposer({ bool confirmed = false }) {
-		// Remove empty lines at start and end of the text (can happen when
-		// pasting text)
-		var lines = _composerController.text.split('\n');
-		while (!lines.isEmpty && lines.first.trim() == '') {
-			lines = lines.sublist(1);
-		}
-		while (!lines.isEmpty && lines.last.trim() == '') {
-			lines = lines.sublist(0, lines.length - 1);
-		}
-		var text = lines.join('\n');
-
-		var lineCount = 1 + '\n'.allMatches(text).length;
-		if (lineCount > 3 && !confirmed) {
-			_showConfirmSendDialog(text);
-			return;
-		}
-
-		if (_composerController.text != '') {
-			_submitText(text);
-		}
-		_composerController.text = '';
-		_composerFocusNode.requestFocus();
-		setState(() {
-			_composerHasCommand = false;
-		});
-	}
-
 	void _handleMessageSwipe(MessageModel msg) {
 		var prefix = '${msg.msg.source!.name}: ';
-		if (!_composerController.text.startsWith(prefix)) {
-			_composerController.text = '${msg.msg.source!.name}: ${_composerController.text}';
-			_composerController.selection = TextSelection.collapsed(offset: _composerController.text.length);
-		}
-		_composerFocusNode.requestFocus();
-		setState(() {
-			_composerHasCommand = false;
-		});
+		_composerKey.currentState!.setTextPrefix(prefix);
 	}
 
 	void _handleScroll() {
@@ -307,25 +158,8 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		}
 	}
 
-	bool _setOwnTyping(bool active) {
-		bool notify;
-		var time = DateTime.now();
-		if (!active) {
-			notify = _ownTyping != null && _ownTyping!.add(Duration(seconds: 6)).isAfter(time);
-			_ownTyping = null;
-		} else {
-			notify = _ownTyping == null || _ownTyping!.add(Duration(seconds: 3)).isBefore(time);
-			if (notify) {
-				_ownTyping = time;
-			}
-		}
-		return notify;
-	}
-
 	@override
 	void dispose() {
-		_composerFocusNode.dispose();
-		_composerController.dispose();
 		_scrollController.removeListener(_handleScroll);
 		_scrollController.dispose();
 		WidgetsBinding.instance.removeObserver(this);
@@ -377,70 +211,6 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		buffer.unreadCount = 0;
 
 		notifController.cancelAllWithBuffer(buffer);
-	}
-
-	Future<Iterable<String>> _generateSuggestions(String text) async {
-		var buffer = context.read<BufferModel>();
-		var client = context.read<Client>();
-		var bufferList = context.read<BufferListModel>();
-
-		if (buffer.members == null && client.isChannel(buffer.name)) {
-			await client.names(buffer.name);
-		}
-
-		if (text.startsWith('/') && !text.contains(' ')) {
-			text = text.toLowerCase();
-			return ['/me'].where((cmd) {
-				return cmd.startsWith(text);
-			});
-		}
-
-		String pattern;
-		var i = text.lastIndexOf(' ');
-		if (i >= 0) {
-			pattern = text.substring(i + 1);
-		} else {
-			pattern = text;
-		}
-		pattern = pattern.toLowerCase();
-
-		if (pattern.length < 3) {
-			return [];
-		}
-
-		Iterable<String> result;
-		if (client.isChannel(pattern)) {
-			result = bufferList.buffers.map((buffer) => buffer.name);
-		} else {
-			result = buffer.members?.members.keys ?? [];
-		}
-
-		return result.where((name) {
-			return name.toLowerCase().startsWith(pattern);
-		}).take(10).map((name) {
-			if (name.startsWith('/')) {
-				// Insert a zero-width space to ensure this doesn't end up
-				// being executed as a command
-				return '\u200B$name';
-			}
-			return name;
-		});
-	}
-
-	void _handleSuggestionSelected(String suggestion) {
-		var text = _composerController.text;
-
-		var i = text.lastIndexOf(' ');
-		if (i >= 0) {
-			_composerController.text = text.substring(0, i + 1) + suggestion + ' ';
-		} else if (suggestion.startsWith('/')) { // command
-			_composerController.text = suggestion + ' ';
-		} else {
-			_composerController.text = suggestion + ': ';
-		}
-
-		_composerController.selection = TextSelection.collapsed(offset: _composerController.text.length);
-		_composerFocusNode.requestFocus();
 	}
 
 	@override
@@ -523,62 +293,9 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 
 		Widget? composer;
 		if (canSendMessage) {
-			var fab = FloatingActionButton(
-				onPressed: () {
-					_submitComposer();
-				},
-				tooltip: _composerHasCommand ? 'Execute' : 'Send',
-				child: Icon(_composerHasCommand ? Icons.done : Icons.send, size: 18),
-				backgroundColor: _composerHasCommand ? Colors.red : null,
-				mini: true,
-				elevation: 0,
-			);
-
 			composer = Material(elevation: 15, child: Container(
 				padding: EdgeInsets.all(10),
-				child: Form(key: _composerFormKey, child: Row(children: [
-					Expanded(child: TypeAheadFormField<String>(
-						textFieldConfiguration: TextFieldConfiguration(
-							decoration: InputDecoration(
-								hintText: 'Write a message...',
-								border: InputBorder.none,
-							),
-							onChanged: (value) {
-								if (showTyping) {
-									_sendTypingStatus();
-								}
-
-								setState(() {
-									_composerHasCommand = value.startsWith('/') && !value.contains('\n');
-								});
-							},
-							onSubmitted: (value) {
-								_submitComposer();
-							},
-							focusNode: _composerFocusNode,
-							controller: _composerController,
-							textInputAction: TextInputAction.send,
-							minLines: 1,
-							maxLines: 5,
-							keyboardType: TextInputType.text, // disallows newlines
-						),
-						direction: AxisDirection.up,
-						hideOnEmpty: true,
-						hideOnLoading: true,
-						// To allow to select a suggestion, type some more,
-						// then select another suggestion, without
-						// unfocusing the text field.
-						keepSuggestionsOnSuggestionSelected: true,
-						animationDuration: const Duration(milliseconds: 300),
-						debounceDuration: const Duration(milliseconds: 50),
-						itemBuilder: (context, suggestion) {
-							return ListTile(title: Text(suggestion));
-						},
-						suggestionsCallback: _generateSuggestions,
-						onSuggestionSelected: _handleSuggestionSelected,
-					)),
-					fab,
-				])),
+				child: Composer(key: _composerKey),
 			));
 		}
 
