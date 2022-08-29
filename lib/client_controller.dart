@@ -587,8 +587,7 @@ class ClientController {
 			break;
 		case 'BATCH':
 			if (msg is ClientEndOfBatch) {
-				var endOfBatch = msg as ClientEndOfBatch;
-				var batch = endOfBatch.child;
+				var batch = msg.child;
 				if (batch.type == 'soju.im/bouncer-networks' && client.isupport.bouncerNetId == null) {
 					return _handleBouncerNetworksBatch(batch);
 				}
