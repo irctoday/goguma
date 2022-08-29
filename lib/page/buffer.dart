@@ -474,7 +474,7 @@ class _CompactMessageItem extends StatelessWidget {
 
 		stack.add(Container(
 			margin: EdgeInsets.only(left: 4),
-			child: Text.rich(
+			child: SelectableText.rich(
 				TextSpan(
 					children: content,
 				),
@@ -598,7 +598,7 @@ class _MessageItem extends StatelessWidget {
 			];
 		}
 
-		Widget inner = RichText(text: TextSpan(
+		Widget inner = SelectableText.rich(TextSpan(
 			children: content,
 			style: textStyle,
 		));
