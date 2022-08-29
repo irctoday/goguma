@@ -269,6 +269,7 @@ class ClientController {
 	final NetworkModel _network;
 
 	String? _prevLastDeliveredTime;
+	bool _gotInitialBouncerNetworksBatch = false;
 
 	Client get client => _client;
 	NetworkModel get network => _network;
@@ -295,6 +296,7 @@ class ClientController {
 						buffer.away = null;
 					}
 				}
+				_gotInitialBouncerNetworksBatch = false;
 				break;
 			case ClientState.connecting:
 				_prevLastDeliveredTime = _getLastDeliveredTime();
@@ -583,6 +585,15 @@ class ClientController {
 				_notifController.showInvite(msg, network);
 			}
 			break;
+		case 'BATCH':
+			if (msg is ClientEndOfBatch) {
+				var endOfBatch = msg as ClientEndOfBatch;
+				var batch = endOfBatch.child;
+				if (batch.type == 'soju.im/bouncer-networks' && client.isupport.bouncerNetId == null) {
+					return _handleBouncerNetworksBatch(batch);
+				}
+			}
+			break;
 		case 'BOUNCER':
 			if (msg.params[0] != 'NETWORK') {
 				break;
@@ -590,65 +601,12 @@ class ClientController {
 			if (client.isupport.bouncerNetId != null) {
 				break;
 			}
-
-			var bouncerNetId = msg.params[1];
-			var attrs = msg.params[2] == '*' ? null : parseIrcTags(msg.params[2]);
-
-			var bouncerNetwork = _bouncerNetworkList.networks[bouncerNetId];
-			var networkMatches = _networkList.networks.where((network) {
-				return network.networkEntry.bouncerId == bouncerNetId;
-			});
-			NetworkModel? childNetwork = networkMatches.isEmpty ? null : networkMatches.first;
-
-			if (attrs == null) {
-				// The bouncer network has been removed
-
-				_bouncerNetworkList.remove(bouncerNetId);
-
-				if (childNetwork == null) {
-					break;
-				}
-
-				_provider.disconnect(childNetwork);
-
-				return _db.deleteNetwork(childNetwork.networkId);
-			}
-
-			if (bouncerNetwork != null) {
-				// The bouncer network has been updated
-				bouncerNetwork.setAttrs(attrs);
-				if (childNetwork != null) {
-					childNetwork.networkEntry.bouncerUri = _uriFromBouncerNetworkModel(bouncerNetwork);
-					return _db.storeNetwork(childNetwork.networkEntry);
-				}
+			// If the message is part of a batch, we'll process it when we
+			// reach the end of the batch
+			if (msg.batchByType('soju.im/bouncer-networks') != null) {
 				break;
 			}
-
-			// The bouncer network has been added
-
-			bouncerNetwork = BouncerNetworkModel(bouncerNetId, attrs);
-			_bouncerNetworkList.add(bouncerNetwork);
-
-			if (childNetwork != null) {
-				// This is the first time we see this bouncer network for this
-				// session, but we've saved it in the DB
-				childNetwork.bouncerNetwork = bouncerNetwork;
-				childNetwork.networkEntry.bouncerUri = _uriFromBouncerNetworkModel(bouncerNetwork);
-				return _db.storeNetwork(childNetwork.networkEntry);
-			}
-
-			var networkEntry = NetworkEntry(
-				server: network.serverId,
-				bouncerId: bouncerNetId,
-				bouncerUri: _uriFromBouncerNetworkModel(bouncerNetwork),
-			);
-			return _db.storeNetwork(networkEntry).then((networkEntry) {
-				var childClient = Client(client.params.apply(bouncerNetId: bouncerNetId));
-				var childNetwork = NetworkModel(network.serverEntry, networkEntry, childClient.nick, childClient.realname);
-				_networkList.add(childNetwork);
-				_provider.add(childClient, childNetwork);
-				childClient.connect();
-			});
+			return _handleBouncerNetwork(msg);
 		case 'MARKREAD':
 		case 'READ':
 			var target = msg.params[0];
@@ -739,6 +697,104 @@ class ClientController {
 		if (isNewBuffer && client.isNick(buf.name)) {
 			_provider.fetchBufferUser(buf);
 		}
+	}
+
+	Future<void> _handleBouncerNetworksBatch(ClientBatch batch) async {
+		for (var msg in batch.messages) {
+			await _handleBouncerNetwork(msg);
+		}
+
+		if (_gotInitialBouncerNetworksBatch) {
+			return;
+		}
+		_gotInitialBouncerNetworksBatch = true;
+
+		// Delete stale child networks
+
+		List<NetworkModel> stale = [];
+		for (var childNetwork in _networkList.networks) {
+			if (childNetwork.networkEntry.bouncerId == null) {
+				continue;
+			}
+			if (childNetwork.serverEntry.id != network.serverEntry.id) {
+				continue;
+			}
+
+			var bouncerNetwork = _bouncerNetworkList.networks[childNetwork.networkEntry.bouncerId];
+			if (bouncerNetwork != null) {
+				continue;
+			}
+
+			stale.add(childNetwork);
+		}
+
+		for (var childNetwork in stale) {
+			_provider.disconnect(childNetwork);
+			await _db.deleteNetwork(childNetwork.networkId);
+		}
+	}
+
+	Future<void> _handleBouncerNetwork(ClientMessage msg) async {
+		var bouncerNetId = msg.params[1];
+		var attrs = msg.params[2] == '*' ? null : parseIrcTags(msg.params[2]);
+
+		var bouncerNetwork = _bouncerNetworkList.networks[bouncerNetId];
+		var networkMatches = _networkList.networks.where((network) {
+			return network.networkEntry.bouncerId == bouncerNetId;
+		});
+		NetworkModel? childNetwork = networkMatches.isEmpty ? null : networkMatches.first;
+
+		if (attrs == null) {
+			// The bouncer network has been removed
+
+			_bouncerNetworkList.remove(bouncerNetId);
+
+			if (childNetwork == null) {
+				return;
+			}
+
+			_provider.disconnect(childNetwork);
+
+			await _db.deleteNetwork(childNetwork.networkId);
+			return;
+		}
+
+		if (bouncerNetwork != null) {
+			// The bouncer network has been updated
+			bouncerNetwork.setAttrs(attrs);
+			if (childNetwork != null) {
+				childNetwork.networkEntry.bouncerUri = _uriFromBouncerNetworkModel(bouncerNetwork);
+				await _db.storeNetwork(childNetwork.networkEntry);
+			}
+			return;
+		}
+
+		// The bouncer network has been added
+
+		bouncerNetwork = BouncerNetworkModel(bouncerNetId, attrs);
+		_bouncerNetworkList.add(bouncerNetwork);
+
+		if (childNetwork != null) {
+			// This is the first time we see this bouncer network for this
+			// session, but we've saved it in the DB
+			childNetwork.bouncerNetwork = bouncerNetwork;
+			childNetwork.networkEntry.bouncerUri = _uriFromBouncerNetworkModel(bouncerNetwork);
+			await _db.storeNetwork(childNetwork.networkEntry);
+			return;
+		}
+
+		var networkEntry = NetworkEntry(
+			server: network.serverId,
+			bouncerId: bouncerNetId,
+			bouncerUri: _uriFromBouncerNetworkModel(bouncerNetwork),
+		);
+		await _db.storeNetwork(networkEntry).then((networkEntry) {
+			var childClient = Client(client.params.apply(bouncerNetId: bouncerNetId));
+			var childNetwork = NetworkModel(network.serverEntry, networkEntry, childClient.nick, childClient.realname);
+			_networkList.add(childNetwork);
+			_provider.add(childClient, childNetwork);
+			childClient.connect();
+		});
 	}
 
 	void _handleChanModeUpdate(BufferModel buffer, ChanModeUpdate update) {
