@@ -71,7 +71,6 @@ Set<String> _getDefaultCaps(ConnectParams params) {
 
 		'soju.im/bouncer-networks',
 		'soju.im/no-implicit-names',
-		'soju.im/read',
 		'soju.im/webpush',
 	};
 
@@ -684,23 +683,14 @@ class Client {
 	}
 
 	bool supportsReadMarker() {
-		return caps.enabled.contains('draft/read-marker') || caps.enabled.contains('soju.im/read');
-	}
-
-	String get _markReadCmd {
-		if (caps.enabled.contains('draft/read-marker')) {
-			return 'MARKREAD';
-		} else if (caps.enabled.contains('soju.im/read')) {
-			return 'READ';
-		}
-		throw Exception('Read markers not supported');
+		return caps.enabled.contains('draft/read-marker');
 	}
 
 	Future<void> fetchReadMarker(String target) {
-		var msg = IrcMessage(_markReadCmd, [target]);
+		var msg = IrcMessage('MARKREAD', [target]);
 		var cm = isupport.caseMapping;
 		return _roundtripMessage(msg, (msg) {
-			return msg.cmd == _markReadCmd && cm(msg.params[0]) == cm(target);
+			return msg.cmd == 'MARKREAD' && cm(msg.params[0]) == cm(target);
 		}).timeout(Duration(seconds: 15));
 	}
 
@@ -708,7 +698,7 @@ class Client {
 		if (!caps.enabled.contains('server-time') || !supportsReadMarker()) {
 			return;
 		}
-		send(IrcMessage(_markReadCmd, [target, 'timestamp=' + t]));
+		send(IrcMessage('MARKREAD', [target, 'timestamp=' + t]));
 	}
 
 	Future<NamesReply> names(String channel) async {

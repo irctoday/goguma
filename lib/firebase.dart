@@ -135,7 +135,6 @@ Future<void> _handleFirebaseMessage(RemoteMessage message) async {
 	var notifController = NotificationController();
 	await notifController.initialize();
 
-	// TODO: cancel existing notifications on READ
 	switch (msg.cmd) {
 	case 'PRIVMSG':
 	case 'NOTICE':

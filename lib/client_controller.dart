@@ -607,7 +607,6 @@ class ClientController {
 			}
 			return _handleBouncerNetwork(msg);
 		case 'MARKREAD':
-		case 'READ':
 			var target = msg.params[0];
 			var bound = msg.params[1];
 
