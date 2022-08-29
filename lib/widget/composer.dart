@@ -8,6 +8,8 @@ import '../irc.dart';
 import '../models.dart';
 import '../prefs.dart';
 
+final whitespaceRegExp = RegExp(r'\s', unicode: true);
+
 class Composer extends StatefulWidget {
 	const Composer({ Key? key }) : super(key: key);
 
@@ -24,19 +26,60 @@ class ComposerState extends State<Composer> {
 
 	DateTime? _ownTyping;
 
-	void _send(String text) async {
+	int _getMaxPrivmsgLen() {
+		var buffer = context.read<BufferModel>();
+		var client = context.read<Client>();
+
+		var msg = IrcMessage(
+			'PRIVMSG',
+			[buffer.name, ''],
+			source: IrcSource(
+				client.nick,
+				user: '_' * client.isupport.usernameLen,
+				host: '_' * client.isupport.hostnameLen,
+			),
+		);
+		var raw = msg.toString() + '\r\n';
+		return client.isupport.lineLen - raw.length;
+	}
+
+	List<IrcMessage> _buildPrivmsg(String text) {
+		var buffer = context.read<BufferModel>();
+		var maxLen = _getMaxPrivmsgLen();
+
+		List<IrcMessage> messages = [];
+		for (var line in text.split('\n')) {
+			while (maxLen > 1 && line.length > maxLen) {
+				// Pick a good cut-off index, preferably at a whitespace
+				// character
+				var i = line.substring(0, maxLen).lastIndexOf(whitespaceRegExp);
+				if (i <= 0) {
+					i = maxLen - 1;
+				}
+
+				var leading = line.substring(0, i + 1);
+				line = line.substring(i + 1);
+
+				messages.add(IrcMessage('PRIVMSG', [buffer.name, leading]));
+			}
+
+			// We'll get ERR_NOTEXTTOSEND if we try to send an empty message
+			if (line != '') {
+				messages.add(IrcMessage('PRIVMSG', [buffer.name, line]));
+			}
+		}
+
+		return messages;
+	}
+
+	void _send(List<IrcMessage> messages) async {
 		var buffer = context.read<BufferModel>();
 		var client = context.read<Client>();
 		var db = context.read<DB>();
 		var bufferList = context.read<BufferListModel>();
 
-		_setOwnTyping(false);
-
-		List<IrcMessage> messages = [];
-		for (var line in text.split('\n')) {
-			var msg = IrcMessage('PRIVMSG', [buffer.name, line]);
+		for (var msg in messages) {
 			client.send(msg);
-			messages.add(msg);
 		}
 
 		if (!client.caps.enabled.contains('echo-message')) {
@@ -69,7 +112,10 @@ class ComposerState extends State<Composer> {
 
 		switch (cmd.toLowerCase()) {
 		case 'me':
-			_send(CtcpMessage('ACTION', param).format());
+			var buffer = context.read<BufferModel>();
+			var text = CtcpMessage('ACTION', param).format();
+			var msg = IrcMessage('PRIVMSG', [buffer.name, text]);
+			_send([msg]);
 			break;
 		default:
 			ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -79,49 +125,47 @@ class ComposerState extends State<Composer> {
 		}
 	}
 
-	void _submitText(String text) {
-		if (!_isCommand) {
-			_send(text);
-			return;
-		}
-
-		assert(text.startsWith('/'));
-		assert(!text.contains('\n'));
-
-		if (text.startsWith('//')) {
-			_send(text.substring(1));
-		} else {
-			_submitCommand(text.substring(1));
-		}
-	}
-
-	void _showConfirmSendDialog(String text) {
-		var lineCount = 1 + '\n'.allMatches(text).length;
-		showDialog<void>(
+	Future<bool> _showConfirmSendDialog(String text, int msgCount) async {
+		var result = await showDialog<bool>(
 			context: context,
 			builder: (context) => AlertDialog(
 				title: Text('Multiple messages'),
-				content: Text('You are about to send $lineCount messages because you composed multiple lines of text. Are you sure?'),
+				content: Text('You are about to send $msgCount messages because you composed a long text. Are you sure?'),
 				actions: [
 					TextButton(
 						child: Text('CANCEL'),
 						onPressed: () {
-							Navigator.pop(context);
+							Navigator.pop(context, false);
 						},
 					),
 					ElevatedButton(
 						child: Text('SEND'),
 						onPressed: () {
-							Navigator.pop(context);
-							_submit(confirmed: true);
+							Navigator.pop(context, true);
 						},
 					),
 				],
 			),
 		);
+		return result!;
 	}
 
-	void _submit({ bool confirmed = false }) {
+	Future<bool> _submitText(String text) async {
+		var messages = _buildPrivmsg(text);
+		if (messages.length == 0) {
+			return true;
+		} else if (messages.length > 3) {
+			var confirmed = await _showConfirmSendDialog(text, messages.length);
+			if (!confirmed) {
+				return false;
+			}
+		}
+
+		_send(messages);
+		return true;
+	}
+
+	void _submit() async {
 		// Remove empty lines at start and end of the text (can happen when
 		// pasting text)
 		var lines = _controller.text.split('\n');
@@ -133,15 +177,24 @@ class ComposerState extends State<Composer> {
 		}
 		var text = lines.join('\n');
 
-		var lineCount = 1 + '\n'.allMatches(text).length;
-		if (lineCount > 3 && !confirmed) {
-			_showConfirmSendDialog(text);
+		var ok = true;
+		if (_isCommand) {
+			assert(text.startsWith('/'));
+			assert(!text.contains('\n'));
+
+			if (text.startsWith('//')) {
+				ok = await _submitText(text.substring(1));
+			} else {
+				_submitCommand(text.substring(1));
+			}
+		} else {
+			ok = await _submitText(text);
+		}
+		if (!ok) {
 			return;
 		}
 
-		if (_controller.text != '') {
-			_submitText(text);
-		}
+		_setOwnTyping(false);
 		_controller.text = '';
 		_focusNode.requestFocus();
 		setState(() {

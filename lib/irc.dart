@@ -590,7 +590,7 @@ class IrcIsupportRegistry {
 	CaseMapping? _caseMapping;
 	final List<IrcIsupportMembership> _memberships = [];
 	int? _monitor;
-	int? _topicLen, _nickLen, _realnameLen;
+	int? _topicLen, _nickLen, _realnameLen, _usernameLen, _hostnameLen, _lineLen;
 	List<String>? _chanModes;
 	IrcIsupportElist? _elist;
 
@@ -605,6 +605,9 @@ class IrcIsupportRegistry {
 	int? get topicLen => _topicLen;
 	int? get nickLen => _nickLen;
 	int? get realnameLen => _realnameLen;
+	int get usernameLen => _usernameLen ?? 20;
+	int get hostnameLen => _hostnameLen ?? 63;
+	int get lineLen => _lineLen ?? 512;
 	List<String> get chanModes => UnmodifiableListView(_chanModes ?? ['beI', 'k', 'l', 'imnst']);
 	IrcIsupportElist? get elist => _elist;
 	String? get vapid => _raw['VAPID'];
@@ -624,6 +627,12 @@ class IrcIsupportRegistry {
 				case 'ELIST':
 					_elist = null;
 					break;
+				case 'HOSTLEN':
+					_hostnameLen = null;
+					break;
+				case 'LINELEN':
+					_lineLen = null;
+					break;
 				case 'MONITOR':
 					_monitor = null;
 					break;
@@ -638,6 +647,9 @@ class IrcIsupportRegistry {
 					break;
 				case 'TOPIC':
 					_topicLen = null;
+					break;
+				case 'USERLEN':
+					_usernameLen = null;
 					break;
 				}
 				continue;
@@ -667,6 +679,18 @@ class IrcIsupportRegistry {
 				break;
 			case 'ELIST':
 				_elist = IrcIsupportElist.parse(v ?? '');
+				break;
+			case 'HOSTLEN':
+				if (v == null) {
+					throw FormatException('Malformed ISUPPORT HOSTLEN: no value');
+				}
+				_hostnameLen = int.parse(v);
+				break;
+			case 'LINELEN':
+				if (v == null) {
+					throw FormatException('Malformed ISUPPORT LINELEN: no value');
+				}
+				_lineLen = int.parse(v);
 				break;
 			case 'MONITOR':
 				_monitor = int.parse(v ?? '0');
@@ -707,6 +731,12 @@ class IrcIsupportRegistry {
 				}
 				_topicLen = int.parse(v);
 				break;
+			case 'USERLEN':
+				if (v == null) {
+					throw FormatException('Malformed ISUPPORT USERLEN: no value');
+				}
+				_usernameLen = int.parse(v);
+				break;
 			}
 		}
 	}
@@ -719,6 +749,9 @@ class IrcIsupportRegistry {
 		_topicLen = null;
 		_nickLen = null;
 		_realnameLen = null;
+		_usernameLen = null;
+		_hostnameLen = null;
+		_lineLen = null;
 		_elist = null;
 	}
 
