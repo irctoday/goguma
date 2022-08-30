@@ -513,7 +513,7 @@ class Client {
 				if (_batches.containsKey(ref)) {
 					throw FormatException('Duplicate BATCH reference: $ref');
 				}
-				var batch = ClientBatch._(type, params, msgBatch);
+				var batch = ClientBatch._(type, params, msgBatch, msg.tags);
 				_batches[ref] = batch;
 				break;
 			case '-':
@@ -1040,13 +1040,15 @@ class ClientBatch {
 	final String type;
 	final UnmodifiableListView<String> params;
 	final ClientBatch? parent;
+	final UnmodifiableMapView<String, String?> tags;
 
 	final List<ClientMessage> _messages = [];
 
 	UnmodifiableListView<ClientMessage> get messages => UnmodifiableListView(_messages);
 
-	ClientBatch._(this.type, List<String> params, this.parent) :
-		params = UnmodifiableListView(params);
+	ClientBatch._(this.type, List<String> params, this.parent, Map<String, String?> tags) :
+		params = UnmodifiableListView(params),
+		tags = UnmodifiableMapView(tags);
 }
 
 class ChatHistoryTarget {
