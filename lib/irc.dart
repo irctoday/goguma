@@ -188,6 +188,18 @@ class IrcMessage {
 			return cmd.compareTo('400') >= 0 && cmd.compareTo('568') <= 0;
 		}
 	}
+
+	IrcMessage copyWith({
+		IrcSource? source,
+		Map<String, String?>? tags,
+	}) {
+		return IrcMessage(
+			cmd,
+			params,
+			source: source ?? this.source,
+			tags: tags ?? this.tags,
+		);
+	}
 }
 
 Map<String, String?> parseIrcTags(String s) {

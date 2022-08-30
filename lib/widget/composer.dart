@@ -86,7 +86,7 @@ class ComposerState extends State<Composer> {
 			List<MessageEntry> entries = [];
 			List<MessageModel> models = [];
 			for (var msg in messages) {
-				msg = IrcMessage(msg.cmd, msg.params, source: IrcSource(client.nick));
+				msg = msg.copyWith(source: IrcSource(client.nick));
 				var entry = MessageEntry(msg, buffer.id);
 				entries.add(entry);
 				models.add(MessageModel(entry: entry));
