@@ -59,6 +59,7 @@ Set<String> _getDefaultCaps(ConnectParams params) {
 		'away-notify',
 		'batch',
 		'echo-message',
+		'labeled-response',
 		'message-tags',
 		'multi-prefix',
 		'sasl',
@@ -111,6 +112,7 @@ class Client {
 	Future<void> _lastWhoFuture = Future.value(null);
 	Future<void> _lastListFuture = Future.value(null);
 	final IrcNameMap<void> _monitored = IrcNameMap(defaultCaseMapping);
+	int _lastLabel = 0;
 
 	ConnectParams get params => _params;
 	String get nick => _nick;
@@ -320,10 +322,34 @@ class Client {
 	}
 
 	Future<ClientMessage> _roundtripMessage(IrcMessage msg, bool Function(ClientMessage msg) test) {
+		String? cmdLabel;
+		if (caps.enabled.contains('labeled-response')) {
+			_lastLabel++;
+			cmdLabel = '$_lastLabel';
+			msg = msg.copyWith(tags: { ...msg.tags, 'label': cmdLabel });
+		}
+
 		var cmd = msg.cmd;
 		send(msg);
 
 		return _waitMessage((msg) {
+			// Note: a reply to a command with a label may be completely
+			// missing the label. But if a reply has a label, it's guaranteed
+			// to match the command's.
+			var label = msg.label;
+			if (label != null && label != cmdLabel) {
+				return false;
+			}
+
+			var endOfLabeledResponse = false;
+			if (label != null && label == cmdLabel) {
+				if (msg.cmd == 'BATCH') {
+					endOfLabeledResponse = msg is ClientEndOfBatch;
+				} else {
+					endOfLabeledResponse = msg.tags['label'] != null;
+				}
+			}
+
 			bool isError = false;
 			switch (msg.cmd) {
 			case 'FAIL':
@@ -339,7 +365,11 @@ class Client {
 				throw IrcException(msg);
 			}
 
-			return test(msg);
+			var done = test(msg);
+			if (!done && endOfLabeledResponse) {
+				throw Exception('Received end of labeled response, but not done handling messages for $cmd');
+			}
+			return done;
 		});
 	}
 
