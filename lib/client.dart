@@ -1015,6 +1015,7 @@ class ClientMessage extends IrcMessage {
 			if (batch.type == type) {
 				return batch;
 			}
+			batch = batch.parent;
 		}
 		return null;
 	}
