@@ -1019,6 +1019,19 @@ class ClientMessage extends IrcMessage {
 		}
 		return null;
 	}
+
+	String? get label {
+		if (tags.containsKey('label')) {
+			return tags['label'];
+		}
+
+		var batch = batchByType('labeled-response');
+		if (batch != null) {
+			return batch.tags['label'];
+		}
+
+		return null;
+	}
 }
 
 class ClientEndOfNames extends ClientMessage {
