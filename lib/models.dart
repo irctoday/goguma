@@ -349,7 +349,7 @@ class BufferListModel extends ChangeNotifier {
 				}
 				return b.lastDeliveredTime!.compareTo(a.lastDeliveredTime!);
 			}
-			return a.name.compareTo(b.name);
+			return a.name.toLowerCase().compareTo(b.name.toLowerCase());
 		});
 		_sorted = l;
 	}

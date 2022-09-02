@@ -86,7 +86,7 @@ class _BufferDetailsPageState extends State<BufferDetailsPage> {
 			if (i != j) {
 				return i - j;
 			}
-			return a.nickname.compareTo(b.nickname);
+			return a.nickname.toLowerCase().compareTo(b.nickname.toLowerCase());
 		});
 
 		setState(() {
