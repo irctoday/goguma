@@ -343,17 +343,19 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 				actions: [
 					PopupMenuButton<String>(
 						onSelected: (key) {
+							var bufferList = context.read<BufferListModel>();
+							var db = context.read<DB>();
 							switch (key) {
 							case 'details':
 								Navigator.pushNamed(context, BufferDetailsPage.routeName, arguments: buffer);
 								break;
 							case 'pin':
-								context.read<BufferListModel>().setPinned(buffer, !buffer.pinned);
-								context.read<DB>().storeBuffer(buffer.entry);
+								bufferList.setPinned(buffer, !buffer.pinned);
+								db.storeBuffer(buffer.entry);
 								break;
 							case 'mute':
-								context.read<BufferListModel>().setMuted(buffer, !buffer.muted);
-								context.read<DB>().storeBuffer(buffer.entry);
+								bufferList.setMuted(buffer, !buffer.muted);
+								db.storeBuffer(buffer.entry);
 								break;
 							case 'part':
 								var client = context.read<Client>();
@@ -362,8 +364,8 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 								} else {
 									client.unmonitor([buffer.name]);
 								}
-								context.read<BufferListModel>().remove(buffer);
-								context.read<DB>().deleteBuffer(buffer.entry.id!);
+								bufferList.remove(buffer);
+								db.deleteBuffer(buffer.entry.id!);
 								Navigator.pop(context);
 								break;
 							}
