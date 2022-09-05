@@ -597,6 +597,11 @@ class IrcCapRegistry {
 
 final defaultCaseMapping = _caseMappingByName('rfc1459')!;
 
+// TODO: don't return these when the server indicates no limit
+const _defaultUsernameLen = 20;
+const _defaultHostnameLen = 63;
+const _defaultLineLen = 512;
+
 class IrcIsupportRegistry {
 	Map<String, String?> _raw = {};
 	CaseMapping? _caseMapping;
@@ -617,9 +622,9 @@ class IrcIsupportRegistry {
 	int? get topicLen => _topicLen;
 	int? get nickLen => _nickLen;
 	int? get realnameLen => _realnameLen;
-	int get usernameLen => _usernameLen ?? 20;
-	int get hostnameLen => _hostnameLen ?? 63;
-	int get lineLen => _lineLen ?? 512;
+	int get usernameLen => _usernameLen ?? _defaultUsernameLen;
+	int get hostnameLen => _hostnameLen ?? _defaultHostnameLen;
+	int get lineLen => _lineLen ?? _defaultLineLen;
 	List<String> get chanModes => UnmodifiableListView(_chanModes ?? ['beI', 'k', 'l', 'imnst']);
 	IrcIsupportElist? get elist => _elist;
 	String? get vapid => _raw['VAPID'];
@@ -693,10 +698,11 @@ class IrcIsupportRegistry {
 				_elist = IrcIsupportElist.parse(v ?? '');
 				break;
 			case 'HOSTLEN':
-				if (v == null) {
-					throw FormatException('Malformed ISUPPORT HOSTLEN: no value');
+				if (v == null || v == '') {
+					_hostnameLen = null;
+				} else {
+					_hostnameLen = int.parse(v);
 				}
-				_hostnameLen = int.parse(v);
 				break;
 			case 'LINELEN':
 				if (v == null) {
@@ -708,16 +714,18 @@ class IrcIsupportRegistry {
 				_monitor = int.parse(v ?? '0');
 				break;
 			case 'NAMELEN':
-				if (v == null) {
-					throw Exception('Malformed ISUPPORT NAMELEN: no value');
+				if (v == null || v == '') {
+					_realnameLen = null;
+				} else {
+					_realnameLen = int.parse(v);
 				}
-				_realnameLen = int.parse(v);
 				break;
 			case 'NICKLEN':
-				if (v == null) {
-					throw Exception('Malformed ISUPPORT NICKLEN: no value');
+				if (v == null || v == '') {
+					_nickLen = null;
+				} else {
+					_nickLen = int.parse(v);
 				}
-				_nickLen = int.parse(v);
 				break;
 			case 'PREFIX':
 				_memberships.clear();
@@ -738,16 +746,18 @@ class IrcIsupportRegistry {
 				}
 				break;
 			case 'TOPICLEN':
-				if (v == null) {
-					throw FormatException('Malformed ISUPPORT TOPICLEN: no value');
+				if (v == null || v == '') {
+					_topicLen = null;
+				} else {
+					_topicLen = int.parse(v);
 				}
-				_topicLen = int.parse(v);
 				break;
 			case 'USERLEN':
-				if (v == null) {
-					throw FormatException('Malformed ISUPPORT USERLEN: no value');
+				if (v == null || v == '') {
+					_usernameLen = null;
+				} else {
+					_usernameLen = int.parse(v);
 				}
-				_usernameLen = int.parse(v);
 				break;
 			}
 		}
