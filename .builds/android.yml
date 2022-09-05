@@ -4,8 +4,9 @@ packages:
   - android-sdk-build-tools
   - android-sdk-cmdline-tools-latest
   - android-sdk-platform-tools
-  - flutter
   - jdk11-openjdk
+  # for flutter
+  - unzip
 sources:
   - https://git.sr.ht/~emersion/goguma
 secrets:
@@ -16,10 +17,13 @@ secrets:
 artifacts:
   - goguma/build/app/outputs/flutter-apk/app-release.apk
 tasks:
-  - setup-tools: |
-      sudo chown -R $USER /opt/flutter /opt/android-sdk
-      source /etc/profile
-      flutter precache --linux
+  - flutter: |
+      git clone --depth=1 --branch=stable https://github.com/flutter/flutter.git
+      export PATH="$PATH:$PWD/flutter/bin"
+      echo "PATH=$PATH" >>~/.buildenv
+      flutter precache --android
+      # need write permission or else licenses are never accepted
+      sudo chown -R $USER /opt/android-sdk
       yes | flutter doctor --android-licenses >/dev/null
       flutter doctor -v
   - configure: |
