@@ -33,7 +33,7 @@ dependencies:
   # pure Dart Ecdh.p256 implementation
   webcrypto: ^0.5.3
   firebase_core: ^1.13.1
-  firebase_messaging: ^11.2.8
+  firebase_messaging: ^13.0.1
   app_links: ^3.2.0
 
 dev_dependencies:

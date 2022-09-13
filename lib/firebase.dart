@@ -29,7 +29,7 @@ class FirebasePushController extends PushController {
 
 		await Firebase.initializeApp(options: options);
 
-		if (!FirebaseMessaging.instance.isSupported()) {
+		if (!await FirebaseMessaging.instance.isSupported()) {
 			throw Exception('Firebase messaging is unsupported on this platform');
 		}
 
