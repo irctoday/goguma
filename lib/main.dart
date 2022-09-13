@@ -219,6 +219,7 @@ Future<void> _syncChatHistory(ClientProvider clientProvider, NetworkListModel ne
 }
 
 // This function is called from a separate Isolate.
+@pragma('vm:entry-point')
 void _dispatchWorkManager() {
 	Workmanager().executeTask((taskName, data) async {
 		try {

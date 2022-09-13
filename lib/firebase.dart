@@ -83,6 +83,7 @@ class FirebasePushController extends PushController {
 }
 
 // This function may called from a separate Isolate
+@pragma('vm:entry-point')
 Future<void> _handleFirebaseMessage(RemoteMessage message) async {
 	print('Received push message: ${message.data}');
 
