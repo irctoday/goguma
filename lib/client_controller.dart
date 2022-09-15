@@ -34,10 +34,17 @@ ConnectParams connectParamsFromServerEntry(ServerEntry entry, Prefs prefs) {
 	);
 }
 
+class ClientException extends IrcException {
+	final Client client;
+	final NetworkModel network;
+
+	ClientException(IrcException base, this.client, this.network) : super(base.msg);
+}
+
 /// A data structure which keeps track of IRC clients.
 class ClientProvider {
 	final Map<NetworkModel, ClientController> _controllers = {};
-	final StreamController<IrcException> _errorsController = StreamController.broadcast(sync: true);
+	final StreamController<ClientException> _errorsController = StreamController.broadcast(sync: true);
 	final StreamController<NetworkModel> _networkStatesController = StreamController.broadcast(sync: true);
 	final Set<ClientAutoReconnectLock> _autoReconnectLocks = {};
 
@@ -55,7 +62,7 @@ class ClientProvider {
 	ClientAutoReconnectLock? _backgroundServiceAutoReconnectLock;
 
 	UnmodifiableListView<Client> get clients => UnmodifiableListView(_controllers.values.map((cc) => cc.client));
-	Stream<IrcException> get errors => _errorsController.stream;
+	Stream<ClientException> get errors => _errorsController.stream;
 	Stream<NetworkModel> get networkStates => _networkStatesController.stream;
 
 	ClientProvider({
@@ -333,7 +340,7 @@ class ClientController {
 
 	Future<void>? _handleMessage(ClientMessage msg) {
 		if (msg.isError()) {
-			_provider._errorsController.add(IrcException(msg));
+			_provider._errorsController.add(ClientException(IrcException(msg), client, network));
 		}
 
 		switch (msg.cmd) {
