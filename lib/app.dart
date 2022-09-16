@@ -232,7 +232,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		_scaffoldMessengerKey.currentState?.clearSnackBars();
 
 		if (state != NetworkState.offline) {
-			_scaffoldMessengerKey.currentState?.hideCurrentMaterialBanner();
+			_scaffoldMessengerKey.currentState?.clearMaterialBanners();
 			return;
 		}
 
