@@ -78,11 +78,14 @@ class ComposerState extends State<Composer> {
 		var db = context.read<DB>();
 		var bufferList = context.read<BufferListModel>();
 
+		List<Future<IrcMessage>> futures = [];
 		for (var msg in messages) {
-			client.send(msg);
+			futures.add(client.sendTextMessage(msg));
 		}
 
 		if (!client.caps.enabled.contains('echo-message')) {
+			messages = await Future.wait(futures);
+
 			List<MessageEntry> entries = [];
 			for (var msg in messages) {
 				var entry = MessageEntry(msg, buffer.id);
