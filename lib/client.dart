@@ -58,7 +58,7 @@ Set<String> _getDefaultCaps(ConnectParams params) {
 	var caps = {
 		'away-notify',
 		'batch',
-		'echo-message',
+		//'echo-message',
 		'labeled-response',
 		'message-tags',
 		'multi-prefix',
@@ -709,6 +709,46 @@ class Client {
 		} on Exception {
 			_socket?.close();
 			rethrow;
+		}
+	}
+
+	Future<IrcMessage> sendTextMessage(IrcMessage req) async {
+		assert(req.cmd == 'PRIVMSG' || req.cmd == 'NOTICE');
+		assert(req.params.length == 2);
+
+		var cm = isupport.caseMapping;
+		var target = req.params[0];
+		if (caps.enabled.contains('echo-message')) {
+			// Assume the first echo-message we get is the one we're waiting
+			// for. Rely on labeled-response to improve this assumption's
+			// robustness.
+			// TODO: implement some kind of queue
+			IrcMessage? echo;
+			await _roundtripMessage(req, (reply) {
+				if (reply.cmd == req.cmd && cm(reply.params[0]) == cm(target)) {
+					echo = reply;
+					return true;
+				}
+
+				switch (reply.cmd) {
+				case ERR_NOSUCHNICK:
+				case ERR_CANNOTSENDTOCHAN:
+					if (cm(reply.params[1]) == cm(target)) {
+						throw IrcException(reply);
+					}
+					break;
+				case ERR_NOTEXTTOSEND:
+					throw IrcException(reply);
+				}
+				return false;
+			}).timeout(Duration(seconds: 30));
+			return echo!;
+		} else {
+			// Best-effort: assume a PING is enough.
+			// TODO: catch errors
+			send(req);
+			await ping();
+			return req.copyWith(source: IrcSource(nick));
 		}
 	}
 
