@@ -109,6 +109,7 @@ class Client {
 	DateTime? _lastConnectTime;
 	final Map<String, ClientBatch> _batches = {};
 	final Map<String, List<ClientMessage>> _pendingNames = {};
+	final Map<String, int> _pendingTextMsgs = {};
 	Future<void> _lastWhoFuture = Future.value(null);
 	Future<void> _lastListFuture = Future.value(null);
 	final IrcNameMap<void> _monitored = IrcNameMap(defaultCaseMapping);
@@ -716,32 +717,66 @@ class Client {
 		assert(req.cmd == 'PRIVMSG' || req.cmd == 'NOTICE');
 		assert(req.params.length == 2);
 
-		var cm = isupport.caseMapping;
-		var target = req.params[0];
 		if (caps.enabled.contains('echo-message')) {
 			// Assume the first echo-message we get is the one we're waiting
 			// for. Rely on labeled-response to improve this assumption's
-			// robustness.
-			// TODO: implement some kind of queue
-			IrcMessage? echo;
-			await _roundtripMessage(req, (reply) {
-				if (reply.cmd == req.cmd && cm(reply.params[0]) == cm(target)) {
-					echo = reply;
-					return true;
-				}
+			// robustness. If labeled-response is not available, keep track of
+			// the number of messages we've sent for that target.
 
-				switch (reply.cmd) {
-				case ERR_NOSUCHNICK:
-				case ERR_CANNOTSENDTOCHAN:
-					if (cm(reply.params[1]) == cm(target)) {
-						throw IrcException(reply);
+			var cm = isupport.caseMapping;
+			var target = req.params[0];
+
+			String? pendingKey;
+			var skip = 0;
+			if (!caps.enabled.contains('labeled-response')) {
+				pendingKey = req.cmd + ' ' + cm(target);
+				skip = _pendingTextMsgs[pendingKey] ?? 0;
+				_pendingTextMsgs[pendingKey] = skip + 1;
+			}
+
+			IrcMessage? echo;
+			try {
+				await _roundtripMessage(req, (reply) {
+					bool match;
+					switch (reply.cmd) {
+					case ERR_NOSUCHNICK:
+					case ERR_CANNOTSENDTOCHAN:
+						match = cm(reply.params[1]) == cm(target);
+						break;
+					case ERR_NOTEXTTOSEND:
+						match = true;
+						break;
+					default:
+						match = reply.cmd == req.cmd && cm(reply.params[0]) == cm(target);
+						break;
 					}
-					break;
-				case ERR_NOTEXTTOSEND:
-					throw IrcException(reply);
+					if (!match) {
+						return false;
+					}
+
+					if (skip > 0) {
+						skip--;
+						return false;
+					}
+
+					if (reply.cmd != req.cmd) {
+						throw IrcException(reply);
+					} else {
+						echo = reply;
+						return true;
+					}
+				}).timeout(Duration(seconds: 30));
+			} finally {
+				if (pendingKey != null) {
+					var n = _pendingTextMsgs[pendingKey]! - 1;
+					if (n == 0) {
+						_pendingTextMsgs.remove(pendingKey);
+					} else {
+						_pendingTextMsgs[pendingKey] = n;
+					}
 				}
-				return false;
-			}).timeout(Duration(seconds: 30));
+			}
+
 			return echo!;
 		} else {
 			// Best-effort: assume a PING is enough.
