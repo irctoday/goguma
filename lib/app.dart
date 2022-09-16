@@ -219,9 +219,15 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 	}
 
 	void _handleNetworkStateChange() {
+		var networkList = context.read<NetworkListModel>();
 		var state = _networkStateAggregator.state;
 		var faultyNetwork = _networkStateAggregator.faultyNetwork;
 		var faultyNetworkName = faultyNetwork?.displayName ?? 'server';
+		if (_networkStateAggregator.faultyNetworkCount == networkList.networks.length) {
+			faultyNetworkName = 'all servers';
+		} else if (_networkStateAggregator.faultyNetworkCount > 1) {
+			faultyNetworkName = '${_networkStateAggregator.faultyNetworkCount} servers';
+		}
 
 		_scaffoldMessengerKey.currentState?.clearSnackBars();
 

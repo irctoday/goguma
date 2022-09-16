@@ -7,6 +7,7 @@ class NetworkStateAggregator extends ChangeNotifier {
 	final List<_NetworkStateListener> _listeners = [];
 	late NetworkState _state;
 	NetworkModel? _faultyNetwork;
+	int _faultyNetworkCount = 0;
 
 	NetworkStateAggregator(NetworkListModel networkList) : _networkList = networkList {
 		_networkList.addListener(_handleNetworkListChange);
@@ -16,6 +17,7 @@ class NetworkStateAggregator extends ChangeNotifier {
 
 	NetworkState get state => _state;
 	NetworkModel? get faultyNetwork => _faultyNetwork;
+	int get faultyNetworkCount => _faultyNetworkCount;
 
 	void _addNetworkListeners() {
 		for (var network in _networkList.networks) {
@@ -43,16 +45,21 @@ class NetworkStateAggregator extends ChangeNotifier {
 	void _update(bool force) {
 		NetworkState aggregateState = NetworkState.online;
 		NetworkModel? faultyNetwork;
+		int faultyNetworkCount = 0;
 		for (var network in _networkList.networks) {
+			if (network.state.index < NetworkState.online.index) {
+				faultyNetworkCount++;
+			}
 			if (network.state.index < aggregateState.index) {
 				aggregateState = network.state;
 				faultyNetwork = network;
 			}
 		}
 
-		if (force || _state != aggregateState) {
+		if (force || _state != aggregateState || _faultyNetwork != faultyNetwork || _faultyNetworkCount != faultyNetworkCount) {
 			_state = aggregateState;
 			_faultyNetwork = faultyNetwork;
+			_faultyNetworkCount = faultyNetworkCount;
 			notifyListeners();
 		}
 	}
