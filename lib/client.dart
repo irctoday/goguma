@@ -58,7 +58,7 @@ Set<String> _getDefaultCaps(ConnectParams params) {
 	var caps = {
 		'away-notify',
 		'batch',
-		//'echo-message',
+		'echo-message',
 		'labeled-response',
 		'message-tags',
 		'multi-prefix',
