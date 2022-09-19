@@ -483,11 +483,16 @@ class BufferModel extends ChangeNotifier {
 	}
 
 	void populateMessageHistory(List<MessageModel> l) {
-		assert(!messageHistoryLoaded);
-		assert(_messages.isEmpty);
-		// The messages passed here must be already sorted by the caller
-		_messages = l;
-		_messageHistoryLoaded = true;
+		// The messages passed here must be already sorted by the caller, and
+		// must always come before the existing messages
+		if (!_messageHistoryLoaded) {
+			assert(_messages.isEmpty);
+			_messages = l;
+			_messageHistoryLoaded = true;
+		} else if (!l.isEmpty) {
+			assert(l.last.entry.time.compareTo(_messages.first.entry.time) <= 0);
+			_messages = [...l, ..._messages];
+		}
 		notifyListeners();
 	}
 

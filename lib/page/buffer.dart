@@ -90,28 +90,10 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		_scrollController.addListener(_handleScroll);
 
 		// Timer.run prevents calling setState() from inside initState()
-		Timer.run(_loadMessages);
-	}
-
-	void _loadMessages() async {
-		var buffer = context.read<BufferModel>();
-		if (!buffer.messageHistoryLoaded) {
-			// TODO: only load a partial view of the messages
-			var entries = await context.read<DB>().listMessages(buffer.id);
-			buffer.populateMessageHistory(entries.map((entry) {
-				return MessageModel(entry: entry);
-			}).toList());
-
-			if (!mounted) {
-				return;
-			}
-
-			if (buffer.messages.length < 100) {
-				_fetchChatHistory();
-			}
-		}
-
-		_updateBufferFocus();
+		Timer.run(() {
+			_fetchChatHistory();
+			_updateBufferFocus();
+		});
 	}
 
 	void _handleMessageSwipe(MessageModel msg) {
@@ -137,11 +119,29 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 			return;
 		}
 
+		var db = context.read<DB>();
 		var clientProvider = context.read<ClientProvider>();
 		var buffer = context.read<BufferModel>();
 		var client = context.read<Client>();
 
-		if (!buffer.messageHistoryLoaded || !client.caps.enabled.contains('draft/chathistory')) {
+		// First try to load history from the DB, then try from the server
+
+		int? firstMsgId;
+		if (!buffer.messages.isEmpty) {
+			firstMsgId = buffer.messages.first.id;
+		}
+
+		var limit = 1000;
+		var entries = await db.listMessagesBefore(buffer.id, firstMsgId, limit);
+		buffer.populateMessageHistory(entries.map((entry) {
+			return MessageModel(entry: entry);
+		}).toList());
+
+		if (entries.length >= limit) {
+			return;
+		}
+
+		if (!client.caps.enabled.contains('draft/chathistory')) {
 			return;
 		}
 

@@ -560,14 +560,21 @@ class DB {
 		};
 	}
 
-	Future<List<MessageEntry>> listMessages(int buffer) async {
+	Future<List<MessageEntry>> listMessagesBefore(int buffer, int? msg, int limit) async {
 		var entries = await _db.rawQuery('''
 			SELECT id, time, buffer, raw
 			FROM Message
-			WHERE buffer = ?
-			ORDER BY time
-		''', [buffer]);
-		return entries.map((m) => MessageEntry.fromMap(m)).toList();
+			WHERE buffer = ? AND (? IS NULL OR id < ?)
+			ORDER BY id DESC LIMIT ?
+		''', [buffer, msg, msg, limit]);
+		var l = entries.map((m) => MessageEntry.fromMap(m)).toList();
+		l.sort((a, b) {
+			if (a.time != b.time) {
+				return a.time.compareTo(b.time);
+			}
+			return a.id!.compareTo(b.id!);
+		});
+		return l;
 	}
 
 	Future<void> storeMessages(List<MessageEntry> entries) async {
