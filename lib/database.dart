@@ -561,12 +561,19 @@ class DB {
 	}
 
 	Future<List<MessageEntry>> listMessagesBefore(int buffer, int? msg, int limit) async {
+		var where = 'buffer = ?';
+		var params = [buffer];
+		if (msg != null) {
+			where += ' AND id < ?';
+			params.add(msg);
+		}
 		var entries = await _db.rawQuery('''
 			SELECT id, time, buffer, raw
 			FROM Message
-			WHERE buffer = ? AND (? IS NULL OR id < ?)
+			WHERE $where
 			ORDER BY id DESC LIMIT ?
-		''', [buffer, msg, msg, limit]);
+		'''
+		, [...params, limit]);
 		var l = entries.map((m) => MessageEntry.fromMap(m)).toList();
 		l.sort((a, b) {
 			if (a.time != b.time) {
