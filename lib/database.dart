@@ -564,14 +564,14 @@ class DB {
 		var where = 'buffer = ?';
 		var params = [buffer];
 		if (msg != null) {
-			where += ' AND id < ?';
-			params.add(msg);
+			where += ' AND id != ? AND time <= (SELECT time FROM Message WHERE id = ?)';
+			params += [msg, msg];
 		}
 		var entries = await _db.rawQuery('''
 			SELECT id, time, buffer, raw
 			FROM Message
 			WHERE $where
-			ORDER BY id DESC LIMIT ?
+			ORDER BY time DESC LIMIT ?
 		'''
 		, [...params, limit]);
 		var l = entries.map((m) => MessageEntry.fromMap(m)).toList();
