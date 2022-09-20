@@ -90,9 +90,15 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		_scrollController.addListener(_handleScroll);
 
 		// Timer.run prevents calling setState() from inside initState()
-		Timer.run(() {
-			_fetchChatHistory();
-			_updateBufferFocus();
+		Timer.run(() async {
+			try {
+				await _fetchChatHistory();
+			} on Exception catch (err) {
+				print('Failed to fetch chat history: $err');
+			}
+			if (mounted) {
+				_updateBufferFocus();
+			}
 		});
 	}
 
@@ -114,7 +120,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		}
 	}
 
-	void _fetchChatHistory() async {
+	Future<void> _fetchChatHistory() async {
 		if (_chatHistoryLoading) {
 			return;
 		}
