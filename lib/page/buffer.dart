@@ -29,6 +29,7 @@ class BufferPage extends StatefulWidget {
 	State<BufferPage> createState() => _BufferPageState();
 
 	static void open(BuildContext context, String name, NetworkModel network) async {
+		var db = context.read<DB>();
 		var bufferList = context.read<BufferListModel>();
 		var clientProvider = context.read<ClientProvider>();
 		var client = clientProvider.get(network);
@@ -36,7 +37,6 @@ class BufferPage extends StatefulWidget {
 
 		var buffer = bufferList.get(name, network);
 		if (buffer == null) {
-			var db = context.read<DB>();
 			var entry = await db.storeBuffer(BufferEntry(name: name, network: network.networkId));
 			buffer = BufferModel(entry: entry, network: network);
 			bufferList.add(buffer);
@@ -202,14 +202,15 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 	}
 
 	void _markRead() {
+		var db = context.read<DB>();
+		var client = context.read<Client>();
 		var buffer = context.read<BufferModel>();
 		var notifController = context.read<NotificationController>();
 
 		if (buffer.unreadCount > 0 && buffer.messages.length > 0) {
 			buffer.entry.lastReadTime = buffer.messages.last.entry.time;
-			context.read<DB>().storeBuffer(buffer.entry);
+			db.storeBuffer(buffer.entry);
 
-			var client = context.read<Client>();
 			if (buffer.entry.lastReadTime != null && client.state != ClientState.disconnected) {
 				client.setReadMarker(buffer.name, buffer.entry.lastReadTime!);
 			}
