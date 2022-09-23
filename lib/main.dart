@@ -25,19 +25,17 @@ const _debugWorkManager = bool.fromEnvironment('debugWorkManager', defaultValue:
 
 Future<PushController> Function()? initPush;
 
-void main() {
+void main() async {
 	FlutterError.onError = _handleFlutterError;
-
-	runZonedGuarded(_main, (Object error, StackTrace stack) {
+	PlatformDispatcher.instance.onError = (error, stack) {
 		FlutterError.reportError(FlutterErrorDetails(
 			exception: error,
 			stack: stack,
 			library: 'goguma',
 		));
-	});
-}
+		return true;
+	};
 
-void _main() async {
 	var syncReceivePort = ReceivePort('main:sync');
 	IsolateNameServer.registerPortWithName(syncReceivePort.sendPort, 'main:sync');
 
