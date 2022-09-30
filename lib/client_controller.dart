@@ -923,8 +923,14 @@ class ClientController {
 
 			if (oldSub.vapidKey == vapidKey) {
 				// Refresh our subscription
-				await client.webPushRegister(oldSub.endpoint, oldSub.getPublicKeys());
-				return;
+				try {
+					await client.webPushRegister(oldSub.endpoint, oldSub.getPublicKeys());
+					return;
+				} on Exception catch (err) {
+					// Maybe the subscription expired
+					print('Failed to refresh old push subscription: $err');
+					print('Trying to register with a fresh subscription...');
+				}
 			}
 
 			try {
