@@ -38,15 +38,13 @@ class NotificationController {
 		await _plugin.initialize(InitializationSettings(
 			linux: LinuxInitializationSettings(defaultActionName: 'Open'),
 			android: AndroidInitializationSettings('ic_stat_name'),
-		), onSelectNotification: _handleSelectNotification);
+		), onDidReceiveNotificationResponse: _handleNotificationResponse);
 
 		var androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 		if (androidPlugin != null) {
 			try {
 				var activeNotifs = await androidPlugin.getActiveNotifications();
-				if (activeNotifs != null) {
-					_populateActive(androidPlugin, activeNotifs);
-				}
+				_populateActive(androidPlugin, activeNotifs);
 			} on Exception catch (err) {
 				print('Failed to list active notifications: $err');
 			}
@@ -61,7 +59,7 @@ class NotificationController {
 		if (launchDetails == null || !launchDetails.didNotificationLaunchApp) {
 			return null;
 		}
-		return launchDetails.payload;
+		return launchDetails.notificationResponse?.payload;
 	}
 
 	void _populateActive(AndroidFlutterLocalNotificationsPlugin androidPlugin, List<ActiveNotification> activeNotifs) async {
@@ -87,8 +85,8 @@ class NotificationController {
 		}
 	}
 
-	void _handleSelectNotification(String? payload) {
-		_selectionsController.add(payload);
+	void _handleNotificationResponse(NotificationResponse resp) {
+		_selectionsController.add(resp.payload);
 	}
 
 	String _bufferTag(BufferModel buffer) {
@@ -259,13 +257,13 @@ class NotificationController {
 
 		await _plugin.show(id, title, body, NotificationDetails(
 			linux: LinuxNotificationDetails(
-				category: LinuxNotificationCategory.imReceived(),
+				category: LinuxNotificationCategory.imReceived,
 			),
 			android: AndroidNotificationDetails(channel.id, channel.name,
 				channelDescription: channel.description,
 				importance: Importance.high,
 				priority: Priority.high,
-				category: 'msg',
+				category: AndroidNotificationCategory.message,
 				when: dateTime?.millisecondsSinceEpoch,
 				styleInformation: messagingStyleInfo,
 				tag: tag,
