@@ -931,7 +931,7 @@ class ClientController {
 			await _db.deleteWebPushSubscription(oldSub.id!);
 		}
 
-		var endpoint = await _provider._pushController!.createSubscription(vapidKey);
+		var endpoint = await _provider._pushController!.createSubscription(network.networkEntry, vapidKey);
 		var webPush = await WebPush.generate();
 		var config = await webPush.exportPrivateKeys();
 		var newSub = WebPushSubscriptionEntry(

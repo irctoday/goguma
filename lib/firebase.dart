@@ -1,17 +1,11 @@
-import 'dart:convert' show json, utf8, base64;
 import 'dart:io';
+import 'dart:convert' show json, base64;
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:shared_preferences_android/shared_preferences_android.dart';
 
 import 'database.dart';
-import 'irc.dart';
-import 'models.dart';
-import 'notification_controller.dart';
-import 'prefs.dart';
 import 'push.dart';
-import 'webpush.dart';
 
 final _gatewayEndpoint = Uri.parse(
 	String.fromEnvironment('pushgardenEndpoint', defaultValue: 'https://pushgarden.emersion.fr')
@@ -45,7 +39,7 @@ class FirebasePushController extends PushController {
 	}
 
 	@override
-	Future<String> createSubscription(String? vapidKey) async {
+	Future<String> createSubscription(NetworkEntry network, String? vapidKey) async {
 		var token = await FirebaseMessaging.instance.getToken();
 		var client = HttpClient();
 		try {
@@ -85,7 +79,7 @@ class FirebasePushController extends PushController {
 // This function may called from a separate Isolate
 @pragma('vm:entry-point')
 Future<void> _handleFirebaseMessage(RemoteMessage message) async {
-	print('Received push message: ${message.data}');
+	print('Received Firebase push message: ${message.data}');
 
 	var encodedPayload = message.data['payload'] as String;
 	var endpoint = Uri.parse(message.data['endpoint'] as String);
@@ -100,102 +94,8 @@ Future<void> _handleFirebaseMessage(RemoteMessage message) async {
 		throw Exception('VAPID public key mismatch');
 	}
 
-	var config = WebPushConfig(
-		p256dhPublicKey: sub.p256dhPublicKey,
-		p256dhPrivateKey: sub.p256dhPrivateKey,
-		authKey: sub.authKey,
-	);
-	var webPush = await WebPush.import(config);
-
 	List<int> ciphertext = base64.decode(encodedPayload);
-	var bytes = await webPush.decrypt(ciphertext);
-	var str = utf8.decode(bytes);
-	var msg = IrcMessage.parse(str);
-
-	print('Decrypted push message payload: $msg');
-
-	var networkEntry = await _fetchNetwork(db, sub.network);
-	if (networkEntry == null) {
-		throw Exception('Got push message for an unknown network #${sub.network}');
-	}
-	var serverEntry = await _fetchServer(db, networkEntry.server);
-	if (serverEntry == null) {
-		throw Exception('Network #${sub.network} has an unknown server #${networkEntry.server}');
-	}
-
-	// See: https://github.com/flutter/flutter/issues/98473#issuecomment-1060952450
-	if (Platform.isAndroid) {
-		SharedPreferencesAndroid.registerWith();
-	}
-	var prefs = await Prefs.load();
-
-	var nickname = serverEntry.nick ?? prefs.nickname;
-	var realname = prefs.realname ?? nickname;
-	var network = NetworkModel(serverEntry, networkEntry, nickname, realname);
-
-	var notifController = NotificationController();
-	await notifController.initialize();
-
-	switch (msg.cmd) {
-	case 'PRIVMSG':
-	case 'NOTICE':
-		var target = msg.params[0];
-		var isChannel = target.length > 0 && networkEntry.isupport.chanTypes.contains(target[0]);
-		if (!isChannel) {
-			target = msg.source!.name;
-		}
-
-		var bufferEntry = await _fetchBuffer(db, target, networkEntry);
-		if (bufferEntry == null) {
-			bufferEntry = BufferEntry(name: target, network: sub.network);
-			await db.storeBuffer(bufferEntry);
-		}
-
-		var buffer = BufferModel(entry: bufferEntry, network: network);
-		if (buffer.muted) {
-			break;
-		}
-
-		var msgEntry = MessageEntry(msg, bufferEntry.id!);
-
-		if (isChannel) {
-			notifController.showHighlight([msgEntry], buffer);
-		} else {
-			notifController.showDirectMessage([msgEntry], buffer);
-		}
-		break;
-	case 'INVITE':
-		notifController.showInvite(msg, network);
-		break;
-	case 'MARKREAD':
-		var target = msg.params[0];
-		var bound = msg.params[1];
-		if (bound == '*') {
-			break;
-		}
-		if (!bound.startsWith('timestamp=')) {
-			throw FormatException('Invalid MARKREAD bound: $msg');
-		}
-		//var time = bound.replaceFirst('timestamp=', '');
-
-		var bufferEntry = await _fetchBuffer(db, target, networkEntry);
-		if (bufferEntry == null) {
-			break;
-		}
-
-		// TODO: we should check lastReadTime here, but we might be racing
-		// against the main Isolate, which also receives MARKREAD via the TCP
-		// connection and isn't aware about notifications opened via push
-
-		// TODO: don't clear notifications whose timestamp is after the read
-		// marker
-		var buffer = BufferModel(entry: bufferEntry, network: network);
-		notifController.cancelAllWithBuffer(buffer);
-		break;
-	default:
-		print('Ignoring ${msg.cmd} message');
-		return;
-	}
+	await handlePushMessage(db, sub, ciphertext);
 }
 
 Future<WebPushSubscriptionEntry?> _fetchWebPushSubscription(DB db, Uri endpoint) async {
@@ -205,37 +105,6 @@ Future<WebPushSubscriptionEntry?> _fetchWebPushSubscription(DB db, Uri endpoint)
 		var subEndpointUri = Uri.parse(entry.endpoint);
 		var msgEndpointUri = subEndpointUri.resolveUri(endpoint);
 		if (subEndpointUri == msgEndpointUri) {
-			return entry;
-		}
-	}
-	return null;
-}
-
-Future<NetworkEntry?> _fetchNetwork(DB db, int id) async {
-	var entries = await db.listNetworks();
-	for (var entry in entries) {
-		if (entry.id == id) {
-			return entry;
-		}
-	}
-	return null;
-}
-
-Future<ServerEntry?> _fetchServer(DB db, int id) async {
-	var entries = await db.listServers();
-	for (var entry in entries) {
-		if (entry.id == id) {
-			return entry;
-		}
-	}
-	return null;
-}
-
-Future<BufferEntry?> _fetchBuffer(DB db, String name, NetworkEntry network) async {
-	var cm = network.isupport.caseMapping;
-	var entries = await db.listBuffers();
-	for (var entry in entries) {
-		if (entry.network == network.id && cm(entry.name) == cm(name)) {
 			return entry;
 		}
 	}

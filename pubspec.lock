@@ -539,6 +539,27 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.8.0"
+  unifiedpush:
+    dependency: "direct main"
+    description:
+      name: unifiedpush
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "4.0.1"
+  unifiedpush_android:
+    dependency: transitive
+    description:
+      name: unifiedpush_android
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.1"
+  unifiedpush_platform_interface:
+    dependency: transitive
+    description:
+      name: unifiedpush_platform_interface
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.0"
   url_launcher:
     dependency: "direct main"
     description:

@@ -19,11 +19,12 @@ import 'models.dart';
 import 'notification_controller.dart';
 import 'prefs.dart';
 import 'push.dart';
+import 'unifiedpush.dart';
 
 // Debugging knobs for work manager.
 const _debugWorkManager = bool.fromEnvironment('debugWorkManager', defaultValue: false);
 
-Future<PushController> Function()? initPush;
+Future<PushController> Function() initPush = UnifiedPushController.init;
 
 void main() async {
 	FlutterError.onError = _handleFlutterError;
@@ -43,12 +44,10 @@ void main() async {
 	await _initWorkManager();
 
 	PushController? pushController;
-	if (initPush != null) {
-		try {
-			pushController = await initPush!();
-		} on Exception catch (err) {
-			print('Warning: failed to initialize push controller: $err');
-		}
+	try {
+		pushController = await initPush();
+	} on Exception catch (err) {
+		print('Warning: failed to initialize push controller: $err');
 	}
 
 	if (Platform.isAndroid) {
