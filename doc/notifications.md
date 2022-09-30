@@ -17,6 +17,8 @@ When running on a device with Google Services available, Goguma may use the
 Google infrastructure to deliver notifications. Notification payloads are
 end-to-end encrypted.
 
+When Google Services are unavailable, Goguma will use [UnifiedPush].
+
 ## Servers supporting chathistory
 
 If all configured servers support the IRCv3 [chathistory] extension, Goguma
@@ -42,5 +44,6 @@ Goguma will ask additional permissions to achieve this. When enabled, a
 persistent notification will be displayed.
 
 [webpush]: https://git.sr.ht/~emersion/soju/tree/master/item/doc/ext/webpush.md
+[UnifiedPush]: https://unifiedpush.org/
 [chathistory]: https://ircv3.net/specs/extensions/chathistory
 [workmanager]: https://pub.dev/packages/workmanager
