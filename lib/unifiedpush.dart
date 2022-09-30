@@ -18,11 +18,11 @@ class UnifiedPushController extends PushController {
 		_singleton ??= UnifiedPushController._();
 		var controller = _singleton!;
 
-		// TODO: handle onUnregistered
 		try {
 			await UnifiedPush.initialize(
 				onNewEndpoint: controller._handleNewEndpoint,
 				onRegistrationFailed: controller._handleRegistrationFailed,
+				onUnregistered: controller._handleUnregistered,
 				onMessage: _handleMessage,
 			);
 		} on UnimplementedError {
@@ -73,6 +73,11 @@ class UnifiedPushController extends PushController {
 			return;
 		}
 		completer.completeError(Exception('UnifiedPush registration failed'));
+	}
+
+	void _handleUnregistered(String instance) {
+		print('UnifiedPush unregistered: $instance');
+		// TODO: handle this
 	}
 }
 
