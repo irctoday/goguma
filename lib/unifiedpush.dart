@@ -29,14 +29,17 @@ class UnifiedPushController extends PushController {
 			throw Exception('UnifiedPush not supported on this platform');
 		}
 
-		if (await UnifiedPush.getDistributor() == '') {
+		var distributor = await UnifiedPush.getDistributor();
+		if (distributor == '') {
 			var distributors = await UnifiedPush.getDistributors([featureAndroidBytesMessage]);
 			if (distributors.length == 0) {
 				throw Exception('No UnifiedPush distributor found');
 			}
 			// TODO: allow the user to select the distributor
-			await UnifiedPush.saveDistributor(distributors.first);
+			distributor = distributors.first;
+			await UnifiedPush.saveDistributor(distributor);
 		}
+		print('Using UnifiedPush distributor: $distributor');
 
 		return controller;
 	}
