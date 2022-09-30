@@ -13,6 +13,7 @@ import 'webpush.dart';
 
 abstract class PushController {
 	Future<String> createSubscription(NetworkEntry network, String? vapidKey);
+	Future<void> deleteSubscription(NetworkEntry network, String endpoint);
 }
 
 // This function may called from a separate Isolate

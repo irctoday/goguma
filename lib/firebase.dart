@@ -74,6 +74,23 @@ class FirebasePushController extends PushController {
 			client.close();
 		}
 	}
+
+	@override
+	Future<void> deleteSubscription(NetworkEntry network, String endpoint) async {
+		// TODO: don't hardcode paths
+		endpoint = endpoint.replaceFirst('/push/', '/subscription/');
+
+		var client = HttpClient();
+		try {
+			var req = await client.deleteUrl(Uri.parse(endpoint));
+			var resp = await req.close();
+			if (resp.statusCode ~/ 100 != 2) {
+				throw Exception('HTTP error ${resp.statusCode}');
+			}
+		} finally {
+			client.close();
+		}
+	}
 }
 
 // This function may called from a separate Isolate

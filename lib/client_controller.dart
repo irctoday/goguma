@@ -908,6 +908,7 @@ class ClientController {
 
 		var subs = await _db.listWebPushSubscriptions();
 		var vapidKey = client.isupport.vapid;
+		var pushController = _provider._pushController!;
 
 		WebPushSubscriptionEntry? oldSub;
 		for (var sub in subs) {
@@ -926,25 +927,38 @@ class ClientController {
 				return;
 			}
 
-			// TODO: delete our pushgarden subscription
+			try {
+				await pushController.deleteSubscription(network.networkEntry, oldSub.endpoint);
+			} on Exception catch (err) {
+				print('Failed to delete old push subscription: $err');
+			}
 			await client.webPushUnregister(oldSub.endpoint);
 			await _db.deleteWebPushSubscription(oldSub.id!);
 		}
 
-		var endpoint = await _provider._pushController!.createSubscription(network.networkEntry, vapidKey);
-		var webPush = await WebPush.generate();
-		var config = await webPush.exportPrivateKeys();
-		var newSub = WebPushSubscriptionEntry(
-			network: network.networkId,
-			endpoint: endpoint,
-			vapidKey: vapidKey,
-			p256dhPrivateKey: config.p256dhPrivateKey,
-			p256dhPublicKey: config.p256dhPublicKey,
-			authKey: config.authKey,
-		);
+		var endpoint = await pushController.createSubscription(network.networkEntry, vapidKey);
 
-		await client.webPushRegister(endpoint, config.getPublicKeys());
-		await _db.storeWebPushSubscription(newSub);
+		try {
+			var webPush = await WebPush.generate();
+			var config = await webPush.exportPrivateKeys();
+			var newSub = WebPushSubscriptionEntry(
+				network: network.networkId,
+				endpoint: endpoint,
+				vapidKey: vapidKey,
+				p256dhPrivateKey: config.p256dhPrivateKey,
+				p256dhPublicKey: config.p256dhPublicKey,
+				authKey: config.authKey,
+			);
+			await client.webPushRegister(endpoint, config.getPublicKeys());
+			await _db.storeWebPushSubscription(newSub);
+		} on Object {
+			try {
+				await pushController.deleteSubscription(network.networkEntry, endpoint);
+			} on Exception catch (err) {
+				print('Failed to delete push subscription after error: $err');
+			}
+			rethrow;
+		}
 	}
 
 	bool _isPushSupported() {
