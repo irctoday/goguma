@@ -91,7 +91,6 @@ void _handleMessage(Uint8List ciphertext, String instance) async {
 
 	var prefix = 'network:';
 	if (!instance.startsWith(prefix)) {
-		_tryUnregister(instance);
 		throw FormatException('Invalid UnifiedPush instance name: "$instance"');
 	}
 	var netId = int.parse(instance.replaceFirst(prefix, ''));
@@ -100,7 +99,6 @@ void _handleMessage(Uint8List ciphertext, String instance) async {
 
 	var sub = await _fetchWebPushSubscription(db, netId);
 	if (sub == null) {
-		_tryUnregister(instance);
 		throw Exception('Got push message for an unknown network ID: $netId');
 	}
 
@@ -115,12 +113,4 @@ Future<WebPushSubscriptionEntry?> _fetchWebPushSubscription(DB db, int netId) as
 		}
 	}
 	return null;
-}
-
-void _tryUnregister(String instance) async {
-	try {
-		await UnifiedPush.unregister(instance);
-	} on Exception catch (err) {
-		print('Failed to unregister stale UnifiedPush instance "$instance": $err');
-	}
 }
