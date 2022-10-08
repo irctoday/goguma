@@ -934,7 +934,10 @@ class ClientController {
 			}
 
 			try {
-				await pushController.deleteSubscription(network.networkEntry, oldSub.endpoint);
+				await pushController.deleteSubscription(network.networkEntry, PushSubscription(
+					endpoint: oldSub.endpoint,
+					tag: oldSub.tag,
+				));
 			} on Exception catch (err) {
 				print('Failed to delete old push subscription: $err');
 			}
@@ -942,24 +945,37 @@ class ClientController {
 			await _db.deleteWebPushSubscription(oldSub.id!);
 		}
 
-		var endpoint = await pushController.createSubscription(network.networkEntry, vapidKey);
+		var details = await pushController.createSubscription(network.networkEntry, vapidKey);
 
 		try {
 			var webPush = await WebPush.generate();
 			var config = await webPush.exportPrivateKeys();
 			var newSub = WebPushSubscriptionEntry(
 				network: network.networkId,
-				endpoint: endpoint,
+				endpoint: details.endpoint,
+				tag: details.tag,
 				vapidKey: vapidKey,
 				p256dhPrivateKey: config.p256dhPrivateKey,
 				p256dhPublicKey: config.p256dhPublicKey,
 				authKey: config.authKey,
 			);
-			await client.webPushRegister(endpoint, config.getPublicKeys());
 			await _db.storeWebPushSubscription(newSub);
+
+			try {
+				// This may result in a Web Push notification being delivered, so
+				// we need to do this last
+				await client.webPushRegister(details.endpoint, config.getPublicKeys());
+			} on Object {
+				try {
+					await _db.deleteWebPushSubscription(newSub.id!);
+				} on Exception catch (err) {
+					print('Failed to delete Web Push subscription from DB after error: $err');
+				}
+				rethrow;
+			}
 		} on Object {
 			try {
-				await pushController.deleteSubscription(network.networkEntry, endpoint);
+				await pushController.deleteSubscription(network.networkEntry, details);
 			} on Exception catch (err) {
 				print('Failed to delete push subscription after error: $err');
 			}

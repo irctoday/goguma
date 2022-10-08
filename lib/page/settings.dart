@@ -60,7 +60,7 @@ class _SettingsPageState extends State<SettingsPage> {
 		);
 	}
 
-	void _logout() {
+	void _logout() async {
 		var db = context.read<DB>();
 		var networkList = context.read<NetworkListModel>();
 		var bouncerNetworkList = context.read<BouncerNetworkListModel>();

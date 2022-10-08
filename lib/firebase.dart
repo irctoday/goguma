@@ -39,7 +39,7 @@ class FirebasePushController extends PushController {
 	}
 
 	@override
-	Future<String> createSubscription(NetworkEntry network, String? vapidKey) async {
+	Future<PushSubscription> createSubscription(NetworkEntry network, String? vapidKey) async {
 		var token = await FirebaseMessaging.instance.getToken();
 		var client = HttpClient();
 		try {
@@ -69,20 +69,27 @@ class FirebasePushController extends PushController {
 				throw FormatException('No valid urn:ietf:params:push Link found');
 			}
 			var pushUrl = pushLink.substring(1, pushLink.length - 1);
-			return _gatewayEndpoint.resolve(pushUrl).toString();
+			var endpoint = _gatewayEndpoint.resolve(pushUrl).toString();
+
+			return PushSubscription(
+				endpoint: endpoint,
+				// TODO: don't hardcode paths
+				tag: endpoint.replaceFirst('/push/', '/subscription/'),
+			);
 		} finally {
 			client.close();
 		}
 	}
 
 	@override
-	Future<void> deleteSubscription(NetworkEntry network, String endpoint) async {
-		// TODO: don't hardcode paths
-		endpoint = endpoint.replaceFirst('/push/', '/subscription/');
+	Future<void> deleteSubscription(NetworkEntry network, PushSubscription sub) async {
+		// Compatibility with old subscriptions
+		// TODO: drop this
+		var subUri = sub.tag ?? sub.endpoint.replaceFirst('/push/', '/subscription/');
 
 		var client = HttpClient();
 		try {
-			var req = await client.deleteUrl(Uri.parse(endpoint));
+			var req = await client.deleteUrl(Uri.parse(subUri));
 			var resp = await req.close();
 			if (resp.statusCode ~/ 100 != 2) {
 				throw Exception('HTTP error ${resp.statusCode}');

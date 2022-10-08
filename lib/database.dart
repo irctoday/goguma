@@ -208,6 +208,7 @@ class WebPushSubscriptionEntry {
 	int? id;
 	final int network;
 	final String endpoint;
+	final String? tag;
 	final String? vapidKey;
 	final Uint8List p256dhPrivateKey;
 	final Uint8List p256dhPublicKey;
@@ -219,6 +220,7 @@ class WebPushSubscriptionEntry {
 			'id': id,
 			'network': network,
 			'endpoint': endpoint,
+			'tag': tag,
 			'vapid_key': vapidKey,
 			'p256dh_private_key': p256dhPrivateKey,
 			'p256dh_public_key': p256dhPublicKey,
@@ -230,6 +232,7 @@ class WebPushSubscriptionEntry {
 	WebPushSubscriptionEntry({
 		required this.network,
 		required this.endpoint,
+		this.tag,
 		required this.p256dhPrivateKey,
 		required this.p256dhPublicKey,
 		required this.authKey,
@@ -241,6 +244,7 @@ class WebPushSubscriptionEntry {
 		id = m['id'] as int,
 		network = m['network'] as int,
 		endpoint = m['endpoint'] as String,
+		tag = m['tag'] as String?,
 		vapidKey = m['vapid_key'] as String?,
 		p256dhPrivateKey = m['p256dh_private_key'] as Uint8List,
 		p256dhPublicKey = m['p256dh_public_key'] as Uint8List,
@@ -335,6 +339,7 @@ class DB {
 						id INTEGER PRIMARY KEY,
 						network INTEGER NOT NULL,
 						endpoint TEXT NOT NULL,
+						tag TEXT,
 						vapid_key TEXT,
 						p256dh_public_key BLOB,
 						p256dh_private_key BLOB,
@@ -412,12 +417,17 @@ class DB {
 						ALTER TABLE Server ADD COLUMN sasl_plain_username TEXT;
 					''');
 				}
+				if (prevVersion < 12) {
+					batch.execute('''
+						ALTER TABLE WebPushSubscription ADD COLUMN tag TEXT;
+					''');
+				}
 				await batch.commit();
 			},
 			onDowngrade: (_, prevVersion, newVersion) async {
 				throw Exception('Attempted to downgrade database from version $prevVersion to version $newVersion');
 			},
-			version: 11,
+			version: 12,
 		);
 		return DB._(db);
 	}
@@ -599,7 +609,7 @@ class DB {
 
 	Future<List<WebPushSubscriptionEntry>> listWebPushSubscriptions() async {
 		var entries = await _db.rawQuery('''
-			SELECT id, network, endpoint, vapid_key, p256dh_public_key,
+			SELECT id, network, endpoint, tag, vapid_key, p256dh_public_key,
 				p256dh_private_key, auth_key, created_at
 			FROM WebPushSubscription
 		''');

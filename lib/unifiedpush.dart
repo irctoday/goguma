@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert' show base64UrlEncode;
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:unifiedpush/constants.dart';
@@ -10,7 +12,7 @@ import 'push.dart';
 UnifiedPushController? _singleton;
 
 class UnifiedPushController extends PushController {
-	final Map<String, Completer<String>> _pendingSubscriptions = {};
+	final Map<String, Completer<PushSubscription>> _pendingSubscriptions = {};
 
 	UnifiedPushController._();
 
@@ -45,19 +47,21 @@ class UnifiedPushController extends PushController {
 	}
 
 	@override
-	Future<String> createSubscription(NetworkEntry network, String? vapidKey) async {
-		var instance = 'network:${network.id}';
+	Future<PushSubscription> createSubscription(NetworkEntry network, String? vapidKey) async {
+		var instance = _generateInstance();
 
 		await UnifiedPush.registerApp(instance, [featureAndroidBytesMessage]);
 
-		var completer = Completer<String>();
+		var completer = Completer<PushSubscription>();
 		_pendingSubscriptions[instance] = completer;
 		return completer.future;
 	}
 
 	@override
-	Future<void> deleteSubscription(NetworkEntry network, String endpoint) async {
-		var instance = 'network:${network.id}';
+	Future<void> deleteSubscription(NetworkEntry network, PushSubscription sub) async {
+		// Compat with old subscriptions
+		// TODO: drop this
+		var instance = sub.tag ?? 'network:${network.id}';
 		await UnifiedPush.unregister(instance);
 	}
 
@@ -67,7 +71,10 @@ class UnifiedPushController extends PushController {
 			// TODO: handle endpoint changes
 			return;
 		}
-		completer.complete(endpoint);
+		completer.complete(PushSubscription(
+			endpoint: endpoint,
+			tag: instance,
+		));
 	}
 
 	void _handleRegistrationFailed(String instance) {
@@ -89,28 +96,46 @@ class UnifiedPushController extends PushController {
 void _handleMessage(Uint8List ciphertext, String instance) async {
 	print('Got UnifiedPush message for $instance');
 
-	var prefix = 'network:';
-	if (!instance.startsWith(prefix)) {
-		throw FormatException('Invalid UnifiedPush instance name: "$instance"');
-	}
-	var netId = int.parse(instance.replaceFirst(prefix, ''));
-
 	var db = await DB.open();
 
-	var sub = await _fetchWebPushSubscription(db, netId);
+	// TODO: drop old compat code
+	var subs = await db.listWebPushSubscriptions();
+	WebPushSubscriptionEntry? sub;
+	var prefix = 'network:';
+	if (instance.startsWith(prefix)) {
+		var netId = int.parse(instance.replaceFirst(prefix, ''));
+		sub = _findSubscriptionWithNetId(subs, netId);
+	} else {
+		sub = _findSubscriptionWithTag(subs, instance);
+	}
 	if (sub == null) {
-		throw Exception('Got push message for an unknown network ID: $netId');
+		throw Exception('Got push message for an unknown instance: $instance');
 	}
 
 	await handlePushMessage(db, sub, ciphertext);
 }
 
-Future<WebPushSubscriptionEntry?> _fetchWebPushSubscription(DB db, int netId) async {
-	var entries = await db.listWebPushSubscriptions();
+WebPushSubscriptionEntry? _findSubscriptionWithNetId(List<WebPushSubscriptionEntry> entries, int netId) {
 	for (var entry in entries) {
 		if (entry.network == netId) {
 			return entry;
 		}
 	}
 	return null;
+}
+
+WebPushSubscriptionEntry? _findSubscriptionWithTag(List<WebPushSubscriptionEntry> entries, String tag) {
+	for (var entry in entries) {
+		if (entry.tag == tag) {
+			return entry;
+		}
+	}
+	return null;
+}
+
+String _generateInstance() {
+	var len = 16;
+	var random = Random.secure();
+	var values = List<int>.generate(len, (i) => random.nextInt(255));
+	return base64UrlEncode(values).replaceAll('=', '');
 }

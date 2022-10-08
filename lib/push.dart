@@ -11,9 +11,19 @@ import 'notification_controller.dart';
 import 'prefs.dart';
 import 'webpush.dart';
 
+class PushSubscription {
+	final String endpoint;
+	final String? tag;
+
+	PushSubscription({
+		required this.endpoint,
+		this.tag,
+	});
+}
+
 abstract class PushController {
-	Future<String> createSubscription(NetworkEntry network, String? vapidKey);
-	Future<void> deleteSubscription(NetworkEntry network, String endpoint);
+	Future<PushSubscription> createSubscription(NetworkEntry network, String? vapidKey);
+	Future<void> deleteSubscription(NetworkEntry network, PushSubscription sub);
 }
 
 // This function may called from a separate Isolate
