@@ -54,8 +54,6 @@ class FirebasePushController extends PushController {
 				throw Exception('HTTP error ${resp.statusCode}');
 			}
 
-			// TODO: parse subscription resource URL as well
-
 			String? pushLink;
 			for (var rawLink in resp.headers['Link'] ?? <String>[]) {
 				var link = HeaderValue.parse(rawLink);
@@ -69,12 +67,17 @@ class FirebasePushController extends PushController {
 				throw FormatException('No valid urn:ietf:params:push Link found');
 			}
 			var pushUrl = pushLink.substring(1, pushLink.length - 1);
-			var endpoint = _gatewayEndpoint.resolve(pushUrl).toString();
+			pushUrl = _gatewayEndpoint.resolve(pushUrl).toString();
+
+			String? subscriptionUrl = resp.headers.value('Location');
+			if (subscriptionUrl == null) {
+				throw FormatException('No Location found');
+			}
+			subscriptionUrl = _gatewayEndpoint.resolve(subscriptionUrl).toString();
 
 			return PushSubscription(
-				endpoint: endpoint,
-				// TODO: don't hardcode paths
-				tag: endpoint.replaceFirst('/push/', '/subscription/'),
+				endpoint: pushUrl,
+				tag: subscriptionUrl,
 			);
 		} finally {
 			client.close();
