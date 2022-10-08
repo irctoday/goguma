@@ -34,11 +34,15 @@ class NotificationController {
 
 	Stream<String?> get selections => _selectionsController.stream;
 
-	Future<String?> initialize() async {
-		await _plugin.initialize(InitializationSettings(
-			linux: LinuxInitializationSettings(defaultActionName: 'Open'),
-			android: AndroidInitializationSettings('ic_stat_name'),
-		), onDidReceiveNotificationResponse: _handleNotificationResponse);
+	Future<String?> initialize({ bool listen = true }) async {
+		// TODO: call initialize() without a callback once this is merged:
+		// https://github.com/MaikuB/flutter_local_notifications/pull/1744
+		if (listen) {
+			await _plugin.initialize(InitializationSettings(
+				linux: LinuxInitializationSettings(defaultActionName: 'Open'),
+				android: AndroidInitializationSettings('ic_stat_name'),
+			), onDidReceiveNotificationResponse: _handleNotificationResponse);
+		}
 
 		var androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 		if (androidPlugin != null) {
@@ -48,6 +52,10 @@ class NotificationController {
 			} on Exception catch (err) {
 				print('Failed to list active notifications: $err');
 			}
+		}
+
+		if (!listen) {
+			return null;
 		}
 
 		NotificationAppLaunchDetails? launchDetails;
