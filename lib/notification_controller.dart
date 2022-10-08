@@ -78,7 +78,7 @@ class NotificationController {
 			try {
 				messagingStyleInfo = await androidPlugin.getActiveNotificationMessagingStyle(notif.id, tag: notif.tag);
 			} on Exception catch (err) {
-				print('Failed to get active notification messagign style: $err');
+				print('Failed to get active notification messaging style: $err');
 			}
 
 			_active.add(_ActiveNotification(notif.id, notif.tag!, notif.title!, messagingStyleInfo));
