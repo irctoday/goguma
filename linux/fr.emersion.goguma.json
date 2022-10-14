@@ -1,0 +1,53 @@
+{
+	"app-id": "fr.emersion.goguma",
+	"runtime": "org.freedesktop.Platform",
+	"runtime-version": "22.08",
+	"sdk": "org.freedesktop.Sdk",
+	"command": "/app/goguma",
+	"separate-locales": false,
+	"build-options": {
+		"build-args": [
+			"--share=network"
+		],
+		"env": {
+			"PUB_CACHE": "/run/build/goguma/pub-cache"
+		}
+	},
+	"finish-args": [
+		"--share=ipc",
+		"--socket=fallback-x11",
+		"--socket=wayland",
+		"--device=dri",
+		"--share=network",
+		"--talk-name=org.freedesktop.Notifications"
+	],
+	"modules": [
+		{
+			"name": "goguma",
+			"buildsystem": "simple",
+			"sources": [
+				{
+					"type": "dir",
+					"path": "..",
+					"dest": "goguma"
+				},
+				{
+					"type": "git",
+					"url": "https://github.com/flutter/flutter.git",
+					"branch": "stable",
+					"dest": "flutter"
+				}
+			],
+			"subdir": "goguma",
+			"build-commands": [
+				"rm -rf build",
+				"../flutter/bin/flutter create --project-name goguma --platforms linux .",
+				"{ echo 'set(CMAKE_C_COMPILER \"gcc\")'; echo 'set(CMAKE_CXX_COMPILER \"g++\")'; cat linux/CMakeLists.txt; } >linux/CMakeLists.txt.new",
+				"mv linux/CMakeLists.txt.new linux/CMakeLists.txt",
+				"../flutter/bin/flutter pub add sqlite3_flutter_libs",
+				"../flutter/bin/flutter build linux",
+				"cp -r build/linux/x64/release/bundle/* /app"
+			]
+		}
+	]
+}
