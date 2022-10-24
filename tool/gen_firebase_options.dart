@@ -4,7 +4,7 @@ import 'dart:io';
 void main(List<String> args) async {
 	if (args.length != 2) {
 		stderr.writeln('usage: gen_firebase_options google-services.json firebase_options.dart');
-		return;
+		exit(1);
 	}
 
 	var inputFilename = args[0];
