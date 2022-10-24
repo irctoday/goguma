@@ -995,6 +995,7 @@ class Client {
 			case ERR_BANNEDFROMCHAN:
 			case ERR_CHANNELISFULL:
 			case ERR_INVITEONLYCHAN:
+			case ERR_BADCHANMASK:
 				if (!outstanding.contains(cm(reply.params[1]))) {
 					break;
 				}
