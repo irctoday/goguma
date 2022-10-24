@@ -137,3 +137,14 @@ Future<WebPushSubscriptionEntry?> _fetchWebPushSubscription(DB db, Uri endpoint)
 	}
 	return null;
 }
+
+Future<PushController> Function() wrapFirebaseInitPush(Future<PushController> Function() next, FirebaseOptions options) {
+	return () async {
+		try {
+			return await FirebasePushController.init(options);
+		} on Exception catch (err) {
+			print('Warning: failed to initialize Firebase: $err');
+		}
+		return await next();
+	};
+}
