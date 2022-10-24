@@ -45,5 +45,5 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Firebase API keys
-/lib/firebase_options.dart
+# Generated code
+/lib/main_generated.dart

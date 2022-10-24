@@ -31,14 +31,14 @@ tasks:
       ln -s ~/keystore.properties android/keystore.properties
       ln -s ~/keystore.jks android/keystore.jks
       flutter pub get
-      flutter pub run tool/gen_firebase_options.dart ~/google-services.json lib/firebase_options.dart
+      flutter pub run tool/gen_main.dart --firebase ~/google-services.json lib/main_generated.dart
   - build: |
       cd goguma
       tag="$(git describe --abbrev=0)"
       hash="$(git rev-parse --short=12 HEAD)"
       build_name="${tag#v}-dev+$hash.firebase"
       build_number="$(git rev-list --first-parent --count origin/master)"
-      flutter build apk --build-name="$build_name" --build-number="$build_number" --target=lib/main_firebase.dart --android-project-arg=firebase=true
+      flutter build apk --build-name="$build_name" --build-number="$build_number" --target=lib/main_generated.dart --android-project-arg=firebase=true
   - analyze: |
       cd goguma
       flutter analyze --no-fatal-infos
