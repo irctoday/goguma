@@ -252,6 +252,15 @@ class NotificationController {
 		return null;
 	}
 
+	bool _isIdAvailable(int id) {
+		for (var notif in _active) {
+			if (notif.id == id) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	Future<void> _show({
 		required String title,
 		String? body,
@@ -266,8 +275,13 @@ class NotificationController {
 			_active.remove(replace);
 			id = replace.id;
 		} else {
-			id = _nextId++;
-			_nextId = _nextId % _maxId;
+			while (true) {
+				id = _nextId++;
+				_nextId = _nextId % _maxId;
+				if (_isIdAvailable(id)) {
+					break;
+				}
+			}
 		}
 		_active.add(_ActiveNotification(id, tag, title, messagingStyleInfo));
 
