@@ -32,17 +32,17 @@ class NotificationController {
 	final StreamController<String?> _selectionsController = StreamController(sync: true);
 	List<_ActiveNotification> _active = [];
 
+	static NotificationController? _instance;
+
 	Stream<String?> get selections => _selectionsController.stream;
 
-	Future<String?> initialize({ bool listen = true }) async {
-		// TODO: call initialize() without a callback once this is merged:
-		// https://github.com/MaikuB/flutter_local_notifications/pull/1744
-		if (listen) {
-			await _plugin.initialize(InitializationSettings(
-				linux: LinuxInitializationSettings(defaultActionName: 'Open'),
-				android: AndroidInitializationSettings('ic_stat_name'),
-			), onDidReceiveNotificationResponse: _handleNotificationResponse);
-		}
+	NotificationController._();
+
+	Future<void> _init() async {
+		await _plugin.initialize(InitializationSettings(
+			linux: LinuxInitializationSettings(defaultActionName: 'Open'),
+			android: AndroidInitializationSettings('ic_stat_name'),
+		), onDidReceiveNotificationResponse: _handleNotificationResponse);
 
 		var androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 		if (androidPlugin != null) {
@@ -53,11 +53,19 @@ class NotificationController {
 				print('Failed to list active notifications: $err');
 			}
 		}
+	}
 
-		if (!listen) {
-			return null;
+	static Future<NotificationController> init() async {
+		// Use a singleton because flutter_local_notifications gets confused
+		// when initialized multiple times per Isolate
+		if (_instance == null) {
+			_instance = NotificationController._();
+			await _instance!._init();
 		}
+		return _instance!;
+	}
 
+	Future<String?> getLaunchSelection() async {
 		NotificationAppLaunchDetails? launchDetails;
 		try {
 			launchDetails = await _plugin.getNotificationAppLaunchDetails();

@@ -63,7 +63,7 @@ void main() async {
 		}
 	}
 
-	var notifController = NotificationController();
+	var notifController = await NotificationController.init();
 	var prefs = await Prefs.load();
 	var db = await DB.open();
 
@@ -264,7 +264,7 @@ Future<void> _handleWorkManagerSync() async {
 		trustIsrgRootX1();
 	}
 
-	var notifController = NotificationController();
+	var notifController = await NotificationController.init();
 	var prefs = await Prefs.load();
 	var db = await DB.open();
 

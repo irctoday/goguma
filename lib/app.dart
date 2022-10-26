@@ -57,7 +57,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		}
 
 		var notifController = context.read<NotificationController>();
-		notifController.initialize().then(_handleSelectNotification);
+		notifController.getLaunchSelection().then(_handleSelectNotification);
 		_notifSelectionSub = notifController.selections.listen(_handleSelectNotification);
 
 		var clientProvider = context.read<ClientProvider>();

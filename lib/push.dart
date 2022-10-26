@@ -60,8 +60,7 @@ Future<void> handlePushMessage(DB db, WebPushSubscriptionEntry sub, List<int> ci
 	var realname = prefs.realname ?? nickname;
 	var network = NetworkModel(serverEntry, networkEntry, nickname, realname);
 
-	var notifController = NotificationController();
-	await notifController.initialize(listen: false);
+	var notifController = await NotificationController.init();
 
 	switch (msg.cmd) {
 	case 'PRIVMSG':
