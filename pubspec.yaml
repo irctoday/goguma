@@ -24,16 +24,16 @@ dependencies:
   path: ^1.8.1
   sqflite_common_ffi: ^2.1.0+2
   workmanager: ^0.5.0-dev.8
-  flutter_local_notifications: ^11.0.1
+  flutter_local_notifications: ^12.0.3
   flutter_background: ^1.1.0
-  connectivity_plus: ^2.2.1
+  connectivity_plus: ^3.0.2
   flutter_typeahead: ^4.0.0
   shared_preferences_android: ^2.0.12
   # TODO: replace "webcrypto" with the "cryptography" package once they have a
   # pure Dart Ecdh.p256 implementation
   webcrypto: ^0.5.3
-  firebase_core: ^1.13.1
-  firebase_messaging: ^13.0.1
+  firebase_core: ^2.1.0
+  firebase_messaging: ^14.0.2
   app_links: ^3.2.0
   unifiedpush: ^4.0.1
 
