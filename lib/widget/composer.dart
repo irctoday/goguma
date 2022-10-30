@@ -355,6 +355,9 @@ class ComposerState extends State<Composer> {
 					onSubmitted: (value) {
 						_submit();
 					},
+					// Prevent the virtual keyboard from being closed when
+					// sending a message
+					onEditingComplete: () {},
 					focusNode: _focusNode,
 					controller: _controller,
 					textInputAction: TextInputAction.send,
