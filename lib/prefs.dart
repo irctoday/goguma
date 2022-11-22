@@ -7,6 +7,7 @@ const _bufferCompactKey = 'buffer_compact';
 const _typingIndicatorKey = 'typing_indicator';
 const _nicknameKey = 'nickname';
 const _realnameKey = 'realname';
+const _pushProviderKey = 'push_provider';
 
 class Prefs {
 	final SharedPreferences _prefs;
@@ -26,6 +27,7 @@ class Prefs {
 	bool get typingIndicator => _prefs.getBool(_typingIndicatorKey) ?? false;
 	String get nickname => _prefs.getString(_nicknameKey) ?? 'user';
 	String? get realname => _prefs.getString(_realnameKey);
+	String? get pushProvider => _prefs.getString(_pushProviderKey);
 
 	set bufferCompact(bool enabled) {
 		_prefs.setBool(_bufferCompactKey, enabled);
@@ -39,11 +41,19 @@ class Prefs {
 		_prefs.setString(_nicknameKey, nickname);
 	}
 
-	set realname(String? realname) {
-		if (realname != null) {
-			_prefs.setString(_realnameKey, realname);
+	void _setOptionalString(String k, String? v) {
+		if (v != null) {
+			_prefs.setString(k, v);
 		} else {
-			_prefs.remove(_realnameKey);
+			_prefs.remove(k);
 		}
+	}
+
+	set realname(String? realname) {
+		_setOptionalString(_realnameKey, realname);
+	}
+
+	set pushProvider(String? provider) {
+		_setOptionalString(_pushProviderKey, provider);
 	}
 }

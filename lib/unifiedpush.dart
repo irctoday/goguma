@@ -10,6 +10,7 @@ import 'database.dart';
 import 'push.dart';
 
 UnifiedPushController? _singleton;
+String? _distributor;
 
 class UnifiedPushController extends PushController {
 	final Map<String, Completer<PushSubscription>> _pendingSubscriptions = {};
@@ -42,9 +43,13 @@ class UnifiedPushController extends PushController {
 			await UnifiedPush.saveDistributor(distributor);
 		}
 		print('Using UnifiedPush distributor: $distributor');
+		_distributor = distributor;
 
 		return controller;
 	}
+
+	@override
+	String get providerName => 'unifiedpush:' + _distributor!;
 
 	@override
 	Future<PushSubscription> createSubscription(NetworkEntry network, String? vapidKey) async {

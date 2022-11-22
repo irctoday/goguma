@@ -22,6 +22,7 @@ class PushSubscription {
 }
 
 abstract class PushController {
+	String get providerName;
 	Future<PushSubscription> createSubscription(NetworkEntry network, String? vapidKey);
 	Future<void> deleteSubscription(NetworkEntry network, PushSubscription sub);
 }

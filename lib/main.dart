@@ -67,6 +67,20 @@ void main() async {
 	var prefs = await Prefs.load();
 	var db = await DB.open();
 
+	// If the push provider has changed, wipe our Web Push subscriptions table.
+	// Ideally we'd unregister old subscriptions, but it's too late at this
+	// point.
+	String? pushProviderName = pushController?.providerName;
+	if (pushProviderName != prefs.pushProvider) {
+		var subs = await db.listWebPushSubscriptions();
+		List<Future<void>> futures = [];
+		for (var sub in subs) {
+			futures.add(db.deleteWebPushSubscription(sub.id!));
+		}
+		await Future.wait(futures);
+		prefs.pushProvider = pushProviderName;
+	}
+
 	var networkList = NetworkListModel();
 	var bufferList = BufferListModel();
 	var bouncerNetworkList = BouncerNetworkListModel();

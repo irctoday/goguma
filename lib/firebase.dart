@@ -39,6 +39,9 @@ class FirebasePushController extends PushController {
 	}
 
 	@override
+	String get providerName => 'firebase:' + _gatewayEndpoint.toString();
+
+	@override
 	Future<PushSubscription> createSubscription(NetworkEntry network, String? vapidKey) async {
 		var token = await FirebaseMessaging.instance.getToken();
 		var client = HttpClient();
