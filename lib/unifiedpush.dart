@@ -9,23 +9,20 @@ import 'package:unifiedpush/unifiedpush.dart';
 import 'database.dart';
 import 'push.dart';
 
-UnifiedPushController? _singleton;
-String? _distributor;
-
 class UnifiedPushController extends PushController {
 	final Map<String, Completer<PushSubscription>> _pendingSubscriptions = {};
+	String? _distributor;
+
+	static UnifiedPushController? _instance;
 
 	UnifiedPushController._();
 
-	static Future<UnifiedPushController> init() async {
-		_singleton ??= UnifiedPushController._();
-		var controller = _singleton!;
-
+	Future<void> _init() async {
 		try {
 			await UnifiedPush.initialize(
-				onNewEndpoint: controller._handleNewEndpoint,
-				onRegistrationFailed: controller._handleRegistrationFailed,
-				onUnregistered: controller._handleUnregistered,
+				onNewEndpoint: _handleNewEndpoint,
+				onRegistrationFailed: _handleRegistrationFailed,
+				onUnregistered: _handleUnregistered,
 				onMessage: _handleMessage,
 			);
 		} on UnimplementedError {
@@ -44,8 +41,14 @@ class UnifiedPushController extends PushController {
 		}
 		print('Using UnifiedPush distributor: $distributor');
 		_distributor = distributor;
+	}
 
-		return controller;
+	static Future<UnifiedPushController> init() async {
+		if (_instance == null) {
+			_instance = UnifiedPushController._();
+			await _instance!._init();
+		}
+		return _instance!;
 	}
 
 	@override
