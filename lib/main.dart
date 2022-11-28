@@ -129,7 +129,7 @@ void main() async {
 			ChangeNotifierProvider<BufferListModel>.value(value: bufferList),
 			ChangeNotifierProvider<BouncerNetworkListModel>.value(value: bouncerNetworkList),
 			Provider<LinkPreviewer>(
-				create: (context) => LinkPreviewer(),
+				create: (context) => LinkPreviewer(db),
 				dispose: (context, linkPreviewer) => linkPreviewer.dispose(),
 			),
 		],

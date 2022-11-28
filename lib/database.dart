@@ -259,6 +259,42 @@ class WebPushSubscriptionEntry {
 	}
 }
 
+class LinkPreviewEntry {
+	int? id;
+	final String url;
+	int? statusCode;
+	String? mimeType;
+	int? contentLength;
+	DateTime updatedAt;
+
+	LinkPreviewEntry({
+		required this.url,
+		this.statusCode,
+		this.mimeType,
+		this.contentLength,
+	}) :
+		updatedAt = DateTime.now();
+
+	LinkPreviewEntry.fromMap(Map<String, dynamic> m) :
+		id = m['id'] as int,
+		url = m['url'] as String,
+		statusCode = m['status_code'] as int?,
+		mimeType = m['mime_type'] as String?,
+		contentLength = m['content_length'] as int?,
+		updatedAt = DateTime.parse(m['updated_at'] as String);
+
+	Map<String, Object?> toMap() {
+		return <String, Object?>{
+			'id': id,
+			'url': url,
+			'status_code': statusCode,
+			'mime_type': mimeType,
+			'content_length': contentLength,
+			'updated_at': formatIrcTime(updatedAt),
+		};
+	}
+}
+
 class DB {
 	final Database _db;
 
@@ -349,6 +385,16 @@ class DB {
 						UNIQUE(network, endpoint)
 					);
 				''');
+				batch.execute('''
+					CREATE TABLE LinkPreview (
+						id INTEGER PRIMARY KEY,
+						url TEXT NOT NULL UNIQUE,
+						status_code INTEGER,
+						mime_type TEXT,
+						content_length INTEGER,
+						updated_at TEXT NOT NULL
+					);
+				''');
 				await batch.commit();
 			},
 			onUpgrade: (db, prevVersion, newVersion) async {
@@ -422,12 +468,24 @@ class DB {
 						ALTER TABLE WebPushSubscription ADD COLUMN tag TEXT;
 					''');
 				}
+				if (prevVersion < 13) {
+					batch.execute('''
+						CREATE TABLE LinkPreview (
+							id INTEGER PRIMARY KEY,
+							url TEXT NOT NULL UNIQUE,
+							status_code INTEGER,
+							mime_type TEXT,
+							content_length INTEGER,
+							updated_at TEXT NOT NULL
+						);
+					''');
+				}
 				await batch.commit();
 			},
 			onDowngrade: (_, prevVersion, newVersion) async {
 				throw Exception('Attempted to downgrade database from version $prevVersion to version $newVersion');
 			},
-			version: 12,
+			version: 13,
 		);
 		return DB._(db);
 	}
@@ -626,5 +684,25 @@ class DB {
 
 	Future<void> deleteWebPushSubscription(int id) async {
 		await _db.rawDelete('DELETE FROM WebPushSubscription WHERE id = ?', [id]);
+	}
+
+	Future<LinkPreviewEntry?> fetchLinkPreview(String url) async {
+		var entries = await _db.rawQuery('''
+			SELECT id, url, status_code, mime_type, content_length, updated_at
+			FROM LinkPreview
+			WHERE url = ?
+		''', [url]);
+		if (entries.isEmpty) {
+			return null;
+		}
+		return LinkPreviewEntry.fromMap(entries.first);
+	}
+
+	Future<void> storeLinkPreview(LinkPreviewEntry entry) async {
+		if (entry.id == null) {
+			entry.id = await _db.insert('LinkPreview', entry.toMap());
+		} else {
+			await _updateById('LinkPreview', entry.toMap());
+		}
 	}
 }

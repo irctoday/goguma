@@ -515,9 +515,20 @@ class _MessageItem extends StatelessWidget {
 	}) : super(key: key);
 
 	Widget _buildLinkPreview(LinkPreviewer linkPreviewer, String text, Alignment alignment) {
+		// Try to populate the initial data from cache, to avoid jitter in
+		// the UI
+		var cached = linkPreviewer.cachedPreviewText(text);
+		Future<List<PhotoPreview>>? future;
+		if (cached == null) {
+			future = linkPreviewer.previewText(text);
+		}
 		return FutureBuilder<List<PhotoPreview>>(
-			future: linkPreviewer.previewText(text),
+			future: future,
+			initialData: cached,
 			builder: (context, snapshot) {
+				if (snapshot.hasError) {
+					Error.throwWithStackTrace(snapshot.error!, snapshot.stackTrace!);
+				}
 				var previews = snapshot.data;
 				if (previews == null || previews.isEmpty) {
 					return Container();
