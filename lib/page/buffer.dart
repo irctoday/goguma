@@ -538,6 +538,23 @@ class _MessageItem extends StatelessWidget {
 								height: 250,
 								fit: BoxFit.cover,
 								filterQuality: FilterQuality.medium,
+								loadingBuilder: (context, child, loadingProgress) {
+									if (loadingProgress == null) {
+										return child;
+									}
+									double? progress;
+									if (loadingProgress.expectedTotalBytes != null) {
+										progress = loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!;
+									}
+									return Container(
+										width: 250,
+										height: 250,
+										alignment: Alignment.center,
+										child: CircularProgressIndicator(
+											value: progress,
+										),
+									);
+								},
 							),
 						),
 					),
