@@ -555,6 +555,20 @@ class _MessageItem extends StatelessWidget {
 										),
 									);
 								},
+								errorBuilder: (context, error, stackTrace) {
+									return Container(
+										width: 250,
+										height: 250,
+										alignment: Alignment.center,
+										child: Column(
+											mainAxisAlignment: MainAxisAlignment.center,
+											children: [
+												Icon(Icons.error),
+												Text(error.toString()),
+											],
+										),
+									);
+								},
 							),
 						),
 					),
