@@ -32,50 +32,61 @@ class LinkPreview extends StatelessWidget {
 				}
 				// TODO: support multiple previews
 				var preview = previews.first;
-				return InkWell(
-					onTap: () {
-						launchUrl(preview.url, mode: LaunchMode.externalApplication);
-					},
-					child: Image.network(
-						preview.url.toString(),
+				return _PhotoPreview(preview);
+			},
+		);
+	}
+}
+
+class _PhotoPreview extends StatelessWidget {
+	final PhotoPreview preview;
+
+	_PhotoPreview(this.preview);
+
+	@override
+	Widget build(BuildContext context) {
+		return InkWell(
+			onTap: () {
+				launchUrl(preview.url, mode: LaunchMode.externalApplication);
+			},
+			child: Image.network(
+				preview.url.toString(),
+				width: 250,
+				height: 250,
+				fit: BoxFit.cover,
+				filterQuality: FilterQuality.medium,
+				loadingBuilder: (context, child, loadingProgress) {
+					if (loadingProgress == null) {
+						return child;
+					}
+					double? progress;
+					if (loadingProgress.expectedTotalBytes != null) {
+						progress = loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!;
+					}
+					return Container(
 						width: 250,
 						height: 250,
-						fit: BoxFit.cover,
-						filterQuality: FilterQuality.medium,
-						loadingBuilder: (context, child, loadingProgress) {
-							if (loadingProgress == null) {
-								return child;
-							}
-							double? progress;
-							if (loadingProgress.expectedTotalBytes != null) {
-								progress = loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!;
-							}
-							return Container(
-								width: 250,
-								height: 250,
-								alignment: Alignment.center,
-								child: CircularProgressIndicator(
-									value: progress,
-								),
-							);
-						},
-						errorBuilder: (context, error, stackTrace) {
-							return Container(
-								width: 250,
-								height: 250,
-								alignment: Alignment.center,
-								child: Column(
-									mainAxisAlignment: MainAxisAlignment.center,
-									children: [
-										Icon(Icons.error),
-										Text(error.toString()),
-									],
-								),
-							);
-						},
-					),
-				);
-			},
+						alignment: Alignment.center,
+						child: CircularProgressIndicator(
+							value: progress,
+						),
+					);
+				},
+				errorBuilder: (context, error, stackTrace) {
+					return Container(
+						width: 250,
+						height: 250,
+						alignment: Alignment.center,
+						child: Column(
+							mainAxisAlignment: MainAxisAlignment.center,
+							children: [
+								Icon(Icons.error),
+								Text(error.toString()),
+							],
+						),
+					);
+				},
+			),
 		);
 	}
 }
