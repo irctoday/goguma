@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../ansi.dart';
 import '../client.dart';
@@ -10,11 +9,11 @@ import '../client_controller.dart';
 import '../database.dart';
 import '../irc.dart';
 import '../linkify.dart';
-import '../link_preview.dart';
 import '../models.dart';
 import '../notification_controller.dart';
 import '../prefs.dart';
 import '../widget/composer.dart';
+import '../widget/link_preview.dart';
 import '../widget/network_indicator.dart';
 import '../widget/swipe_action.dart';
 import 'buffer_details.dart';
@@ -514,80 +513,6 @@ class _MessageItem extends StatelessWidget {
 		this.onSwipe
 	}) : super(key: key);
 
-	Widget _buildLinkPreview(LinkPreviewer linkPreviewer, String text, Alignment alignment) {
-		// Try to populate the initial data from cache, to avoid jitter in
-		// the UI
-		var cached = linkPreviewer.cachedPreviewText(text);
-		Future<List<PhotoPreview>>? future;
-		if (cached == null) {
-			future = linkPreviewer.previewText(text);
-		}
-		return FutureBuilder<List<PhotoPreview>>(
-			future: future,
-			initialData: cached,
-			builder: (context, snapshot) {
-				if (snapshot.hasError) {
-					Error.throwWithStackTrace(snapshot.error!, snapshot.stackTrace!);
-				}
-				var previews = snapshot.data;
-				if (previews == null || previews.isEmpty) {
-					return Container();
-				}
-				// TODO: support multiple previews
-				var preview = previews.first;
-				return Align(alignment: alignment, child: Container(
-					margin: EdgeInsets.only(top: 5),
-					child: ClipRRect(
-						borderRadius: BorderRadius.circular(10),
-						child: InkWell(
-							onTap: () {
-								launchUrl(preview.url, mode: LaunchMode.externalApplication);
-							},
-							child: Image.network(
-								preview.url.toString(),
-								width: 250,
-								height: 250,
-								fit: BoxFit.cover,
-								filterQuality: FilterQuality.medium,
-								loadingBuilder: (context, child, loadingProgress) {
-									if (loadingProgress == null) {
-										return child;
-									}
-									double? progress;
-									if (loadingProgress.expectedTotalBytes != null) {
-										progress = loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!;
-									}
-									return Container(
-										width: 250,
-										height: 250,
-										alignment: Alignment.center,
-										child: CircularProgressIndicator(
-											value: progress,
-										),
-									);
-								},
-								errorBuilder: (context, error, stackTrace) {
-									return Container(
-										width: 250,
-										height: 250,
-										alignment: Alignment.center,
-										child: Column(
-											mainAxisAlignment: MainAxisAlignment.center,
-											children: [
-												Icon(Icons.error),
-												Text(error.toString()),
-											],
-										),
-									);
-								},
-							),
-						),
-					),
-				));
-			},
-		);
-	}
-
 	@override
 	Widget build(BuildContext context) {
 		var client = context.read<Client>();
@@ -685,8 +610,13 @@ class _MessageItem extends StatelessWidget {
 			];
 
 			if (prefs.linkPreview) {
-				var linkPreviewer = context.read<LinkPreviewer>();
-				linkPreview = _buildLinkPreview(linkPreviewer, body, boxAlignment);
+				linkPreview = Align(alignment: boxAlignment, child: Container(
+					margin: EdgeInsets.only(top: 5),
+					child: ClipRRect(
+						borderRadius: BorderRadius.circular(10),
+						child: LinkPreview(body),
+					),
+				));
 			}
 		}
 
