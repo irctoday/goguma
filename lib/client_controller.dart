@@ -768,6 +768,7 @@ class ClientController {
 			// The bouncer network has been updated
 			bouncerNetwork.setAttrs(attrs);
 			if (childNetwork != null) {
+				childNetwork.networkEntry.bouncerName = attrs['name'];
 				childNetwork.networkEntry.bouncerUri = _uriFromBouncerNetworkModel(bouncerNetwork);
 				await _db.storeNetwork(childNetwork.networkEntry);
 			}

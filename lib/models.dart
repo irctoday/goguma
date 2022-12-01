@@ -75,7 +75,7 @@ class NetworkModel extends ChangeNotifier {
 
 	String get displayName {
 		// If the user has set a custom bouncer network name, use that
-		var bouncerNetworkName = bouncerNetwork?.name;
+		var bouncerNetworkName = bouncerNetwork?.name ?? networkEntry.bouncerName;
 		var bouncerNetworkHost = bouncerNetwork?.host;
 		if (bouncerNetworkName != null && bouncerNetworkName != bouncerNetworkHost) {
 			return bouncerNetworkName;

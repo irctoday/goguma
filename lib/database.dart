@@ -57,6 +57,7 @@ class NetworkEntry {
 	int? id;
 	final int server;
 	String? bouncerId;
+	String? bouncerName;
 	String? _rawBouncerUri;
 	String? _rawIsupport;
 	String? _rawCaps;
@@ -70,6 +71,7 @@ class NetworkEntry {
 			'id': id,
 			'server': server,
 			'bouncer_id': bouncerId,
+			'bouncer_name': bouncerName,
 			'bouncer_uri': _rawBouncerUri,
 			'isupport': _rawIsupport,
 			'caps': _rawCaps,
@@ -84,6 +86,7 @@ class NetworkEntry {
 		id = m['id'] as int,
 		server = m['server'] as int,
 		bouncerId = m['bouncer_id'] as String?,
+		bouncerName = m['bouncer_name'] as String?,
 		_rawBouncerUri = m['bouncer_uri'] as String?,
 		_rawIsupport = m['isupport'] as String?,
 		_rawCaps = m['caps'] as String?;
@@ -336,6 +339,7 @@ class DB {
 						id INTEGER PRIMARY KEY,
 						server INTEGER NOT NULL,
 						bouncer_id TEXT,
+						bouncer_name TEXT,
 						bouncer_uri TEXT,
 						isupport TEXT,
 						caps TEXT,
@@ -480,12 +484,17 @@ class DB {
 						);
 					''');
 				}
+				if (prevVersion < 14) {
+					batch.execute('''
+						ALTER TABLE Network ADD COLUMN bouncer_name TEXT;
+					''');
+				}
 				await batch.commit();
 			},
 			onDowngrade: (_, prevVersion, newVersion) async {
 				throw Exception('Attempted to downgrade database from version $prevVersion to version $newVersion');
 			},
-			version: 13,
+			version: 14,
 		);
 		return DB._(db);
 	}
@@ -540,7 +549,7 @@ class DB {
 
 	Future<List<NetworkEntry>> listNetworks() async {
 		var entries = await _db.rawQuery('''
-			SELECT id, server, bouncer_id, bouncer_uri, isupport, caps
+			SELECT id, server, bouncer_id, bouncer_name, bouncer_uri, isupport, caps
 			FROM Network ORDER BY id
 		''');
 		return entries.map((m) => NetworkEntry.fromMap(m)).toList();
