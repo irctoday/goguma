@@ -67,9 +67,15 @@ Future<void> handlePushMessage(DB db, WebPushSubscriptionEntry sub, List<int> ci
 	case 'PRIVMSG':
 	case 'NOTICE':
 		var target = msg.params[0];
-		var isChannel = target.length > 0 && networkEntry.isupport.chanTypes.contains(target[0]);
+		var isChannel = _isChannel(target, networkEntry.isupport);
 		if (!isChannel) {
-			target = msg.source!.name;
+			var channelCtx = msg.tags['+draft/channel-context'];
+			if (channelCtx != null && _isChannel(channelCtx, networkEntry.isupport) && await _fetchBuffer(db, channelCtx, networkEntry) != null) {
+				target = channelCtx;
+				isChannel = true;
+			} else {
+				target = msg.source!.name;
+			}
 		}
 
 		var bufferEntry = await _fetchBuffer(db, target, networkEntry);
@@ -123,6 +129,10 @@ Future<void> handlePushMessage(DB db, WebPushSubscriptionEntry sub, List<int> ci
 		print('Ignoring ${msg.cmd} message');
 		return;
 	}
+}
+
+bool _isChannel(String name, IrcIsupportRegistry isupport) {
+	return name.length > 0 && isupport.chanTypes.contains(name[0]);
 }
 
 Future<NetworkEntry?> _fetchNetwork(DB db, int id) async {

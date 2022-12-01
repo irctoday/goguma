@@ -576,7 +576,12 @@ class ClientController {
 			// target can be my own nick for direct messages, "*" for server
 			// messages, "$xxx" for server-wide broadcasts
 			if (!client.isChannel(target) && !client.isMyNick(msg.source.name)) {
-				target = msg.source.name;
+				var channelCtx = msg.tags['+draft/channel-context'];
+				if (channelCtx != null && client.isChannel(channelCtx) && _bufferList.get(channelCtx, network) != null) {
+					target = channelCtx;
+				} else {
+					target = msg.source.name;
+				}
 			}
 			if (msg.cmd == 'TAGMSG') {
 				var typing = msg.tags['+typing'];
@@ -829,31 +834,34 @@ class ClientController {
 		if (buffer.muted) {
 			return;
 		}
+
+		var isChannel = client.isChannel(buffer.name);
+
 		entries = entries.where((entry) {
 			if (buffer.lastDeliveredTime != null && buffer.lastDeliveredTime!.compareTo(entry.time) >= 0) {
 				return false;
 			}
-			return _shouldNotifyMessage(entry);
+			return _shouldNotifyMessage(entry, isChannel);
 		}).toList();
 		if (entries.isEmpty) {
 			return;
 		}
 
-		if (client.isChannel(buffer.name)) {
+		if (isChannel) {
 			await _notifController.showHighlight(entries, buffer);
 		} else {
 			await _notifController.showDirectMessage(entries, buffer);
 		}
 	}
 
-	bool _shouldNotifyMessage(MessageEntry entry) {
+	bool _shouldNotifyMessage(MessageEntry entry, bool isChannel) {
 		if (entry.msg.cmd != 'PRIVMSG' && entry.msg.cmd != 'NOTICE') {
 			return false;
 		}
 		if (client.isMyNick(entry.msg.source!.name)) {
 			return false;
 		}
-		if (client.isChannel(entry.msg.params[0]) && !findTextHighlight(entry.msg.params[1], client.nick)) {
+		if (isChannel && !findTextHighlight(entry.msg.params[1], client.nick)) {
 			return false;
 		}
 		return true;

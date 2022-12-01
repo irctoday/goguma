@@ -573,6 +573,12 @@ class _MessageItem extends StatelessWidget {
 			text: sender,
 			style: TextStyle(fontWeight: FontWeight.bold),
 		);
+		if (ircMsg.tags['+draft/channel-context'] != null) {
+			senderTextSpan = TextSpan(children: [
+				senderTextSpan,
+				TextSpan(text: ' (only visible to you)', style: TextStyle(color: textColor.withOpacity(0.5))),
+			]);
+		}
 
 		var linkStyle = TextStyle(decoration: TextDecoration.underline);
 
