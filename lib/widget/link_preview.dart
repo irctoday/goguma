@@ -7,7 +7,7 @@ import '../link_preview.dart';
 class LinkPreview extends StatelessWidget {
 	final String text;
 
-	LinkPreview(this.text);
+	const LinkPreview(this.text, { Key? key }) : super(key: key);
 
 	@override
 	Widget build(BuildContext context) {
@@ -41,7 +41,7 @@ class LinkPreview extends StatelessWidget {
 class _PhotoPreview extends StatelessWidget {
 	final PhotoPreview preview;
 
-	_PhotoPreview(this.preview);
+	const _PhotoPreview(this.preview, { Key? key }) : super(key: key);
 
 	@override
 	Widget build(BuildContext context) {
