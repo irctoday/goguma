@@ -219,8 +219,19 @@ class _JoinItem extends StatelessWidget {
 		);
 
 		if (action is _JoinChannelAction) {
+			Widget? trailing;
+			if(action.listReply.clients > 0) {
+				trailing = Row(
+					mainAxisSize: MainAxisSize.min,
+					children: [
+						Icon(Icons.person),
+						Text('${action.listReply.clients}'),
+					],
+				);
+			}
 			return ListTile(
 				leading: Icon(Icons.tag),
+				trailing: trailing,
 				title: title,
 				subtitle: action.listReply.topic == '' ? null : Text(
 					stripAnsiFormatting(action.listReply.topic),
