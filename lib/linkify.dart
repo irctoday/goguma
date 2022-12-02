@@ -8,7 +8,6 @@ import 'client.dart';
 import 'models.dart';
 
 List<LinkifyElement> extractLinks(String text, [NetworkModel? network]) {
-
 	var linkifiers = [
 		_UrlLinkifier(),
 		EmailLinkifier(),

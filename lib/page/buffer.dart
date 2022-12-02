@@ -577,7 +577,7 @@ class _MessageItem extends StatelessWidget {
 			style: TextStyle(fontWeight: FontWeight.bold),
 		);
 
-		var linkStyle = textStyle.apply(decoration: TextDecoration.underline);
+		var linkStyle = TextStyle(decoration: TextDecoration.underline);
 
 		List<InlineSpan> content;
 		Widget? linkPreview;
@@ -627,7 +627,6 @@ class _MessageItem extends StatelessWidget {
 
 		Widget inner = SelectableText.rich(TextSpan(
 			children: content,
-			style: textStyle,
 		));
 
 		if (showTime) {
@@ -657,6 +656,8 @@ class _MessageItem extends StatelessWidget {
 				),
 			]);
 		}
+
+		inner = DefaultTextStyle.merge(style: textStyle, child: inner);
 
 		Widget decoratedMessage;
 		if (isAction) {
