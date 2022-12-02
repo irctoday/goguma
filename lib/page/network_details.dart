@@ -114,10 +114,13 @@ class _NetworkDetailsPageState extends State<NetworkDetailsPage> {
 				margin: const EdgeInsets.all(15),
 				child: Builder(builder: (context) {
 					var textStyle = DefaultTextStyle.of(context).style.apply(fontSizeFactor: 1.2);
-					var linkStyle = textStyle.apply(color: Colors.blue, decoration: TextDecoration.underline);
-					return RichText(
-						textAlign: TextAlign.center,
-						text: linkify(context, motd, textStyle: textStyle, linkStyle: linkStyle),
+					var linkStyle = TextStyle(color: Colors.blue, decoration: TextDecoration.underline);
+					return DefaultTextStyle(
+						style: textStyle,
+						child: Text.rich(
+							linkify(context, motd, linkStyle: linkStyle),
+							textAlign: TextAlign.center,
+						),
 					);
 				}),
 			));

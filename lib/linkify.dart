@@ -20,7 +20,6 @@ List<LinkifyElement> extractLinks(String text, [NetworkModel? network]) {
 }
 
 TextSpan linkify(BuildContext context, String text, {
-	required TextStyle textStyle,
 	required TextStyle linkStyle,
 }) {
 	NetworkModel? network;
@@ -44,7 +43,6 @@ TextSpan linkify(BuildContext context, String text, {
 				throw Exception('Failed to launch URL: ${link.url}');
 			}
 		},
-		style: textStyle,
 		linkStyle: linkStyle,
 	);
 }

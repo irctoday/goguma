@@ -142,10 +142,13 @@ class _BufferDetailsPageState extends State<BufferDetailsPage> {
 				margin: const EdgeInsets.all(15),
 				child: Builder(builder: (context) {
 					var textStyle = DefaultTextStyle.of(context).style.apply(fontSizeFactor: 1.2);
-					var linkStyle = textStyle.apply(color: Colors.blue, decoration: TextDecoration.underline);
-					return RichText(
-						textAlign: TextAlign.center,
-						text: linkify(context, topic, textStyle: textStyle, linkStyle: linkStyle),
+					var linkStyle = TextStyle(color: Colors.blue, decoration: TextDecoration.underline);
+					return DefaultTextStyle(
+						style: textStyle,
+						child: Text.rich(
+							linkify(context, topic, linkStyle: linkStyle),
+							textAlign: TextAlign.center,
+						),
 					);
 				}),
 			));
