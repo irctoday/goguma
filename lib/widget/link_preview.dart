@@ -4,10 +4,17 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../link_preview.dart';
 
+typedef LinkPreviewBuilder = Widget Function(BuildContext context, Widget child);
+
 class LinkPreview extends StatelessWidget {
 	final String text;
+	final LinkPreviewBuilder builder;
 
-	const LinkPreview(this.text, { Key? key }) : super(key: key);
+	const LinkPreview({
+		required this.text,
+		required this.builder,
+		Key? key,
+	}) : super(key: key);
 
 	@override
 	Widget build(BuildContext context) {
@@ -32,7 +39,7 @@ class LinkPreview extends StatelessWidget {
 				}
 				// TODO: support multiple previews
 				var preview = previews.first;
-				return _PhotoPreview(preview);
+				return builder(context, _PhotoPreview(preview));
 			},
 		);
 	}

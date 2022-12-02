@@ -610,13 +610,18 @@ class _MessageItem extends StatelessWidget {
 			];
 
 			if (prefs.linkPreview) {
-				linkPreview = Align(alignment: boxAlignment, child: Container(
-					margin: EdgeInsets.only(top: 5),
-					child: ClipRRect(
-						borderRadius: BorderRadius.circular(10),
-						child: LinkPreview(body),
-					),
-				));
+				linkPreview = LinkPreview(
+					text: body,
+					builder: (context, child) {
+						return Align(alignment: boxAlignment, child: Container(
+							margin: EdgeInsets.only(top: 5),
+							child: ClipRRect(
+								borderRadius: BorderRadius.circular(10),
+								child: child,
+							),
+						));
+					},
+				);
 			}
 		}
 
