@@ -543,7 +543,7 @@ class _MessageItem extends StatelessWidget {
 
 		var boxColor = Colors.primaries[sender.hashCode % Colors.primaries.length].shade500;
 		var boxAlignment = Alignment.centerLeft;
-		var textStyle = DefaultTextStyle.of(context).style;
+		var textColor = DefaultTextStyle.of(context).style.color!;
 
 		if (client.isMyNick(sender)) {
 			// Actions are displayed as if they were told by an external
@@ -556,9 +556,7 @@ class _MessageItem extends StatelessWidget {
 		}
 
 		if (!isAction) {
-			textStyle = DefaultTextStyle.of(context).style.apply(
-				color: boxColor.computeLuminance() > 0.5 ? Colors.black : Colors.white,
-			);
+			textColor = boxColor.computeLuminance() > 0.5 ? Colors.black : Colors.white;
 		}
 
 		const margin = 16.0;
@@ -632,8 +630,8 @@ class _MessageItem extends StatelessWidget {
 			var hh = localDateTime.hour.toString().padLeft(2, '0');
 			var mm = localDateTime.minute.toString().padLeft(2, '0');
 			var time = '   $hh:$mm';
-			var timeStyle = textStyle.apply(
-				color: textStyle.color!.withOpacity(0.5),
+			var timeStyle = DefaultTextStyle.of(context).style.apply(
+				color: textColor.withOpacity(0.5),
 				fontSizeFactor: 0.8,
 			);
 
@@ -656,7 +654,7 @@ class _MessageItem extends StatelessWidget {
 			]);
 		}
 
-		inner = DefaultTextStyle.merge(style: textStyle, child: inner);
+		inner = DefaultTextStyle.merge(style: TextStyle(color: textColor), child: inner);
 
 		Widget decoratedMessage;
 		if (isAction) {
