@@ -110,10 +110,8 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 					autofocus: true,
 					maxLength: _nicknameLen,
 					validator: (value) {
-						if (value == null || value == '') {
-							return 'A nickname is required';
-						}
-						return null;
+						var client = context.read<ClientProvider>().get(widget.network);
+						return validateNickname(value ?? '', client.isupport);
 					},
 				),
 				if (_canEditRealname) TextFormField(

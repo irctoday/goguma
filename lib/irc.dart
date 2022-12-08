@@ -1488,3 +1488,21 @@ class NamesReplyMember {
 
 	const NamesReplyMember({ required this.nickname, this.prefix = '' });
 }
+
+// See https://modern.ircdocs.horse/#clients
+String? validateNickname(String nickname, IrcIsupportRegistry isupport) {
+	if (nickname.isEmpty) {
+		return 'Cannot be empty';
+	}
+	for (var ch in const [' ', ',', '*', '?', '!', '@']) {
+		if (nickname.contains(ch)) {
+			return 'Cannot contain "$ch"';
+		}
+	}
+	for (var ch in ['\$', ':', ...isupport.chanTypes.split('')]) {
+		if (nickname.startsWith(ch)) {
+			return 'Cannot start with "$ch"';
+		}
+	}
+	return null;
+}
