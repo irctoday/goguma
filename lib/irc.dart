@@ -1506,3 +1506,30 @@ String? validateNickname(String nickname, IrcIsupportRegistry isupport) {
 	}
 	return null;
 }
+
+// See https://modern.ircdocs.horse/#channels
+String? validateChannel(String channel, IrcIsupportRegistry isupport) {
+	if (isupport.chanTypes.isEmpty) {
+		return 'Channels are disabled on this server';
+	}
+
+	for (var ch in const [' ', ',', '\x07']) {
+		if (channel.contains(ch)) {
+			return 'Cannot contain "$ch"';
+		}
+	}
+
+	var chanTypes = isupport.chanTypes.split('');
+	bool found = false;
+	for (var ch in chanTypes) {
+		if (channel.startsWith(ch)) {
+			found = true;
+			break;
+		}
+	}
+	if (!found) {
+		return 'Must start with any of "${chanTypes.join('", "')}"';
+	}
+
+	return null;
+}

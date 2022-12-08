@@ -114,6 +114,11 @@ class _JoinPageState extends State<JoinPage> {
 			query = chanTypes[0] + query;
 		}
 
+		if (validateChannel(query, client.isupport) != null) {
+			// Not a valid channel name, don't bother
+			return [];
+		}
+
 		var mask = query;
 		if (client.isupport.elist?.mask == true) {
 			mask += '*';
@@ -143,9 +148,9 @@ class _JoinPageState extends State<JoinPage> {
 	}
 
 	Future<Iterable<_Action>> _searchNetworkUsers(String query, NetworkModel network, Client client) async {
-		var chanTypes = client.isupport.chanTypes;
-		if (chanTypes.contains(query[0])) {
-			return []; // user is explicitly searching for a channel
+		if (validateNickname(query, client.isupport) != null) {
+			// Not a valid nickname, don't bother
+			return [];
 		}
 
 		// TODO: find a way to know whether the server supports masks in WHO
