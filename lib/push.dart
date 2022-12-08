@@ -65,7 +65,12 @@ Future<void> handlePushMessage(DB db, WebPushSubscriptionEntry sub, List<int> ci
 
 	switch (msg.cmd) {
 	case 'PRIVMSG':
-	case 'NOTICE':
+		var ctcp = CtcpMessage.parse(msg);
+		if (ctcp != null && ctcp.cmd != 'ACTION') {
+			print('Ignoring CTCP ${ctcp.cmd} message');
+			break;
+		}
+
 		var target = msg.params[0];
 		var isChannel = _isChannel(target, networkEntry.isupport);
 		if (!isChannel) {

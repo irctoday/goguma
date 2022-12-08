@@ -855,13 +855,17 @@ class ClientController {
 	}
 
 	bool _shouldNotifyMessage(MessageEntry entry, bool isChannel) {
-		if (entry.msg.cmd != 'PRIVMSG' && entry.msg.cmd != 'NOTICE') {
+		if (entry.msg.cmd != 'PRIVMSG') {
 			return false;
 		}
 		if (client.isMyNick(entry.msg.source!.name)) {
 			return false;
 		}
 		if (isChannel && !findTextHighlight(entry.msg.params[1], client.nick)) {
+			return false;
+		}
+		var ctcp = CtcpMessage.parse(entry.msg);
+		if (ctcp != null && ctcp.cmd != 'ACTION') {
 			return false;
 		}
 		return true;
