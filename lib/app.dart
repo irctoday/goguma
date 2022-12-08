@@ -6,6 +6,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'ansi.dart';
 import 'client.dart';
 import 'client_controller.dart';
 import 'dialog/authenticate.dart';
@@ -40,6 +41,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 	final GlobalKey<NavigatorState> _navigatorKey = GlobalKey(debugLabel: 'main-navigator');
 	final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey(debugLabel: 'main-scaffold-messenger');
 	late StreamSubscription<void> _clientErrorSub;
+	late StreamSubscription<void> _clientNoticeSub;
 	late StreamSubscription<void> _connectivitySub;
 	late StreamSubscription<void> _notifSelectionSub;
 	StreamSubscription<void>? _appLinksSub;
@@ -83,6 +85,18 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 			var snackBar = SnackBar(content: Text(err.toString()), action: action);
 			_scaffoldMessengerKey.currentState?.showSnackBar(snackBar);
 		});
+		_clientNoticeSub = clientProvider.notices.listen((notice) {
+			List<String> texts = [];
+			for (var msg in notice.msgs) {
+				texts.add(stripAnsiFormatting(msg.params[1]));
+			}
+			var snackBar = SnackBar(content: Text.rich(TextSpan(children: [
+				TextSpan(text: notice.target, style: TextStyle(fontWeight: FontWeight.bold)),
+				TextSpan(text: ': '),
+				TextSpan(text: texts.join('\n')),
+			])));
+			_scaffoldMessengerKey.currentState?.showSnackBar(snackBar);
+		});
 
 		_connectivitySub = Connectivity().onConnectivityChanged.listen((result) {
 			if (result != ConnectivityResult.none) {
@@ -119,6 +133,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		_pingTimer?.cancel();
 		_autoReconnectLock?.release();
 		_clientErrorSub.cancel();
+		_clientNoticeSub.cancel();
 		_connectivitySub.cancel();
 		_notifSelectionSub.cancel();
 		_appLinksSub?.cancel();

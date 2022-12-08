@@ -41,10 +41,20 @@ class ClientException extends IrcException {
 	ClientException(IrcException base, this.client, this.network) : super(base.msg);
 }
 
+class ClientNotice {
+	final List<ClientMessage> msgs;
+	final String target;
+	final Client client;
+	final NetworkModel network;
+
+	const ClientNotice(this.msgs, this.target, this.client, this.network);
+}
+
 /// A data structure which keeps track of IRC clients.
 class ClientProvider {
 	final Map<NetworkModel, ClientController> _controllers = {};
 	final StreamController<ClientException> _errorsController = StreamController.broadcast(sync: true);
+	final StreamController<ClientNotice> _noticesController = StreamController.broadcast(sync: true);
 	final StreamController<NetworkModel> _networkStatesController = StreamController.broadcast(sync: true);
 	final Set<ClientAutoReconnectLock> _autoReconnectLocks = {};
 
@@ -63,6 +73,7 @@ class ClientProvider {
 
 	UnmodifiableListView<Client> get clients => UnmodifiableListView(_controllers.values.map((cc) => cc.client));
 	Stream<ClientException> get errors => _errorsController.stream;
+	Stream<ClientNotice> get notices => _noticesController.stream;
 	Stream<NetworkModel> get networkStates => _networkStatesController.stream;
 
 	ClientProvider({
@@ -665,13 +676,36 @@ class ClientController {
 
 		var isHistory = messages.first.batchByType('chathistory') != null;
 
+		var createNewBuffer = false;
+		List<ClientMessage> notices = [];
+		if (!client.isChannel(target)) {
+			for (var msg in messages) {
+				if (msg.cmd == 'NOTICE') {
+					notices.add(msg);
+					continue;
+				}
+
+				// Disregard non-/me CTCP messages
+				var ctcp = CtcpMessage.parse(msg);
+				if (ctcp == null || ctcp.cmd == 'ACTION') {
+					createNewBuffer = true;
+					break;
+				}
+			}
+		}
+
 		var buf = _bufferList.get(target, network);
 		var isNewBuffer = false;
-		if (buf == null && !client.isChannel(target)) {
+		if (buf == null && createNewBuffer) {
 			isNewBuffer = true;
 			buf = await _createBuffer(target);
 		}
 		if (buf == null) {
+			if (!notices.isEmpty) {
+				// We don't have a buffer to display these NOTICEs, open an
+				// ephemeral snackbar
+				_provider._noticesController.add(ClientNotice(notices, target, client, network));
+			}
 			return;
 		}
 
