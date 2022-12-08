@@ -138,6 +138,9 @@ class _JoinPageState extends State<JoinPage> {
 		List<_Action> actions = [];
 		bool exactMatch = false;
 		for (var reply in replies) {
+			if (!reply.channel.toLowerCase().contains(query.toLowerCase())) {
+				continue;
+			}
 			if (reply.channel.toLowerCase() == query.toLowerCase()) {
 				exactMatch = true;
 			}
