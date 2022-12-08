@@ -54,6 +54,8 @@ class _JoinPageState extends State<JoinPage> {
 			_actions = [];
 		});
 
+		query = query.trim();
+
 		if (query.length < 2) {
 			return;
 		}
