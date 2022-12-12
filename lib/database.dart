@@ -625,7 +625,7 @@ class DB {
 		};
 	}
 
-	Future<Map<int, String>> fetchBuffersLastDeliveredTime() async {
+	Future<Map<int, String?>> fetchBuffersLastDeliveredTime() async {
 		var entries = await _db.rawQuery('''
 			SELECT id, (
 				SELECT time
@@ -635,9 +635,9 @@ class DB {
 			) time
 			FROM Buffer
 		''');
-		return <int, String>{
+		return <int, String?>{
 			for (var m in entries)
-				m['id'] as int: m['time'] as String,
+				m['id'] as int: m['time'] as String?,
 		};
 	}
 
