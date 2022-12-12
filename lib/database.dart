@@ -627,13 +627,17 @@ class DB {
 
 	Future<Map<int, String>> fetchBuffersLastDeliveredTime() async {
 		var entries = await _db.rawQuery('''
-			SELECT buffer, MAX(time) AS time
-			FROM Message
-			GROUP BY buffer
+			SELECT id, (
+				SELECT time
+				FROM Message
+				WHERE buffer = buffer.id
+				ORDER BY time DESC LIMIT 1
+			) time
+			FROM Buffer
 		''');
 		return <int, String>{
 			for (var m in entries)
-				m['buffer'] as int: m['time'] as String,
+				m['id'] as int: m['time'] as String,
 		};
 	}
 
