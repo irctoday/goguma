@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'dart:convert' show json, base64;
+import 'dart:convert' show json, base64, utf8;
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -41,6 +41,19 @@ class FirebasePushController extends PushController {
 	@override
 	String get providerName => 'firebase:' + _gatewayEndpoint.toString();
 
+	Future<void> _checkRespStatusCode(HttpClientResponse resp) async {
+		if (resp.statusCode ~/ 100 == 2) {
+			return;
+		}
+
+		var msg = 'HTTP error ${resp.statusCode}';
+		var type = resp.headers.contentType;
+		if (type == null || type.mimeType == 'text/plain') {
+			msg += ': ' + await resp.take(1024).transform(utf8.decoder).join();
+		}
+		throw Exception(msg);
+	}
+
 	@override
 	Future<PushSubscription> createSubscription(NetworkEntry network, String? vapidKey) async {
 		var token = await FirebaseMessaging.instance.getToken();
@@ -53,9 +66,7 @@ class FirebasePushController extends PushController {
 				'vapid': vapidKey,
 			}));
 			var resp = await req.close();
-			if (resp.statusCode ~/ 100 != 2) {
-				throw Exception('HTTP error ${resp.statusCode}');
-			}
+			await _checkRespStatusCode(resp);
 
 			String? pushLink;
 			for (var rawLink in resp.headers['Link'] ?? <String>[]) {
@@ -97,9 +108,7 @@ class FirebasePushController extends PushController {
 		try {
 			var req = await client.deleteUrl(Uri.parse(subUri));
 			var resp = await req.close();
-			if (resp.statusCode ~/ 100 != 2) {
-				throw Exception('HTTP error ${resp.statusCode}');
-			}
+			await _checkRespStatusCode(resp);
 		} finally {
 			client.close();
 		}
