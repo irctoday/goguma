@@ -298,6 +298,130 @@ class LinkPreviewEntry {
 	}
 }
 
+// Note: because of limitations of the Android SQLite library, each statement
+// must be in a separate string.
+
+const _schema = [
+	'''
+		CREATE TABLE Server (
+			id INTEGER PRIMARY KEY,
+			host TEXT NOT NULL,
+			port INTEGER,
+			tls INTEGER NOT NULL DEFAULT 1,
+			nick TEXT,
+			pass TEXT,
+			sasl_plain_username TEXT,
+			sasl_plain_password TEXT
+		)
+	''',
+	'''
+		CREATE TABLE Network (
+			id INTEGER PRIMARY KEY,
+			server INTEGER NOT NULL,
+			bouncer_id TEXT,
+			bouncer_name TEXT,
+			bouncer_uri TEXT,
+			isupport TEXT,
+			caps TEXT,
+			FOREIGN KEY (server) REFERENCES Server(id) ON DELETE CASCADE,
+			UNIQUE(server, bouncer_id)
+		)
+	''',
+	'''
+		CREATE TABLE Buffer (
+			id INTEGER PRIMARY KEY,
+			name TEXT NOT NULL,
+			network INTEGER NOT NULL,
+			last_read_time TEXT,
+			pinned INTEGER NOT NULL DEFAULT 0,
+			muted INTEGER NOT NULL DEFAULT 0,
+			topic TEXT,
+			realname TEXT,
+			FOREIGN KEY (network) REFERENCES Network(id) ON DELETE CASCADE,
+			UNIQUE(name, network)
+		)
+	''',
+	'''
+		CREATE TABLE Message (
+			id INTEGER PRIMARY KEY,
+			time TEXT NOT NULL,
+			buffer INTEGER NOT NULL,
+			raw TEXT NOT NULL,
+			FOREIGN KEY (buffer) REFERENCES Buffer(id) ON DELETE CASCADE
+		)
+	''',
+	'''
+		CREATE INDEX index_message_buffer_time
+		ON Message(buffer, time);
+	''',
+	'''
+		CREATE TABLE WebPushSubscription (
+			id INTEGER PRIMARY KEY,
+			network INTEGER NOT NULL,
+			endpoint TEXT NOT NULL,
+			tag TEXT,
+			vapid_key TEXT,
+			p256dh_public_key BLOB,
+			p256dh_private_key BLOB,
+			auth_key BLOB,
+			created_at TEXT NOT NULL,
+			FOREIGN KEY (network) REFERENCES Network(id) ON DELETE CASCADE,
+			UNIQUE(network, endpoint)
+		);
+	''',
+	'''
+		CREATE TABLE LinkPreview (
+			id INTEGER PRIMARY KEY,
+			url TEXT NOT NULL UNIQUE,
+			status_code INTEGER,
+			mime_type TEXT,
+			content_length INTEGER,
+			updated_at TEXT NOT NULL
+		);
+	''',
+];
+
+const _migrations = [
+	'''
+		CREATE INDEX index_message_buffer_time
+		ON Message(buffer, time);
+	''',
+	'ALTER TABLE Buffer ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0;',
+	'ALTER TABLE Buffer ADD COLUMN muted INTEGER NOT NULL DEFAULT 0;',
+	'ALTER TABLE Buffer ADD COLUMN topic TEXT;',
+	'ALTER TABLE Buffer ADD COLUMN realname TEXT;',
+	'''
+		CREATE TABLE WebPushSubscription (
+			id INTEGER PRIMARY KEY,
+			network INTEGER NOT NULL,
+			endpoint TEXT NOT NULL,
+			vapid_key TEXT,
+			p256dh_public_key BLOB,
+			p256dh_private_key BLOB,
+			auth_key BLOB,
+			created_at TEXT NOT NULL,
+			FOREIGN KEY (network) REFERENCES Network(id) ON DELETE CASCADE,
+			UNIQUE(network, endpoint)
+		);
+	''',
+	'ALTER TABLE Network ADD COLUMN isupport TEXT;',
+	'ALTER TABLE Network ADD COLUMN caps TEXT;',
+	'ALTER TABLE Network ADD COLUMN bouncer_uri TEXT;',
+	'ALTER TABLE Server ADD COLUMN sasl_plain_username TEXT;',
+	'ALTER TABLE WebPushSubscription ADD COLUMN tag TEXT;',
+	'''
+		CREATE TABLE LinkPreview (
+			id INTEGER PRIMARY KEY,
+			url TEXT NOT NULL UNIQUE,
+			status_code INTEGER,
+			mime_type TEXT,
+			content_length INTEGER,
+			updated_at TEXT NOT NULL
+		);
+	''',
+	'ALTER TABLE Network ADD COLUMN bouncer_name TEXT;',
+];
+
 class DB {
 	final Database _db;
 
@@ -322,179 +446,24 @@ class DB {
 				print('Initializing database version $version');
 
 				var batch = db.batch();
-				batch.execute('''
-					CREATE TABLE Server (
-						id INTEGER PRIMARY KEY,
-						host TEXT NOT NULL,
-						port INTEGER,
-						tls INTEGER NOT NULL DEFAULT 1,
-						nick TEXT,
-						pass TEXT,
-						sasl_plain_username TEXT,
-						sasl_plain_password TEXT
-					)
-				''');
-				batch.execute('''
-					CREATE TABLE Network (
-						id INTEGER PRIMARY KEY,
-						server INTEGER NOT NULL,
-						bouncer_id TEXT,
-						bouncer_name TEXT,
-						bouncer_uri TEXT,
-						isupport TEXT,
-						caps TEXT,
-						FOREIGN KEY (server) REFERENCES Server(id) ON DELETE CASCADE,
-						UNIQUE(server, bouncer_id)
-					)
-				''');
-				batch.execute('''
-					CREATE TABLE Buffer (
-						id INTEGER PRIMARY KEY,
-						name TEXT NOT NULL,
-						network INTEGER NOT NULL,
-						last_read_time TEXT,
-						pinned INTEGER NOT NULL DEFAULT 0,
-						muted INTEGER NOT NULL DEFAULT 0,
-						topic TEXT,
-						realname TEXT,
-						FOREIGN KEY (network) REFERENCES Network(id) ON DELETE CASCADE,
-						UNIQUE(name, network)
-					)
-				''');
-				batch.execute('''
-					CREATE TABLE Message (
-						id INTEGER PRIMARY KEY,
-						time TEXT NOT NULL,
-						buffer INTEGER NOT NULL,
-						raw TEXT NOT NULL,
-						FOREIGN KEY (buffer) REFERENCES Buffer(id) ON DELETE CASCADE
-					)
-				''');
-				batch.execute('''
-					CREATE INDEX index_message_buffer_time
-					ON Message(buffer, time);
-				''');
-				batch.execute('''
-					CREATE TABLE WebPushSubscription (
-						id INTEGER PRIMARY KEY,
-						network INTEGER NOT NULL,
-						endpoint TEXT NOT NULL,
-						tag TEXT,
-						vapid_key TEXT,
-						p256dh_public_key BLOB,
-						p256dh_private_key BLOB,
-						auth_key BLOB,
-						created_at TEXT NOT NULL,
-						FOREIGN KEY (network) REFERENCES Network(id) ON DELETE CASCADE,
-						UNIQUE(network, endpoint)
-					);
-				''');
-				batch.execute('''
-					CREATE TABLE LinkPreview (
-						id INTEGER PRIMARY KEY,
-						url TEXT NOT NULL UNIQUE,
-						status_code INTEGER,
-						mime_type TEXT,
-						content_length INTEGER,
-						updated_at TEXT NOT NULL
-					);
-				''');
+				for (var stmt in _schema) {
+					batch.execute(stmt);
+				}
 				await batch.commit();
 			},
 			onUpgrade: (db, prevVersion, newVersion) async {
 				print('Upgrading database from version $prevVersion to version $newVersion');
 
 				var batch = db.batch();
-				if (prevVersion < 2) {
-					batch.execute('''
-						CREATE INDEX index_message_buffer_time
-						ON Message(buffer, time);
-					''');
-				}
-				if (prevVersion < 3) {
-					batch.execute('''
-						ALTER TABLE Buffer ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0;
-					''');
-				}
-				if (prevVersion < 4) {
-					batch.execute('''
-						ALTER TABLE Buffer ADD COLUMN muted INTEGER NOT NULL DEFAULT 0;
-					''');
-				}
-				if (prevVersion < 5) {
-					batch.execute('''
-						ALTER TABLE Buffer ADD COLUMN topic TEXT;
-					''');
-				}
-				if (prevVersion < 6) {
-					batch.execute('''
-						ALTER TABLE Buffer ADD COLUMN realname TEXT;
-					''');
-				}
-				if (prevVersion < 7) {
-					batch.execute('''
-						CREATE TABLE WebPushSubscription (
-							id INTEGER PRIMARY KEY,
-							network INTEGER NOT NULL,
-							endpoint TEXT NOT NULL,
-							vapid_key TEXT,
-							p256dh_public_key BLOB,
-							p256dh_private_key BLOB,
-							auth_key BLOB,
-							created_at TEXT NOT NULL,
-							FOREIGN KEY (network) REFERENCES Network(id) ON DELETE CASCADE,
-							UNIQUE(network, endpoint)
-						);
-					''');
-				}
-				if (prevVersion < 8) {
-					batch.execute('''
-						ALTER TABLE Network ADD COLUMN isupport TEXT;
-					''');
-				}
-				if (prevVersion < 9) {
-					batch.execute('''
-						ALTER TABLE Network ADD COLUMN caps TEXT;
-					''');
-				}
-				if (prevVersion < 10) {
-					batch.execute('''
-						ALTER TABLE Network ADD COLUMN bouncer_uri TEXT;
-					''');
-				}
-				if (prevVersion < 11) {
-					batch.execute('''
-						ALTER TABLE Server ADD COLUMN sasl_plain_username TEXT;
-					''');
-				}
-				if (prevVersion < 12) {
-					batch.execute('''
-						ALTER TABLE WebPushSubscription ADD COLUMN tag TEXT;
-					''');
-				}
-				if (prevVersion < 13) {
-					batch.execute('''
-						CREATE TABLE LinkPreview (
-							id INTEGER PRIMARY KEY,
-							url TEXT NOT NULL UNIQUE,
-							status_code INTEGER,
-							mime_type TEXT,
-							content_length INTEGER,
-							updated_at TEXT NOT NULL
-						);
-					''');
-				}
-				if (prevVersion < 14) {
-					batch.execute('''
-						ALTER TABLE Network ADD COLUMN bouncer_name TEXT;
-					''');
+				for (var ver = prevVersion; ver < newVersion; ver++) {
+					batch.execute(_migrations[ver - 1]);
 				}
 				await batch.commit();
 			},
 			onDowngrade: (_, prevVersion, newVersion) async {
 				throw Exception('Attempted to downgrade database from version $prevVersion to version $newVersion');
 			},
-			version: 14,
+			version: _migrations.length + 1,
 		);
 		return DB._(db);
 	}
