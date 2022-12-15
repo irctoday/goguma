@@ -1,3 +1,6 @@
+import 'dart:collection';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'models.dart';
@@ -6,8 +9,7 @@ class NetworkStateAggregator extends ChangeNotifier {
 	final NetworkListModel _networkList;
 	final List<_NetworkStateListener> _listeners = [];
 	late NetworkState _state;
-	NetworkModel? _faultyNetwork;
-	int _faultyNetworkCount = 0;
+	Set<NetworkModel> _faultyNetworks = {};
 
 	NetworkStateAggregator(NetworkListModel networkList) : _networkList = networkList {
 		_networkList.addListener(_handleNetworkListChange);
@@ -16,8 +18,7 @@ class NetworkStateAggregator extends ChangeNotifier {
 	}
 
 	NetworkState get state => _state;
-	NetworkModel? get faultyNetwork => _faultyNetwork;
-	int get faultyNetworkCount => _faultyNetworkCount;
+	Set<NetworkModel> get faultyNetworks => UnmodifiableSetView(_faultyNetworks);
 
 	void _addNetworkListeners() {
 		for (var network in _networkList.networks) {
@@ -44,22 +45,19 @@ class NetworkStateAggregator extends ChangeNotifier {
 
 	void _update(bool force) {
 		NetworkState aggregateState = NetworkState.online;
-		NetworkModel? faultyNetwork;
-		int faultyNetworkCount = 0;
+		Set<NetworkModel> faultyNetworks = {};
 		for (var network in _networkList.networks) {
 			if (network.state.index < NetworkState.online.index) {
-				faultyNetworkCount++;
+				faultyNetworks.add(network);
 			}
 			if (network.state.index < aggregateState.index) {
 				aggregateState = network.state;
-				faultyNetwork = network;
 			}
 		}
 
-		if (force || _state != aggregateState || _faultyNetwork != faultyNetwork || _faultyNetworkCount != faultyNetworkCount) {
+		if (force || _state != aggregateState || !setEquals(_faultyNetworks, faultyNetworks)) {
 			_state = aggregateState;
-			_faultyNetwork = faultyNetwork;
-			_faultyNetworkCount = faultyNetworkCount;
+			_faultyNetworks = faultyNetworks;
 			notifyListeners();
 		}
 	}
