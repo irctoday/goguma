@@ -582,9 +582,12 @@ class DB {
 	Future<Map<int, int>> fetchBuffersUnreadCount() async {
 		var entries = await _db.rawQuery('''
 			SELECT id, (
-				SELECT COUNT(Message.id)
+				SELECT COUNT(id)
 				FROM Message
-				WHERE buffer = Buffer.id AND time > Buffer.last_read_time
+				WHERE buffer = Buffer.id AND (
+					Buffer.last_read_time IS NULL OR
+					time > Buffer.last_read_time
+				)
 			) unread_count
 			FROM Buffer
 		''');
