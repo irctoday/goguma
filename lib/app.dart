@@ -261,7 +261,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 
 		String? faultyNetworkName;
 		if (faultyNetworks.length == 1) {
-			faultyNetworkName = faultyNetworks.first.displayName ?? 'server';
+			faultyNetworkName = faultyNetworks.first.displayName;
 		} else if (faultyNetworks.length == networkList.networks.length) {
 			faultyNetworkName = 'all servers';
 		} else {
