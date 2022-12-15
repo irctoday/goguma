@@ -597,6 +597,22 @@ class DB {
 		};
 	}
 
+	Future<int> fetchBufferUnreadCount(int buffer) async {
+		var entries = await _db.rawQuery('''
+			WITH buf AS (SELECT last_read_time FROM Buffer WHERE id = ?)
+			SELECT COUNT(id) AS unread_count
+			FROM Message, buf
+			WHERE buffer = ? AND (
+				buf.last_read_time IS NULL OR
+				time > buf.last_read_time
+			)
+		''', [buffer, buffer]);
+		if (entries.isEmpty) {
+			return 0;
+		}
+		return entries.first['unread_count'] as int;
+	}
+
 	Future<Map<int, String?>> listBuffersLastDeliveredTime() async {
 		var entries = await _db.rawQuery('''
 			SELECT id, (

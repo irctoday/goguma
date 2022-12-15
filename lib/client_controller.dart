@@ -650,12 +650,15 @@ class ClientController {
 				break;
 			}
 
+			// TODO: only cancel notifications with a lower timestamp
 			_notifController.cancelAllWithBuffer(buffer);
 
 			buffer.entry.lastReadTime = time;
-			// TODO: recompute unread count from messages
-			buffer.unreadCount = 0;
-			return _db.storeBuffer(buffer.entry);
+			return _db.storeBuffer(buffer.entry).then((_) {
+				return _db.fetchBufferUnreadCount(buffer.id);
+			}).then((unreadCount) {
+				buffer.unreadCount = unreadCount;
+			});
 		case RPL_MONONLINE:
 		case RPL_MONOFFLINE:
 			var online = msg.cmd == RPL_MONONLINE;
