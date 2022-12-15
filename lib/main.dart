@@ -148,8 +148,8 @@ Future<void> _initModels({
 	var serverEntriesFuture = db.listServers();
 	var networkEntriesFuture = db.listNetworks();
 	var bufferEntriesFuture = db.listBuffers();
-	var unreadCountsFuture = db.fetchBuffersUnreadCount();
-	var lastDeliveredTimesFuture = db.fetchBuffersLastDeliveredTime();
+	var unreadCountsFuture = db.listBuffersUnreadCount();
+	var lastDeliveredTimesFuture = db.listBuffersLastDeliveredTime();
 
 	var serverEntries = await serverEntriesFuture;
 	var networkEntries = await networkEntriesFuture;

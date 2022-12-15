@@ -579,7 +579,7 @@ class DB {
 		await _db.rawDelete('DELETE FROM Buffer WHERE id = ?', [id]);
 	}
 
-	Future<Map<int, int>> fetchBuffersUnreadCount() async {
+	Future<Map<int, int>> listBuffersUnreadCount() async {
 		var entries = await _db.rawQuery('''
 			SELECT id, (
 				SELECT COUNT(id)
@@ -597,7 +597,7 @@ class DB {
 		};
 	}
 
-	Future<Map<int, String?>> fetchBuffersLastDeliveredTime() async {
+	Future<Map<int, String?>> listBuffersLastDeliveredTime() async {
 		var entries = await _db.rawQuery('''
 			SELECT id, (
 				SELECT time
