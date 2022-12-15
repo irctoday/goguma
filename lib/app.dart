@@ -46,6 +46,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 	late StreamSubscription<void> _notifSelectionSub;
 	StreamSubscription<void>? _appLinksSub;
 	late NetworkStateAggregator _networkStateAggregator;
+	final Map<NetworkModel, List<ScaffoldFeatureController<SnackBar, SnackBarClosedReason>>> _snackBarControllers = {};
+	Set<NetworkModel> _faultyNetworks = {};
 
 	@override
 	void initState() {
@@ -83,7 +85,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 			}
 
 			var snackBar = SnackBar(content: Text(err.toString()), action: action);
-			_scaffoldMessengerKey.currentState?.showSnackBar(snackBar);
+			_showNetworkSnackBar(snackBar, err.network);
 		});
 		_clientNoticeSub = clientProvider.notices.listen((notice) {
 			List<String> texts = [];
@@ -95,7 +97,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 				TextSpan(text: ': '),
 				TextSpan(text: texts.join('\n')),
 			])));
-			_scaffoldMessengerKey.currentState?.showSnackBar(snackBar);
+			_showNetworkSnackBar(snackBar, notice.network);
 		});
 
 		_connectivitySub = Connectivity().onConnectivityChanged.listen((result) {
@@ -156,6 +158,25 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 			_autoReconnectLock = null;
 			_pingTimer?.cancel();
 			_pingTimer = null;
+		}
+	}
+
+	void _showNetworkSnackBar(SnackBar snackBar, NetworkModel network) {
+		var scaffoldMessenger = _scaffoldMessengerKey.currentState;
+		if (scaffoldMessenger == null) {
+			return;
+		}
+
+		var controller = scaffoldMessenger.showSnackBar(snackBar);
+		_snackBarControllers.putIfAbsent(network, () => []).add(controller);
+		controller.closed.whenComplete(() {
+			_snackBarControllers[network]!.remove(controller);
+		});
+	}
+
+	void _closeNetworkSnackBars(NetworkModel network) {
+		for (var controller in _snackBarControllers[network] ?? const []) {
+			controller.close();
 		}
 	}
 
@@ -247,7 +268,12 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 			faultyNetworkName = '${faultyNetworks.length} servers';
 		}
 
-		_scaffoldMessengerKey.currentState?.clearSnackBars();
+		var affectedNetworks = Set.of(faultyNetworks).union(_faultyNetworks);
+		for (var network in affectedNetworks) {
+			_closeNetworkSnackBars(network);
+		}
+
+		_faultyNetworks = Set.of(faultyNetworks);
 
 		if (state != NetworkState.offline) {
 			_scaffoldMessengerKey.currentState?.clearMaterialBanners();
