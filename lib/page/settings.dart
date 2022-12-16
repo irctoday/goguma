@@ -164,7 +164,7 @@ class _SettingsPageState extends State<SettingsPage> {
 						});
 					},
 				),
-				if (!_compact) SwitchListTile(
+				SwitchListTile(
 					title: Text('Display link previews'),
 					subtitle: Text('Retrieve link previews directly from websites for messages you receive. Privacy-conscious users may want to leave this off.'),
 					secondary: Icon(Icons.preview),

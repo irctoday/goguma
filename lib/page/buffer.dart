@@ -416,6 +416,7 @@ class _CompactMessageItem extends StatelessWidget {
 
 	@override
 	Widget build(BuildContext context) {
+		var prefs = context.read<Prefs>();
 		var ircMsg = msg.msg;
 		var entry = msg.entry;
 		var sender = ircMsg.source!.name;
@@ -428,17 +429,20 @@ class _CompactMessageItem extends StatelessWidget {
 
 		var textStyle = TextStyle(color: Theme.of(context).textTheme.bodyText1!.color);
 
+		String? text;
 		List<TextSpan> textSpans;
 		if (ctcp != null) {
 			textStyle = textStyle.apply(fontStyle: FontStyle.italic);
 
 			if (ctcp.cmd == 'ACTION') {
-				textSpans = applyAnsiFormatting(ctcp.param ?? '', textStyle);
+				text = ctcp.param;
+				textSpans = applyAnsiFormatting(text ?? '', textStyle);
 			} else {
 				textSpans = [TextSpan(text: 'has sent a CTCP "${ctcp.cmd}" command', style: textStyle)];
 			}
 		} else {
-			textSpans = applyAnsiFormatting(ircMsg.params[1], textStyle);
+			text = ircMsg.params[1];
+			textSpans = applyAnsiFormatting(text, textStyle);
 		}
 
 		textSpans = textSpans.map((span) {
@@ -492,9 +496,29 @@ class _CompactMessageItem extends StatelessWidget {
 			),
 		));
 
+		Widget? linkPreview;
+		if (prefs.linkPreview && text != null) {
+			var body = stripAnsiFormatting(text);
+			linkPreview = LinkPreview(
+				text: body,
+				builder: (context, child) {
+					return Align(alignment: Alignment.center, child: Container(
+						margin: EdgeInsets.symmetric(vertical: 5),
+						child: ClipRRect(
+							borderRadius: BorderRadius.circular(10),
+							child: child,
+						),
+					));
+				},
+			);
+		}
+
 		return Container(
 			margin: EdgeInsets.only(top: prevMsgSameSender ? 0 : 2.5, bottom: last ? 10 : 0, left: 4, right: 5),
-			child: Stack(children: stack),
+			child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+				Stack(children: stack),
+				if (linkPreview != null) linkPreview,
+			]),
 		);
 	}
 }
