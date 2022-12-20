@@ -29,7 +29,7 @@ const _debugWorkManager = bool.fromEnvironment('debugWorkManager', defaultValue:
 Future<PushController> Function() initPush = UnifiedPushController.init;
 
 void main() async {
-	FlutterError.onError = _handleFlutterError;
+	FlutterError.onError = log.reportFlutterError;
 	PlatformDispatcher.instance.onError = (error, stack) {
 		FlutterError.reportError(FlutterErrorDetails(
 			exception: error,
@@ -347,11 +347,4 @@ Future<void> _waitNetworkOnline(NetworkModel network) {
 	return completer.future.timeout(Duration(minutes: 5)).whenComplete(() {
 		network.removeListener(listener);
 	});
-}
-
-void _handleFlutterError(FlutterErrorDetails details) {
-	FlutterError.dumpErrorToConsole(details, forceReport: true);
-	if (kReleaseMode && details.exception is Error) {
-		exit(1);
-	}
 }
