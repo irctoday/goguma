@@ -9,6 +9,7 @@ import 'package:workmanager/workmanager.dart';
 import 'client.dart';
 import 'database.dart';
 import 'irc.dart';
+import 'logging.dart';
 import 'models.dart';
 import 'notification_controller.dart';
 import 'prefs.dart';
@@ -145,7 +146,7 @@ class ClientProvider {
 		_workManagerSyncEnabled = enable;
 
 		if (!enable) {
-			print('Disabling sync work manager');
+			log.print('Disabling sync work manager');
 			Workmanager().cancelByUniqueName('sync');
 			return;
 		}
@@ -155,7 +156,7 @@ class ClientProvider {
 			freq = Duration(hours: 4);
 		}
 
-		print('Enabling sync work manager (frequency: $freq)');
+		log.print('Enabling sync work manager (frequency: $freq)');
 		Workmanager().registerPeriodicTask('sync', 'sync',
 			frequency: freq,
 			tag: 'sync',
@@ -171,7 +172,7 @@ class ClientProvider {
 			_backgroundServiceAutoReconnectLock?.release();
 			_backgroundServiceAutoReconnectLock = null;
 			if (FlutterBackground.isBackgroundExecutionEnabled) {
-				print('Disabling sync background service');
+				log.print('Disabling sync background service');
 				FlutterBackground.disableBackgroundExecution();
 			}
 			return;
@@ -191,7 +192,7 @@ class ClientProvider {
 	}
 
 	void askBackgroundServicePermissions() async {
-		print('Enabling sync background service');
+		log.print('Enabling sync background service');
 
 		var success = await FlutterBackground.initialize(androidConfig: FlutterBackgroundAndroidConfig(
 			notificationTitle: 'Goguma connection',
@@ -201,17 +202,17 @@ class ClientProvider {
 		));
 		needBackgroundServicePermissions.value = !success;
 		if (!success) {
-			print('Failed to obtain permissions for background service');
+			log.print('Failed to obtain permissions for background service');
 			return;
 		}
 
 		success = await FlutterBackground.enableBackgroundExecution();
 		if (success) {
-			print('Enabled sync background service');
+			log.print('Enabled sync background service');
 			_backgroundServiceAutoReconnectLock?.release();
 			_backgroundServiceAutoReconnectLock = ClientAutoReconnectLock.acquire(this);
 		} else {
-			print('Failed to enable sync background service');
+			log.print('Failed to enable sync background service');
 		}
 	}
 
@@ -221,7 +222,7 @@ class ClientProvider {
 		try {
 			replies = await client.who(buffer.name);
 		} on Exception catch (err) {
-			print('Failed to fetch WHO ${buffer.name}: $err');
+			log.print('Failed to fetch WHO ${buffer.name}', error: err);
 			return;
 		}
 
@@ -954,7 +955,7 @@ class ClientController {
 			return;
 		}
 
-		print('Enabling push synchronization');
+		log.print('Enabling push synchronization');
 
 		var subs = await _db.listWebPushSubscriptions();
 		var vapidKey = client.isupport.vapid;
@@ -978,8 +979,8 @@ class ClientController {
 					return;
 				} on Exception catch (err) {
 					// Maybe the subscription expired
-					print('Failed to refresh old push subscription: $err');
-					print('Trying to register with a fresh subscription...');
+					log.print('Failed to refresh old push subscription', error: err);
+					log.print('Trying to register with a fresh subscription...');
 				}
 			}
 
@@ -989,7 +990,7 @@ class ClientController {
 					tag: oldSub.tag,
 				));
 			} on Exception catch (err) {
-				print('Failed to delete old push subscription: $err');
+				log.print('Failed to delete old push subscription', error: err);
 			}
 			await client.webPushUnregister(oldSub.endpoint);
 			await _db.deleteWebPushSubscription(oldSub.id!);
@@ -1019,7 +1020,7 @@ class ClientController {
 				try {
 					await _db.deleteWebPushSubscription(newSub.id!);
 				} on Exception catch (err) {
-					print('Failed to delete Web Push subscription from DB after error: $err');
+					log.print('Failed to delete Web Push subscription from DB after error', error: err);
 				}
 				rethrow;
 			}
@@ -1027,7 +1028,7 @@ class ClientController {
 			try {
 				await pushController.deleteSubscription(network.networkEntry, details);
 			} on Exception catch (err) {
-				print('Failed to delete push subscription after error: $err');
+				log.print('Failed to delete push subscription after error', error: err);
 			}
 			rethrow;
 		}

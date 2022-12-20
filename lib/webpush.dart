@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:webcrypto/webcrypto.dart';
 
+import 'logging.dart';
+
 const _saltSize = 16;
 const _ikmSize = 32;
 const _contentEncryptionKeySize = 16;
@@ -90,11 +92,11 @@ class WebPush {
 		Uint8List cleartext;
 		try {
 			cleartext = await aesSecretKey.decryptBytes(body, nonce, tagLength: _contentEncryptionKeySize * 8);
-		} on OperationError catch (err, stack) {
+		} on OperationError catch (err, stackTrace) {
 			// Turn the Error into an Exception to avoid crashing
-			print('Failed to decrypt Web Push payload: $err');
-			print('Stack:\n$stack');
-			throw Exception('$err');
+			log.print('Failed to decrypt Web Push payload', error: err);
+			log.print('Stack trace:\n$stackTrace');
+			Error.throwWithStackTrace(Exception('Failed to decrypt Web Push payload: $err'), stackTrace);
 		}
 
 		var paddingIndex = cleartext.lastIndexOf(_paddingDelimiter);

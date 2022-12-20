@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'database.dart';
+import 'logging.dart';
 import 'push.dart';
 
 final _gatewayEndpoint = Uri.parse(
@@ -34,7 +35,7 @@ class FirebasePushController extends PushController {
 		FirebaseMessaging.onBackgroundMessage(_handleFirebaseMessage);
 		FirebaseMessaging.onMessage.listen(_handleFirebaseMessage);
 
-		print('Firebase messaging initialized');
+		log.print('Firebase messaging initialized');
 		return FirebasePushController._(options);
 	}
 
@@ -118,7 +119,7 @@ class FirebasePushController extends PushController {
 // This function may called from a separate Isolate
 @pragma('vm:entry-point')
 Future<void> _handleFirebaseMessage(RemoteMessage message) async {
-	print('Received Firebase push message: ${message.data}');
+	log.print('Received Firebase push message: ${message.data}');
 
 	var encodedPayload = message.data['payload'] as String;
 	var endpoint = Uri.parse(message.data['endpoint'] as String);
@@ -155,7 +156,7 @@ Future<PushController> Function() wrapFirebaseInitPush(Future<PushController> Fu
 		try {
 			return await FirebasePushController.init(options);
 		} on Exception catch (err) {
-			print('Warning: failed to initialize Firebase: $err');
+			log.print('Warning: failed to initialize Firebase', error: err);
 		}
 		return await next();
 	};

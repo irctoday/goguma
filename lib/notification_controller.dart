@@ -5,6 +5,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'ansi.dart';
 import 'database.dart';
 import 'irc.dart';
+import 'logging.dart';
 import 'models.dart';
 
 var _nextId = 1;
@@ -50,7 +51,7 @@ class NotificationController {
 				var activeNotifs = await androidPlugin.getActiveNotifications();
 				_populateActive(androidPlugin, activeNotifs);
 			} on Exception catch (err) {
-				print('Failed to list active notifications: $err');
+				log.print('Failed to list active notifications', error: err);
 			}
 		}
 	}
@@ -86,7 +87,7 @@ class NotificationController {
 			}
 
 			if (notif.tag == null || notif.title == null) {
-				print('Found an active notification without a tag or title');
+				log.print('Found an active notification without a tag or title');
 				continue;
 			}
 
@@ -94,7 +95,7 @@ class NotificationController {
 			try {
 				messagingStyleInfo = await androidPlugin.getActiveNotificationMessagingStyle(notif.id, tag: notif.tag);
 			} on Exception catch (err) {
-				print('Failed to get active notification messaging style: $err');
+				log.print('Failed to get active notification messaging style', error: err);
 			}
 
 			_active.add(_ActiveNotification(notif.id, notif.tag!, notif.title!, messagingStyleInfo));

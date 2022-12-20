@@ -16,6 +16,7 @@ import 'client_controller.dart';
 import 'database.dart';
 import 'irc.dart';
 import 'link_preview.dart';
+import 'logging.dart';
 import 'models.dart';
 import 'notification_controller.dart';
 import 'prefs.dart';
@@ -48,7 +49,7 @@ void main() async {
 	try {
 		pushController = await initPush();
 	} on Exception catch (err) {
-		print('Warning: failed to initialize push controller: $err');
+		log.print('Warning: failed to initialize push controller', error: err);
 	}
 
 	if (Platform.isAndroid) {
@@ -200,7 +201,7 @@ Future<void> _initWorkManager() async {
 }
 
 Future<void> _syncChatHistory(ClientProvider clientProvider, NetworkListModel networkList) async {
-	print('Starting chat history synchronization');
+	log.print('Starting chat history synchronization');
 
 	var autoReconnectLock = ClientAutoReconnectLock.acquire(clientProvider);
 
@@ -225,9 +226,9 @@ Future<void> _syncChatHistory(ClientProvider clientProvider, NetworkListModel ne
 			}
 		}));
 
-		print('Finished chat history synchronization');
+		log.print('Finished chat history synchronization');
 	} on Object catch (err) {
-		print('Failed chat history synchronization: $err');
+		log.print('Failed chat history synchronization', error: err);
 		rethrow;
 	} finally {
 		autoReconnectLock.release();
@@ -241,7 +242,7 @@ void _dispatchWorkManager() {
 		try {
 			WidgetsFlutterBinding.ensureInitialized();
 
-			print('Executing work manager task: $taskName');
+			log.print('Executing work manager task: $taskName');
 
 			switch (taskName) {
 			case 'sync':

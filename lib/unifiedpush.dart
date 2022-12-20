@@ -7,6 +7,7 @@ import 'package:unifiedpush/constants.dart';
 import 'package:unifiedpush/unifiedpush.dart';
 
 import 'database.dart';
+import 'logging.dart';
 import 'push.dart';
 
 class UnifiedPushController extends PushController {
@@ -39,7 +40,7 @@ class UnifiedPushController extends PushController {
 			distributor = distributors.first;
 			await UnifiedPush.saveDistributor(distributor);
 		}
-		print('Using UnifiedPush distributor: $distributor');
+		log.print('Using UnifiedPush distributor: $distributor');
 		_distributor = distributor;
 	}
 
@@ -94,7 +95,7 @@ class UnifiedPushController extends PushController {
 	}
 
 	void _handleUnregistered(String instance) {
-		print('UnifiedPush unregistered: $instance');
+		log.print('UnifiedPush unregistered: $instance');
 		// TODO: handle this
 	}
 }
@@ -102,7 +103,7 @@ class UnifiedPushController extends PushController {
 // This function may called from a separate Isolate
 @pragma('vm:entry-point')
 void _handleMessage(Uint8List ciphertext, String instance) async {
-	print('Got UnifiedPush message for $instance');
+	log.print('Got UnifiedPush message for $instance');
 
 	var db = await DB.open();
 

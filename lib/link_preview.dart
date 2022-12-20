@@ -4,6 +4,7 @@ import 'package:linkify/linkify.dart' as lnk;
 
 import 'database.dart';
 import 'linkify.dart';
+import 'logging.dart';
 
 const maxPhotoSize = 10 * 1024 * 1024;
 
@@ -54,7 +55,7 @@ class LinkPreviewer {
 		try {
 			entry = await _fetchPreview(url);
 		} on Exception catch (err) {
-			print('Failed to fetch link preview for <$url>: $err');
+			log.print('Failed to fetch link preview for <$url>', error: err);
 		}
 		if (entry == null) {
 			return null;

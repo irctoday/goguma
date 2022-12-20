@@ -8,6 +8,7 @@ import '../ansi.dart';
 import '../irc.dart';
 import '../client.dart';
 import '../client_controller.dart';
+import '../logging.dart';
 import '../models.dart';
 
 class JoinPage extends StatefulWidget {
@@ -132,7 +133,7 @@ class _JoinPageState extends State<JoinPage> {
 			// wait forever before being able to join a channel
 			replies = await client.list(mask).timeout(const Duration(seconds: 10));
 		} on Exception catch (err) {
-			print('Failed to LIST channels: $err');
+			log.print('Failed to LIST channels', error: err);
 		}
 
 		List<_Action> actions = [];
@@ -164,7 +165,7 @@ class _JoinPageState extends State<JoinPage> {
 		try {
 			replies = await client.who(query);
 		} on Exception catch (err) {
-			print('Failed to WHO user: $err');
+			log.print('Failed to WHO user', error: err);
 		}
 
 		return replies.map((reply) => _JoinUserAction(reply, network));

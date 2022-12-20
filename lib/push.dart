@@ -6,6 +6,7 @@ import 'package:shared_preferences_android/shared_preferences_android.dart';
 
 import 'database.dart';
 import 'irc.dart';
+import 'logging.dart';
 import 'models.dart';
 import 'notification_controller.dart';
 import 'prefs.dart';
@@ -40,7 +41,7 @@ Future<void> handlePushMessage(DB db, WebPushSubscriptionEntry sub, List<int> ci
 	var str = utf8.decode(bytes);
 	var msg = IrcMessage.parse(str);
 
-	print('Decrypted push message payload: $msg');
+	log.print('Decrypted push message payload: $msg');
 
 	var networkEntry = await _fetchNetwork(db, sub.network);
 	if (networkEntry == null) {
@@ -67,7 +68,7 @@ Future<void> handlePushMessage(DB db, WebPushSubscriptionEntry sub, List<int> ci
 	case 'PRIVMSG':
 		var ctcp = CtcpMessage.parse(msg);
 		if (ctcp != null && ctcp.cmd != 'ACTION') {
-			print('Ignoring CTCP ${ctcp.cmd} message');
+			log.print('Ignoring CTCP ${ctcp.cmd} message');
 			break;
 		}
 
@@ -131,7 +132,7 @@ Future<void> handlePushMessage(DB db, WebPushSubscriptionEntry sub, List<int> ci
 		notifController.cancelAllWithBuffer(buffer);
 		break;
 	default:
-		print('Ignoring ${msg.cmd} message');
+		log.print('Ignoring ${msg.cmd} message');
 		return;
 	}
 }

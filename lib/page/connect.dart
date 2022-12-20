@@ -5,6 +5,7 @@ import '../client.dart';
 import '../client_controller.dart';
 import '../database.dart';
 import '../irc.dart';
+import '../logging.dart';
 import '../models.dart';
 import '../prefs.dart';
 import 'buffer_list.dart';
@@ -142,7 +143,7 @@ class _ConnectPageState extends State<ConnectPage> {
 			if (serverText != serverController.text) {
 				return;
 			}
-			print('Failed to fetch server caps: $err');
+			log.print('Failed to fetch server caps', error: err);
 			setState(() {
 				_error = err;
 			});

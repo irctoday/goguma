@@ -9,6 +9,7 @@ import '../client_controller.dart';
 import '../database.dart';
 import '../irc.dart';
 import '../linkify.dart';
+import '../logging.dart';
 import '../models.dart';
 import '../notification_controller.dart';
 import '../prefs.dart';
@@ -66,7 +67,7 @@ void _join(Client client, BufferModel buffer) async {
 	try {
 		await client.join([buffer.name]);
 	} on IrcException catch (err) {
-		print('Failed to join "${buffer.name}": $err');
+		log.print('Failed to join "${buffer.name}"', error: err);
 	} finally {
 		buffer.joining = false;
 	}
@@ -95,7 +96,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 			try {
 				await _fetchChatHistory();
 			} on Exception catch (err) {
-				print('Failed to fetch chat history: $err');
+				log.print('Failed to fetch chat history', error: err);
 			}
 			if (mounted) {
 				_updateBufferFocus();

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../client_controller.dart';
 import '../irc.dart';
+import '../logging.dart';
 import '../models.dart';
 import 'buffer.dart';
 
@@ -137,7 +138,7 @@ class _EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
 			}
 		} on Exception catch (err) {
 			// TODO: surface the error to the user
-			print('Failed to save network: $err');
+			log.print('Failed to save network', error: err);
 
 			if (mounted) {
 				setState(() {
@@ -159,7 +160,7 @@ class _EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
 			// TODO: show a spinner until we reach this point
 			BufferPage.open(navigatorState.context, entity.name, network);
 		} on Exception catch (err) {
-			print('Failed to auto-open buffer "${entity.name}": $err');
+			log.print('Failed to auto-open buffer "${entity.name}"', error: err);
 		}
 	}
 

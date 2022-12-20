@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 import 'irc.dart';
+import 'logging.dart';
 
 class SaslPlainCredentials {
 	final String username;
@@ -180,7 +181,7 @@ class Client {
 		try {
 			socket = await socketFuture;
 		} on Exception catch (err) {
-			_log('Connection failed: ' + err.toString());
+			_log('Connection failed', error: err);
 			_setState(ClientState.disconnected);
 			_tryAutoReconnect();
 			rethrow;
@@ -194,7 +195,7 @@ class Client {
 		// called when only the incoming side of the bi-directional connection
 		// is closed. See the onDone callback below.
 		socket.done.catchError((Object err) {
-			_log('Connection error: $err');
+			_log('Connection error', error: err);
 			_messagesController.addError(err);
 			_statesController.addError(err);
 		}).whenComplete(() {
@@ -240,8 +241,8 @@ class Client {
 		}
 	}
 
-	void _log(String s) {
-		print('[$_id] $s');
+	void _log(String s, { Object? error }) {
+		log.print('[$_id] $s', error: error);
 	}
 
 	void _setState(ClientState state) {
@@ -286,7 +287,7 @@ class Client {
 			try {
 				await connect();
 			} on Exception catch (err) {
-				_log('Failed to reconnect: $err');
+				_log('Failed to reconnect', error: err);
 			}
 		});
 	}

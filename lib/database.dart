@@ -8,6 +8,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'irc.dart';
+import 'logging.dart';
 
 class ServerEntry {
 	int? id;
@@ -443,7 +444,7 @@ class DB {
 				await db.execute('PRAGMA foreign_keys = ON');
 			},
 			onCreate: (db, version) async {
-				print('Initializing database version $version');
+				log.print('Initializing database version $version');
 
 				var batch = db.batch();
 				for (var stmt in _schema) {
@@ -452,7 +453,7 @@ class DB {
 				await batch.commit();
 			},
 			onUpgrade: (db, prevVersion, newVersion) async {
-				print('Upgrading database from version $prevVersion to version $newVersion');
+				log.print('Upgrading database from version $prevVersion to version $newVersion');
 
 				var batch = db.batch();
 				for (var ver = prevVersion; ver < newVersion; ver++) {

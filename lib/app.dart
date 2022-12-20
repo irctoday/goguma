@@ -11,6 +11,7 @@ import 'client.dart';
 import 'client_controller.dart';
 import 'dialog/authenticate.dart';
 import 'irc.dart';
+import 'logging.dart';
 import 'models.dart';
 import 'network_state_aggregator.dart';
 import 'notification_controller.dart';
@@ -200,14 +201,14 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 				try {
 					await client.ping();
 				} on Exception catch (err) {
-					print('PING failed: $err');
+					log.print('PING failed', error: err);
 				}
 				break;
 			case ClientState.disconnected:
 				try {
 					await client.connect();
 				} on Exception catch (err) {
-					print('Reconnect failed: $err');
+					log.print('Reconnect failed', error: err);
 				}
 				break;
 			default:
