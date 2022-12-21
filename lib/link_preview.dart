@@ -21,7 +21,7 @@ class LinkPreviewer {
 	}
 
 	Future<LinkPreviewEntry?> _fetchPreview(Uri url) async {
-		if (url.scheme != 'https') {
+		if (url.scheme != 'https' || url.host.isEmpty) {
 			return null;
 		}
 
