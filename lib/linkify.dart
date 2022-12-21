@@ -99,8 +99,14 @@ class _UrlLinkifier extends Linkifier {
 				}
 			}
 
-			out.add(UrlElement(text.substring(0, i)));
+			var url = text.substring(0, i);
 			text = text.substring(i);
+
+			if (Uri.tryParse(url) != null) {
+				out.add(UrlElement(url));
+			} else {
+				out.add(TextElement(url));
+			}
 		}
 	}
 
