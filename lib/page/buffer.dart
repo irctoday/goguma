@@ -429,7 +429,7 @@ class _CompactMessageItem extends StatelessWidget {
 		var textStyle = TextStyle(color: Theme.of(context).textTheme.bodyText1!.color);
 
 		List<TextSpan> textSpans;
-		if (ctcp != null && ctcp.cmd == 'ACTION') {
+		if (ctcp != null) {
 			textStyle = textStyle.apply(fontStyle: FontStyle.italic);
 
 			if (ctcp.cmd == 'ACTION') {
@@ -442,7 +442,8 @@ class _CompactMessageItem extends StatelessWidget {
 		}
 
 		textSpans = textSpans.map((span) {
-			return linkify(context, span.text!, linkStyle: TextStyle(decoration: TextDecoration.underline));
+			var linkSpan = linkify(context, span.text!, linkStyle: TextStyle(decoration: TextDecoration.underline));
+			return TextSpan(style: span.style, children: [linkSpan]);
 		}).toList();
 
 		List<Widget> stack = [];
