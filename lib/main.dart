@@ -42,6 +42,8 @@ void main() async {
 	var syncReceivePort = ReceivePort('main:sync');
 	IsolateNameServer.registerPortWithName(syncReceivePort.sendPort, 'main:sync');
 
+	await log.init();
+
 	WidgetsFlutterBinding.ensureInitialized();
 	await _initWorkManager();
 
@@ -240,6 +242,7 @@ Future<void> _syncChatHistory(ClientProvider clientProvider, NetworkListModel ne
 void _dispatchWorkManager() {
 	Workmanager().executeTask((taskName, data) async {
 		try {
+			await log.init();
 			WidgetsFlutterBinding.ensureInitialized();
 
 			log.print('Executing work manager task: $taskName');
