@@ -241,6 +241,12 @@ class Client {
 		}
 	}
 
+	Future<void> disconnect() async {
+		_reconnectTimer?.cancel();
+		_reconnectTimer = null;
+		await _socket?.close();
+	}
+
 	void _log(String s, { Object? error }) {
 		log.print('[$_id] $s', error: error);
 	}
@@ -591,8 +597,7 @@ class Client {
 		}
 		_log('Destroying client');
 		_autoReconnect = false;
-		_reconnectTimer?.cancel();
-		_socket?.close();
+		disconnect();
 		_messagesController.close();
 		_statesController.close();
 	}

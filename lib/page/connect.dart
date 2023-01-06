@@ -74,7 +74,7 @@ class _ConnectPageState extends State<ConnectPage> {
 			return;
 		}
 
-		_fetchCapsClient?.dispose();
+		_fetchCapsClient?.disconnect();
 		_fetchCapsClient = null;
 
 		var serverEntry = _generateServerEntry();
@@ -166,7 +166,7 @@ class _ConnectPageState extends State<ConnectPage> {
 	}
 
 	Future<IrcAvailableCapRegistry> _fetchAvailableCaps() async {
-		_fetchCapsClient?.dispose();
+		_fetchCapsClient?.disconnect();
 		_fetchCapsClient = null;
 
 		var serverEntry = _generateServerEntry();
@@ -195,7 +195,7 @@ class _ConnectPageState extends State<ConnectPage> {
 
 	@override
 	void dispose() {
-		_fetchCapsClient?.dispose();
+		_fetchCapsClient?.disconnect();
 		serverController.dispose();
 		nicknameController.dispose();
 		passwordController.dispose();
