@@ -297,24 +297,36 @@ class Client {
 			return Future.error(Exception('Disconnected from server'));
 		}
 
+		// We need to manually track the Future completion state, because the
+		// cancel() calls below are asynchronous, so multiple listen()
+		// callbacks may be invoked before the Stream subscriptions are
+		// cancelled.
+		var completed = false;
 		Completer<ClientMessage> completer = Completer();
 
 		var statesSub = states.listen((state) {
-			if (state == ClientState.disconnected) {
+			if (state == ClientState.disconnected && !completed) {
 				completer.completeError(Exception('Disconnected from server'));
+				completed = true;
 			}
 		});
 
 		var messagesSub = messages.listen((msg) {
+			if (completed) {
+				return;
+			}
+
 			bool done;
 			try {
 				done = test(msg);
 			} on Object catch (err, stackTrace) {
 				completer.completeError(err, stackTrace);
+				completed = true;
 				return;
 			}
 			if (done) {
 				completer.complete(msg);
+				completed = true;
 			}
 		});
 
