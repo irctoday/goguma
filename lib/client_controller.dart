@@ -842,7 +842,7 @@ class ClientController {
 			var childNetwork = NetworkModel(network.serverEntry, networkEntry, childClient.nick, childClient.realname);
 			_networkList.add(childNetwork);
 			_provider.add(childClient, childNetwork);
-			childClient.connect();
+			childClient.connect().ignore();
 		});
 	}
 
