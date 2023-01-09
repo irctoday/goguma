@@ -160,9 +160,11 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		try {
 			await clientProvider.fetchChatHistory(buffer);
 		} finally {
-			setState(() {
-				_chatHistoryLoading = false;
-			});
+			if (mounted) {
+				setState(() {
+					_chatHistoryLoading = false;
+				});
+			}
 		}
 	}
 
