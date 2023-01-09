@@ -190,31 +190,7 @@ class Client {
 		_log('Connection opened');
 		_socket = socket;
 		_setState(ClientState.connected);
-
-		// socket.done is resolved when socket.close() is called. It's not
-		// called when only the incoming side of the bi-directional connection
-		// is closed. See the onDone callback below.
-		socket.done.catchError((Object err) {
-			_log('Connection error', error: err);
-			_messagesController.addError(err);
-			_statesController.addError(err);
-		}).whenComplete(() {
-			_log('Connection closed');
-
-			_socket = null;
-			_registered = false;
-			caps.clear();
-			_batches.clear();
-			_pendingNames.clear();
-			_monitored.clear();
-
-			// Don't mutate our state or try to auto-reconnect if we're already
-			// connecting.
-			if (_state != ClientState.connecting) {
-				_setState(ClientState.disconnected);
-				_tryAutoReconnect();
-			}
-		});
+		_monitorSocket(socket);
 
 		var decoder = Utf8Decoder(allowMalformed: true);
 		var text = decoder.bind(socket);
@@ -237,6 +213,35 @@ class Client {
 			} on Exception {
 				_socket?.close();
 				rethrow;
+			}
+		}
+	}
+
+	void _monitorSocket(Socket socket) async {
+		// socket.done is resolved when socket.close() is called. It's not
+		// called when only the incoming side of the bi-directional connection
+		// is closed. See the onDone callback below.
+		try {
+			await socket.done;
+		} on Exception catch (err) {
+			_log('Connection error', error: err);
+			_messagesController.addError(err);
+			_statesController.addError(err);
+		} finally {
+			_log('Connection closed');
+
+			_socket = null;
+			_registered = false;
+			caps.clear();
+			_batches.clear();
+			_pendingNames.clear();
+			_monitored.clear();
+
+			// Don't mutate our state or try to auto-reconnect if we're already
+			// connecting.
+			if (_state != ClientState.connecting) {
+				_setState(ClientState.disconnected);
+				_tryAutoReconnect();
 			}
 		}
 	}
