@@ -140,7 +140,7 @@ class _ConnectPageState extends State<ConnectPage> {
 		try {
 			availableCaps = await _fetchAvailableCaps();
 		} on Exception catch (err) {
-			if (serverText != serverController.text) {
+			if (serverText != serverController.text || !mounted) {
 				return;
 			}
 			log.print('Failed to fetch server caps', error: err);
@@ -150,7 +150,7 @@ class _ConnectPageState extends State<ConnectPage> {
 			return;
 		}
 
-		if (serverText != serverController.text) {
+		if (serverText != serverController.text || !mounted) {
 			return;
 		}
 
