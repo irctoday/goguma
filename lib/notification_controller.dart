@@ -41,6 +41,11 @@ class NotificationController {
 
 	Future<void> _init() async {
 		await _plugin.initialize(InitializationSettings(
+			iOS: DarwinInitializationSettings(
+				requestAlertPermission: true,
+				requestBadgePermission: true,
+				requestSoundPermission: true,
+			),
 			linux: LinuxInitializationSettings(defaultActionName: 'Open'),
 			android: AndroidInitializationSettings('ic_stat_name'),
 		), onDidReceiveNotificationResponse: _handleNotificationResponse);
