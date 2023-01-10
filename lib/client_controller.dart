@@ -206,7 +206,12 @@ class ClientProvider {
 			return;
 		}
 
-		success = await FlutterBackground.enableBackgroundExecution();
+		try {
+			success = await FlutterBackground.enableBackgroundExecution();
+		} on Exception catch (err) {
+			log.print('Failed to enable sync background service', error: err);
+			success = false;
+		}
 		if (success) {
 			log.print('Enabled sync background service');
 			_backgroundServiceAutoReconnectLock?.release();
