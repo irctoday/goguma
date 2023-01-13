@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -83,7 +85,7 @@ class _AuthenticateDialogState extends State<AuthenticateDialog> {
 			if (widget.network.networkEntry.bouncerId == null) {
 				widget.network.serverEntry.saslPlainUsername = username;
 				widget.network.serverEntry.saslPlainPassword = password;
-				db.storeServer(widget.network.serverEntry);
+				unawaited(db.storeServer(widget.network.serverEntry));
 			}
 
 			// Reconnect all child networks

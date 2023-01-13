@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -74,7 +76,7 @@ class _ConnectPageState extends State<ConnectPage> {
 			return;
 		}
 
-		_fetchCapsClient?.disconnect();
+		_fetchCapsClient?.disconnect().ignore();
 		_fetchCapsClient = null;
 
 		var serverEntry = _generateServerEntry();
@@ -125,7 +127,7 @@ class _ConnectPageState extends State<ConnectPage> {
 		client.connect().ignore();
 
 		if (mounted) {
-			Navigator.pushReplacementNamed(context, BufferListPage.routeName);
+			unawaited(Navigator.pushReplacementNamed(context, BufferListPage.routeName));
 		}
 	}
 
@@ -166,7 +168,7 @@ class _ConnectPageState extends State<ConnectPage> {
 	}
 
 	Future<IrcAvailableCapRegistry> _fetchAvailableCaps() async {
-		_fetchCapsClient?.disconnect();
+		_fetchCapsClient?.disconnect().ignore();
 		_fetchCapsClient = null;
 
 		var serverEntry = _generateServerEntry();

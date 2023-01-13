@@ -173,7 +173,7 @@ class ClientProvider {
 			_backgroundServiceAutoReconnectLock = null;
 			if (FlutterBackground.isBackgroundExecutionEnabled) {
 				log.print('Disabling sync background service');
-				FlutterBackground.disableBackgroundExecution();
+				unawaited(FlutterBackground.disableBackgroundExecution());
 			}
 			return;
 		}
@@ -240,7 +240,7 @@ class ClientProvider {
 		var reply = replies[0];
 		buffer.realname = reply.realname;
 		buffer.away = reply.away;
-		_db.storeBuffer(buffer.entry);
+		unawaited(_db.storeBuffer(buffer.entry));
 	}
 
 	Future<void> fetchChatHistory(BufferModel buffer) async {
@@ -741,7 +741,7 @@ class ClientController {
 			_openNotifications(buf, unread);
 		} else if (buf.entry.lastReadTime == null || buf.entry.lastReadTime!.compareTo(t) < 0) {
 			buf.entry.lastReadTime = t;
-			_db.storeBuffer(buf.entry);
+			unawaited(_db.storeBuffer(buf.entry));
 			client.setReadMarker(buf.name, buf.entry.lastReadTime!);
 		}
 

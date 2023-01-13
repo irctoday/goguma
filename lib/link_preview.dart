@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:linkify/linkify.dart' as lnk;
@@ -83,7 +84,7 @@ class LinkPreviewer {
 		try {
 			preview = await future;
 		} finally {
-			_pending.remove(k);
+			unawaited(_pending.remove(k));
 		}
 
 		_cached[k] = preview;

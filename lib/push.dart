@@ -98,13 +98,13 @@ Future<void> handlePushMessage(DB db, WebPushSubscriptionEntry sub, List<int> ci
 		var msgEntry = MessageEntry(msg, bufferEntry.id!);
 
 		if (isChannel) {
-			notifController.showHighlight([msgEntry], buffer);
+			await notifController.showHighlight([msgEntry], buffer);
 		} else {
-			notifController.showDirectMessage([msgEntry], buffer);
+			await notifController.showDirectMessage([msgEntry], buffer);
 		}
 		break;
 	case 'INVITE':
-		notifController.showInvite(msg, network);
+		await notifController.showInvite(msg, network);
 		break;
 	case 'MARKREAD':
 		var target = msg.params[0];
@@ -129,7 +129,7 @@ Future<void> handlePushMessage(DB db, WebPushSubscriptionEntry sub, List<int> ci
 		// TODO: don't clear notifications whose timestamp is after the read
 		// marker
 		var buffer = BufferModel(entry: bufferEntry, network: network);
-		notifController.cancelAllWithBuffer(buffer);
+		await notifController.cancelAllWithBuffer(buffer);
 		break;
 	default:
 		log.print('Ignoring ${msg.cmd} message');

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -68,13 +70,13 @@ class _SettingsPageState extends State<SettingsPage> {
 		var bouncerNetworkList = context.read<BouncerNetworkListModel>();
 
 		for (var network in networkList.networks) {
-			db.deleteNetwork(network.networkId);
+			unawaited(db.deleteNetwork(network.networkId));
 		}
 		networkList.clear();
 		bouncerNetworkList.clear();
 		context.read<ClientProvider>().disconnectAll();
 
-		Navigator.pushNamedAndRemoveUntil(context, ConnectPage.routeName, (Route<dynamic> route) => false);
+		unawaited(Navigator.pushNamedAndRemoveUntil(context, ConnectPage.routeName, (Route<dynamic> route) => false));
 	}
 
 	@override

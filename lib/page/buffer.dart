@@ -47,7 +47,7 @@ class BufferPage extends StatefulWidget {
 		// TODO: this is racy if the user has navigated away since the
 		// BufferPage.open() call
 		var until = ModalRoute.withName(BufferListPage.routeName);
-		navigator.pushNamedAndRemoveUntil(routeName, until, arguments: buffer);
+		unawaited(navigator.pushNamedAndRemoveUntil(routeName, until, arguments: buffer));
 
 		if (client.isChannel(name)) {
 			_join(client, buffer);

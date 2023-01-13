@@ -373,7 +373,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 			throw Exception('Cannot open buffer "$target": neither a nick nor a channel');
 		}
 
-		showDialog<void>(context: _navigatorKey.currentState!.overlay!.context, builder: (context) {
+		unawaited(showDialog<void>(context: _navigatorKey.currentState!.overlay!.context, builder: (context) {
 			return AlertDialog(
 				title: const Text('New conversation'),
 				content: content,
@@ -393,7 +393,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 					),
 				],
 			);
-		});
+		}));
 	}
 
 	Route<dynamic>? _handleGenerateRoute(RouteSettings settings) {
