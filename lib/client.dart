@@ -220,7 +220,7 @@ class Client {
 	void _monitorSocket(Socket socket) async {
 		// socket.done is resolved when socket.close() is called. It's not
 		// called when only the incoming side of the bi-directional connection
-		// is closed. See the onDone callback below.
+		// is closed. See the onDone callback above in lines.listen().
 		try {
 			await socket.done;
 		} on Exception catch (err) {
