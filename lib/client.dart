@@ -203,7 +203,7 @@ class Client {
 			// This callback is invoked when the incoming side of the
 			// bi-directional connection is closed. We close the outgoing side
 			// here.
-			_socket?.close();
+			_socket?.close().ignore();
 		});
 
 		if (register) {
@@ -211,7 +211,7 @@ class Client {
 				await _register(params);
 				_params = params;
 			} on Exception {
-				_socket?.close();
+				_socket?.close().ignore();
 				rethrow;
 			}
 		}
@@ -732,7 +732,7 @@ class Client {
 				return msg.cmd == 'PONG' && msg.params[1] == token;
 			}).timeout(Duration(seconds: 15));
 		} on Exception {
-			_socket?.close();
+			_socket?.close().ignore();
 			rethrow;
 		}
 	}
