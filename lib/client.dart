@@ -490,7 +490,10 @@ class Client {
 		switch (msg.cmd) {
 		case RPL_ENDOFNAMES:
 			var channel = msg.params[1];
-			var names = _pendingNames.remove(channel)!;
+			var names = _pendingNames.remove(channel);
+			if (names == null) {
+				throw FormatException('RPL_ENDOFNAMES sent without RPL_NAMREPLY');
+			}
 			clientMsg = ClientEndOfNames._(msg, names, isupport, batch: msgBatch);
 			break;
 		case 'BATCH':
