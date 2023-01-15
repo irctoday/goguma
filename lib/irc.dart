@@ -203,6 +203,14 @@ class IrcMessage {
 			tags: tags ?? this.tags,
 		);
 	}
+
+	String paramAt(int index) {
+		try {
+			return params[index];
+		} on RangeError {
+			throw FormatException('Invalid $cmd message: missing param at index $index');
+		}
+	}
 }
 
 Map<String, String?> parseIrcTags(String s) {
