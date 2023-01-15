@@ -732,7 +732,7 @@ class Client {
 
 		try {
 			await _roundtripMessage(msg, (msg) {
-				return msg.cmd == 'PONG' && msg.paramAt(1) == token;
+				return msg.cmd == 'PONG' && msg.params[1] == token;
 			}).timeout(Duration(seconds: 15));
 		} on Exception {
 			_socket?.close().ignore();

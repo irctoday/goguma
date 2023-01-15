@@ -82,18 +82,33 @@ String formatIrcTime(DateTime dt) {
 	return DateTime.utc(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.millisecond).toIso8601String();
 }
 
+class IrcParamList extends UnmodifiableListView<String> {
+	final String _cmd;
+
+	IrcParamList._(Iterable<String> source, this._cmd) : super(source);
+
+	@override
+	String operator [](int index) {
+		try {
+			return super[index];
+		} on RangeError {
+			throw FormatException('Invalid $_cmd message: missing parameter at index $index');
+		}
+	}
+}
+
 class IrcMessage {
 	final UnmodifiableMapView<String, String?> tags;
 	final IrcSource? source;
 	final String cmd;
-	final UnmodifiableListView<String> params;
+	final IrcParamList params;
 
 	IrcMessage(this.cmd, List<String> params, {
 		Map<String, String?> tags = const {},
 		this.source,
 	}) :
 		tags = UnmodifiableMapView(tags),
-		params = UnmodifiableListView(params);
+		params = IrcParamList._(params, cmd);
 
 	static IrcMessage parse(String s) {
 		while (s.endsWith('\n') || s.endsWith('\r')) {
@@ -202,14 +217,6 @@ class IrcMessage {
 			source: source ?? this.source,
 			tags: tags ?? this.tags,
 		);
-	}
-
-	String paramAt(int index) {
-		try {
-			return params[index];
-		} on RangeError {
-			throw FormatException('Invalid $cmd message: missing param at index $index');
-		}
 	}
 }
 
