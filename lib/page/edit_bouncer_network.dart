@@ -158,7 +158,9 @@ class _EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
 			var network = await _waitForNetwork(bouncerNetId);
 			await _waitNetworkOnline(network);
 			// TODO: show a spinner until we reach this point
-			BufferPage.open(navigatorState.context, entity.name, network);
+			if (navigatorState.mounted) {
+				BufferPage.open(navigatorState.context, entity.name, network);
+			}
 		} on Exception catch (err) {
 			log.print('Failed to auto-open buffer "${entity.name}"', error: err);
 		}
