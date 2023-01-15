@@ -37,7 +37,10 @@ class Logger {
 	void reportFlutterError(FlutterErrorDetails details) async {
 		FlutterError.dumpErrorToConsole(details, forceReport: true);
 
-		if (_sentryEnabled) {
+		// Workaround: we get some uncaught SocketException on Android without
+		// a stack. Ignore these.
+		// TODO: figure out where they're coming from.
+		if (_sentryEnabled && !(details.exception is SocketException)) {
 			await Sentry.captureException(details.exception, stackTrace: details.stack);
 		}
 
