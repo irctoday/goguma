@@ -59,7 +59,12 @@ If you aren't familiar with `git send-email`, you can use the
 
 ## License
 
-AGPLv3, see LICENSE.
+AGPLv3 (see LICENSE) with an application store exception. As an additional
+permission under section 7, you are allowed to distribute the software through
+an application store, even if that store has restrictive terms and conditions
+that are incompatible with the AGPL, provided that the source is also available
+under the AGPL with or without this permission through a channel without those
+restrictive terms and conditions.
 
 Copyright (C) 2021 The goguma Contributors
 
