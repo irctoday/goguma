@@ -630,7 +630,7 @@ class IrcIsupportRegistry {
 	IrcIsupportElist? _elist;
 
 	String? get network => _raw['NETWORK'];
-	String get chanTypes => _raw['CHANTYPES'] ?? '';
+	String get chanTypes => _raw['CHANTYPES'] ?? '#&+!';
 	CaseMapping get caseMapping => _caseMapping ?? defaultCaseMapping;
 	String? get bouncerNetId => _raw['BOUNCER_NETID'];
 	UnmodifiableListView<IrcIsupportMembership> get memberships => UnmodifiableListView(_memberships);
