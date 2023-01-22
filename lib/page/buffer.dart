@@ -287,7 +287,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 				var nextMsg = msgIndex + 1 < messages.length ? messages[msgIndex + 1] : null;
 
 				VoidCallback? onSwipe;
-				if (isChannel) {
+				if (isChannel && canSendMessage) {
 					onSwipe = () => _handleMessageSwipe(msg);
 				}
 
