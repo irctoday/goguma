@@ -138,6 +138,7 @@ class BufferEntry {
 	String? lastReadTime;
 	bool pinned;
 	bool muted;
+	bool archived;
 
 	String? topic;
 	String? realname;
@@ -152,10 +153,17 @@ class BufferEntry {
 			'muted': muted ? 1 : 0,
 			'topic': topic,
 			'realname': realname,
+			'archived': archived ? 1 : 0,
 		};
 	}
 
-	BufferEntry({ required this.name, required this.network, this.pinned = false, this.muted = false });
+	BufferEntry({
+		required this.name,
+		required this.network,
+		this.pinned = false,
+		this.muted = false,
+		this.archived = false,
+	});
 
 	BufferEntry.fromMap(Map<String, dynamic> m) :
 		id = m['id'] as int,
@@ -165,7 +173,8 @@ class BufferEntry {
 		pinned = m['pinned'] == 1,
 		muted = m['muted'] == 1,
 		topic = m['topic'] as String?,
-		realname = m['realname'] as String?;
+		realname = m['realname'] as String?,
+		archived = m['archived'] == 1;
 }
 
 class MessageEntry {
@@ -338,6 +347,7 @@ const _schema = [
 			muted INTEGER NOT NULL DEFAULT 0,
 			topic TEXT,
 			realname TEXT,
+			archived INTEGER NOT NULL DEFAULT 0,
 			FOREIGN KEY (network) REFERENCES Network(id) ON DELETE CASCADE,
 			UNIQUE(name, network)
 		)
@@ -421,6 +431,7 @@ const _migrations = [
 		);
 	''',
 	'ALTER TABLE Network ADD COLUMN bouncer_name TEXT;',
+	'ALTER TABLE Buffer ADD COLUMN archived INTEGER NOT NULL DEFAULT 0;',
 ];
 
 class DB {
@@ -561,7 +572,10 @@ class DB {
 
 	Future<List<BufferEntry>> listBuffers() async {
 		var entries = await _db.rawQuery('''
-			SELECT id, name, network, last_read_time, pinned, muted, topic, realname FROM Buffer ORDER BY id
+			SELECT id, name, network, last_read_time, pinned, muted, topic,
+				realname, archived
+			FROM Buffer
+			ORDER BY id
 		''');
 		return entries.map((m) => BufferEntry.fromMap(m)).toList();
 	}

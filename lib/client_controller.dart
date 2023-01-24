@@ -400,7 +400,7 @@ class ClientController {
 			var limit = const Duration(days: 5);
 			List<String> nicks = [];
 			for (var buffer in _bufferList.buffers) {
-				if (buffer.network != network || !client.isNick(buffer.name)) {
+				if (buffer.network != network || !client.isNick(buffer.name) || buffer.archived) {
 					continue;
 				}
 				var t = buffer.lastDeliveredTime;
@@ -425,7 +425,7 @@ class ClientController {
 			if (!client.caps.enabled.contains('soju.im/bouncer-networks')) {
 				List<String> channels = [];
 				for (var buffer in _bufferList.buffers) {
-					if (buffer.network == network && client.isChannel(buffer.name)) {
+					if (buffer.network == network && client.isChannel(buffer.name) && !buffer.archived) {
 						channels.add(buffer.name);
 					}
 				}

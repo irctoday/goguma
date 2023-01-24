@@ -301,6 +301,13 @@ class _BufferItem extends AnimatedWidget {
 				color: Theme.of(context).textTheme.caption!.color,
 			));
 		}
+		if (buffer.archived) {
+			trailing.add(Icon(
+				Icons.inventory_2,
+				size: 20,
+				color: Theme.of(context).textTheme.caption!.color,
+			));
+		}
 		if (buffer.unreadCount != 0) {
 			trailing.add(Container(
 				padding: EdgeInsets.all(3),

@@ -233,7 +233,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 
 		var subtitle = buffer.topic ?? buffer.realname;
 		var isOnline = network.state == NetworkState.synchronizing || network.state == NetworkState.online;
-		var canSendMessage = isOnline;
+		var canSendMessage = isOnline && !buffer.archived;
 		var isChannel = client.isChannel(buffer.name);
 		if (isChannel) {
 			canSendMessage = canSendMessage && buffer.joined;
@@ -263,7 +263,32 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 					TextButton(
 						child: Text('JOIN'),
 						onPressed: () {
+							var bufferList = context.read<BufferListModel>();
+							var db = context.read<DB>();
+
+							bufferList.setArchived(buffer, false);
+							db.storeBuffer(buffer.entry);
 							_join(client, buffer);
+						},
+					),
+				],
+			);
+		}
+		if (joinBanner == null && buffer.archived) {
+			joinBanner = MaterialBanner(
+				content: Text('This conversation is archived.'),
+				actions: [
+					TextButton(
+						child: Text('UNARCHIVE'),
+						onPressed: () {
+							var bufferList = context.read<BufferListModel>();
+							var clientProvider = context.read<ClientProvider>();
+							var db = context.read<DB>();
+
+							bufferList.setArchived(buffer, false);
+							db.storeBuffer(buffer.entry);
+							clientProvider.fetchBufferUser(buffer);
+							client.monitor([buffer.name]);
 						},
 					),
 				],
@@ -367,6 +392,11 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 								} else {
 									client.unmonitor([buffer.name]);
 								}
+								bufferList.setArchived(buffer, true);
+								db.storeBuffer(buffer.entry);
+								Navigator.pop(context);
+								break;
+							case 'delete':
 								bufferList.remove(buffer);
 								db.deleteBuffer(buffer.entry.id!);
 								Navigator.pop(context);
@@ -378,7 +408,8 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 								PopupMenuItem(child: Text('Details'), value: 'details'),
 								PopupMenuItem(child: Text(buffer.pinned ? 'Unpin' : 'Pin'), value: 'pin'),
 								PopupMenuItem(child: Text(buffer.muted ? 'Unmute' : 'Mute'), value: 'mute'),
-								if (isOnline) PopupMenuItem(child: Text('Leave'), value: 'part'),
+								if (!buffer.archived && (isOnline || !isChannel)) PopupMenuItem(child: Text(isChannel ? 'Leave' : 'Archive'), value: 'part'),
+								if (buffer.archived) PopupMenuItem(child: Text('Delete'), value: 'delete'),
 							];
 						},
 					),

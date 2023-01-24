@@ -331,6 +331,12 @@ class BufferListModel extends ChangeNotifier {
 		notifyListeners();
 	}
 
+	void setArchived(BufferModel buf, bool archived) {
+		buf.archived = archived;
+		_rebuildSorted();
+		notifyListeners();
+	}
+
 	void _rebuildSorted() {
 		var l = [..._buffers.values];
 		l.sort((a, b) {
@@ -339,6 +345,9 @@ class BufferListModel extends ChangeNotifier {
 			}
 			if (a.muted != b.muted) {
 				return a.muted ? 1 : -1;
+			}
+			if (a.archived != b.archived) {
+				return a.archived ? 1 : -1;
 			}
 			if (a.lastDeliveredTime != b.lastDeliveredTime) {
 				if (a.lastDeliveredTime == null) {
@@ -404,6 +413,7 @@ class BufferModel extends ChangeNotifier {
 	bool get messageHistoryLoaded => _messageHistoryLoaded;
 	bool get pinned => entry.pinned;
 	bool get muted => entry.muted;
+	bool get archived => entry.archived;
 
 	String? get topic => entry.topic;
 	bool get joining => _joining;
@@ -447,6 +457,11 @@ class BufferModel extends ChangeNotifier {
 
 	set muted(bool muted) {
 		entry.muted = muted;
+		notifyListeners();
+	}
+
+	set archived(bool archived) {
+		entry.archived = archived;
 		notifyListeners();
 	}
 
