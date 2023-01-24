@@ -302,14 +302,6 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 			},
 		);
 
-		Widget? composer;
-		if (canSendMessage) {
-			composer = Material(elevation: 15, child: Container(
-				padding: EdgeInsets.all(10),
-				child: Composer(key: _composerKey),
-			));
-		}
-
 		Widget? jumpToBottom;
 		if (_showJumpToBottom) {
 			jumpToBottom = Positioned(
@@ -398,7 +390,14 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 					msgList,
 					if (jumpToBottom != null) jumpToBottom,
 				])),
-				if (composer != null) composer,
+				Visibility(
+					visible: canSendMessage,
+					maintainState: true,
+					child: Material(elevation: 15, child: Container(
+						padding: EdgeInsets.all(10),
+						child: Composer(key: _composerKey),
+					)),
+				),
 			])),
 		);
 	}
