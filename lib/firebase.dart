@@ -30,7 +30,10 @@ class FirebasePushController extends PushController {
 
 		// Workaround: isSupported() may return true on devices without Play Services:
 		// https://github.com/firebase/flutterfire/issues/8917
-		await FirebaseMessaging.instance.getToken();
+		var token = await FirebaseMessaging.instance.getToken();
+		if (token == null) {
+			throw Exception('Failed to obtain Firebase messaging token');
+		}
 
 		FirebaseMessaging.onBackgroundMessage(_handleFirebaseMessage);
 		FirebaseMessaging.onMessage.listen(_handleFirebaseMessage);
