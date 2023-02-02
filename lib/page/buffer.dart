@@ -644,7 +644,7 @@ class _MessageItem extends StatelessWidget {
 		Widget? linkPreview;
 		if (isAction) {
 			// isAction can only ever be true if we have a ctcp
-			var actionText = stripAnsiFormatting(ctcp!.param ?? '');
+			var actionText = stripAnsiFormatting(ctcp.param ?? '');
 
 			content = [
 				WidgetSpan(
