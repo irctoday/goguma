@@ -24,6 +24,7 @@ class ConnectParams {
 	final String? pass;
 	final SaslPlainCredentials? saslPlain;
 	final String? bouncerNetId;
+	final String? away;
 
 	const ConnectParams({
 		required this.host,
@@ -34,6 +35,7 @@ class ConnectParams {
 		this.pass,
 		this.saslPlain,
 		this.bouncerNetId,
+		this.away,
 	}) : realname = realname ?? nick;
 
 	ConnectParams apply({
@@ -41,6 +43,7 @@ class ConnectParams {
 		String? nick,
 		String? realname,
 		SaslPlainCredentials? saslPlain,
+		String? away,
 	}) {
 		return ConnectParams(
 			host: host,
@@ -51,6 +54,7 @@ class ConnectParams {
 			pass: pass,
 			saslPlain: saslPlain ?? this.saslPlain,
 			bouncerNetId: bouncerNetId ?? this.bouncerNetId,
+			away: away ?? this.away,
 		);
 	}
 }
@@ -70,6 +74,7 @@ Set<String> _getDefaultCaps(ConnectParams params) {
 
 		'draft/chathistory',
 		'draft/extended-monitor',
+		'draft/pre-away',
 		'draft/read-marker',
 
 		'soju.im/bouncer-networks',
@@ -445,6 +450,11 @@ class Client {
 		if (params.bouncerNetId != null) {
 			send(IrcMessage('BOUNCER', ['BIND', params.bouncerNetId!]));
 		}
+		if (params.away != null) {
+			// We cannot check for the pre-away cap here, because we haven't
+			// received the list of available server caps yet
+			setAway(params.away).ignore();
+		}
 		send(IrcMessage('CAP', ['END']));
 
 		var saslSuccess = false;
@@ -555,6 +565,9 @@ class Client {
 			}
 			_log('Registration complete');
 			_registered = true;
+			if (params.away != null && !caps.enabled.contains('draft/pre-away')) {
+				setAway(params.away);
+			}
 			break;
 		case 'NICK':
 			if (isMyNick(msg.source!.name)) {
@@ -1027,6 +1040,7 @@ class Client {
 			}
 			return false;
 		});
+		_params = _params.apply(away: msg);
 	}
 
 	Future<void> join(List<String> names) async {

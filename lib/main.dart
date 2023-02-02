@@ -313,7 +313,7 @@ Future<void> _handleWorkManagerSync() async {
 	);
 
 	for (var client in clientProvider.clients) {
-		client.connect().ignore();
+		client.connect(params: client.params.apply(away: '*')).ignore();
 	}
 
 	try {

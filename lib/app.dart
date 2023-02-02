@@ -68,6 +68,17 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 
 		var clientProvider = context.read<ClientProvider>();
 		_clientErrorSub = clientProvider.errors.listen((err) {
+			if (err.msg.cmd == ERR_NOTREGISTERED) {
+				// We may send commands the server doesn't accept before
+				// connection registration (e.g. AWAY), because we don't know
+				// the server's available capabilities at that point.
+				return;
+			}
+			if (err.msg.cmd == ERR_UNKNOWNCOMMAND && err.msg.params[1] == 'AWAY') {
+				// Some servers may be missing AWAY support
+				return;
+			}
+
 			SnackBarAction? action;
 			if (err.msg.cmd == ERR_SASLFAIL) {
 				if (err.client.params.bouncerNetId != null) {
