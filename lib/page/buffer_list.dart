@@ -277,7 +277,7 @@ class _BufferItem extends AnimatedWidget {
 					TextSpan(text: buffer.name),
 					TextSpan(
 						text: ' on ${buffer.network.displayName}',
-						style: TextStyle(color: Theme.of(context).textTheme.caption!.color),
+						style: TextStyle(color: Theme.of(context).textTheme.bodySmall!.color),
 					),
 				]),
 				overflow: TextOverflow.fade,
@@ -291,28 +291,28 @@ class _BufferItem extends AnimatedWidget {
 			trailing.add(Icon(
 				Icons.notifications_off,
 				size: 20,
-				color: Theme.of(context).textTheme.caption!.color,
+				color: Theme.of(context).textTheme.bodySmall!.color,
 			));
 		}
 		if (buffer.pinned) {
 			trailing.add(Icon(
 				Icons.push_pin,
 				size: 20,
-				color: Theme.of(context).textTheme.caption!.color,
+				color: Theme.of(context).textTheme.bodySmall!.color,
 			));
 		}
 		if (buffer.archived) {
 			trailing.add(Icon(
 				Icons.inventory_2,
 				size: 20,
-				color: Theme.of(context).textTheme.caption!.color,
+				color: Theme.of(context).textTheme.bodySmall!.color,
 			));
 		}
 		if (buffer.unreadCount != 0) {
 			trailing.add(Container(
 				padding: EdgeInsets.all(3),
 				decoration: BoxDecoration(
-					color: buffer.muted ? Theme.of(context).textTheme.caption!.color : Colors.red,
+					color: buffer.muted ? Theme.of(context).textTheme.bodySmall!.color : Colors.red,
 					borderRadius: BorderRadius.circular(20),
 				),
 				constraints: BoxConstraints(minWidth: 20, minHeight: 20),

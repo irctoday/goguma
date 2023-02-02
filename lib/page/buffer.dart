@@ -459,7 +459,7 @@ class _CompactMessageItem extends StatelessWidget {
 		var prevIrcMsg = prevMsg?.msg;
 		var prevMsgSameSender = prevIrcMsg != null && ircMsg.source!.name == prevIrcMsg.source!.name;
 
-		var textStyle = TextStyle(color: Theme.of(context).textTheme.bodyText1!.color);
+		var textStyle = TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color);
 
 		String? text;
 		List<TextSpan> textSpans;
@@ -507,7 +507,7 @@ class _CompactMessageItem extends StatelessWidget {
 			var hh = localDateTime.hour.toString().padLeft(2, '0');
 			var mm = localDateTime.minute.toString().padLeft(2, '0');
 			var timeText = '\u00A0[$hh:$mm]';
-			var timeStyle = TextStyle(color: Theme.of(context).textTheme.caption!.color);
+			var timeStyle = TextStyle(color: Theme.of(context).textTheme.bodySmall!.color);
 			stack.add(Positioned(
 				bottom: 0,
 				right: 0,
@@ -643,7 +643,6 @@ class _MessageItem extends StatelessWidget {
 		List<InlineSpan> content;
 		Widget? linkPreview;
 		if (isAction) {
-			// isAction can only ever be true if we have a ctcp
 			var actionText = stripAnsiFormatting(ctcp.param ?? '');
 
 			content = [

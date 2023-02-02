@@ -223,7 +223,7 @@ class _JoinItem extends StatelessWidget {
 				TextSpan(text: action.title),
 				TextSpan(
 					text: ' on ${action.network.displayName}',
-					style: TextStyle(color: Theme.of(context).textTheme.caption!.color),
+					style: TextStyle(color: Theme.of(context).textTheme.bodySmall!.color),
 				),
 			]),
 			overflow: TextOverflow.fade,
