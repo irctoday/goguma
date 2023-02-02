@@ -1013,6 +1013,22 @@ class Client {
 		}
 	}
 
+	Future<void> setAway(String? msg) async {
+		List<String> params = [];
+		if (msg != null) {
+			params.add(msg == '' ? '*' : msg);
+		}
+		var cmd = IrcMessage('AWAY', params);
+		await _roundtripMessage(cmd, (reply) {
+			switch (reply.cmd) {
+			case RPL_NOWAWAY:
+			case RPL_UNAWAY:
+				return true;
+			}
+			return false;
+		});
+	}
+
 	Future<void> join(List<String> names) async {
 		if (names.isEmpty) {
 			return;
