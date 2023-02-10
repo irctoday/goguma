@@ -58,7 +58,6 @@ class _PhotoPreview extends StatelessWidget {
 			},
 			child: Image.network(
 				preview.url.toString(),
-				width: 250,
 				height: 250,
 				fit: BoxFit.cover,
 				filterQuality: FilterQuality.medium,
