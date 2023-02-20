@@ -31,7 +31,17 @@ String stripAnsiFormatting(String s) {
 			}
 			break;
 		case '\x04': // hex color
+			var color = _parseHexColorCode(s.substring(i + 1));
+			if (color == null) {
+				break;
+			}
 			i += 6;
+			if (s.length > i + 1 && s[i + 1] == ',') {
+				var color = _parseHexColorCode(s.substring(i + 2));
+				if (color != null) {
+					i += 7;
+				}
+			}
 			break;
 		default:
 			out += ch;
