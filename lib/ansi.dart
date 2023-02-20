@@ -79,6 +79,7 @@ List<TextSpan> applyAnsiFormatting(String s, TextStyle base) {
 		case '\x1D': // italic
 		case '\x1F': // underline
 		case '\x03': // color
+		case '\x04': // hex color
 			List<TextDecoration> decorations = [base.decoration ?? TextDecoration.none];
 			if (underline) {
 				decorations.add(TextDecoration.underline);
