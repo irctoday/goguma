@@ -408,7 +408,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 								PopupMenuItem(child: Text('Details'), value: 'details'),
 								PopupMenuItem(child: Text(buffer.pinned ? 'Unpin' : 'Pin'), value: 'pin'),
 								PopupMenuItem(child: Text(buffer.muted ? 'Unmute' : 'Mute'), value: 'mute'),
-								if (!buffer.archived && (isOnline || !isChannel)) PopupMenuItem(child: Text(isChannel ? 'Leave' : 'Archive'), value: 'part'),
+								if (!buffer.archived && (isOnline || !isChannel)) PopupMenuItem(child: Text(buffer.joined ? 'Leave' : 'Archive'), value: 'part'),
 								if (buffer.archived) PopupMenuItem(child: Text('Delete'), value: 'delete'),
 							];
 						},
