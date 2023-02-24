@@ -75,6 +75,7 @@ class UnifiedPushController extends PushController {
 	}
 
 	void _handleNewEndpoint(String endpoint, String instance) {
+		log.print('New UnifiedPush endpoint for instance $instance');
 		var completer = _pendingSubscriptions.remove(instance);
 		if (completer == null) {
 			// TODO: handle endpoint changes
@@ -95,7 +96,7 @@ class UnifiedPushController extends PushController {
 	}
 
 	void _handleUnregistered(String instance) {
-		log.print('UnifiedPush unregistered: $instance');
+		log.print('Unregistered UnifiedPush instance $instance');
 		// TODO: handle this
 	}
 }

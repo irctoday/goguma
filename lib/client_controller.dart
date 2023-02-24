@@ -981,12 +981,15 @@ class ClientController {
 				// Refresh our subscription
 				try {
 					await client.webPushRegister(oldSub.endpoint, oldSub.getPublicKeys());
+					log.print('Refreshed existing push subscription');
 					return;
 				} on Exception catch (err) {
 					// Maybe the subscription expired
 					log.print('Failed to refresh old push subscription', error: err);
 					log.print('Trying to register with a fresh subscription...');
 				}
+			} else {
+				log.print('VAPID key changed');
 			}
 
 			try {
@@ -999,6 +1002,8 @@ class ClientController {
 			}
 			await client.webPushUnregister(oldSub.endpoint);
 			await _db.deleteWebPushSubscription(oldSub.id!);
+		} else {
+			log.print('No existing push subscription found for this network');
 		}
 
 		var details = await pushController.createSubscription(network.networkEntry, vapidKey);
@@ -1021,6 +1026,7 @@ class ClientController {
 				// This may result in a Web Push notification being delivered, so
 				// we need to do this last
 				await client.webPushRegister(details.endpoint, config.getPublicKeys());
+				log.print('Registered new push subscription successfully');
 			} on Object {
 				try {
 					await _db.deleteWebPushSubscription(newSub.id!);
