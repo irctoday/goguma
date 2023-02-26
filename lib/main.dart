@@ -77,6 +77,7 @@ void main() async {
 	String? pushProviderName = pushController?.providerName;
 	if (pushProviderName != prefs.pushProvider) {
 		var subs = await db.listWebPushSubscriptions();
+		log.print('Push provider changed (${prefs.pushProvider} -> $pushProviderName), clearing ${subs.length} subscriptions');
 		List<Future<void>> futures = [];
 		for (var sub in subs) {
 			futures.add(db.deleteWebPushSubscription(sub.id!));
