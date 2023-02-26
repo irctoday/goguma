@@ -983,10 +983,14 @@ class ClientController {
 					await client.webPushRegister(oldSub.endpoint, oldSub.getPublicKeys());
 					log.print('Refreshed existing push subscription');
 					return;
-				} on Exception catch (err) {
+				} on IrcException catch (err) {
 					// Maybe the subscription expired
-					log.print('Failed to refresh old push subscription', error: err);
-					log.print('Trying to register with a fresh subscription...');
+					if (err.msg.cmd == 'FAIL' && err.msg.params[0] == 'WEBPUSH') {
+						log.print('Failed to refresh old push subscription', error: err);
+						log.print('Trying to register with a fresh subscription...');
+					} else {
+						rethrow;
+					}
 				}
 			} else {
 				log.print('VAPID key changed');
