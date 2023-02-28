@@ -1100,14 +1100,14 @@ class Client {
 		var msg = IrcMessage('WEBPUSH', ['REGISTER', endpoint, formatIrcTags(encodedKeys)]);
 		return _roundtripMessage(msg, (msg) {
 			return msg.cmd == 'WEBPUSH' && msg.params[0] == 'REGISTER' && msg.params[1] == endpoint;
-		});
+		}).timeout(Duration(seconds: 30));
 	}
 
 	Future<void> webPushUnregister(String endpoint) {
 		var msg = IrcMessage('WEBPUSH', ['UNREGISTER', endpoint]);
 		return _roundtripMessage(msg, (msg) {
 			return msg.cmd == 'WEBPUSH' && msg.params[0] == 'UNREGISTER' && msg.params[1] == endpoint;
-		});
+		}).timeout(Duration(seconds: 30));
 	}
 
 	Future<String> addBouncerNetwork(Map<String, String?> attrs) async {
