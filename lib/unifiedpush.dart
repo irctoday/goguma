@@ -93,8 +93,10 @@ class UnifiedPushController extends PushController {
 	}
 
 	void _handleRegistrationFailed(String instance) {
+		log.print('UnifiedPush registration failed for instance $instance');
 		var completer = _pendingSubscriptions.remove(instance);
 		if (completer == null) {
+			log.print('Unhandled UnifiedPush failed registration');
 			return;
 		}
 		completer.completeError(Exception('UnifiedPush registration failed'));
