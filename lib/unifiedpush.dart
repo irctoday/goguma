@@ -100,9 +100,17 @@ class UnifiedPushController extends PushController {
 		completer.completeError(Exception('UnifiedPush registration failed'));
 	}
 
-	void _handleUnregistered(String instance) {
+	void _handleUnregistered(String instance) async {
 		log.print('Unregistered UnifiedPush instance $instance');
-		// TODO: handle this
+
+		var db = await DB.open();
+		var sub = await _fetchSubscriptionWithInstance(db, instance);
+		if (sub == null) {
+			log.print('Unregistered unknown UnifiedPush instance: $instance');
+			return;
+		}
+
+		await db.deleteWebPushSubscription(sub.id!);
 	}
 }
 
@@ -112,22 +120,24 @@ void _handleMessage(Uint8List ciphertext, String instance) async {
 	log.print('Got UnifiedPush message for $instance');
 
 	var db = await DB.open();
-
-	// TODO: drop old compat code
-	var subs = await db.listWebPushSubscriptions();
-	WebPushSubscriptionEntry? sub;
-	var prefix = 'network:';
-	if (instance.startsWith(prefix)) {
-		var netId = int.parse(instance.replaceFirst(prefix, ''));
-		sub = _findSubscriptionWithNetId(subs, netId);
-	} else {
-		sub = _findSubscriptionWithTag(subs, instance);
-	}
+	var sub = await _fetchSubscriptionWithInstance(db, instance);
 	if (sub == null) {
 		throw Exception('Got push message for an unknown instance: $instance');
 	}
 
 	await handlePushMessage(db, sub, ciphertext);
+}
+
+Future<WebPushSubscriptionEntry?> _fetchSubscriptionWithInstance(DB db, String instance) async {
+	// TODO: drop old compat code
+	var subs = await db.listWebPushSubscriptions();
+	var prefix = 'network:';
+	if (instance.startsWith(prefix)) {
+		var netId = int.parse(instance.replaceFirst(prefix, ''));
+		return _findSubscriptionWithNetId(subs, netId);
+	} else {
+		return _findSubscriptionWithTag(subs, instance);
+	}
 }
 
 WebPushSubscriptionEntry? _findSubscriptionWithNetId(List<WebPushSubscriptionEntry> entries, int netId) {
