@@ -709,6 +709,9 @@ class ClientController {
 			isNewBuffer = true;
 			buf = await _createBuffer(target);
 		}
+		if (buf != null && buf.archived && !createNewBuffer) {
+			buf = null;
+		}
 		if (buf == null) {
 			if (!notices.isEmpty) {
 				// We don't have a buffer to display these NOTICEs, open an
