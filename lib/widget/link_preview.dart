@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../link_preview.dart';
+import '../page/gallery.dart';
 
 typedef LinkPreviewBuilder = Widget Function(BuildContext context, Widget child);
 
@@ -54,7 +54,7 @@ class _PhotoPreview extends StatelessWidget {
 	Widget build(BuildContext context) {
 		return InkWell(
 			onTap: () {
-				launchUrl(preview.url, mode: LaunchMode.externalApplication);
+				Navigator.pushNamed(context, GalleryPage.routeName, arguments: preview.url);
 			},
 			child: Image.network(
 				preview.url.toString(),

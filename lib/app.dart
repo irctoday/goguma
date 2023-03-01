@@ -19,6 +19,7 @@ import 'page/buffer.dart';
 import 'page/buffer_details.dart';
 import 'page/buffer_list.dart';
 import 'page/connect.dart';
+import 'page/gallery.dart';
 import 'page/join.dart';
 import 'page/edit_bouncer_network.dart';
 import 'page/network_details.dart';
@@ -464,6 +465,10 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 					child: NetworkDetailsPage(),
 				);
 			};
+			break;
+		case GalleryPage.routeName:
+			var uri = settings.arguments as Uri;
+			builder = (context) => GalleryPage(uri: uri);
 			break;
 		default:
 			throw Exception('Unknown route ${settings.name}');
