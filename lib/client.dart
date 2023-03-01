@@ -303,7 +303,10 @@ class Client {
 		});
 	}
 
-	Future<ClientMessage> _waitMessage(bool Function(ClientMessage msg) test) {
+	Future<ClientMessage> _waitMessage(bool Function(ClientMessage msg) test, {
+		Duration? timeout,
+		FutureOr<ClientMessage> Function()? onTimeout,
+	}) {
 		if (state != ClientState.connected) {
 			return Future.error(Exception('Disconnected from server'));
 		}
@@ -341,13 +344,16 @@ class Client {
 			}
 		});
 
-		return completer.future.whenComplete(() {
+		const defaultTimeout = Duration(seconds: 30);
+		return completer.future.timeout(timeout ?? defaultTimeout, onTimeout: onTimeout).whenComplete(() {
 			statesSub.cancel();
 			messagesSub.cancel();
 		});
 	}
 
-	Future<ClientMessage> _roundtripMessage(IrcMessage msg, bool Function(ClientMessage msg) test) {
+	Future<ClientMessage> _roundtripMessage(IrcMessage msg, bool Function(ClientMessage msg) test, {
+		Duration? timeout,
+	}) {
 		String? cmdLabel;
 		if (caps.enabled.contains('labeled-response')) {
 			_lastLabel++;
@@ -396,6 +402,8 @@ class Client {
 				throw Exception('Received end of labeled response, but not done handling messages for $cmd');
 			}
 			return done;
+		}, timeout: timeout, onTimeout: () {
+			throw TimeoutException('Timed out waiting for $cmd reply');
 		});
 	}
 
@@ -466,7 +474,7 @@ class Client {
 				break;
 			}
 			return false;
-		}).timeout(Duration(seconds: 30), onTimeout: () {
+		}, onTimeout: () {
 			throw TimeoutException('Connection registration timed out');
 		});
 	}
@@ -656,7 +664,7 @@ class Client {
 			default:
 				return false;
 			}
-		}).timeout(Duration(seconds: 30));
+		});
 	}
 
 	Future<void> authWithPlain(String username, String password) async {
@@ -733,7 +741,7 @@ class Client {
 		try {
 			await _roundtripMessage(msg, (msg) {
 				return msg.cmd == 'PONG' && msg.params[1] == token;
-			}).timeout(Duration(seconds: 15));
+			}, timeout: const Duration(seconds: 15));
 		} on Exception {
 			_socket?.close().ignore();
 			rethrow;
@@ -792,7 +800,7 @@ class Client {
 						echo = reply;
 						return true;
 					}
-				}).timeout(Duration(seconds: 30));
+				});
 			} finally {
 				if (pendingKey != null) {
 					var n = _pendingTextMsgs[pendingKey]! - 1;
@@ -823,7 +831,7 @@ class Client {
 		var cm = isupport.caseMapping;
 		return _roundtripMessage(msg, (msg) {
 			return msg.cmd == 'MARKREAD' && cm(msg.params[0]) == cm(target);
-		}).timeout(Duration(seconds: 15));
+		}, timeout: Duration(seconds: 15));
 	}
 
 	void setReadMarker(String target, String t) {
@@ -868,7 +876,7 @@ class Client {
 				return cm(msg.params[1]) == cm(mask);
 			}
 			return false;
-		}).timeout(Duration(seconds: 30));
+		});
 
 		return replies;
 	}
@@ -933,7 +941,7 @@ class Client {
 				return true;
 			}
 			return false;
-		}).timeout(Duration(seconds: 30));
+		});
 		return replies;
 	}
 
@@ -1100,14 +1108,14 @@ class Client {
 		var msg = IrcMessage('WEBPUSH', ['REGISTER', endpoint, formatIrcTags(encodedKeys)]);
 		return _roundtripMessage(msg, (msg) {
 			return msg.cmd == 'WEBPUSH' && msg.params[0] == 'REGISTER' && msg.params[1] == endpoint;
-		}).timeout(Duration(seconds: 30));
+		});
 	}
 
 	Future<void> webPushUnregister(String endpoint) {
 		var msg = IrcMessage('WEBPUSH', ['UNREGISTER', endpoint]);
 		return _roundtripMessage(msg, (msg) {
 			return msg.cmd == 'WEBPUSH' && msg.params[0] == 'UNREGISTER' && msg.params[1] == endpoint;
-		}).timeout(Duration(seconds: 30));
+		});
 	}
 
 	Future<String> addBouncerNetwork(Map<String, String?> attrs) async {
