@@ -928,6 +928,11 @@ class IrcNameMap<V> extends MapBase<String, V> {
 		return _m.remove(_cm(key as String))?.value;
 	}
 
+	@override
+	bool containsKey(Object? key) {
+		return _m.containsKey(_cm(key as String));
+	}
+
 	void setCaseMapping(CaseMapping cm) {
 		_m = Map.fromIterables(_m.values.map((entry) => cm(entry.name)), _m.values);
 		_cm = cm;
