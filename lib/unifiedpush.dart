@@ -113,6 +113,7 @@ class UnifiedPushController extends PushController {
 		}
 
 		await db.deleteWebPushSubscription(sub.id!);
+		// TODO: send WEBPUSH UNREGISTER to the IRC server
 	}
 }
 
