@@ -82,6 +82,7 @@ class UnifiedPushController extends PushController {
 		log.print('New UnifiedPush endpoint for instance $instance');
 		var completer = _pendingSubscriptions.remove(instance);
 		if (completer == null) {
+			log.print('Unhandled UnifiedPush endpoint update');
 			// TODO: handle endpoint changes
 			return;
 		}
