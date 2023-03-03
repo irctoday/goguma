@@ -1,12 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
+class GalleryPageArguments {
+	final Uri uri;
+	final Object heroTag;
+
+	const GalleryPageArguments({
+		required this.uri,
+		required this.heroTag,
+	});
+}
+
 class GalleryPage extends StatefulWidget {
 	static const routeName = '/buffer/gallery';
 
 	final Uri uri;
+	final Object heroTag;
 
-	const GalleryPage({ Key? key, required this.uri }) : super(key: key);
+	const GalleryPage({ Key? key, required this.uri, required this.heroTag }) : super(key: key);
 
 	@override
 	State<GalleryPage> createState() => _GalleryPageState();
@@ -29,7 +40,7 @@ class _GalleryPageState extends State<GalleryPage> {
 				],
 			),
 			backgroundColor: Colors.black,
-			body: Image.network(
+			body: Hero(tag: widget.heroTag, child: Image.network(
 				widget.uri.toString(),
 				filterQuality: FilterQuality.medium,
 				loadingBuilder: (context, child, loadingProgress) {
@@ -56,7 +67,7 @@ class _GalleryPageState extends State<GalleryPage> {
 						],
 					));
 				},
-			),
+			)),
 		);
 	}
 }

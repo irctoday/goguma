@@ -47,16 +47,20 @@ class LinkPreview extends StatelessWidget {
 
 class _PhotoPreview extends StatelessWidget {
 	final PhotoPreview preview;
+	final Object _heroTag;
 
-	const _PhotoPreview(this.preview, { Key? key }) : super(key: key);
+	_PhotoPreview(this.preview, { Key? key }) : _heroTag = Object(), super(key: key);
 
 	@override
 	Widget build(BuildContext context) {
 		return InkWell(
 			onTap: () {
-				Navigator.pushNamed(context, GalleryPage.routeName, arguments: preview.url);
+				Navigator.pushNamed(context, GalleryPage.routeName, arguments: GalleryPageArguments(
+					uri: preview.url,
+					heroTag: _heroTag,
+				));
 			},
-			child: Image.network(
+			child: Hero(tag: _heroTag, child: Image.network(
 				preview.url.toString(),
 				height: 250,
 				fit: BoxFit.cover,
@@ -92,7 +96,7 @@ class _PhotoPreview extends StatelessWidget {
 						),
 					);
 				},
-			),
+			)),
 		);
 	}
 }

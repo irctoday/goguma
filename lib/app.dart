@@ -467,8 +467,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 			};
 			break;
 		case GalleryPage.routeName:
-			var uri = settings.arguments as Uri;
-			builder = (context) => GalleryPage(uri: uri);
+			var args = settings.arguments as GalleryPageArguments;
+			builder = (context) => GalleryPage(uri: args.uri, heroTag: args.heroTag);
 			break;
 		default:
 			throw Exception('Unknown route ${settings.name}');
