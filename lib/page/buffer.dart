@@ -432,15 +432,15 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 					msgList,
 					if (jumpToBottom != null) jumpToBottom,
 				])),
-				Visibility(
-					visible: canSendMessage,
-					maintainState: true,
-					child: Material(elevation: 15, child: Container(
-						padding: EdgeInsets.all(10),
-						child: Composer(key: _composerKey),
-					)),
-				),
 			])),
+			bottomNavigationBar: Visibility(
+				visible: canSendMessage,
+				maintainState: true,
+				child: Material(elevation: 15, child: Container(
+					padding: EdgeInsets.all(10),
+					child: Composer(key: _composerKey),
+				)),
+			),
 		);
 	}
 }
