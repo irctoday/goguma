@@ -346,6 +346,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 				child: FloatingActionButton(
 					mini: true,
 					tooltip: 'Jump to bottom',
+					heroTag: null,
 					child: const Icon(Icons.keyboard_double_arrow_down, size: 18),
 					backgroundColor: Colors.grey,
 					foregroundColor: Colors.white,
