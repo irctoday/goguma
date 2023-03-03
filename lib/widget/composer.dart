@@ -302,6 +302,12 @@ class ComposerState extends State<Composer> {
 	}
 
 	void setTextPrefix(String prefix) {
+		if (prefix.startsWith('/')) {
+			// Insert a zero-width space to ensure this doesn't end up
+			// being executed as a command
+			prefix = '\u200B$prefix';
+		}
+
 		if (!_controller.text.startsWith(prefix)) {
 			_controller.text = prefix + _controller.text;
 			_controller.selection = TextSelection.collapsed(offset: _controller.text.length);
