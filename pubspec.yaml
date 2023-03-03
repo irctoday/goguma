@@ -27,7 +27,6 @@ dependencies:
   flutter_local_notifications: ^13.0.0
   flutter_background: ^1.1.0
   connectivity_plus: ^3.0.2
-  flutter_typeahead: ^4.3.3
   shared_preferences_android: ^2.0.12
   # TODO: replace "webcrypto" with the "cryptography" package once they have a
   # pure Dart Ecdh.p256 implementation
@@ -38,6 +37,7 @@ dependencies:
   unifiedpush: ^4.0.1
   sentry: ^6.18.1
   share_plus: ^6.3.1
+  flutter_flipped_autocomplete: ^1.0.0
 
 dev_dependencies:
   flutter_lints: ^2.0.1

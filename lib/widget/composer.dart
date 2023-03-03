@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_typeahead/flutter_typeahead.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:flutter_flipped_autocomplete/flutter_flipped_autocomplete.dart';
 import 'package:provider/provider.dart';
 
 import '../client.dart';
@@ -208,7 +209,8 @@ class ComposerState extends State<Composer> {
 		});
 	}
 
-	Future<Iterable<String>> _generateSuggestions(String text) async {
+	Future<Iterable<String>> _buildOptions(TextEditingValue textEditingValue) async {
+		var text = textEditingValue.text;
 		var buffer = context.read<BufferModel>();
 		var client = context.read<Client>();
 		var bufferList = context.read<BufferListModel>();
@@ -256,20 +258,17 @@ class ComposerState extends State<Composer> {
 		});
 	}
 
-	void _handleSuggestionSelected(String suggestion) {
+	String _displayStringForOption(String option) {
 		var text = _controller.text;
 
 		var i = text.lastIndexOf(' ');
 		if (i >= 0) {
-			_controller.text = text.substring(0, i + 1) + suggestion + ' ';
-		} else if (suggestion.startsWith('/')) { // command
-			_controller.text = suggestion + ' ';
+			return text.substring(0, i + 1) + option + ' ';
+		} else if (option.startsWith('/')) { // command
+			return option + ' ';
 		} else {
-			_controller.text = suggestion + ': ';
+			return option + ': ';
 		}
-
-		_controller.selection = TextSelection.collapsed(offset: _controller.text.length);
-		_focusNode.requestFocus();
 	}
 
 	void _sendTypingStatus() {
@@ -320,11 +319,90 @@ class ComposerState extends State<Composer> {
 		super.dispose();
 	}
 
-	@override
-	Widget build(BuildContext context) {
+	Widget _buildTextField(BuildContext context, TextEditingController controller, FocusNode focusNode, VoidCallback onFieldSubmitted) {
 		var prefs = context.read<Prefs>();
 		var sendTyping = prefs.typingIndicator;
 
+		return TextFormField(
+			controller: controller,
+			focusNode: focusNode,
+			onChanged: (value) {
+				if (sendTyping) {
+					_sendTypingStatus();
+				}
+
+				setState(() {
+					_isCommand = value.startsWith('/') && !value.contains('\n');
+				});
+			},
+			onFieldSubmitted: (value) {
+				onFieldSubmitted();
+				_submit();
+			},
+			// Prevent the virtual keyboard from being closed when
+			// sending a message
+			onEditingComplete: () {},
+			decoration: InputDecoration(
+				hintText: 'Write a message...',
+				border: InputBorder.none,
+			),
+			textInputAction: TextInputAction.send,
+			minLines: 1,
+			maxLines: 5,
+			keyboardType: TextInputType.text, // disallows newlines
+		);
+	}
+
+	Widget _buildOptionsView(BuildContext context, AutocompleteOnSelected<String> onSelected, Iterable<String> options) {
+		var listView = ListView.builder(
+			padding: EdgeInsets.zero,
+			shrinkWrap: true,
+			itemCount: options.length,
+			reverse: true,
+			itemBuilder: (context, index) {
+				var option = options.elementAt(index);
+				return InkWell(
+					onTap: () {
+						onSelected(option);
+					},
+					child: Builder(
+						builder: (context) {
+							var highlight = AutocompleteHighlightedOption.of(context) == index;
+							if (highlight) {
+								SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
+									Scrollable.ensureVisible(context, alignment: 0.5);
+								});
+							}
+							return Container(
+								color: highlight ? Theme.of(context).focusColor : null,
+								padding: const EdgeInsets.all(16.0),
+								child: Text(option),
+							);
+						},
+					),
+				);
+			},
+		);
+
+		return Align(
+			alignment: Alignment.bottomLeft,
+			child: Material(
+				elevation: 4.0,
+				child: ConstrainedBox(
+					constraints: BoxConstraints(
+						maxHeight: 200,
+						// TODO: use the width of the text field instead:
+						// https://github.com/flutter/flutter/pull/110032
+						maxWidth: MediaQuery.of(context).size.width - 100,
+					),
+					child: listView,
+				),
+			),
+		);
+	}
+
+	@override
+	Widget build(BuildContext context) {
 		var fab = FloatingActionButton(
 			onPressed: () {
 				_submit();
@@ -337,48 +415,13 @@ class ComposerState extends State<Composer> {
 		);
 
 		return Form(key: _formKey, child: Row(children: [
-			Expanded(child: TypeAheadFormField<String>(
-				textFieldConfiguration: TextFieldConfiguration(
-					decoration: InputDecoration(
-						hintText: 'Write a message...',
-						border: InputBorder.none,
-					),
-					onChanged: (value) {
-						if (sendTyping) {
-							_sendTypingStatus();
-						}
-
-						setState(() {
-							_isCommand = value.startsWith('/') && !value.contains('\n');
-						});
-					},
-					onSubmitted: (value) {
-						_submit();
-					},
-					// Prevent the virtual keyboard from being closed when
-					// sending a message
-					onEditingComplete: () {},
-					focusNode: _focusNode,
-					controller: _controller,
-					textInputAction: TextInputAction.send,
-					minLines: 1,
-					maxLines: 5,
-					keyboardType: TextInputType.text, // disallows newlines
-				),
-				direction: AxisDirection.up,
-				hideOnEmpty: true,
-				hideOnLoading: true,
-				// To allow to select a suggestion, type some more,
-				// then select another suggestion, without
-				// unfocusing the text field.
-				keepSuggestionsOnSuggestionSelected: true,
-				animationDuration: const Duration(milliseconds: 300),
-				debounceDuration: const Duration(milliseconds: 50),
-				itemBuilder: (context, suggestion) {
-					return ListTile(title: Text(suggestion));
-				},
-				suggestionsCallback: _generateSuggestions,
-				onSuggestionSelected: _handleSuggestionSelected,
+			Expanded(child: RawFlippedAutocomplete(
+				optionsBuilder: _buildOptions,
+				displayStringForOption: _displayStringForOption,
+				fieldViewBuilder: _buildTextField,
+				focusNode: _focusNode,
+				textEditingController: _controller,
+				optionsViewBuilder: _buildOptionsView,
 			)),
 			fab,
 		]));
