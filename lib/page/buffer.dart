@@ -437,10 +437,17 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 			bottomNavigationBar: Visibility(
 				visible: canSendMessage,
 				maintainState: true,
-				child: Material(elevation: 15, child: Container(
-					padding: EdgeInsets.all(10),
-					child: Composer(key: _composerKey),
-				)),
+				child: Padding(
+					// Hack to keep the bottomNavigationBar displayed when the
+					// virtual keyboard shows up
+					padding: EdgeInsets.only(
+						bottom: MediaQuery.of(context).viewInsets.bottom,
+					),
+					child: Material(elevation: 15, child: Container(
+						padding: EdgeInsets.all(10),
+						child: Composer(key: _composerKey),
+					)),
+				),
 			),
 		);
 	}
