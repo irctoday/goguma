@@ -266,9 +266,9 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 			}
 		}
 
-		Widget? joinBanner;
+		MaterialBanner? banner;
 		if (isOnline && isChannel && !buffer.joined && !buffer.joining) {
-			joinBanner = MaterialBanner(
+			banner = MaterialBanner(
 				content: Text('You have left this channel.'),
 				actions: [
 					TextButton(
@@ -285,8 +285,8 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 				],
 			);
 		}
-		if (joinBanner == null && buffer.archived) {
-			joinBanner = MaterialBanner(
+		if (banner == null && buffer.archived) {
+			banner = MaterialBanner(
 				content: Text('This conversation is archived.'),
 				actions: [
 					TextButton(
@@ -427,7 +427,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 				],
 			),
 			body: NetworkIndicator(network: network, child: Column(children: [
-				if (joinBanner != null) joinBanner,
+				if (banner != null) banner,
 				Expanded(child: Stack(children: [
 					msgList,
 					if (jumpToBottom != null) jumpToBottom,
