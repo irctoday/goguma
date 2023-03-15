@@ -180,6 +180,7 @@ class BufferEntry {
 class MessageEntry {
 	int? id;
 	final String time;
+	final String? networkMsgid;
 	final int buffer;
 	final String raw;
 
@@ -190,6 +191,7 @@ class MessageEntry {
 		return <String, Object?>{
 			'id': id,
 			'time': time,
+			'network_msgid': networkMsgid,
 			'buffer': buffer,
 			'raw': raw,
 		};
@@ -197,12 +199,14 @@ class MessageEntry {
 
 	MessageEntry(IrcMessage msg, this.buffer) :
 		time = msg.tags['time'] ?? formatIrcTime(DateTime.now()),
+		networkMsgid = msg.tags['msgid'],
 		raw = msg.toString(),
 		_msg = msg;
 
 	MessageEntry.fromMap(Map<String, dynamic> m) :
 		id = m['id'] as int,
 		time = m['time'] as String,
+		networkMsgid = m['msgid'] as String?,
 		buffer = m['buffer'] as int,
 		raw = m['raw'] as String;
 
@@ -356,6 +360,7 @@ const _schema = [
 		CREATE TABLE Message (
 			id INTEGER PRIMARY KEY,
 			time TEXT NOT NULL,
+			network_msgid TEXT,
 			buffer INTEGER NOT NULL,
 			raw TEXT NOT NULL,
 			FOREIGN KEY (buffer) REFERENCES Buffer(id) ON DELETE CASCADE
@@ -365,6 +370,7 @@ const _schema = [
 		CREATE INDEX index_message_buffer_time
 		ON Message(buffer, time);
 	''',
+	'CREATE INDEX index_message_network_msgid on Message(network_msgid);'
 	'''
 		CREATE TABLE WebPushSubscription (
 			id INTEGER PRIMARY KEY,
@@ -432,6 +438,8 @@ const _migrations = [
 	''',
 	'ALTER TABLE Network ADD COLUMN bouncer_name TEXT;',
 	'ALTER TABLE Buffer ADD COLUMN archived INTEGER NOT NULL DEFAULT 0;',
+	'ALTER TABLE Message ADD COLUMN network_msgid TEXT;',
+	'CREATE INDEX index_message_network_msgid on Message(network_msgid);'
 ];
 
 class DB {
@@ -652,7 +660,7 @@ class DB {
 			params += [msg, msg];
 		}
 		var entries = await _db.rawQuery('''
-			SELECT id, time, buffer, raw
+			SELECT id, time, network_msgid, buffer, raw
 			FROM Message
 			WHERE $where
 			ORDER BY time DESC LIMIT ?
