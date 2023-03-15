@@ -315,9 +315,15 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 				var msgIndex = messages.length - index - 1;
 				var msg = messages[msgIndex];
 				var prevMsg = msgIndex > 0 ? messages[msgIndex - 1] : null;
+				var key = ValueKey(msg.id);
 
 				if (compact) {
-					return _CompactMessageItem(msg: msg, prevMsg: prevMsg, last: msgIndex == messages.length - 1);
+					return _CompactMessageItem(
+						key: key,
+						msg: msg,
+						prevMsg: prevMsg,
+						last: msgIndex == messages.length - 1,
+					);
 				}
 
 				var nextMsg = msgIndex + 1 < messages.length ? messages[msgIndex + 1] : null;
@@ -328,7 +334,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 				}
 
 				return _MessageItem(
-					key: ValueKey(msg.id),
+					key: key,
 					msg: msg,
 					prevMsg: prevMsg,
 					nextMsg: nextMsg,
