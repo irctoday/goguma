@@ -206,7 +206,7 @@ class MessageEntry {
 	MessageEntry.fromMap(Map<String, dynamic> m) :
 		id = m['id'] as int,
 		time = m['time'] as String,
-		networkMsgid = m['msgid'] as String?,
+		networkMsgid = m['network_msgid'] as String?,
 		buffer = m['buffer'] as int,
 		raw = m['raw'] as String;
 
