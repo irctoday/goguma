@@ -104,22 +104,6 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		});
 	}
 
-	void _handleMessageSwipe(MessageModel msg) {
-		var buffer = context.read<BufferModel>();
-
-		// TODO: disable swap when source is not in channel
-		// TODO: query members when BufferPage is first displayed
-		var nickname = msg.msg.source!.name;
-		if (buffer.members != null && !buffer.members!.members.containsKey(nickname)) {
-			ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-				content: Text('This user is no longer in this channel.'),
-			));
-			return;
-		}
-
-		_composerKey.currentState!.setTextPrefix('$nickname: ');
-	}
-
 	void _handleScroll() {
 		if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
 			_fetchChatHistory();
@@ -330,7 +314,9 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 
 				VoidCallback? onSwipe;
 				if (isChannel && canSendMessage) {
-					onSwipe = () => _handleMessageSwipe(msg);
+					onSwipe = () {
+						_composerKey.currentState!.replyTo(msg);
+					};
 				}
 
 				return _MessageItem(

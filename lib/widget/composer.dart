@@ -26,6 +26,8 @@ class ComposerState extends State<Composer> {
 	bool _isCommand = false;
 
 	DateTime? _ownTyping;
+	String? _replyPrefix;
+	MessageModel? _replyTo;
 
 	int _getMaxPrivmsgLen() {
 		var buffer = context.read<BufferModel>();
@@ -50,6 +52,11 @@ class ComposerState extends State<Composer> {
 
 		List<IrcMessage> messages = [];
 		for (var line in text.split('\n')) {
+			Map<String, String?> tags = {};
+			if (messages.isEmpty && _replyTo?.msg.tags['msgid'] != null) {
+				tags['+draft/reply'] = _replyTo!.msg.tags['msgid']!;
+			}
+
 			while (maxLen > 1 && line.length > maxLen) {
 				// Pick a good cut-off index, preferably at a whitespace
 				// character
@@ -61,12 +68,12 @@ class ComposerState extends State<Composer> {
 				var leading = line.substring(0, i + 1);
 				line = line.substring(i + 1);
 
-				messages.add(IrcMessage('PRIVMSG', [buffer.name, leading]));
+				messages.add(IrcMessage('PRIVMSG', [buffer.name, leading], tags: tags));
 			}
 
 			// We'll get ERR_NOTEXTTOSEND if we try to send an empty message
 			if (line != '') {
-				messages.add(IrcMessage('PRIVMSG', [buffer.name, line]));
+				messages.add(IrcMessage('PRIVMSG', [buffer.name, line], tags: tags));
 			}
 		}
 
@@ -202,6 +209,8 @@ class ComposerState extends State<Composer> {
 		}
 
 		_setOwnTyping(false);
+		_replyPrefix = null;
+		_replyTo = null;
 		_controller.text = '';
 		_focusNode.requestFocus();
 		setState(() {
@@ -301,13 +310,28 @@ class ComposerState extends State<Composer> {
 		return notify;
 	}
 
-	void setTextPrefix(String prefix) {
+	void replyTo(MessageModel msg) {
+		var buffer = context.read<BufferModel>();
+
+		// TODO: disable swap when source is not in channel
+		// TODO: query members when BufferPage is first displayed
+		var nickname = msg.msg.source!.name;
+		if (buffer.members != null && !buffer.members!.members.containsKey(nickname)) {
+			ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+				content: Text('This user is no longer in this channel.'),
+			));
+			return;
+		}
+
+		var prefix = '$nickname: ';
 		if (prefix.startsWith('/')) {
 			// Insert a zero-width space to ensure this doesn't end up
 			// being executed as a command
 			prefix = '\u200B$prefix';
 		}
 
+		_replyPrefix = prefix;
+		_replyTo = msg;
 		if (!_controller.text.startsWith(prefix)) {
 			_controller.text = prefix + _controller.text;
 			_controller.selection = TextSelection.collapsed(offset: _controller.text.length);
@@ -335,6 +359,11 @@ class ComposerState extends State<Composer> {
 			onChanged: (value) {
 				if (sendTyping) {
 					_sendTypingStatus();
+				}
+
+				if (_replyPrefix != null && !value.startsWith(_replyPrefix!)) {
+					_replyPrefix = null;
+					_replyTo = null;
 				}
 
 				setState(() {
