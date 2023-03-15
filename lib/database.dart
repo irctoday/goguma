@@ -516,8 +516,7 @@ class DB {
 
 	Future<List<ServerEntry>> listServers() async {
 		var entries = await _db.rawQuery('''
-			SELECT id, host, port, tls, nick, pass, sasl_plain_username, sasl_plain_password
-			FROM Server ORDER BY id
+			SELECT * FROM Server ORDER BY id
 		''');
 		return entries.map((m) => ServerEntry.fromMap(m)).toList();
 	}
@@ -538,8 +537,7 @@ class DB {
 
 	Future<List<NetworkEntry>> listNetworks() async {
 		var entries = await _db.rawQuery('''
-			SELECT id, server, bouncer_id, bouncer_name, bouncer_uri, isupport, caps
-			FROM Network ORDER BY id
+			SELECT * FROM Network ORDER BY id
 		''');
 		return entries.map((m) => NetworkEntry.fromMap(m)).toList();
 	}
@@ -580,10 +578,7 @@ class DB {
 
 	Future<List<BufferEntry>> listBuffers() async {
 		var entries = await _db.rawQuery('''
-			SELECT id, name, network, last_read_time, pinned, muted, topic,
-				realname, archived
-			FROM Buffer
-			ORDER BY id
+			SELECT * FROM Buffer ORDER BY id
 		''');
 		return entries.map((m) => BufferEntry.fromMap(m)).toList();
 	}
@@ -660,7 +655,7 @@ class DB {
 			params += [msg, msg];
 		}
 		var entries = await _db.rawQuery('''
-			SELECT id, time, network_msgid, buffer, raw
+			SELECT *
 			FROM Message
 			WHERE $where
 			ORDER BY time DESC LIMIT ?
@@ -691,9 +686,7 @@ class DB {
 
 	Future<List<WebPushSubscriptionEntry>> listWebPushSubscriptions() async {
 		var entries = await _db.rawQuery('''
-			SELECT id, network, endpoint, tag, vapid_key, p256dh_public_key,
-				p256dh_private_key, auth_key, created_at
-			FROM WebPushSubscription
+			SELECT * FROM WebPushSubscription
 		''');
 		return entries.map((m) => WebPushSubscriptionEntry.fromMap(m)).toList();
 	}
@@ -712,9 +705,7 @@ class DB {
 
 	Future<LinkPreviewEntry?> fetchLinkPreview(String url) async {
 		var entries = await _db.rawQuery('''
-			SELECT id, url, status_code, mime_type, content_length, updated_at
-			FROM LinkPreview
-			WHERE url = ?
+			SELECT * FROM LinkPreview WHERE url = ?
 		''', [url]);
 		if (entries.isEmpty) {
 			return null;
