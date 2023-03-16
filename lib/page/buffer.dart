@@ -91,6 +91,11 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 
 		_scrollController.addListener(_handleScroll);
 
+		var buffer = context.read<BufferModel>();
+		if (buffer.messages.length >= 1000) {
+			return;
+		}
+
 		// Timer.run prevents calling setState() from inside initState()
 		Timer.run(() async {
 			try {
