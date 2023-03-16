@@ -117,7 +117,7 @@ class _NetworkDetailsPageState extends State<NetworkDetailsPage> {
 					var linkStyle = TextStyle(color: Colors.blue, decoration: TextDecoration.underline);
 					return DefaultTextStyle(
 						style: textStyle,
-						child: Text.rich(
+						child: SelectableText.rich(
 							linkify(context, motd, linkStyle: linkStyle),
 							textAlign: TextAlign.center,
 						),
