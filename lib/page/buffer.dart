@@ -85,6 +85,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 	bool _chatHistoryLoading = false;
 	int _initialScrollIndex = 0;
 	bool _isAtTop = false;
+	bool _isAtBottom = false;
 
 	bool _initialChatHistoryLoaded = false;
 	bool _showJumpToBottom = false;
@@ -107,6 +108,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 		var buffer = context.read<BufferModel>();
 		if (buffer.messages.length >= 1000) {
 			_setInitialChatHistoryLoaded();
+			_updateBufferFocus();
 			return;
 		}
 
@@ -125,19 +127,28 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 
 	void _handleScroll() {
 		var positions = _itemPositionsListener.itemPositions.value;
+		if (positions.isEmpty) {
+			return;
+		}
 
 		var buffer = context.read<BufferModel>();
-		var isAtTop = positions.last.index == buffer.messages.length - 1;
+		var isAtTop = positions.any((pos) => pos.index == buffer.messages.length - 1);
 		if (!_isAtTop && isAtTop) {
 			_fetchChatHistory();
 		}
 		_isAtTop = isAtTop;
 
-		var showJumpToBottom = positions.first.index >= 20;
+		var showJumpToBottom = positions.any((pos) => pos.index >= 20);
 		if (_showJumpToBottom != showJumpToBottom) {
 			setState(() {
 				_showJumpToBottom = showJumpToBottom;
 			});
+		}
+
+		var isAtBottom = positions.any((pos) => pos.index < 2);
+		if (_isAtBottom != isAtBottom) {
+			_isAtBottom = isAtBottom;
+			_updateBufferFocus();
 		}
 	}
 
@@ -239,7 +250,8 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 	void _updateBufferFocus() {
 		var buffer = context.read<BufferModel>();
 		var state = WidgetsBinding.instance.lifecycleState ?? AppLifecycleState.resumed;
-		buffer.focused = state == AppLifecycleState.resumed && _activated;
+		var positions = _itemPositionsListener.itemPositions.value;
+		buffer.focused = state == AppLifecycleState.resumed && _activated && _isAtBottom;
 		if (buffer.focused) {
 			_markRead();
 		}
