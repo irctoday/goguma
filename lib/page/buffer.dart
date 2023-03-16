@@ -659,7 +659,7 @@ class _MessageItem extends StatelessWidget {
 	final MessageModel? prevMsg, nextMsg;
 	final String? unreadMarkerTime;
 	final VoidCallback? onSwipe;
-	final Function(int)? onMsgRefTap;
+	final void Function(int)? onMsgRefTap;
 
 	const _MessageItem({
 		Key? key,
