@@ -381,7 +381,27 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 		}
 
 		Widget msgList;
-		if (_initialChatHistoryLoaded) {
+		if (_initialChatHistoryLoaded && messages.isEmpty) {
+			msgList = Center(child: Column(
+				mainAxisAlignment: MainAxisAlignment.center,
+				children: [
+					Icon(Icons.forum, size: 100),
+					Text(
+						buffer.name,
+						style: Theme.of(context).textTheme.headlineSmall,
+						textAlign: TextAlign.center,
+					),
+					SizedBox(height: 15),
+					Container(
+						constraints: BoxConstraints(maxWidth: 300),
+						child: Text(
+							'No messages yet in this conversation.',
+							textAlign: TextAlign.center,
+						),
+					),
+				],
+			));
+		} else if (_initialChatHistoryLoaded) {
 			msgList = ScrollablePositionedList.builder(
 				key: _listKey,
 				reverse: true,
