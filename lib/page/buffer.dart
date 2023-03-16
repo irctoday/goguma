@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../ansi.dart';
 import '../client.dart';
@@ -74,13 +75,17 @@ void _join(Client client, BufferModel buffer) async {
 }
 
 class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
-	final _scrollController = ScrollController();
+	final _itemScrollController = ItemScrollController();
+	final _itemPositionsListener = ItemPositionsListener.create();
 	final _listKey = GlobalKey();
 	final GlobalKey<ComposerState> _composerKey = GlobalKey();
 
 	bool _activated = true;
 	bool _chatHistoryLoading = false;
+	int _initialScrollIndex = 0;
+	bool _isAtTop = false;
 
+	bool _initialChatHistoryLoaded = false;
 	bool _showJumpToBottom = false;
 
 	@override
@@ -89,10 +94,11 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 
 		WidgetsBinding.instance.addObserver(this);
 
-		_scrollController.addListener(_handleScroll);
+		_itemPositionsListener.itemPositions.addListener(_handleScroll);
 
 		var buffer = context.read<BufferModel>();
 		if (buffer.messages.length >= 1000) {
+			_setInitialChatHistoryLoaded();
 			return;
 		}
 
@@ -110,11 +116,16 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 	}
 
 	void _handleScroll() {
-		if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
+		var positions = _itemPositionsListener.itemPositions.value;
+
+		var buffer = context.read<BufferModel>();
+		var isAtTop = positions.last.index == buffer.messages.length - 1;
+		if (!_isAtTop && isAtTop) {
 			_fetchChatHistory();
 		}
+		_isAtTop = isAtTop;
 
-		var showJumpToBottom = _scrollController.position.pixels > _scrollController.position.viewportDimension;
+		var showJumpToBottom = positions.first.index >= 20;
 		if (_showJumpToBottom != showJumpToBottom) {
 			setState(() {
 				_showJumpToBottom = showJumpToBottom;
@@ -145,6 +156,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 		buffer.populateMessageHistory(models.toList());
 
 		if (entries.length >= limit) {
+			setState(_setInitialChatHistoryLoaded);
 			return;
 		}
 
@@ -162,15 +174,35 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 			if (mounted) {
 				setState(() {
 					_chatHistoryLoading = false;
+					_setInitialChatHistoryLoaded();
 				});
+			}
+		}
+	}
+
+	void _setInitialChatHistoryLoaded() {
+		if (_initialChatHistoryLoaded) {
+			return;
+		}
+		_initialChatHistoryLoaded = true;
+
+		if (widget.unreadMarkerTime == null) {
+			return;
+		}
+
+		var buffer = context.read<BufferModel>();
+		for (var i = buffer.messages.length - 1; i >= 0; i--) {
+			var msg = buffer.messages[i];
+			if (widget.unreadMarkerTime!.compareTo(msg.entry.time) >= 0) {
+				_initialScrollIndex = buffer.messages.length - i - 1;
+				break;
 			}
 		}
 	}
 
 	@override
 	void dispose() {
-		_scrollController.removeListener(_handleScroll);
-		_scrollController.dispose();
+		_itemPositionsListener.itemPositions.removeListener(_handleScroll);
 		WidgetsBinding.instance.removeObserver(this);
 		super.dispose();
 	}
@@ -294,45 +326,53 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 			);
 		}
 
-		var msgList = ListView.builder(
-			key: _listKey,
-			reverse: true,
-			controller: _scrollController,
-			itemCount: messages.length,
-			itemBuilder: (context, index) {
-				var msgIndex = messages.length - index - 1;
-				var msg = messages[msgIndex];
-				var prevMsg = msgIndex > 0 ? messages[msgIndex - 1] : null;
-				var key = ValueKey(msg.id);
+		Widget msgList;
+		if (_initialChatHistoryLoaded) {
+			msgList = ScrollablePositionedList.builder(
+				key: _listKey,
+				reverse: true,
+				itemScrollController: _itemScrollController,
+				itemPositionsListener: _itemPositionsListener,
+				itemCount: messages.length,
+				initialScrollIndex: _initialScrollIndex,
+				initialAlignment: _initialScrollIndex > 0 ? 1 : 0,
+				itemBuilder: (context, index) {
+					var msgIndex = messages.length - index - 1;
+					var msg = messages[msgIndex];
+					var prevMsg = msgIndex > 0 ? messages[msgIndex - 1] : null;
+					var key = ValueKey(msg.id);
 
-				if (compact) {
-					return _CompactMessageItem(
+					if (compact) {
+						return _CompactMessageItem(
+							key: key,
+							msg: msg,
+							prevMsg: prevMsg,
+							last: msgIndex == messages.length - 1,
+						);
+					}
+
+					var nextMsg = msgIndex + 1 < messages.length ? messages[msgIndex + 1] : null;
+
+					VoidCallback? onSwipe;
+					if (isChannel && canSendMessage) {
+						onSwipe = () {
+							_composerKey.currentState!.replyTo(msg);
+						};
+					}
+
+					return _MessageItem(
 						key: key,
 						msg: msg,
 						prevMsg: prevMsg,
-						last: msgIndex == messages.length - 1,
+						nextMsg: nextMsg,
+						unreadMarkerTime: widget.unreadMarkerTime,
+						onSwipe: onSwipe,
 					);
-				}
-
-				var nextMsg = msgIndex + 1 < messages.length ? messages[msgIndex + 1] : null;
-
-				VoidCallback? onSwipe;
-				if (isChannel && canSendMessage) {
-					onSwipe = () {
-						_composerKey.currentState!.replyTo(msg);
-					};
-				}
-
-				return _MessageItem(
-					key: key,
-					msg: msg,
-					prevMsg: prevMsg,
-					nextMsg: nextMsg,
-					unreadMarkerTime: widget.unreadMarkerTime,
-					onSwipe: onSwipe,
-				);
-			},
-		);
+				},
+			);
+		} else {
+			msgList = Container();
+		}
 
 		Widget? jumpToBottom;
 		if (_showJumpToBottom) {
@@ -347,11 +387,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 					backgroundColor: Colors.grey,
 					foregroundColor: Colors.white,
 					onPressed: () {
-						_scrollController.animateTo(
-							0,
-							duration: Duration(milliseconds: 200),
-							curve: Curves.easeInOut,
-						);
+						_itemScrollController.jumpTo(index: 0);
 					},
 				),
 			);
