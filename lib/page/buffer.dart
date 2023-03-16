@@ -367,6 +367,17 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 						nextMsg: nextMsg,
 						unreadMarkerTime: widget.unreadMarkerTime,
 						onSwipe: onSwipe,
+						onMsgRefTap: (id) {
+							for (var i = 0; i < messages.length; i++) {
+								if (messages[i].id == id) {
+									_itemScrollController.jumpTo(
+										index: messages.length - i - 1,
+										alignment: 0.5,
+									);
+									break;
+								}
+							}
+						},
 					);
 				},
 			);
@@ -611,6 +622,7 @@ class _MessageItem extends StatelessWidget {
 	final MessageModel? prevMsg, nextMsg;
 	final String? unreadMarkerTime;
 	final VoidCallback? onSwipe;
+	final Function(int)? onMsgRefTap;
 
 	const _MessageItem({
 		Key? key,
@@ -618,7 +630,8 @@ class _MessageItem extends StatelessWidget {
 		this.prevMsg,
 		this.nextMsg,
 		this.unreadMarkerTime,
-		this.onSwipe
+		this.onSwipe,
+		this.onMsgRefTap,
 	}) : super(key: key);
 
 	@override
@@ -725,13 +738,18 @@ class _MessageItem extends StatelessWidget {
 
 				replyChip = WidgetSpan(
 					alignment: PlaceholderAlignment.middle,
-					child: SelectionContainer.disabled(child: Chip(
+					child: SelectionContainer.disabled(child: ActionChip(
 						avatar: Icon(Icons.reply, size: 16, color: textColor),
 						label: Text(replyNickname),
 						labelPadding: EdgeInsets.only(right: 4),
 						backgroundColor: Color.alphaBlend(textColor.withOpacity(0.15), boxColor),
 						labelStyle: TextStyle(color: textColor),
 						visualDensity: VisualDensity(vertical: -4),
+						onPressed: () {
+							if (onMsgRefTap != null) {
+								onMsgRefTap!(msg.replyTo!.id!);
+							}
+						},
 					)),
 				);
 			}
