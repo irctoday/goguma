@@ -250,7 +250,6 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 	void _updateBufferFocus() {
 		var buffer = context.read<BufferModel>();
 		var state = WidgetsBinding.instance.lifecycleState ?? AppLifecycleState.resumed;
-		var positions = _itemPositionsListener.itemPositions.value;
 		buffer.focused = state == AppLifecycleState.resumed && _activated && _isAtBottom;
 		if (buffer.focused) {
 			_markRead();
