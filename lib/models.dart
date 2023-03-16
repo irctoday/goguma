@@ -487,6 +487,9 @@ class BufferModel extends ChangeNotifier {
 
 	void addMessages(Iterable<MessageModel> msgs, { bool append = false }) {
 		assert(messageHistoryLoaded);
+		if (msgs.isEmpty) {
+			return;
+		}
 		if (append) {
 			_messages.addAll(msgs);
 		} else {
