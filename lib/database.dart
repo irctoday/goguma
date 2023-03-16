@@ -671,6 +671,21 @@ class DB {
 		return l;
 	}
 
+	Future<Map<String, MessageEntry>> fetchMessageSetByNetworkMsgid(int buffer, List<String> msgids) async {
+		var inList = List.filled(msgids.length, '?').join(', ');
+		var entries = await _db.rawQuery('''
+			SELECT *
+			FROM Message
+			WHERE buffer = ? AND network_msgid IN ($inList)
+		''', <Object>[buffer] + msgids);
+		Map<String, MessageEntry> messages = {};
+		for (var m in entries) {
+			var entry = MessageEntry.fromMap(m);
+			messages[entry.networkMsgid!] = entry;
+		}
+		return messages;
+	}
+
 	Future<void> storeMessages(List<MessageEntry> entries) async {
 		await _db.transaction((txn) async {
 			await Future.wait(entries.map((entry) async {

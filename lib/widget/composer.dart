@@ -4,6 +4,7 @@ import 'package:flutter_flipped_autocomplete/flutter_flipped_autocomplete.dart';
 import 'package:provider/provider.dart';
 
 import '../client.dart';
+import '../client_controller.dart';
 import '../database.dart';
 import '../irc.dart';
 import '../models.dart';
@@ -101,11 +102,7 @@ class ComposerState extends State<Composer> {
 			}
 			await db.storeMessages(entries);
 
-			List<MessageModel> models = [];
-			for (var entry in entries) {
-				models.add(MessageModel(entry: entry));
-			}
-
+			var models = await buildMessageModelList(db, entries);
 			if (buffer.messageHistoryLoaded) {
 				buffer.addMessages(models, append: true);
 			}

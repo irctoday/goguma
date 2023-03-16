@@ -136,9 +136,8 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver {
 
 		var limit = 1000;
 		var entries = await db.listMessagesBefore(buffer.id, firstMsgId, limit);
-		buffer.populateMessageHistory(entries.map((entry) {
-			return MessageModel(entry: entry);
-		}).toList());
+		var models = await buildMessageModelList(db, entries);
+		buffer.populateMessageHistory(models.toList());
 
 		if (entries.length >= limit) {
 			return;
@@ -673,10 +672,35 @@ class _MessageItem extends StatelessWidget {
 				linkify(context, actionText, linkStyle: linkStyle),
 			];
 		} else {
-			var body = stripAnsiFormatting(ircMsg.params[1]);
+			var body = ircMsg.params[1];
+			WidgetSpan? replyChip;
+			if (msg.replyTo != null && msg.replyTo!.msg.source != null) {
+				var replyNickname = msg.replyTo!.msg.source!.name;
+
+				var replyPrefix = '$replyNickname: ';
+				if (body.startsWith(replyPrefix)) {
+					body = body.replaceFirst(replyPrefix, '');
+				}
+
+				replyChip = WidgetSpan(
+					alignment: PlaceholderAlignment.middle,
+					child: SelectionContainer.disabled(child: Chip(
+						avatar: Icon(Icons.reply, size: 16, color: textColor),
+						label: Text(replyNickname),
+						labelPadding: EdgeInsets.only(right: 4),
+						backgroundColor: Color.alphaBlend(textColor.withOpacity(0.15), boxColor),
+						labelStyle: TextStyle(color: textColor),
+						visualDensity: VisualDensity(vertical: -4),
+					)),
+				);
+			}
+
+			body = stripAnsiFormatting(body);
 			content = [
 				if (isFirstInGroup) senderTextSpan,
 				if (isFirstInGroup) TextSpan(text: '\n'),
+				if (replyChip != null) replyChip,
+				if (replyChip != null) WidgetSpan(child: SizedBox(width: 5, height: 5)),
 				linkify(context, body, linkStyle: linkStyle),
 			];
 
@@ -696,9 +720,7 @@ class _MessageItem extends StatelessWidget {
 			}
 		}
 
-		Widget inner = SelectableText.rich(TextSpan(
-			children: content,
-		));
+		Widget inner = SelectionArea(child: Text.rich(TextSpan(children: content)));
 
 		if (showTime) {
 			var hh = localDateTime.hour.toString().padLeft(2, '0');

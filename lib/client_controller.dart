@@ -724,7 +724,8 @@ class ClientController {
 		var entries = messages.map((msg) => MessageEntry(msg, buf!.id)).toList();
 		await _db.storeMessages(entries);
 		if (buf.messageHistoryLoaded) {
-			buf.addMessages(entries.map((entry) => MessageModel(entry: entry)), append: !isHistory);
+			var models = await buildMessageModelList(_db, entries);
+			buf.addMessages(models, append: !isHistory);
 		}
 
 		String t = entries.first.time;
@@ -1067,4 +1068,29 @@ IrcUri? _uriFromBouncerNetworkModel(BouncerNetworkModel bouncerNetwork) {
 		host: bouncerNetwork.host!,
 		port: bouncerNetwork.port,
 	);
+}
+
+Future<Iterable<MessageModel>> buildMessageModelList(DB db, List<MessageEntry> entries) async {
+	if (entries.isEmpty) {
+		return [];
+	}
+
+	List<String> msgids = [];
+	for (var entry in entries) {
+		var parentMsgid = entry.msg.tags['+draft/reply'];
+		if (parentMsgid != null) {
+			msgids.add(parentMsgid);
+		}
+	}
+
+	var bufferId = entries.first.buffer;
+	var parents = await db.fetchMessageSetByNetworkMsgid(bufferId, msgids);
+	return entries.map((entry) {
+		MessageEntry? replyTo;
+		var parentMsgid = entry.msg.tags['+draft/reply'];
+		if (parentMsgid != null) {
+			replyTo = parents[parentMsgid];
+		}
+		return MessageModel(entry: entry, replyTo: replyTo);
+	});
 }

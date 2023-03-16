@@ -549,8 +549,9 @@ int _compareMessageModels(MessageModel a, MessageModel b) {
 
 class MessageModel {
 	final MessageEntry entry;
+	final MessageEntry? replyTo;
 
-	MessageModel({ required this.entry }) {
+	MessageModel({ required this.entry, this.replyTo }) {
 		assert(entry.id != null);
 	}
 
