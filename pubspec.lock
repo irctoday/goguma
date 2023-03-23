@@ -646,12 +646,13 @@ packages:
     source: hosted
     version: "4.0.3"
   unifiedpush_android:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      name: unifiedpush_android
-      sha256: f69a30edcd6f777d0d2877429558ab8615fe6691a21ea7d4563406373582c5e0
-      url: "https://pub.dev"
-    source: hosted
+      path: unifiedpush_android
+      ref: single-engine
+      resolved-ref: "8922f740b084e2a83402913194f3c498d9245f15"
+      url: "https://github.com/emersion/UnifiedPush-flutter-connector.git"
+    source: git
     version: "1.1.2"
   unifiedpush_platform_interface:
     dependency: transitive
