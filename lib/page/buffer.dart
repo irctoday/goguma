@@ -150,6 +150,13 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 			_isAtBottom = isAtBottom;
 			_updateBufferFocus();
 		}
+
+		// Workaround for the last messages becoming hidden when the virtual
+		// keyboard is opened: reset the alignment to 0.
+		if (_initialScrollIndex != 0 && positions.any((pos) => pos.index == 0 && pos.itemLeadingEdge == 0)) {
+			_itemScrollController.jumpTo(index: 0, alignment: 0);
+			_initialScrollIndex = 0;
+		}
 	}
 
 	Future<void> _fetchChatHistory() async {
