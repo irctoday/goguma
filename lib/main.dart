@@ -325,9 +325,9 @@ Future<void> _handleWorkManagerSync() async {
 	}
 }
 
-Future<void> _waitNetworkOnline(NetworkModel network) {
+Future<void> _waitNetworkOnline(NetworkModel network) async {
 	if (network.state == NetworkState.online) {
-		return Future.value(null);
+		return;
 	}
 
 	var completer = Completer<void>();
@@ -348,7 +348,10 @@ Future<void> _waitNetworkOnline(NetworkModel network) {
 		}
 	}
 	network.addListener(listener);
-	return completer.future.timeout(Duration(minutes: 5)).whenComplete(() {
+
+	try {
+		await completer.future.timeout(const Duration(minutes: 5));
+	} finally {
 		network.removeListener(listener);
-	});
+	}
 }
