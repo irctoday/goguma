@@ -37,6 +37,10 @@ class Logger {
 	void reportFlutterError(FlutterErrorDetails details) async {
 		FlutterError.dumpErrorToConsole(details, forceReport: true);
 
+		if (details.silent) {
+			return;
+		}
+
 		// Workaround: we get some uncaught SocketException on Android without
 		// a stack. Ignore these.
 		// TODO: figure out where they're coming from.
