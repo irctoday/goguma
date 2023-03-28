@@ -282,6 +282,7 @@ class LinkPreviewEntry {
 	int? statusCode;
 	String? mimeType;
 	int? contentLength;
+	String? imageUrl;
 	DateTime updatedAt;
 
 	LinkPreviewEntry({
@@ -289,6 +290,7 @@ class LinkPreviewEntry {
 		this.statusCode,
 		this.mimeType,
 		this.contentLength,
+		this.imageUrl,
 	}) :
 		updatedAt = DateTime.now();
 
@@ -298,6 +300,7 @@ class LinkPreviewEntry {
 		statusCode = m['status_code'] as int?,
 		mimeType = m['mime_type'] as String?,
 		contentLength = m['content_length'] as int?,
+		imageUrl = m['image_url'] as String?,
 		updatedAt = DateTime.parse(m['updated_at'] as String);
 
 	Map<String, Object?> toMap() {
@@ -307,6 +310,7 @@ class LinkPreviewEntry {
 			'status_code': statusCode,
 			'mime_type': mimeType,
 			'content_length': contentLength,
+			'image_url': imageUrl,
 			'updated_at': formatIrcTime(updatedAt),
 		};
 	}
@@ -393,6 +397,7 @@ const _schema = [
 			status_code INTEGER,
 			mime_type TEXT,
 			content_length INTEGER,
+			image_url TEXT,
 			updated_at TEXT NOT NULL
 		);
 	''',
@@ -439,7 +444,8 @@ const _migrations = [
 	'ALTER TABLE Network ADD COLUMN bouncer_name TEXT;',
 	'ALTER TABLE Buffer ADD COLUMN archived INTEGER NOT NULL DEFAULT 0;',
 	'ALTER TABLE Message ADD COLUMN network_msgid TEXT;',
-	'CREATE INDEX index_message_network_msgid on Message(network_msgid);'
+	'CREATE INDEX index_message_network_msgid on Message(network_msgid);',
+	'ALTER TABLE LinkPreview ADD COLUMN image_url TEXT;',
 ];
 
 class DB {

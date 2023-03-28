@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:html/parser.dart' as html;
 import 'package:linkify/linkify.dart' as lnk;
 
 import 'database.dart';
@@ -8,6 +9,8 @@ import 'linkify.dart';
 import 'logging.dart';
 
 const maxPhotoSize = 10 * 1024 * 1024;
+const maxHtmlSize = 1 * 1024 * 1024;
+const peekHtmlSize = 4096;
 
 class LinkPreviewer {
 	final HttpClient _client = HttpClient();
@@ -21,8 +24,39 @@ class LinkPreviewer {
 		_client.close();
 	}
 
+	bool _validateUrl(Uri url) {
+		return url.scheme == 'https' && !url.host.isEmpty;
+	}
+
+	bool _validateUrlStr(String str) {
+		var url = Uri.tryParse(str);
+		return url != null && _validateUrl(url);
+	}
+
+	Future<LinkPreviewEntry> _fetchHtmlPreview(Uri url, LinkPreviewEntry entry, bool reqRange) async {
+		var req = await _client.getUrl(url);
+		if (reqRange) {
+			req.headers.set('Range', 'bytes=0-${peekHtmlSize-1}');
+		}
+		var resp = await req.close();
+		if (resp.statusCode ~/ 100 != 2) {
+			throw Exception('HTTP error fetching $url: ${resp.statusCode}');
+		}
+		var buf = await resp.take(peekHtmlSize).reduce((a, b) => [...a, ...b]);
+		// TODO: find a way to discard the rest of the response?
+		var doc = html.parse(buf);
+		// OpenGraph, see https://ogp.me/
+		var ogImage = doc.querySelector('head > meta[property="og:image"]');
+		var ogImageStr = ogImage?.attributes['content'];
+		if (ogImageStr != null && _validateUrlStr(ogImageStr)) {
+			entry.imageUrl = ogImage?.attributes['content'];
+		}
+		// TODO: add support for oEmbed, see https://oembed.com/
+		return entry;
+	}
+
 	Future<LinkPreviewEntry?> _fetchPreview(Uri url) async {
-		if (url.scheme != 'https' || url.host.isEmpty) {
+		if (!_validateUrl(url)) {
 			return null;
 		}
 
@@ -32,25 +66,28 @@ class LinkPreviewer {
 			throw Exception('HTTP error fetching $url: ${resp.statusCode}');
 		}
 
-		if (resp.headers.contentType?.primaryType != 'image') {
-			return null;
-		}
-		if (resp.headers.contentLength > maxPhotoSize) {
-			return null;
-		}
-
-		return LinkPreviewEntry(
+		var entry = LinkPreviewEntry(
 			url: url.toString(),
 			statusCode: resp.statusCode,
 			mimeType: resp.headers.contentType?.mimeType,
 			contentLength: resp.headers.contentLength > 0 ? resp.headers.contentLength : null,
 		);
+
+		if (resp.headers.contentType?.mimeType == 'text/html') {
+			var acceptsByteRanges = resp.headers.value('Accept-Ranges') == 'bytes';
+			var useByteRanges = resp.headers.contentLength > peekHtmlSize && acceptsByteRanges;
+			if (useByteRanges || resp.headers.contentLength < maxHtmlSize) {
+				return await _fetchHtmlPreview(url, entry, useByteRanges);
+			}
+		}
+
+		return entry;
 	}
 
 	Future<PhotoPreview?> _previewUrl(Uri url) async {
 		var entry = await _db.fetchLinkPreview(url.toString());
 		if (entry != null) {
-			return PhotoPreview(url);
+			return PhotoPreview._fromEntry(entry);
 		}
 
 		try {
@@ -63,7 +100,7 @@ class LinkPreviewer {
 		}
 
 		await _db.storeLinkPreview(entry);
-		return PhotoPreview(url);
+		return PhotoPreview._fromEntry(entry);
 	}
 
 	Future<PhotoPreview?> previewUrl(Uri url) async {
@@ -132,4 +169,22 @@ class PhotoPreview {
 	final Uri url;
 
 	PhotoPreview(this.url);
+
+	static PhotoPreview? _fromEntry(LinkPreviewEntry entry) {
+		var mimeType = entry.mimeType;
+		if (mimeType == null) {
+			return null;
+		}
+
+		if (mimeType.startsWith('image/')) {
+			if (entry.contentLength != null && entry.contentLength! > maxPhotoSize) {
+				return null;
+			}
+			return PhotoPreview(Uri.parse(entry.url));
+		} else if (entry.imageUrl != null) {
+			return PhotoPreview(Uri.parse(entry.imageUrl!));
+		} else {
+			return null;
+		}
+	}
 }
