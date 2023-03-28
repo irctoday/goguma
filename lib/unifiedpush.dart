@@ -64,7 +64,9 @@ class UnifiedPushController extends PushController {
 		var completer = Completer<PushSubscription>();
 		_pendingSubscriptions[instance] = completer;
 		try {
-			return await completer.future.timeout(Duration(seconds: 30));
+			return await completer.future.timeout(Duration(seconds: 30), onTimeout: () {
+				throw TimeoutException('Timed out creating UnifiedPush subscription');
+			});
 		} finally {
 			_pendingSubscriptions.remove(instance);
 		}
