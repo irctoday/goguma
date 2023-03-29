@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:html/parser.dart' as html;
 import 'package:html/dom.dart' as htmldom;
@@ -10,8 +11,9 @@ import 'linkify.dart';
 import 'logging.dart';
 
 const maxPhotoSize = 10 * 1024 * 1024;
-const maxHtmlSize = 1 * 1024 * 1024;
-const peekHtmlSize = 4096;
+const maxHtmlSize = 2 * 1024 * 1024;
+const minPeekHtmlSize = 50 * 1024;
+const maxPeekHtmlSize = 500 * 1024;
 const minImageDimensions = 250;
 
 class LinkPreviewer {
@@ -36,7 +38,7 @@ class LinkPreviewer {
 	}
 
 	String? _findOpenGraph(htmldom.Document doc, String name) {
-		var elem = doc.querySelector('head > meta[property="$name"]');
+		var elem = doc.head?.querySelector('meta[property="$name"]');
 		return elem?.attributes['content'];
 	}
 
@@ -48,24 +50,59 @@ class LinkPreviewer {
 		return int.tryParse(value);
 	}
 
+	bool _findBodyTag(List<int> buf) {
+		var pattern = '<body';
+		var offset = 0;
+		for (var byte in buf) {
+			var ch = String.fromCharCode(byte);
+			if (offset == pattern.length && (ch == '>' || ch == ' ')) {
+				return true;
+			}
+			if (ch.toLowerCase() == pattern[offset]) {
+				offset++;
+			} else {
+				offset = 0;
+			}
+		}
+		return false;
+	}
+
 	Future<LinkPreviewEntry> _fetchHtmlPreview(Uri url, LinkPreviewEntry entry, bool reqRange) async {
 		var req = await _client.getUrl(url);
 		if (reqRange) {
-			req.headers.set('Range', 'bytes=0-${peekHtmlSize-1}');
+			req.headers.set('Range', 'bytes=0-${maxPeekHtmlSize-1}');
 		}
 		var resp = await req.close();
 		if (resp.statusCode ~/ 100 != 2) {
 			throw Exception('HTTP error fetching $url: ${resp.statusCode}');
 		}
-		List<int> buf = [];
+
+		// Continue reading the response body until we find a <body> tag. Some
+		// web pages (e.g. YouTube) have OpenGraph metadata at the end of the
+		// <head> and require us to read 500KiB.
+		var peekSize = minPeekHtmlSize;
+		var bytesBuilder = BytesBuilder(copy: false);
 		await for (var chunk in resp) {
-			buf.addAll(chunk);
-			if (buf.length >= peekHtmlSize) {
+			bytesBuilder.add(chunk);
+
+			if (bytesBuilder.length < peekSize) {
+				continue;
+			}
+
+			if (_findBodyTag(bytesBuilder.toBytes())) {
 				break;
+			}
+
+			if (peekSize >= maxPeekHtmlSize) {
+				break;
+			}
+			peekSize *= 2;
+			if (peekSize > maxPeekHtmlSize) {
+				peekSize = maxPeekHtmlSize;
 			}
 		}
 		// TODO: find a way to discard the rest of the response?
-		var doc = html.parse(buf);
+		var doc = html.parse(bytesBuilder.toBytes());
 
 		// OpenGraph, see https://ogp.me/
 		var ogImage = _findOpenGraph(doc, 'og:image');
@@ -100,7 +137,7 @@ class LinkPreviewer {
 
 		if (resp.headers.contentType?.mimeType == 'text/html') {
 			var acceptsByteRanges = resp.headers.value('Accept-Ranges') == 'bytes';
-			var useByteRanges = resp.headers.contentLength > peekHtmlSize && acceptsByteRanges;
+			var useByteRanges = resp.headers.contentLength > maxPeekHtmlSize && acceptsByteRanges;
 			if (useByteRanges || resp.headers.contentLength < maxHtmlSize) {
 				return await _fetchHtmlPreview(url, entry, useByteRanges);
 			}
