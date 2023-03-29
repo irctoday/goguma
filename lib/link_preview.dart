@@ -57,7 +57,13 @@ class LinkPreviewer {
 		if (resp.statusCode ~/ 100 != 2) {
 			throw Exception('HTTP error fetching $url: ${resp.statusCode}');
 		}
-		var buf = await resp.take(peekHtmlSize).reduce((a, b) => [...a, ...b]);
+		List<int> buf = [];
+		await for (var chunk in resp) {
+			buf.addAll(chunk);
+			if (buf.length >= peekHtmlSize) {
+				break;
+			}
+		}
 		// TODO: find a way to discard the rest of the response?
 		var doc = html.parse(buf);
 
