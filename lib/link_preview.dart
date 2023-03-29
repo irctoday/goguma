@@ -111,7 +111,7 @@ class LinkPreviewer {
 		var ogImage = _findOpenGraph(doc, 'og:image');
 		var ogImageWidth = _findOpenGraphInt(doc, 'og:image:width');
 		var ogImageHeight = _findOpenGraphInt(doc, 'og:image:height');
-		var imageDimValid = (ogImageWidth ?? minImageDimensions) >= minImageDimensions && (ogImageHeight ?? minImageDimensions) >= minImageDimensions;
+		var imageDimValid = (ogImageWidth ?? 0) >= minImageDimensions && (ogImageHeight ?? 0) >= minImageDimensions;
 		if (ogImage != null && _validateUrlStr(ogImage) && imageDimValid) {
 			entry.imageUrl = ogImage;
 		}
