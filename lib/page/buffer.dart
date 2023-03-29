@@ -187,6 +187,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 		}
 
 		if (!client.caps.enabled.contains('draft/chathistory')) {
+			setState(_setInitialChatHistoryLoaded);
 			return;
 		}
 
