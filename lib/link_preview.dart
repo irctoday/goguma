@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+// See https://github.com/dart-lang/linter/issues/4234
+// ignore: unnecessary_import
 import 'dart:typed_data';
 
 import 'package:html/parser.dart' as html;
