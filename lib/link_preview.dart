@@ -49,7 +49,8 @@ class LinkPreviewer {
 		if (value == null) {
 			return null;
 		}
-		return int.tryParse(value);
+		// Some websites use floating-point numbers instead of integers...
+		return double.tryParse(value)?.round();
 	}
 
 	bool _findBodyTag(List<int> buf) {
