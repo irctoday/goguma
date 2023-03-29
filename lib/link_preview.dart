@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:html/parser.dart' as html;
+import 'package:html/dom.dart' as htmldom;
 import 'package:linkify/linkify.dart' as lnk;
 
 import 'database.dart';
@@ -11,6 +12,7 @@ import 'logging.dart';
 const maxPhotoSize = 10 * 1024 * 1024;
 const maxHtmlSize = 1 * 1024 * 1024;
 const peekHtmlSize = 4096;
+const minImageDimensions = 250;
 
 class LinkPreviewer {
 	final HttpClient _client = HttpClient();
@@ -33,6 +35,19 @@ class LinkPreviewer {
 		return url != null && _validateUrl(url);
 	}
 
+	String? _findOpenGraph(htmldom.Document doc, String name) {
+		var elem = doc.querySelector('head > meta[property="$name"]');
+		return elem?.attributes['content'];
+	}
+
+	int? _findOpenGraphInt(htmldom.Document doc, String name) {
+		var value = _findOpenGraph(doc, name);
+		if (value == null) {
+			return null;
+		}
+		return int.tryParse(value);
+	}
+
 	Future<LinkPreviewEntry> _fetchHtmlPreview(Uri url, LinkPreviewEntry entry, bool reqRange) async {
 		var req = await _client.getUrl(url);
 		if (reqRange) {
@@ -45,12 +60,16 @@ class LinkPreviewer {
 		var buf = await resp.take(peekHtmlSize).reduce((a, b) => [...a, ...b]);
 		// TODO: find a way to discard the rest of the response?
 		var doc = html.parse(buf);
+
 		// OpenGraph, see https://ogp.me/
-		var ogImage = doc.querySelector('head > meta[property="og:image"]');
-		var ogImageStr = ogImage?.attributes['content'];
-		if (ogImageStr != null && _validateUrlStr(ogImageStr)) {
-			entry.imageUrl = ogImage?.attributes['content'];
+		var ogImage = _findOpenGraph(doc, 'og:image');
+		var ogImageWidth = _findOpenGraphInt(doc, 'og:image:width');
+		var ogImageHeight = _findOpenGraphInt(doc, 'og:image:height');
+		var imageDimValid = (ogImageWidth ?? minImageDimensions) >= minImageDimensions && (ogImageHeight ?? minImageDimensions) >= minImageDimensions;
+		if (ogImage != null && _validateUrlStr(ogImage) && imageDimValid) {
+			entry.imageUrl = ogImage;
 		}
+
 		// TODO: add support for oEmbed, see https://oembed.com/
 		return entry;
 	}
