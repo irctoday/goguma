@@ -21,8 +21,8 @@ const minImageDimensions = 250;
 class LinkPreviewer {
 	final HttpClient _client = HttpClient();
 	final DB _db;
-	final Map<String, Future<PhotoPreview?>> _pending = {};
-	final Map<String, PhotoPreview?> _cached = {};
+	final Map<String, Future<LinkPreview?>> _pending = {};
+	final Map<String, LinkPreview?> _cached = {};
 
 	LinkPreviewer(DB db) : _db = db;
 
@@ -149,10 +149,10 @@ class LinkPreviewer {
 		return entry;
 	}
 
-	Future<PhotoPreview?> _previewUrl(Uri url) async {
+	Future<LinkPreview?> _previewUrl(Uri url) async {
 		var entry = await _db.fetchLinkPreview(url.toString());
 		if (entry != null) {
-			return PhotoPreview._fromEntry(entry);
+			return LinkPreview._fromEntry(entry);
 		}
 
 		try {
@@ -165,10 +165,10 @@ class LinkPreviewer {
 		}
 
 		await _db.storeLinkPreview(entry);
-		return PhotoPreview._fromEntry(entry);
+		return LinkPreview._fromEntry(entry);
 	}
 
-	Future<PhotoPreview?> previewUrl(Uri url) async {
+	Future<LinkPreview?> previewUrl(Uri url) async {
 		var k = url.toString();
 
 		if (_cached.containsKey(k)) {
@@ -182,7 +182,7 @@ class LinkPreviewer {
 
 		var future = _previewUrl(url);
 		_pending[k] = future;
-		PhotoPreview? preview;
+		LinkPreview? preview;
 		try {
 			preview = await future;
 		} finally {
@@ -193,10 +193,10 @@ class LinkPreviewer {
 		return preview;
 	}
 
-	Future<List<PhotoPreview>> previewText(String text) async {
+	Future<List<LinkPreview>> previewText(String text) async {
 		var links = extractLinks(text);
 
-		List<PhotoPreview> previews = [];
+		List<LinkPreview> previews = [];
 		await Future.wait(links.map((link) async {
 			if (link is lnk.UrlElement) {
 				var preview = await previewUrl(Uri.parse(link.url));
@@ -209,10 +209,10 @@ class LinkPreviewer {
 		return previews;
 	}
 
-	List<PhotoPreview>? cachedPreviewText(String text) {
+	List<LinkPreview>? cachedPreviewText(String text) {
 		var links = extractLinks(text);
 
-		List<PhotoPreview> previews = [];
+		List<LinkPreview> previews = [];
 		for (var link in links) {
 			if (!(link is lnk.UrlElement)) {
 				continue;
@@ -230,26 +230,43 @@ class LinkPreviewer {
 	}
 }
 
-class PhotoPreview {
+abstract class LinkPreview {
 	final Uri url;
 
-	PhotoPreview(this.url);
+	Uri get imageUrl;
 
-	static PhotoPreview? _fromEntry(LinkPreviewEntry entry) {
+	LinkPreview._(this.url);
+
+	static LinkPreview? _fromEntry(LinkPreviewEntry entry) {
 		var mimeType = entry.mimeType;
 		if (mimeType == null) {
 			return null;
 		}
 
+		var url = Uri.parse(entry.url);
 		if (mimeType.startsWith('image/')) {
 			if (entry.contentLength != null && entry.contentLength! > maxPhotoSize) {
 				return null;
 			}
-			return PhotoPreview(Uri.parse(entry.url));
+			return PhotoPreview(url);
 		} else if (entry.imageUrl != null) {
-			return PhotoPreview(Uri.parse(entry.imageUrl!));
+			return PagePreview(url, Uri.parse(entry.imageUrl!));
 		} else {
 			return null;
 		}
 	}
+}
+
+class PhotoPreview extends LinkPreview {
+	PhotoPreview(Uri url) : super._(url);
+
+	@override
+	Uri get imageUrl => url;
+}
+
+class PagePreview extends LinkPreview {
+	@override
+	final Uri imageUrl;
+
+	PagePreview(Uri url, this.imageUrl) : super._(url);
 }

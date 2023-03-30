@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import '../link_preview.dart';
+import '../link_preview.dart' as lib;
 import '../page/gallery.dart';
 
 typedef LinkPreviewBuilder = Widget Function(BuildContext context, Widget child);
@@ -18,15 +19,15 @@ class LinkPreview extends StatelessWidget {
 
 	@override
 	Widget build(BuildContext context) {
-		var linkPreviewer = context.read<LinkPreviewer>();
+		var linkPreviewer = context.read<lib.LinkPreviewer>();
 		// Try to populate the initial data from cache, to avoid jitter in
 		// the UI
 		var cached = linkPreviewer.cachedPreviewText(text);
-		Future<List<PhotoPreview>>? future;
+		Future<List<lib.LinkPreview>>? future;
 		if (cached == null) {
 			future = linkPreviewer.previewText(text);
 		}
-		return FutureBuilder<List<PhotoPreview>>(
+		return FutureBuilder<List<lib.LinkPreview>>(
 			future: future,
 			initialData: cached,
 			builder: (context, snapshot) {
@@ -46,7 +47,7 @@ class LinkPreview extends StatelessWidget {
 }
 
 class _PhotoPreview extends StatelessWidget {
-	final PhotoPreview preview;
+	final lib.LinkPreview preview;
 	final Object _heroTag;
 
 	_PhotoPreview(this.preview, { Key? key }) : _heroTag = Object(), super(key: key);
@@ -54,14 +55,21 @@ class _PhotoPreview extends StatelessWidget {
 	@override
 	Widget build(BuildContext context) {
 		return InkWell(
-			onTap: () {
-				Navigator.pushNamed(context, GalleryPage.routeName, arguments: GalleryPageArguments(
-					uri: preview.url,
-					heroTag: _heroTag,
-				));
+			onTap: () async {
+				if (preview is lib.PhotoPreview) {
+					await Navigator.pushNamed(context, GalleryPage.routeName, arguments: GalleryPageArguments(
+						uri: preview.url,
+						heroTag: _heroTag,
+					));
+				} else {
+					bool ok = await launchUrl(preview.url, mode: LaunchMode.externalApplication);
+					if (!ok) {
+						throw Exception('Failed to launch URL: ${preview.url}');
+					}
+				}
 			},
 			child: Hero(tag: _heroTag, child: Image.network(
-				preview.url.toString(),
+				preview.imageUrl.toString(),
 				height: 250,
 				fit: BoxFit.cover,
 				filterQuality: FilterQuality.medium,
