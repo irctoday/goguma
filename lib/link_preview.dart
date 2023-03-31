@@ -108,7 +108,13 @@ class LinkPreviewer {
 			}
 		}
 		// TODO: find a way to discard the rest of the response?
-		var doc = html.parse(bytesBuilder.toBytes());
+		htmldom.Document doc;
+		try {
+			doc = html.parse(bytesBuilder.toBytes());
+		} on ArgumentError catch (err) {
+			// Can happen on unsupported charset
+			throw Exception('Failed to parse HTML: $err');
+		}
 
 		// OpenGraph, see https://ogp.me/
 		var ogImage = _findOpenGraph(doc, 'og:image');
