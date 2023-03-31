@@ -58,8 +58,11 @@ class LinkPreviewer {
 		var offset = 0;
 		for (var byte in buf) {
 			var ch = String.fromCharCode(byte);
-			if (offset == pattern.length && (ch == '>' || ch == ' ')) {
-				return true;
+			if (offset == pattern.length) {
+				if (ch == '>' || ch == ' ') {
+					return true;
+				}
+				offset = 0;
 			}
 			if (ch.toLowerCase() == pattern[offset]) {
 				offset++;
