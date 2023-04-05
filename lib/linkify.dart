@@ -125,6 +125,7 @@ class _UrlLinkifier extends Linkifier {
 		case ']':
 		case '{':
 		case '}':
+		case '"':
 			return true;
 		default:
 			return false;
