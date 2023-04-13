@@ -370,7 +370,7 @@ const _schema = [
 		CREATE INDEX index_message_buffer_time
 		ON Message(buffer, time);
 	''',
-	'CREATE INDEX index_message_network_msgid on Message(network_msgid);'
+	'CREATE INDEX index_message_network_msgid on Message(network_msgid);',
 	'''
 		CREATE TABLE WebPushSubscription (
 			id INTEGER PRIMARY KEY,
