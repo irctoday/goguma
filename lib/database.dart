@@ -372,9 +372,9 @@ const _schema = [
 	''',
 	'''
 		CREATE INDEX index_message_buffer_time
-		ON Message(buffer, time);
+		ON Message(buffer, time)
 	''',
-	'CREATE INDEX index_message_network_msgid on Message(network_msgid);',
+	'CREATE INDEX index_message_network_msgid on Message(network_msgid)',
 	'''
 		CREATE TABLE WebPushSubscription (
 			id INTEGER PRIMARY KEY,
@@ -388,7 +388,7 @@ const _schema = [
 			created_at TEXT NOT NULL,
 			FOREIGN KEY (network) REFERENCES Network(id) ON DELETE CASCADE,
 			UNIQUE(network, endpoint)
-		);
+		)
 	''',
 	'''
 		CREATE TABLE LinkPreview (
@@ -399,19 +399,19 @@ const _schema = [
 			content_length INTEGER,
 			image_url TEXT,
 			updated_at TEXT NOT NULL
-		);
+		)
 	''',
 ];
 
 const _migrations = [
 	'''
 		CREATE INDEX index_message_buffer_time
-		ON Message(buffer, time);
+		ON Message(buffer, time)
 	''',
-	'ALTER TABLE Buffer ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0;',
-	'ALTER TABLE Buffer ADD COLUMN muted INTEGER NOT NULL DEFAULT 0;',
-	'ALTER TABLE Buffer ADD COLUMN topic TEXT;',
-	'ALTER TABLE Buffer ADD COLUMN realname TEXT;',
+	'ALTER TABLE Buffer ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0',
+	'ALTER TABLE Buffer ADD COLUMN muted INTEGER NOT NULL DEFAULT 0',
+	'ALTER TABLE Buffer ADD COLUMN topic TEXT',
+	'ALTER TABLE Buffer ADD COLUMN realname TEXT',
 	'''
 		CREATE TABLE WebPushSubscription (
 			id INTEGER PRIMARY KEY,
@@ -424,13 +424,13 @@ const _migrations = [
 			created_at TEXT NOT NULL,
 			FOREIGN KEY (network) REFERENCES Network(id) ON DELETE CASCADE,
 			UNIQUE(network, endpoint)
-		);
+		)
 	''',
-	'ALTER TABLE Network ADD COLUMN isupport TEXT;',
-	'ALTER TABLE Network ADD COLUMN caps TEXT;',
-	'ALTER TABLE Network ADD COLUMN bouncer_uri TEXT;',
-	'ALTER TABLE Server ADD COLUMN sasl_plain_username TEXT;',
-	'ALTER TABLE WebPushSubscription ADD COLUMN tag TEXT;',
+	'ALTER TABLE Network ADD COLUMN isupport TEXT',
+	'ALTER TABLE Network ADD COLUMN caps TEXT',
+	'ALTER TABLE Network ADD COLUMN bouncer_uri TEXT',
+	'ALTER TABLE Server ADD COLUMN sasl_plain_username TEXT',
+	'ALTER TABLE WebPushSubscription ADD COLUMN tag TEXT',
 	'''
 		CREATE TABLE LinkPreview (
 			id INTEGER PRIMARY KEY,
@@ -439,13 +439,13 @@ const _migrations = [
 			mime_type TEXT,
 			content_length INTEGER,
 			updated_at TEXT NOT NULL
-		);
+		)
 	''',
-	'ALTER TABLE Network ADD COLUMN bouncer_name TEXT;',
-	'ALTER TABLE Buffer ADD COLUMN archived INTEGER NOT NULL DEFAULT 0;',
-	'ALTER TABLE Message ADD COLUMN network_msgid TEXT;',
-	'CREATE INDEX index_message_network_msgid on Message(network_msgid);',
-	'ALTER TABLE LinkPreview ADD COLUMN image_url TEXT;',
+	'ALTER TABLE Network ADD COLUMN bouncer_name TEXT',
+	'ALTER TABLE Buffer ADD COLUMN archived INTEGER NOT NULL DEFAULT 0',
+	'ALTER TABLE Message ADD COLUMN network_msgid TEXT',
+	'CREATE INDEX index_message_network_msgid on Message(network_msgid)',
+	'ALTER TABLE LinkPreview ADD COLUMN image_url TEXT',
 ];
 
 class DB {
