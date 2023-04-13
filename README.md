@@ -16,7 +16,8 @@ Goals:
 - Cross-platform: the main target platforms are Linux and Android.
 
 If you want to try out goguma on Android, you can use our
-[F-Droid repository][fdroid-nightly] which provides nightly builds.
+[F-Droid repository][fdroid-nightly] which provides nightly builds. Goguma is
+also available on the [official F-Droid repository][fdroid-stable].
 Alternatively, you can grab APKs directly from [our CI][android-ci] (check out
 build artifacts).
 
@@ -63,6 +64,7 @@ Copyright (C) 2021 The goguma Contributors
 
 [goguma]: https://sr.ht/~emersion/goguma/
 [fdroid-nightly]: https://fdroid.emersion.fr/#goguma-nightly
+[fdroid-stable]: https://f-droid.org/en/packages/fr.emersion.goguma/
 [android-ci]: https://builds.sr.ht/~emersion/goguma/commits/master/android
 [mailing list]: https://lists.sr.ht/~emersion/goguma-dev
 [issue tracker]: https://todo.sr.ht/~emersion/goguma
