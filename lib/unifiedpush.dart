@@ -31,7 +31,7 @@ class UnifiedPushController extends PushController {
 		}
 
 		var distributor = await UnifiedPush.getDistributor();
-		if (distributor == '') {
+		if (distributor == null) {
 			var distributors = await UnifiedPush.getDistributors([featureAndroidBytesMessage]);
 			if (distributors.length == 0) {
 				throw Exception('No UnifiedPush distributor found');
