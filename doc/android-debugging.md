@@ -12,6 +12,9 @@ To obtain Android logs from a computer:
 - Reproduce the bug in Goguma.
 - Stop collecting logs and share the file.
 
+It's possible to filter the logs with "flutter", however this will hide
+messages produced by the Android libraries used by Goguma.
+
 ## From a phone
 
 The [Logcat Reader] app can be used to read Android's logs directly from the
