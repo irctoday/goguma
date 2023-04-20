@@ -67,7 +67,7 @@ Copyright (C) 2021 The goguma Contributors
 [fdroid-nightly]: https://fdroid.emersion.fr/#goguma-nightly
 [fdroid-stable]: https://f-droid.org/packages/fr.emersion.goguma/
 [android-ci]: https://builds.sr.ht/~emersion/goguma/commits/master/android
-[documentation]: docs/README.md
+[documentation]: doc/README.md
 [mailing list]: https://lists.sr.ht/~emersion/goguma-dev
 [issue tracker]: https://todo.sr.ht/~emersion/goguma
 [#emersion on Libera Chat]: ircs://irc.libera.chat/#emersion
