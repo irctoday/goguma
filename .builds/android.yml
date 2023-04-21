@@ -18,6 +18,10 @@ secrets:
 artifacts:
   - goguma/build/app/outputs/flutter-apk/app-release.apk
 tasks:
+  - java: |
+      # For some reason the latest JDK ends up being installed... But the
+      # Android build tools require an older one
+      sudo archlinux-java set java-11-openjdk
   - flutter: |
       git clone --depth=1 --branch=stable https://github.com/flutter/flutter.git
       export PATH="$PATH:$PWD/flutter/bin"
