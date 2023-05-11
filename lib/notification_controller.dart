@@ -86,8 +86,12 @@ class NotificationController {
 
 	void _populateActive(AndroidFlutterLocalNotificationsPlugin androidPlugin, List<ActiveNotification> activeNotifs) async {
 		for (var notif in activeNotifs) {
-			if (_nextId <= notif.id) {
-				_nextId = notif.id + 1;
+			if (notif.id == null) {
+				continue; // not created by the flutter_local_notifications plugin
+			}
+
+			if (_nextId <= notif.id!) {
+				_nextId = notif.id! + 1;
 				_nextId = _nextId % _maxId;
 			}
 
@@ -98,12 +102,12 @@ class NotificationController {
 
 			MessagingStyleInformation? messagingStyleInfo;
 			try {
-				messagingStyleInfo = await androidPlugin.getActiveNotificationMessagingStyle(notif.id, tag: notif.tag);
+				messagingStyleInfo = await androidPlugin.getActiveNotificationMessagingStyle(notif.id!, tag: notif.tag);
 			} on Exception catch (err) {
 				log.print('Failed to get active notification messaging style', error: err);
 			}
 
-			_active.add(_ActiveNotification(notif.id, notif.tag!, notif.title!, messagingStyleInfo));
+			_active.add(_ActiveNotification(notif.id!, notif.tag!, notif.title!, messagingStyleInfo));
 		}
 	}
 
