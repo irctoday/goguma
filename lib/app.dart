@@ -541,8 +541,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 	Widget build(BuildContext context) {
 		return MaterialApp(
 			title: 'Goguma',
-			theme: ThemeData(primarySwatch: Colors.indigo, useMaterial3: false),
-			darkTheme: ThemeData(brightness: Brightness.dark, colorSchemeSeed: Colors.indigo, useMaterial3: false),
+			theme: ThemeData(colorSchemeSeed: Colors.indigo),
+			darkTheme: ThemeData(brightness: Brightness.dark, colorSchemeSeed: Colors.indigo),
 			themeMode: _themeMode,
 			initialRoute: _initialRoute,
 			onGenerateRoute: _handleGenerateRoute,

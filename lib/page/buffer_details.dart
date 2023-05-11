@@ -142,7 +142,11 @@ class _BufferDetailsPageState extends State<BufferDetailsPage> {
 				margin: const EdgeInsets.all(15),
 				child: Builder(builder: (context) {
 					var textStyle = DefaultTextStyle.of(context).style.apply(fontSizeFactor: 1.2);
-					var linkStyle = TextStyle(color: Colors.blue, decoration: TextDecoration.underline);
+					var linkStyle = TextStyle(
+						color: Colors.blue,
+						decoration: TextDecoration.underline,
+						decorationColor: Colors.blue,
+					);
 					return DefaultTextStyle(
 						style: textStyle,
 						child: SelectableText.rich(

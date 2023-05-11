@@ -192,8 +192,6 @@ class _JoinPageState extends State<JoinPage> {
 								child: CircularProgressIndicator(strokeWidth: 2),
 							),
 						),
-						style: TextStyle(color: Colors.white),
-						cursorColor: Colors.white,
 					)),
 				),
 			),

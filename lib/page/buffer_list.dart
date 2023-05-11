@@ -172,8 +172,6 @@ class _BufferListPageState extends State<BufferListPage> {
 								hintText: 'Search...',
 								border: InputBorder.none,
 							),
-							style: TextStyle(color: Colors.white),
-							cursorColor: Colors.white,
 							onChanged: _search,
 						);
 					} else {
@@ -318,7 +316,7 @@ class _BufferItem extends AnimatedWidget {
 				constraints: BoxConstraints(minWidth: 20, minHeight: 20),
 				child: Text(
 					'${buffer.unreadCount}',
-					style: TextStyle(color: Colors.white, fontSize: 12),
+					style: TextStyle(fontSize: 12),
 					textAlign: TextAlign.center,
 				),
 			));
