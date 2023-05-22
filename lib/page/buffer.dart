@@ -138,17 +138,17 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 		}
 		_isAtTop = isAtTop;
 
-		var showJumpToBottom = positions.any((pos) => pos.index >= 20);
-		if (_showJumpToBottom != showJumpToBottom) {
-			setState(() {
-				_showJumpToBottom = showJumpToBottom;
-			});
-		}
-
 		var isAtBottom = positions.any((pos) => pos.index < 2);
 		if (_isAtBottom != isAtBottom) {
 			_isAtBottom = isAtBottom;
 			_updateBufferFocus();
+		}
+
+		var showJumpToBottom = positions.any((pos) => pos.index >= 20) && !isAtBottom;
+		if (_showJumpToBottom != showJumpToBottom) {
+			setState(() {
+				_showJumpToBottom = showJumpToBottom;
+			});
 		}
 
 		// Workaround for the last messages becoming hidden when the virtual
