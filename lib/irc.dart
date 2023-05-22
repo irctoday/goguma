@@ -615,6 +615,16 @@ class IrcCapRegistry {
 
 final defaultCaseMapping = _caseMappingByName('rfc1459')!;
 
+final _defaultMemberships = [
+	IrcIsupportMembership('q', '~'),
+	IrcIsupportMembership('a', '&'),
+	IrcIsupportMembership('o', '@'),
+	IrcIsupportMembership('h', '%'),
+	IrcIsupportMembership('v', '+'),
+];
+
+final _defaultChanModes = ['beI', 'k', 'l', 'imnst'];
+
 // TODO: don't return these when the server indicates no limit
 const _defaultUsernameLen = 20;
 const _defaultHostnameLen = 63;
@@ -623,7 +633,7 @@ const _defaultLineLen = 512;
 class IrcIsupportRegistry {
 	Map<String, String?> _raw = {};
 	CaseMapping? _caseMapping;
-	final List<IrcIsupportMembership> _memberships = [];
+	List<IrcIsupportMembership>? _memberships;
 	int? _monitor;
 	int? _topicLen, _nickLen, _realnameLen, _usernameLen, _hostnameLen, _lineLen;
 	List<String>? _chanModes;
@@ -633,7 +643,7 @@ class IrcIsupportRegistry {
 	String get chanTypes => _raw['CHANTYPES'] ?? '#&+!';
 	CaseMapping get caseMapping => _caseMapping ?? defaultCaseMapping;
 	String? get bouncerNetId => _raw['BOUNCER_NETID'];
-	UnmodifiableListView<IrcIsupportMembership> get memberships => UnmodifiableListView(_memberships);
+	UnmodifiableListView<IrcIsupportMembership> get memberships => UnmodifiableListView(_memberships ?? _defaultMemberships);
 	int? get monitor => _monitor;
 	String? get botMode => _raw['BOT'];
 	bool get whox => _raw.containsKey('WHOX');
@@ -643,7 +653,7 @@ class IrcIsupportRegistry {
 	int get usernameLen => _usernameLen ?? _defaultUsernameLen;
 	int get hostnameLen => _hostnameLen ?? _defaultHostnameLen;
 	int get lineLen => _lineLen ?? _defaultLineLen;
-	List<String> get chanModes => UnmodifiableListView(_chanModes ?? ['beI', 'k', 'l', 'imnst']);
+	List<String> get chanModes => UnmodifiableListView(_chanModes ?? _defaultChanModes);
 	IrcIsupportElist? get elist => _elist;
 	String? get vapid => _raw['VAPID'];
 
@@ -678,7 +688,7 @@ class IrcIsupportRegistry {
 					_nickLen = null;
 					break;
 				case 'PREFIX':
-					_memberships.clear();
+					_memberships = null;
 					break;
 				case 'TOPIC':
 					_topicLen = null;
@@ -746,8 +756,8 @@ class IrcIsupportRegistry {
 				}
 				break;
 			case 'PREFIX':
-				_memberships.clear();
 				if (v == null || v == '') {
+					_memberships = null;
 					break;
 				}
 				var i = v.indexOf(')');
@@ -759,9 +769,11 @@ class IrcIsupportRegistry {
 				if (modes.length != prefixes.length) {
 					throw FormatException('Malformed ISUPPORT PREFIX value (modes and prefixes count mismatch): $v');
 				}
+				List<IrcIsupportMembership> memberships = [];
 				for (var i = 0; i < modes.length; i++) {
-					_memberships.add(IrcIsupportMembership(modes[i], prefixes[i]));
+					memberships.add(IrcIsupportMembership(modes[i], prefixes[i]));
 				}
+				_memberships = memberships;
 				break;
 			case 'TOPICLEN':
 				if (v == null || v == '') {
@@ -784,7 +796,7 @@ class IrcIsupportRegistry {
 	void clear() {
 		_raw = {};
 		_caseMapping = null;
-		_memberships.clear();
+		_memberships = null;
 		_monitor = null;
 		_topicLen = null;
 		_nickLen = null;
