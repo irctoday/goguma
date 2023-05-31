@@ -16,6 +16,7 @@ import '../notification_controller.dart';
 import '../prefs.dart';
 import '../widget/composer.dart';
 import '../widget/link_preview.dart';
+import '../widget/message_sheet.dart';
 import '../widget/network_indicator.dart';
 import '../widget/swipe_action.dart';
 import 'buffer_details.dart';
@@ -920,6 +921,17 @@ class _MessageItem extends StatelessWidget {
 					),
 				),
 				onSwipe: onSwipe,
+			);
+		}
+
+		// TODO: support actions as well
+		if (!isAction) {
+			decoratedMessage = GestureDetector(
+				onLongPress: () {
+					var buffer = context.read<BufferModel>();
+					MessageSheet.open(context, buffer, msg, onSwipe);
+				},
+				child: decoratedMessage,
 			);
 		}
 
