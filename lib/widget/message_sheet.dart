@@ -14,8 +14,8 @@ class MessageSheet extends StatelessWidget {
 
 	const MessageSheet({ Key? key, required this.message, this.onReply }) : super(key: key);
 
-	static open(BuildContext context, BufferModel buffer, MessageModel message, VoidCallback? onReply) {
-		showModalBottomSheet(
+	static void open(BuildContext context, BufferModel buffer, MessageModel message, VoidCallback? onReply) {
+		showModalBottomSheet<void>(
 			context: context,
 			showDragHandle: true,
 			builder: (context) {
@@ -62,7 +62,9 @@ class MessageSheet extends StatelessWidget {
 					var body = stripAnsiFormatting(message.msg.params[1]);
 					var text = '<$sender> $body';
 					await Clipboard.setData(ClipboardData(text: text));
-					Navigator.pop(context);
+					if (context.mounted) {
+						Navigator.pop(context);
+					}
 				},
 			),
 		]);
