@@ -9,6 +9,7 @@ import 'logging.dart';
 import 'models.dart';
 
 var _nextId = 1;
+var _launchSelectionPopped = false;
 const _maxId = 0x7FFFFFFF; // 2^31 - 1
 
 class _NotificationChannel {
@@ -71,13 +72,17 @@ class NotificationController {
 		return _instance!;
 	}
 
-	Future<String?> getLaunchSelection() async {
+	Future<String?> popLaunchSelection() async {
+		if (_launchSelectionPopped) {
+			return null;
+		}
 		NotificationAppLaunchDetails? launchDetails;
 		try {
 			launchDetails = await _plugin.getNotificationAppLaunchDetails();
 		} on UnimplementedError {
 			// Ignore
 		}
+		_launchSelectionPopped = true;
 		if (launchDetails == null || !launchDetails.didNotificationLaunchApp) {
 			return null;
 		}
