@@ -450,7 +450,7 @@ class Client {
 		if (params.bouncerNetId != null) {
 			send(IrcMessage('BOUNCER', ['BIND', params.bouncerNetId!]));
 		}
-		if (params.away != null) {
+		if (params.away != null && _requestCaps.contains('draft/pre-away')) {
 			// We cannot check for the pre-away cap here, because we haven't
 			// received the list of available server caps yet
 			setAway(params.away).ignore();
