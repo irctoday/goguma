@@ -719,6 +719,19 @@ class ClientController {
 				// ephemeral snackbar
 				_provider._noticesController.add(ClientNotice(notices, target, client, network));
 			}
+
+			// Bump last delivery time so that we don't fetch again the same
+			// NOTICEs via chathistory
+			bool bumped = false;
+			for (var msg in notices) {
+				var t = msg.tags['time'];
+				if (t != null && _network.networkEntry.bumpLastDeliveredTime(t)) {
+					bumped = true;
+				}
+			}
+			if (bumped) {
+				unawaited(_db.storeNetwork(_network.networkEntry));
+			}
 			return;
 		}
 
