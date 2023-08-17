@@ -18,9 +18,6 @@ secrets:
 artifacts:
   - goguma/build/app/outputs/flutter-apk/app-release.apk
 tasks:
-  - java: |
-      # Workaround for https://github.com/Jguer/yay/issues/2135
-      sudo archlinux-java set java-17-openjdk
   - flutter: |
       git clone --depth=1 --branch=stable https://github.com/flutter/flutter.git
       export PATH="$PATH:$PWD/flutter/bin"
