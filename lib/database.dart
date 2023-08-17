@@ -59,6 +59,7 @@ class NetworkEntry {
 	final int server;
 	String? bouncerId;
 	String? bouncerName;
+	String? lastDeliveredTime;
 	String? _rawBouncerUri;
 	String? _rawIsupport;
 	String? _rawCaps;
@@ -73,6 +74,7 @@ class NetworkEntry {
 			'server': server,
 			'bouncer_id': bouncerId,
 			'bouncer_name': bouncerName,
+			'last_delivered_time': lastDeliveredTime,
 			'bouncer_uri': _rawBouncerUri,
 			'isupport': _rawIsupport,
 			'caps': _rawCaps,
@@ -88,6 +90,7 @@ class NetworkEntry {
 		server = m['server'] as int,
 		bouncerId = m['bouncer_id'] as String?,
 		bouncerName = m['bouncer_name'] as String?,
+		lastDeliveredTime = m['last_delivered_time'] as String?,
 		_rawBouncerUri = m['bouncer_uri'] as String?,
 		_rawIsupport = m['isupport'] as String?,
 		_rawCaps = m['caps'] as String?;
@@ -128,6 +131,14 @@ class NetworkEntry {
 	set bouncerUri(IrcUri? uri) {
 		_bouncerUri = uri;
 		_rawBouncerUri = uri?.toString();
+	}
+
+	bool bumpLastDeliveredTime(String t) {
+		if (lastDeliveredTime != null && lastDeliveredTime!.compareTo(t) >= 0) {
+			return false;
+		}
+		lastDeliveredTime = t;
+		return true;
 	}
 }
 
@@ -341,6 +352,7 @@ const _schema = [
 			bouncer_uri TEXT,
 			isupport TEXT,
 			caps TEXT,
+			last_delivered_time TEXT,
 			FOREIGN KEY (server) REFERENCES Server(id) ON DELETE CASCADE,
 			UNIQUE(server, bouncer_id)
 		)
@@ -446,6 +458,7 @@ const _migrations = [
 	'ALTER TABLE Message ADD COLUMN network_msgid TEXT',
 	'CREATE INDEX index_message_network_msgid on Message(network_msgid)',
 	'ALTER TABLE LinkPreview ADD COLUMN image_url TEXT',
+	'ALTER TABLE Network ADD COLUMN last_delivered_time TEXT',
 ];
 
 class DB {

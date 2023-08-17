@@ -323,7 +323,8 @@ class ClientController {
 				_gotInitialBouncerNetworksBatch = false;
 				break;
 			case ClientState.connecting:
-				_prevLastDeliveredTime = _getLastDeliveredTime();
+				// TODO: drop _getLastDeliveredTime() in a future release
+				_prevLastDeliveredTime = _network.networkEntry.lastDeliveredTime ?? _getLastDeliveredTime();
 				network.state = NetworkState.connecting;
 				break;
 			case ClientState.connected:
@@ -750,6 +751,9 @@ class ClientController {
 		}
 
 		_bufferList.bumpLastDeliveredTime(buf, t);
+		if (_network.networkEntry.bumpLastDeliveredTime(t)) {
+			unawaited(_db.storeNetwork(_network.networkEntry));
+		}
 
 		if (isNewBuffer && client.isNick(buf.name)) {
 			_provider.fetchBufferUser(buf);

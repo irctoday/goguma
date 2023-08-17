@@ -86,6 +86,7 @@ class ComposerState extends State<Composer> {
 		var client = context.read<Client>();
 		var db = context.read<DB>();
 		var bufferList = context.read<BufferListModel>();
+		var network = context.read<NetworkModel>();
 
 		List<Future<IrcMessage>> futures = [];
 		for (var msg in messages) {
@@ -107,6 +108,9 @@ class ComposerState extends State<Composer> {
 				buffer.addMessages(models, append: true);
 			}
 			bufferList.bumpLastDeliveredTime(buffer, entries.last.time);
+			if (network.networkEntry.bumpLastDeliveredTime(entries.last.time)) {
+				await db.storeNetwork(network.networkEntry);
+			}
 		}
 	}
 
