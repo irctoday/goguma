@@ -29,17 +29,25 @@ tasks:
       flutter doctor -v
   - configure: |
       cd goguma
-      ln -s ~/keystore.properties android/keystore.properties
-      ln -s ~/keystore.jks android/keystore.jks
+      [ -e ~/keystore.properties ] && ln -s ~/keystore.properties android/keystore.properties
+      [ -e ~/keystore.jks ] && ln -s ~/keystore.jks android/keystore.jks
       flutter pub get
-      dart run tool/gen_main.dart --firebase ~/google-services.json lib/main_generated.dart
+      if [ -e ~/google-services.json ]; then
+        dart run tool/gen_main.dart --firebase ~/google-services.json lib/main_generated.dart
+      fi
   - build: |
       cd goguma
       tag="$(git describe --abbrev=0)"
       hash="$(git rev-parse --short=12 HEAD)"
-      build_name="${tag#v}-dev+$hash.firebase"
+      build_name="${tag#v}-dev+$hash"
       build_number="$(git rev-list --first-parent --count origin/master)"
-      sentry_dsn="$(cat ~/sentry-dsn.txt)"
+      target=lib/main.dart
+      if [ -e ~/google-services.json ]; then
+        build_name="$build_name.firebase"
+        target=lib/main_generated.dart
+      fi
+      sentry_dsn=""
+      [ -e ~/sentry-dsn.txt ] && sentry_dsn="$(cat ~/sentry-dsn.txt)"
       flutter build apk \
         --build-name="$build_name" \
         --build-number="$build_number" \
@@ -52,6 +60,7 @@ tasks:
       flutter analyze --no-fatal-infos
   - deploy: |
       cd goguma
+      [ -e ~/.ssh/id_rsa ] || complete-build
       [ "$(git rev-parse origin/master)" = "$(git rev-parse HEAD)" ] || complete-build
       build_number="$(git rev-list --first-parent --count origin/master)"
       ssh_opts="-o StrictHostKeyChecking=no"
