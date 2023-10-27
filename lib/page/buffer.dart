@@ -815,7 +815,7 @@ class _MessageItem extends StatelessWidget {
 
 				replyChip = WidgetSpan(
 					alignment: PlaceholderAlignment.middle,
-					child: SelectionContainer.disabled(child: ActionChip(
+					child: ActionChip(
 						avatar: Icon(Icons.reply, size: 16, color: textColor),
 						label: Text(replyNickname),
 						labelPadding: EdgeInsets.only(right: 4),
@@ -827,7 +827,7 @@ class _MessageItem extends StatelessWidget {
 								onMsgRefTap!(msg.replyTo!.id!);
 							}
 						},
-					)),
+					),
 				);
 			}
 
@@ -856,7 +856,7 @@ class _MessageItem extends StatelessWidget {
 			}
 		}
 
-		Widget inner = SelectionArea(child: Text.rich(TextSpan(children: content)));
+		Widget inner = Text.rich(TextSpan(children: content));
 
 		if (showTime) {
 			var hh = localDateTime.hour.toString().padLeft(2, '0');
@@ -870,10 +870,10 @@ class _MessageItem extends StatelessWidget {
 			// Add a fully transparent text span with the time, so that the real
 			// time text doesn't collide with the message text.
 			content.add(WidgetSpan(
-				child: SelectionContainer.disabled(child: Text(
+				child: Text(
 					time,
 					style: timeStyle.apply(color: Color(0x00000000)),
-				)),
+				),
 			));
 
 			inner = Stack(children: [
