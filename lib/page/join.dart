@@ -210,7 +210,7 @@ class _JoinPageState extends State<JoinPage> {
 class _JoinItem extends StatelessWidget {
 	final _Action _action;
 
-	const _JoinItem({ super.key, required _Action action }) :
+	const _JoinItem({ required _Action action }) :
 		_action = action;
 
 	@override

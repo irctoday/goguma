@@ -75,7 +75,6 @@ class _RefreshIndicator extends StatefulWidget {
 	final String? semanticsLabel;
 
 	const _RefreshIndicator({
-		super.key,
 		required this.child,
 		required this.loading,
 		this.semanticsLabel,

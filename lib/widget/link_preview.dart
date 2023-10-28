@@ -50,7 +50,7 @@ class _PhotoPreview extends StatelessWidget {
 	final lib.LinkPreview preview;
 	final Object _heroTag;
 
-	_PhotoPreview(this.preview, { super.key }) : _heroTag = Object();
+	_PhotoPreview(this.preview) : _heroTag = Object();
 
 	@override
 	Widget build(BuildContext context) {

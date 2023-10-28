@@ -200,7 +200,7 @@ class _SettingsPageState extends State<SettingsPage> {
 class _NetworkItem extends AnimatedWidget {
 	final NetworkModel network;
 
-	_NetworkItem({ super.key, required this.network }) :
+	_NetworkItem({ required this.network }) :
 		super(listenable: Listenable.merge([network, network.bouncerNetwork]));
 
 	@override

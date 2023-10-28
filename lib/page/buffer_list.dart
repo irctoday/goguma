@@ -221,7 +221,6 @@ class _BackgroundServicePermissionBanner extends StatelessWidget {
 	final Widget child;
 
 	const _BackgroundServicePermissionBanner({
-		super.key,
 		required this.child,
 	});
 
@@ -264,7 +263,7 @@ class _BufferItem extends AnimatedWidget {
 	final BufferModel buffer;
 	final bool showNetworkName;
 
-	const _BufferItem({ super.key, required this.buffer, this.showNetworkName = false }) : super(listenable: buffer);
+	const _BufferItem({ required this.buffer, this.showNetworkName = false }) : super(listenable: buffer);
 
 	@override
 	Widget build(BuildContext context) {
@@ -355,7 +354,6 @@ class _BufferListPlaceholder extends StatelessWidget {
 	final Widget? trailing;
 
 	const _BufferListPlaceholder({
-		super.key,
 		required this.icon,
 		required this.title,
 		required this.subtitle,
