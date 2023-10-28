@@ -13,7 +13,7 @@ import 'network_details.dart';
 class BufferDetailsPage extends StatefulWidget {
 	static const routeName = '/buffer/details';
 
-	const BufferDetailsPage({ Key? key }) : super(key: key);
+	const BufferDetailsPage({ super.key });
 
 	@override
 	State<BufferDetailsPage> createState() => _BufferDetailsPageState();

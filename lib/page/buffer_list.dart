@@ -14,7 +14,7 @@ import 'buffer.dart';
 class BufferListPage extends StatefulWidget {
 	static const routeName = '/';
 
-	const BufferListPage({ Key? key }) : super(key: key);
+	const BufferListPage({ super.key });
 
 	@override
 	State<BufferListPage> createState() => _BufferListPageState();
@@ -221,9 +221,9 @@ class _BackgroundServicePermissionBanner extends StatelessWidget {
 	final Widget child;
 
 	const _BackgroundServicePermissionBanner({
-		Key? key,
+		super.key,
 		required this.child,
-	}) : super(key: key);
+	});
 
 	@override
 	Widget build(BuildContext context) {
@@ -264,7 +264,7 @@ class _BufferItem extends AnimatedWidget {
 	final BufferModel buffer;
 	final bool showNetworkName;
 
-	const _BufferItem({ Key? key, required this.buffer, this.showNetworkName = false }) : super(key: key, listenable: buffer);
+	const _BufferItem({ super.key, required this.buffer, this.showNetworkName = false }) : super(listenable: buffer);
 
 	@override
 	Widget build(BuildContext context) {
@@ -355,12 +355,12 @@ class _BufferListPlaceholder extends StatelessWidget {
 	final Widget? trailing;
 
 	const _BufferListPlaceholder({
-		Key? key,
+		super.key,
 		required this.icon,
 		required this.title,
 		required this.subtitle,
 		this.trailing,
-	}) : super(key: key);
+	});
 
 	@override
 	Widget build(BuildContext context) {

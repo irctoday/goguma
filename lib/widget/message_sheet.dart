@@ -12,7 +12,7 @@ class MessageSheet extends StatelessWidget {
 	final MessageModel message;
 	final VoidCallback? onReply;
 
-	const MessageSheet({ Key? key, required this.message, this.onReply }) : super(key: key);
+	const MessageSheet({ super.key, required this.message, this.onReply });
 
 	static void open(BuildContext context, BufferModel buffer, MessageModel message, VoidCallback? onReply) {
 		showModalBottomSheet<void>(

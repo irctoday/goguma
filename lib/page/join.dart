@@ -14,7 +14,7 @@ import '../models.dart';
 class JoinPage extends StatefulWidget {
 	static const routeName = '/join';
 
-	const JoinPage({ Key? key }) : super(key: key);
+	const JoinPage({ super.key });
 
 	@override
 	State<JoinPage> createState() => _JoinPageState();
@@ -210,9 +210,8 @@ class _JoinPageState extends State<JoinPage> {
 class _JoinItem extends StatelessWidget {
 	final _Action _action;
 
-	const _JoinItem({ Key? key, required _Action action }) :
-		_action = action,
-		super(key: key);
+	const _JoinItem({ super.key, required _Action action }) :
+		_action = action;
 
 	@override
 	Widget build(BuildContext context) {

@@ -267,7 +267,7 @@ abstract class LinkPreview {
 }
 
 class PhotoPreview extends LinkPreview {
-	PhotoPreview(Uri url) : super._(url);
+	PhotoPreview(super.url) : super._();
 
 	@override
 	Uri get imageUrl => url;
@@ -277,5 +277,5 @@ class PagePreview extends LinkPreview {
 	@override
 	final Uri imageUrl;
 
-	PagePreview(Uri url, this.imageUrl) : super._(url);
+	PagePreview(super.url, this.imageUrl) : super._();
 }

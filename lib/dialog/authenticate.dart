@@ -17,7 +17,7 @@ class AuthenticateDialog extends StatefulWidget {
 		});
 	}
 
-	const AuthenticateDialog({ Key? key, required this.network }) : super(key: key);
+	const AuthenticateDialog({ super.key, required this.network });
 
 	@override
 	State<AuthenticateDialog> createState() => _AuthenticateDialogState();

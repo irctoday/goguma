@@ -1208,16 +1208,16 @@ class ClientMessage extends IrcMessage {
 class ClientEndOfNames extends ClientMessage {
 	final NamesReply names;
 
-	ClientEndOfNames._(IrcMessage msg, List<ClientMessage> names, IrcIsupportRegistry isupport, { ClientBatch? batch }) :
+	ClientEndOfNames._(super.msg, List<ClientMessage> names, IrcIsupportRegistry isupport, { super.batch }) :
 		names = NamesReply.parse(names, isupport),
-		super._(msg, batch: batch);
+		super._();
 }
 
 class ClientEndOfBatch extends ClientMessage {
 	final ClientBatch child;
 
-	ClientEndOfBatch._(IrcMessage msg, this.child, { ClientBatch? batch }) :
-		super._(msg, batch: batch);
+	ClientEndOfBatch._(super.msg, this.child, { super.batch }) :
+		super._();
 }
 
 class ClientBatch {

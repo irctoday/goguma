@@ -30,7 +30,7 @@ const _themeMode = ThemeMode.system;
 class App extends StatefulWidget {
 	final IrcUri? initialUri;
 
-	const App({ Key? key, this.initialUri }) : super(key: key);
+	const App({ super.key, this.initialUri });
 
 	@override
 	State<App> createState() => _AppState();

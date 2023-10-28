@@ -88,7 +88,7 @@ String formatIrcTime(DateTime dt) {
 class IrcParamList extends UnmodifiableListView<String> {
 	final String _cmd;
 
-	IrcParamList._(Iterable<String> source, this._cmd) : super(source);
+	IrcParamList._(super.source, this._cmd);
 
 	@override
 	String operator [](int index) {

@@ -5,7 +5,7 @@ class SwipeAction extends StatefulWidget {
 	final VoidCallback? onSwipe;
 	final Widget? background;
 
-	const SwipeAction({ Key? key, required this.child, this.onSwipe, this.background }) : super(key: key);
+	const SwipeAction({ super.key, required this.child, this.onSwipe, this.background });
 
 	@override
 	State<SwipeAction> createState() => _SwipeActionState();

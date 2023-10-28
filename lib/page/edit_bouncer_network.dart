@@ -15,7 +15,7 @@ class EditBouncerNetworkPage extends StatefulWidget {
 	final BouncerNetworkModel? network;
 	final IrcUri? initialUri;
 
-	const EditBouncerNetworkPage({ Key? key, this.network, this.initialUri }) : super(key: key);
+	const EditBouncerNetworkPage({ super.key, this.network, this.initialUri });
 
 	@override
 	State<EditBouncerNetworkPage> createState() => _EditBouncerNetworkPageState();

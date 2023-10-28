@@ -18,7 +18,7 @@ import 'network_details.dart';
 class SettingsPage extends StatefulWidget {
 	static const routeName = '/settings';
 
-	const SettingsPage({ Key? key }) : super(key: key);
+	const SettingsPage({ super.key });
 
 	@override
 	State<SettingsPage> createState() => _SettingsPageState();
@@ -200,8 +200,8 @@ class _SettingsPageState extends State<SettingsPage> {
 class _NetworkItem extends AnimatedWidget {
 	final NetworkModel network;
 
-	_NetworkItem({ Key? key, required this.network }) :
-		super(key: key, listenable: Listenable.merge([network, network.bouncerNetwork]));
+	_NetworkItem({ super.key, required this.network }) :
+		super(listenable: Listenable.merge([network, network.bouncerNetwork]));
 
 	@override
 	Widget build(BuildContext context) {

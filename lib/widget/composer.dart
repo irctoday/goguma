@@ -13,7 +13,7 @@ import '../prefs.dart';
 final whitespaceRegExp = RegExp(r'\s', unicode: true);
 
 class Composer extends StatefulWidget {
-	const Composer({ Key? key }) : super(key: key);
+	const Composer({ super.key });
 
 	@override
 	ComposerState createState() => ComposerState();

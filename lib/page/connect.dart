@@ -17,7 +17,7 @@ class ConnectPage extends StatefulWidget {
 
 	final IrcUri? initialUri;
 
-	const ConnectPage({ Key? key, this.initialUri }) : super(key: key);
+	const ConnectPage({ super.key, this.initialUri });
 
 	@override
 	State<ConnectPage> createState() => _ConnectPageState();

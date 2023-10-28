@@ -14,8 +14,8 @@ class LinkPreview extends StatelessWidget {
 	const LinkPreview({
 		required this.text,
 		required this.builder,
-		Key? key,
-	}) : super(key: key);
+		super.key,
+	});
 
 	@override
 	Widget build(BuildContext context) {
@@ -50,7 +50,7 @@ class _PhotoPreview extends StatelessWidget {
 	final lib.LinkPreview preview;
 	final Object _heroTag;
 
-	_PhotoPreview(this.preview, { Key? key }) : _heroTag = Object(), super(key: key);
+	_PhotoPreview(this.preview, { super.key }) : _heroTag = Object();
 
 	@override
 	Widget build(BuildContext context) {

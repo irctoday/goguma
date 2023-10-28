@@ -7,7 +7,7 @@ import '../network_state_aggregator.dart';
 class NetworkListIndicator extends StatefulWidget {
 	final Widget child;
 
-	const NetworkListIndicator({ Key? key, required this.child }) : super(key: key);
+	const NetworkListIndicator({ super.key, required this.child });
 
 	@override
 	State<NetworkListIndicator> createState() => _NetworkListIndicatorState();
@@ -53,10 +53,10 @@ class NetworkIndicator extends AnimatedWidget {
 	final NetworkModel network;
 
 	const NetworkIndicator({
-		Key? key,
+		super.key,
 		required this.child,
 		required this.network,
-	}) : super(key: key, listenable: network);
+	}) : super(listenable: network);
 
 	@override
 	Widget build(BuildContext context) {
@@ -75,11 +75,11 @@ class _RefreshIndicator extends StatefulWidget {
 	final String? semanticsLabel;
 
 	const _RefreshIndicator({
-		Key? key,
+		super.key,
 		required this.child,
 		required this.loading,
 		this.semanticsLabel,
-	}) : super(key: key);
+	});
 
 	@override
 	_RefreshIndicatorState createState() => _RefreshIndicatorState();

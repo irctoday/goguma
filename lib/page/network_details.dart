@@ -12,7 +12,7 @@ import 'edit_bouncer_network.dart';
 class NetworkDetailsPage extends StatefulWidget {
 	static const routeName = '/settings/network';
 
-	const NetworkDetailsPage({ Key? key }) : super(key: key);
+	const NetworkDetailsPage({ super.key });
 
 	@override
 	State<NetworkDetailsPage> createState() => _NetworkDetailsPageState();

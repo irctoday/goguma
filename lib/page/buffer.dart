@@ -27,7 +27,7 @@ class BufferPage extends StatefulWidget {
 
 	final String? unreadMarkerTime;
 
-	const BufferPage({ Key? key, this.unreadMarkerTime }) : super(key: key);
+	const BufferPage({ super.key, this.unreadMarkerTime });
 
 	@override
 	State<BufferPage> createState() => _BufferPageState();
@@ -579,11 +579,11 @@ class _CompactMessageItem extends StatelessWidget {
 	final bool last;
 
 	const _CompactMessageItem({
-		Key? key,
+		super.key,
 		required this.msg,
 		this.prevMsg,
 		this.last = false,
-	}) : super(key: key);
+	});
 
 	@override
 	Widget build(BuildContext context) {
@@ -702,14 +702,14 @@ class _MessageItem extends StatelessWidget {
 	final void Function(int)? onMsgRefTap;
 
 	const _MessageItem({
-		Key? key,
+		super.key,
 		required this.msg,
 		this.prevMsg,
 		this.nextMsg,
 		this.unreadMarkerTime,
 		this.onSwipe,
 		this.onMsgRefTap,
-	}) : super(key: key);
+	});
 
 	@override
 	Widget build(BuildContext context) {

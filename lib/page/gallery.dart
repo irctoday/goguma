@@ -17,7 +17,7 @@ class GalleryPage extends StatefulWidget {
 	final Uri uri;
 	final Object heroTag;
 
-	const GalleryPage({ Key? key, required this.uri, required this.heroTag }) : super(key: key);
+	const GalleryPage({ super.key, required this.uri, required this.heroTag });
 
 	@override
 	State<GalleryPage> createState() => _GalleryPageState();

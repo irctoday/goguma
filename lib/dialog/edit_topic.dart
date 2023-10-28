@@ -13,7 +13,7 @@ class EditTopicDialog extends StatefulWidget {
 		});
 	}
 
-	const EditTopicDialog({ Key? key, required this.buffer }) : super(key: key);
+	const EditTopicDialog({ super.key, required this.buffer });
 
 	@override
 	EditTopicDialogState createState() => EditTopicDialogState();
