@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../client.dart';
 import '../client_controller.dart';
+import '../commands.dart';
 import '../database.dart';
 import '../irc.dart';
 import '../models.dart';
@@ -115,28 +116,29 @@ class ComposerState extends State<Composer> {
 	}
 
 	void _submitCommand(String text) {
-		String cmd;
+		String name;
 		String? param;
 		var i = text.indexOf(' ');
 		if (i >= 0) {
-			cmd = text.substring(0, i);
+			name = text.substring(0, i);
 			param = text.substring(i + 1);
 		} else {
-			cmd = text;
+			name = text;
 		}
 
-		switch (cmd.toLowerCase()) {
-		case 'me':
-			var buffer = context.read<BufferModel>();
-			var text = CtcpMessage('ACTION', param).format();
-			var msg = IrcMessage('PRIVMSG', [buffer.name, text]);
-			_send([msg]);
-			break;
-		default:
+		var cmd = commands[name];
+		if (cmd == null) {
 			ScaffoldMessenger.of(context).showSnackBar(SnackBar(
 				content: Text('Command not found'),
 			));
-			break;
+			return;
+		}
+
+		var msgText = cmd(param);
+		if (msgText != null) {
+			var buffer = context.read<BufferModel>();
+			var msg = IrcMessage('PRIVMSG', [buffer.name, msgText]);
+			_send([msg]);
 		}
 	}
 
@@ -231,7 +233,7 @@ class ComposerState extends State<Composer> {
 
 		if (text.startsWith('/') && !text.contains(' ')) {
 			text = text.toLowerCase();
-			return ['/me'].where((cmd) {
+			return commands.keys.where((cmd) {
 				return cmd.startsWith(text);
 			});
 		}
