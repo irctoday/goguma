@@ -134,7 +134,15 @@ class ComposerState extends State<Composer> {
 			return;
 		}
 
-		var msgText = cmd(param);
+		String? msgText;
+		try {
+			msgText = cmd(context, param);
+		} on CommandException catch (err) {
+			ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+				content: Text(err.message),
+			));
+			return;
+		}
 		if (msgText != null) {
 			var buffer = context.read<BufferModel>();
 			var msg = IrcMessage('PRIVMSG', [buffer.name, msgText]);
