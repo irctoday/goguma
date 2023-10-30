@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'client.dart';
 import 'irc.dart';
+import 'models.dart';
 
 typedef Command = String? Function(BuildContext context, String? param);
 
@@ -24,11 +25,22 @@ String? _join(BuildContext context, String? param) {
 	return null;
 }
 
+String? _kick(BuildContext context, String? param) {
+	var client = context.read<Client>();
+	var buffer = context.read<BufferModel>();
+	if (!client.isChannel(buffer.name)) {
+		throw CommandException('This command can only be used in channels');
+	}
+	client.send(IrcMessage('KICK', [buffer.name, _requireParam(param)]));
+	return null;
+}
+
 String? _me(BuildContext context, String? param) {
 	return CtcpMessage('ACTION', param).format();
 }
 
 const Map<String, Command> commands = {
-	'me': _me,
 	'join': _join,
+	'kick': _kick,
+	'me': _me,
 };
