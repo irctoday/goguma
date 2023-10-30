@@ -49,9 +49,22 @@ String? _mode(BuildContext context, String? param) {
 	return null;
 }
 
+String? _quote(BuildContext context, String? param) {
+	var client = context.read<Client>();
+	IrcMessage msg;
+	try {
+		msg = IrcMessage.parse(_requireParam(param));
+	} on FormatException {
+		throw CommandException('Invalid IRC command');
+	}
+	client.send(msg);
+	return null;
+}
+
 const Map<String, Command> commands = {
 	'join': _join,
 	'kick': _kick,
 	'me': _me,
 	'mode': _mode,
+	'quote': _quote,
 };
