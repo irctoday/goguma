@@ -39,8 +39,19 @@ String? _me(BuildContext context, String? param) {
 	return CtcpMessage('ACTION', param).format();
 }
 
+String? _mode(BuildContext context, String? param) {
+	var client = context.read<Client>();
+	var buffer = context.read<BufferModel>();
+	if (!client.isChannel(buffer.name)) {
+		throw CommandException('This command can only be used in channels');
+	}
+	client.send(IrcMessage('MODE', [buffer.name, ..._requireParam(param).split(' ')]));
+	return null;
+}
+
 const Map<String, Command> commands = {
 	'join': _join,
 	'kick': _kick,
 	'me': _me,
+	'mode': _mode,
 };
