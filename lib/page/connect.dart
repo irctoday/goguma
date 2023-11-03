@@ -249,6 +249,7 @@ class _ConnectPageState extends State<ConnectPage> {
 				child: Container(padding: EdgeInsets.all(10), child: Column(children: [
 					Focus(onFocusChange: _handleServerFocusChange, child: TextFormField(
 						keyboardType: TextInputType.url,
+						autocorrect: false,
 						decoration: InputDecoration(
 							labelText: 'Server',
 							errorText: serverErr,
@@ -279,6 +280,7 @@ class _ConnectPageState extends State<ConnectPage> {
 							labelText: 'Nickname',
 							errorText: nicknameErr,
 						),
+						autocorrect: false,
 						controller: nicknameController,
 						onEditingComplete: () => focusNode.nextFocus(),
 						validator: (value) {

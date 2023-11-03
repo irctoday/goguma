@@ -115,6 +115,7 @@ class _AuthenticateDialogState extends State<AuthenticateDialog> {
 						TextFormField(
 							controller: _usernameController,
 							decoration: InputDecoration(labelText: 'Username'),
+							autocorrect: false,
 							validator: (value) {
 								if (value == null || value == '') {
 									return 'Required';

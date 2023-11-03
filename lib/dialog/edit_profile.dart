@@ -108,6 +108,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 					controller: _nicknameController,
 					decoration: InputDecoration(labelText: 'Nickname'),
 					autofocus: true,
+					autocorrect: false,
 					maxLength: _nicknameLen,
 					validator: (value) {
 						var client = context.read<ClientProvider>().get(widget.network);

@@ -214,10 +214,12 @@ class _EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
 			TextFormField(
 				controller: _nicknameController,
 				decoration: InputDecoration(labelText: 'Nickname (optional)'),
+				autocorrect: false,
 			),
 			TextFormField(
 				controller: _usernameController,
 				decoration: InputDecoration(labelText: 'Username (optional)'),
+				autocorrect: false,
 			),
 			TextFormField(
 				controller: _realnameController,
@@ -276,6 +278,7 @@ class _EditBouncerNetworkPageState extends State<EditBouncerNetworkPage> {
 				child: Container(padding: EdgeInsets.all(10), child: Column(children: [
 					TextFormField(
 						keyboardType: TextInputType.url,
+						autocorrect: false,
 						controller: _urlController,
 						decoration: InputDecoration(labelText: 'Server'),
 						validator: (value) {
