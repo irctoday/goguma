@@ -862,6 +862,7 @@ class _MessageItem extends StatelessWidget {
 			var hh = localDateTime.hour.toString().padLeft(2, '0');
 			var mm = localDateTime.minute.toString().padLeft(2, '0');
 			var time = '   $hh:$mm';
+			var timeScreenReader = 'Sent at $hh $mm';
 			var timeStyle = DefaultTextStyle.of(context).style.apply(
 				color: textColor.withOpacity(0.5),
 				fontSizeFactor: 0.8,
@@ -873,6 +874,7 @@ class _MessageItem extends StatelessWidget {
 				child: Text(
 					time,
 					style: timeStyle.apply(color: Color(0x00000000)),
+					semanticsLabel: '',  // Make screen reader quiet
 				),
 			));
 
@@ -881,7 +883,11 @@ class _MessageItem extends StatelessWidget {
 				Positioned(
 					bottom: 0,
 					right: 0,
-					child: Text(time, style: timeStyle),
+					child: Text(
+						time,
+						style: timeStyle,
+						semanticsLabel: timeScreenReader,
+					),
 				),
 			]);
 		}
