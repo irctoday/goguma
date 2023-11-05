@@ -167,6 +167,10 @@ class ClientProvider {
 	}
 
 	void _setupBackgroundServiceSync(bool enable) async {
+		if (!Platform.isAndroid) {
+			return;
+		}
+
 		if (!enable) {
 			needBackgroundServicePermissions.value = false;
 			_backgroundServiceAutoReconnectLock?.release();
