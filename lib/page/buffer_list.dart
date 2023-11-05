@@ -329,7 +329,12 @@ class _BufferItem extends AnimatedWidget {
 		var height = (dense ? 64.0 : 72.0) + theme.visualDensity.baseSizeAdjustment.dy;
 
 		return Container(alignment: Alignment.center, height: height, child: ListTile(
-			leading: CircleAvatar(child: Text(_initials(buffer.name))),
+			leading: CircleAvatar(
+				child: Text(
+					_initials(buffer.name),
+					semanticsLabel: ''
+				)
+			),
 			trailing: trailing.isEmpty ? null : Wrap(
 				spacing: 5,
 				children: trailing,
