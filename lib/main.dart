@@ -60,7 +60,7 @@ void main() async {
 
 	var appLinks = AppLinks();
 	IrcUri? initialUri;
-	if (Platform.isAndroid) {
+	if (Platform.isAndroid || Platform.isIOS) {
 		var initialUriStr = await appLinks.getInitialAppLinkString();
 		if (initialUriStr != null) {
 			initialUri = IrcUri.parse(initialUriStr);
