@@ -13,7 +13,8 @@ Goals:
   and network disruptions should be handled transparently
 - Lightweight: go easy on resource usage to run smoothly on older phones and
   save battery power.
-- Cross-platform: the main target platforms are Linux and Android.
+- Cross-platform: the main target platforms are Linux and Android, iOS is also
+  supported.
 
 If you want to try out goguma on Android, you can use our
 [F-Droid repository][fdroid-nightly] which provides nightly builds. Goguma is
