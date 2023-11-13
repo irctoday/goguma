@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_flipped_autocomplete/flutter_flipped_autocomplete.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
 import '../client.dart';
@@ -8,6 +11,7 @@ import '../client_controller.dart';
 import '../commands.dart';
 import '../database.dart';
 import '../irc.dart';
+import '../logging.dart';
 import '../models.dart';
 import '../prefs.dart';
 
@@ -26,10 +30,39 @@ class ComposerState extends State<Composer> {
 	final _controller = TextEditingController();
 
 	bool _isCommand = false;
+	bool _locationServiceAvailable = false;
+	bool _addMenuLoading = false;
 
 	DateTime? _ownTyping;
 	String? _replyPrefix;
 	MessageModel? _replyTo;
+
+	@override
+	void initState() {
+		super.initState();
+		_checkLocationService();
+	}
+
+	void _checkLocationService() async {
+		bool avail = false;
+		try {
+			avail = await Geolocator.isLocationServiceEnabled();
+		} on Exception catch (err) {
+			log.print('Failed to check for location service: $err');
+		}
+
+		if (avail) {
+			var permission = await Geolocator.checkPermission();
+			avail = permission != LocationPermission.deniedForever;
+		}
+
+		if (!mounted) {
+			return;
+		}
+		setState(() {
+			_locationServiceAvailable = avail;
+		});
+	}
 
 	int _getMaxPrivmsgLen() {
 		var buffer = context.read<BufferModel>();
@@ -353,6 +386,42 @@ class ComposerState extends State<Composer> {
 		});
 	}
 
+	Future<void> _shareLocation() async {
+		var permission = await Geolocator.checkPermission();
+		if (permission == LocationPermission.denied) {
+			permission = await Geolocator.requestPermission();
+		}
+		if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+			if (mounted) {
+				ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+					content: Text('Permission to access current location denied'),
+				));
+			}
+			return;
+		}
+
+		Position pos;
+		try {
+			pos = await Geolocator.getCurrentPosition(timeLimit: Duration(seconds: 15));
+		} on TimeoutException {
+			if (mounted) {
+				ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+					content: Text('Current location unavailable'),
+				));
+			}
+			return;
+		}
+
+		// TODO: consider including the "u" (uncertainty) parameter, however
+		// some consumers choke on parameters (e.g. Google Maps)
+		var uri = 'geo:${pos.latitude},${pos.longitude}';
+		if (_controller.text == '') {
+			_controller.text = uri;
+		} else {
+			_controller.text += ' ' + uri;
+		}
+	}
+
 	@override
 	void dispose() {
 		_focusNode.dispose();
@@ -460,6 +529,41 @@ class ComposerState extends State<Composer> {
 			elevation: 0,
 		);
 
+		Widget? addMenu;
+		if (_addMenuLoading) {
+			addMenu = Container(
+				width: 15,
+				height: 15,
+				margin: EdgeInsets.all(10),
+				child: CircularProgressIndicator(strokeWidth: 2),
+			);
+		} else if (_locationServiceAvailable) {
+			addMenu = PopupMenuButton(
+				icon: const Icon(Icons.add),
+				tooltip: 'Add',
+				itemBuilder: (context) => [
+					PopupMenuItem(
+						value: 'share-location',
+						child: Text('Share my location'),
+					),
+				],
+				onSelected: (item) async {
+					setState(() {
+						_addMenuLoading = true;
+					});
+					try {
+						await _shareLocation();
+					} finally {
+						if (mounted) {
+							setState(() {
+								_addMenuLoading = false;
+							});
+						}
+					}
+				},
+			);
+		}
+
 		return Form(key: _formKey, child: Row(children: [
 			Expanded(child: RawFlippedAutocomplete(
 				optionsBuilder: _buildOptions,
@@ -469,6 +573,7 @@ class ComposerState extends State<Composer> {
 				textEditingController: _controller,
 				optionsViewBuilder: _buildOptionsView,
 			)),
+			if (addMenu != null) addMenu,
 			fab,
 		]));
 	}

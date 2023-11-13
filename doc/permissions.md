@@ -9,6 +9,7 @@ On Android, Goguma requests the following permissions:
   chathistory extension ([flutter_background]).
 - `VIBRATE`, `POST_NOTIFICATIONS`: to show notifications
   ([flutter_local_notifications]).
+- `ACCESS_FINE_LOCATION`: to share the current location.
 
 [flutter_background]: https://pub.dev/packages/flutter_background#android
 [flutter_local_notifications]: https://github.com/MaikuB/flutter_local_notifications/blob/master/flutter_local_notifications/android/src/main/AndroidManifest.xml
