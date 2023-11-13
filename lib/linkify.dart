@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:linkify/linkify.dart' as lnk;
@@ -10,6 +12,7 @@ import 'models.dart';
 List<LinkifyElement> extractLinks(String text, [NetworkModel? network]) {
 	var linkifiers = [
 		_UrlLinkifier(),
+		_GeoLinkifier(),
 		EmailLinkifier(),
 		if (network != null) _IrcChannelLinkifier(network.uri.toString()),
 	];
@@ -214,6 +217,106 @@ class _IrcChannelLinkifier extends Linkifier {
 		default:
 			return false;
 		}
+	}
+}
+
+class _GeoLinkifier extends Linkifier {
+	const _GeoLinkifier();
+
+	@override
+	List<LinkifyElement> parse(List<LinkifyElement> elements, LinkifyOptions options) {
+		var out = <LinkifyElement>[];
+		for (var element in elements) {
+			if (element is TextElement) {
+				_parseText(out, element.text);
+			} else {
+				out.add(element);
+			}
+		}
+		return out;
+	}
+
+	void _parseText(List<LinkifyElement> out, String text) {
+		while (text != '') {
+			var i = text.indexOf('geo:');
+			if (i < 0) {
+				out.add(TextElement(text));
+				return;
+			}
+
+			if (i > 0) {
+				out.add(TextElement(text.substring(0, i)));
+				text = text.substring(i);
+			}
+
+			i = 0;
+			for (; i < text.length; i++) {
+				var ch = text[i];
+				if (_isWhitespace(ch)) {
+					break;
+				}
+
+				var nextCh = '';
+				if (i + 1 < text.length) {
+					nextCh = text[i + 1];
+				}
+
+				if (nextCh != '' && _isWhitespace(nextCh)) {
+					break;
+				}
+			}
+
+			var url = text.substring(0, i);
+			text = text.substring(i);
+
+			var coords = _tryParseUri(url);
+			if (coords != null) {
+				// Sigh. It seems like there is a contest to be the worst geo
+				// URI citizen between Android and iOS. Android supports geo
+				// URIs but with a different flavor incompatible with the RFC.
+				// iOS doesn't support geo URIs at all. Both need special
+				// handling to display a pin.
+				String? text;
+				if (Platform.isAndroid) {
+					text = url;
+					url = 'geo:${coords[0]},${coords[1]}?q=${coords[0]},${coords[1]}(Position)';
+				} else if (Platform.isIOS) {
+					text = url;
+					url = 'https://maps.apple.com/?ll=${coords[0]},${coords[1]}&q=Position';
+				}
+				out.add(UrlElement(url, text));
+			} else {
+				out.add(TextElement(url));
+			}
+		}
+	}
+
+	/// Parse a geo URI according to RFC 5870.
+	List<double>? _tryParseUri(String url) {
+		var path = url.replaceFirst('geo:', '');
+
+		var i = path.indexOf(';'); // strip RFC parameters
+		if (i < 0) {
+			i = path.indexOf('?'); // strip Google Maps parameters
+		}
+		var coordsStr = path;
+		if (i >= 0) {
+			coordsStr = path.substring(0, i);
+		}
+
+		List<double> coords = [];
+		for (var str in coordsStr.split(',')) {
+			var coord = double.tryParse(str);
+			if (coord == null) {
+				return null;
+			}
+			coords.add(coord);
+		}
+		if (coords.length != 2 && coords.length != 3) {
+			return null;
+		}
+
+		return coords;
 	}
 }
 
