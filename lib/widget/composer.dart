@@ -538,28 +538,33 @@ class ComposerState extends State<Composer> {
 				child: CircularProgressIndicator(strokeWidth: 2),
 			);
 		} else if (_locationServiceAvailable) {
-			addMenu = PopupMenuButton(
+			addMenu = IconButton(
 				icon: const Icon(Icons.add),
 				tooltip: 'Add',
-				itemBuilder: (context) => [
-					PopupMenuItem(
-						value: 'share-location',
-						child: Text('Share my location'),
-					),
-				],
-				onSelected: (item) async {
-					setState(() {
-						_addMenuLoading = true;
-					});
-					try {
-						await _shareLocation();
-					} finally {
-						if (mounted) {
-							setState(() {
-								_addMenuLoading = false;
-							});
-						}
-					}
+				onPressed: () {
+					showModalBottomSheet(
+						context: context,
+						builder: (context) => Column(mainAxisSize: MainAxisSize.min, children: [
+							ListTile(
+								title: Text('Share my location'),
+								leading: Icon(Icons.my_location),
+								onTap: () async {
+									setState(() {
+										_addMenuLoading = true;
+									});
+									try {
+										await _shareLocation();
+									} finally {
+										if (mounted) {
+											setState(() {
+												_addMenuLoading = false;
+											});
+										}
+									}
+								}
+							),
+						]),
+					);
 				},
 			);
 		}
