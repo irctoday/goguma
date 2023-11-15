@@ -549,6 +549,7 @@ class ComposerState extends State<Composer> {
 								title: Text('Share my location'),
 								leading: Icon(Icons.my_location),
 								onTap: () async {
+									Navigator.pop(context);
 									setState(() {
 										_addMenuLoading = true;
 									});
