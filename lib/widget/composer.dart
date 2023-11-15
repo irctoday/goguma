@@ -542,7 +542,7 @@ class ComposerState extends State<Composer> {
 				icon: const Icon(Icons.add),
 				tooltip: 'Add',
 				onPressed: () {
-					showModalBottomSheet(
+					showModalBottomSheet<void>(
 						context: context,
 						builder: (context) => Column(mainAxisSize: MainAxisSize.min, children: [
 							ListTile(
