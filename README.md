@@ -16,13 +16,12 @@ Goals:
 - Cross-platform: the main target platforms are Linux and Android, iOS is also
   supported.
 
-If you want to try out goguma on Android, you can use our
-[F-Droid repository][fdroid-nightly] which provides nightly builds. Goguma is
-also available on the [official F-Droid repository][fdroid-stable].
-Community-supported Goguma versions are available on the [Google Play Store]
-and the [Apple App Store]. Alternatively, you can grab APKs directly from
-[our CI][android-ci] (check out build artifacts). For more information about
-using Goguma, see our [documentation].
+If you want to try out goguma on Android, you can use [our F-Droid repository]
+which provides nightly builds. Goguma is also available on the
+[official F-Droid repository]. Community-supported Goguma versions are
+available on the [Google Play Store] and the [Apple App Store].
+
+For more information about using Goguma, see our [documentation].
 
 <img src="https://l.sr.ht/ah3N.png" width="220" alt="Conversation list">
 <img src="https://l.sr.ht/5NNh.png" width="220" alt="Conversation view">
@@ -71,11 +70,10 @@ restrictive terms and conditions.
 Copyright (C) 2021 The goguma Contributors
 
 [goguma]: https://sr.ht/~emersion/goguma/
-[fdroid-nightly]: https://fdroid.emersion.fr/#goguma-nightly
-[fdroid-stable]: https://f-droid.org/packages/fr.emersion.goguma/
+[our F-Droid repository]: https://fdroid.emersion.fr/#goguma-nightly
+[official F-Droid repository]: https://f-droid.org/packages/fr.emersion.goguma/
 [Google Play Store]: https://play.google.com/store/apps/details?id=fr.emersion.goguma.play
 [Apple App Store]: https://apps.apple.com/fr/app/goguma-irc/id6470394620
-[android-ci]: https://builds.sr.ht/~emersion/goguma/commits/master/android
 [documentation]: doc/README.md
 [mailing list]: https://lists.sr.ht/~emersion/goguma-dev
 [issue tracker]: https://todo.sr.ht/~emersion/goguma
