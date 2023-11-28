@@ -1,9 +1,13 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_flipped_autocomplete/flutter_flipped_autocomplete.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:mime/mime.dart';
 import 'package:provider/provider.dart';
 
 import '../client.dart';
@@ -422,6 +426,85 @@ class ComposerState extends State<Composer> {
 		}
 	}
 
+	Future<void> _uploadFile(XFile file) async {
+		var client = context.read<Client>();
+		var filehostUrl = Uri.parse(client.isupport.filehost!);
+
+		if (client.params.tls && filehostUrl.scheme != 'https') {
+			throw Exception('File host ($filehostUrl) is not using HTTPS');
+		}
+
+		ContentType? contentType;
+		if (file.mimeType != null) {
+			contentType = ContentType.parse(file.mimeType!);
+		}
+		if (contentType == null) {
+			// file.mimeType is always unset for the io impl of cross_file
+			var mimeType = lookupMimeType(file.name);
+			if (mimeType != null) {
+				contentType = ContentType.parse(mimeType);
+			}
+		}
+
+		var contentDisposition = HeaderValue('attachment', {'filename': file.name});
+
+		var contentLength = await file.length();
+
+		var httpClient = HttpClient();
+		String uploadUrl;
+		try {
+			var saslPlain = client.params.saslPlain;
+			if (saslPlain != null) {
+				httpClient.addCredentials(filehostUrl, "", HttpClientBasicCredentials(saslPlain.username, saslPlain.password));
+			}
+
+			var req = await httpClient.postUrl(filehostUrl);
+			req.headers.contentType = contentType;
+			req.headers.contentLength = contentLength;
+			req.headers.set('Content-Disposition', contentDisposition);
+			await req.addStream(file.openRead());
+			var resp = await req.close();
+			if (resp.statusCode != 201) {
+				throw Exception('HTTP error ${resp.statusCode} (expected 201)');
+			}
+
+			var location = resp.headers.value('Location');
+			if (location == null) {
+				throw FormatException('Missing Location header field in file upload response');
+			}
+			uploadUrl = filehostUrl.resolve(location).toString();
+		} finally {
+			httpClient.close();
+		}
+
+		// TODO: show image preview
+		if (_controller.text != '') {
+			_controller.text += ' ';
+		}
+		_controller.text += uploadUrl;
+	}
+
+	void _runAddMenuTask(Future<void> Function() f) async {
+		setState(() {
+			_addMenuLoading = true;
+		});
+		try {
+			await f();
+		} on Exception catch (err) {
+			if (mounted) {
+				ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+					content: Text(err.toString()),
+				));
+			}
+		} finally {
+			if (mounted) {
+				setState(() {
+					_addMenuLoading = false;
+				});
+			}
+		}
+	}
+
 	@override
 	void dispose() {
 		_focusNode.dispose();
@@ -518,6 +601,8 @@ class ComposerState extends State<Composer> {
 
 	@override
 	Widget build(BuildContext context) {
+		var client = context.read<Client>();
+
 		var fab = FloatingActionButton(
 			onPressed: () {
 				_submit();
@@ -537,7 +622,7 @@ class ComposerState extends State<Composer> {
 				margin: EdgeInsets.all(10),
 				child: CircularProgressIndicator(strokeWidth: 2),
 			);
-		} else if (_locationServiceAvailable) {
+		} else if (_locationServiceAvailable || client.isupport.filehost != null) {
 			addMenu = IconButton(
 				icon: const Icon(Icons.add),
 				tooltip: 'Add',
@@ -545,24 +630,39 @@ class ComposerState extends State<Composer> {
 					showModalBottomSheet<void>(
 						context: context,
 						builder: (context) => Column(mainAxisSize: MainAxisSize.min, children: [
-							ListTile(
+							if (_locationServiceAvailable) ListTile(
 								title: Text('Share my location'),
 								leading: Icon(Icons.my_location),
+								onTap: () {
+									Navigator.pop(context);
+									_runAddMenuTask(_shareLocation);
+								}
+							),
+							if (client.isupport.filehost != null) ListTile(
+								title: Text('Share a picture'),
+								leading: Icon(Icons.add_photo_alternate),
 								onTap: () async {
 									Navigator.pop(context);
-									setState(() {
-										_addMenuLoading = true;
-									});
-									try {
-										await _shareLocation();
-									} finally {
-										if (mounted) {
-											setState(() {
-												_addMenuLoading = false;
-											});
-										}
+									var file = await ImagePicker().pickImage(source: ImageSource.gallery);
+									if (file != null) {
+										_runAddMenuTask(() async {
+											await _uploadFile(file);
+										});
 									}
-								}
+								},
+							),
+							if (client.isupport.filehost != null) ListTile(
+								title: Text('Share a file'),
+								leading: Icon(Icons.upload_file),
+								onTap: () async {
+									Navigator.pop(context);
+									var file = await openFile(confirmButtonText: 'Upload');
+									if (file != null) {
+										_runAddMenuTask(() async {
+											await _uploadFile(file);
+										});
+									}
+								},
 							),
 						]),
 					);

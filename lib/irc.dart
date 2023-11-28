@@ -660,6 +660,7 @@ class IrcIsupportRegistry {
 	List<String> get chanModes => UnmodifiableListView(_chanModes ?? _defaultChanModes);
 	IrcIsupportElist? get elist => _elist;
 	String? get vapid => _raw['VAPID'];
+	String? get filehost => _raw['soju.im/FILEHOST'];
 
 	void parse(List<String> tokens) {
 		for (var tok in tokens) {
