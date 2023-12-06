@@ -238,7 +238,7 @@ class ClientProvider {
 		}
 
 		try {
-			await androidPlugin.requestPermission();
+			await androidPlugin.requestNotificationsPermission();
 		} on Exception catch (err) {
 			log.print('Failed to request notifications permission', error: err);
 		}
