@@ -3,6 +3,7 @@ import 'dart:convert' show json, base64, utf8;
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'database.dart';
 import 'logging.dart';
@@ -34,6 +35,9 @@ class FirebasePushController extends PushController {
 		if (token == null) {
 			throw Exception('Failed to obtain Firebase messaging token');
 		}
+
+		await _updateToken(token);
+		// TODO: listen to FirebaseMessaging.instance.onTokenRefresh
 
 		FirebaseMessaging.onBackgroundMessage(_handleFirebaseMessage);
 		FirebaseMessaging.onMessage.listen(_handleFirebaseMessage);
@@ -116,6 +120,25 @@ class FirebasePushController extends PushController {
 		} finally {
 			client.close();
 		}
+	}
+
+	static Future<void> _updateToken(String token) async {
+		var prefs = await SharedPreferences.getInstance();
+		var oldToken = prefs.getString('firebase_messaging_token');
+		var updated = oldToken != null && oldToken != token;
+		await prefs.setString('firebase_messaging_token', token);
+		if (!updated) {
+			return;
+		}
+
+		log.print('Firebase token changed, deleting all subscriptions');
+
+		var db = await DB.open();
+		var subs = await db.listWebPushSubscriptions();
+		for (var sub in subs) {
+			await db.deleteWebPushSubscription(sub.id!);
+		}
+		// TODO: send WEBPUSH UNREGISTER to the IRC server
 	}
 }
 
