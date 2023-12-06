@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_background/flutter_background.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:workmanager/workmanager.dart';
 
 import 'client.dart';
@@ -137,6 +138,10 @@ class ClientProvider {
 		});
 		_setupWorkManagerSync(useWorkManager, usePush);
 		_setupBackgroundServiceSync(!useWorkManager);
+
+		if (usePush || useWorkManager) {
+			_askNotificationPermissions();
+		}
 	}
 
 	void _setupWorkManagerSync(bool enable, bool lowFreq) {
@@ -222,6 +227,20 @@ class ClientProvider {
 			_backgroundServiceAutoReconnectLock = ClientAutoReconnectLock.acquire(this);
 		} else {
 			log.print('Failed to enable sync background service');
+		}
+	}
+
+	void _askNotificationPermissions() async {
+		var plugin = FlutterLocalNotificationsPlugin();
+		var androidPlugin = plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+		if (androidPlugin == null) {
+			return;
+		}
+
+		try {
+			await androidPlugin.requestPermission();
+		} on Exception catch (err) {
+			log.print('Failed to request notifications permission', error: err);
 		}
 	}
 
