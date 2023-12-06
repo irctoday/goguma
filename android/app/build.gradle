@@ -52,8 +52,7 @@ android {
 
     defaultConfig {
         applicationId "fr.emersion.goguma"
-        // TODO: make firebase_messaging optional and revert to `flutter.minSdkVersion`
-        minSdkVersion 19
+        minSdkVersion flutter.minSdkVersion
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
