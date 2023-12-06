@@ -26,7 +26,7 @@ dependencies:
   workmanager: ^0.5.0-dev.8
   flutter_local_notifications: ^16.2.0
   flutter_background: ^1.1.0
-  connectivity_plus: ^4.0.0
+  connectivity_plus: ^5.0.2
   shared_preferences_android: ^2.0.12
   # TODO: replace "webcrypto" with the "cryptography" package once they have a
   # pure Dart Ecdh.p256 implementation
