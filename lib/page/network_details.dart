@@ -129,6 +129,7 @@ class _NetworkDetailsPageState extends State<NetworkDetailsPage> {
 
 		String statusTitle;
 		String? statusSubtitle;
+		Widget? statusTrailing;
 		if (network.bouncerNetwork != null && network.state == NetworkState.online) {
 			statusTitle = bouncerNetworkStateDescription(network.bouncerNetwork!.state);
 			if (network.bouncerNetwork?.error?.isNotEmpty == true) {
@@ -137,10 +138,19 @@ class _NetworkDetailsPageState extends State<NetworkDetailsPage> {
 		} else {
 			statusTitle = networkStateDescription(network.state);
 		}
+		if (network.state == NetworkState.offline) {
+			statusTrailing = ElevatedButton(
+				onPressed: () {
+					client.connect().ignore();
+				},
+				child: Text('RECONNECT'),
+			);
+		}
 		children.add(ListTile(
 			leading: Icon(Icons.sync),
 			title: Text(statusTitle),
 			subtitle: statusSubtitle == null ? null : Text(statusSubtitle),
+			trailing: statusTrailing,
 		));
 
 		if (client.caps.enabled.contains('sasl') && network.state == NetworkState.online) {
