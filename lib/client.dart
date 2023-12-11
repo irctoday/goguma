@@ -111,6 +111,7 @@ class Client {
 	bool _registered = false;
 	final StreamController<ClientMessage> _messagesController = StreamController.broadcast(sync: true);
 	final StreamController<ClientState> _statesController = StreamController.broadcast(sync: true);
+	final StreamController<Exception> _connectErrorsController = StreamController.broadcast(sync: true);
 	Timer? _reconnectTimer;
 	bool _autoReconnect;
 	DateTime? _lastConnectTime;
@@ -130,6 +131,7 @@ class Client {
 	bool get registered => _registered;
 	Stream<ClientMessage> get messages => _messagesController.stream;
 	Stream<ClientState> get states => _statesController.stream;
+	Stream<Exception> get connectErrors => _connectErrorsController.stream;
 	bool get autoReconnect => _autoReconnect;
 
 	Client(ConnectParams params, {
@@ -187,6 +189,9 @@ class Client {
 			socket = await socketFuture;
 		} on Exception catch (err) {
 			_log('Connection failed', error: err);
+			if (!_connectErrorsController.isClosed) {
+				_connectErrorsController.add(err);
+			}
 			_setState(ClientState.disconnected);
 			_tryAutoReconnect();
 			rethrow;
@@ -230,8 +235,9 @@ class Client {
 			await socket.done;
 		} on Exception catch (err) {
 			_log('Connection error', error: err);
-			_messagesController.addError(err);
-			_statesController.addError(err);
+			if (!_connectErrorsController.isClosed) {
+				_connectErrorsController.add(err);
+			}
 		} finally {
 			_log('Connection closed');
 
@@ -629,6 +635,7 @@ class Client {
 		disconnect();
 		_messagesController.close();
 		_statesController.close();
+		_connectErrorsController.close();
 	}
 
 	void send(IrcMessage msg) {
