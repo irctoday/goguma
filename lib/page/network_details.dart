@@ -137,6 +137,9 @@ class _NetworkDetailsPageState extends State<NetworkDetailsPage> {
 			}
 		} else {
 			statusTitle = networkStateDescription(network.state);
+			if (network.connectError != null) {
+				statusSubtitle = network.connectError;
+			}
 		}
 		if (network.state == NetworkState.offline) {
 			statusTrailing = ElevatedButton(
