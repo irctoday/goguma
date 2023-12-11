@@ -201,13 +201,15 @@ class _NetworkDetailsPageState extends State<NetworkDetailsPage> {
 			},
 			childCount: buffers.length,
 		));
-		var s = buffers.length > 1 ? 's' : '';
 
-		children.add(Divider());
-		children.add(Container(
-			margin: const EdgeInsets.all(15),
-			child: Text('${buffers.length} conversation$s', style: TextStyle(fontWeight: FontWeight.bold)),
-		));
+		if (!buffers.isEmpty) {
+			var s = buffers.length > 1 ? 's' : '';
+			children.add(Divider());
+			children.add(Container(
+				margin: const EdgeInsets.all(15),
+				child: Text('${buffers.length} conversation$s', style: TextStyle(fontWeight: FontWeight.bold)),
+			));
+		}
 
 		return Scaffold(
 			body: CustomScrollView(
