@@ -352,6 +352,7 @@ class ClientController {
 				break;
 			case ClientState.connected:
 				network.state = NetworkState.registering;
+				network.connectError = null;
 				break;
 			}
 		});
@@ -363,6 +364,10 @@ class ClientController {
 				messagesSub.pause();
 				future.whenComplete(() => messagesSub.resume());
 			}
+		});
+
+		client.connectErrors.listen((err) {
+			network.connectError = err.toString();
 		});
 	}
 

@@ -213,6 +213,9 @@ class _NetworkItem extends AnimatedWidget {
 			}
 		} else {
 			subtitle = networkStateDescription(network.state);
+			if (network.connectError != null) {
+				subtitle = '$subtitle - ${network.connectError}';
+			}
 		}
 
 		return ListTile(
