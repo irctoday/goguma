@@ -920,6 +920,7 @@ class Client {
 		var endMsg = await _roundtripMessage(msg, (msg) {
 			switch (msg.cmd) {
 			case ERR_NOSUCHNICK:
+			case ERR_NOSUCHSERVER:
 				throw IrcException(msg);
 			case RPL_WHOISCERTFP:
 			case RPL_WHOISREGNICK:
