@@ -308,10 +308,11 @@ class _BufferItem extends AnimatedWidget {
 			));
 		}
 		if (buffer.unreadCount != 0) {
+			var theme = Theme.of(context);
 			trailing.add(Container(
 				padding: EdgeInsets.all(3),
 				decoration: BoxDecoration(
-					color: buffer.muted ? Theme.of(context).textTheme.bodySmall!.color : Colors.red,
+					color: buffer.muted ? theme.textTheme.bodySmall!.color : theme.colorScheme.secondaryContainer,
 					borderRadius: BorderRadius.circular(20),
 				),
 				constraints: BoxConstraints(minWidth: 20, minHeight: 20),
