@@ -455,7 +455,7 @@ class ComposerState extends State<Composer> {
 		try {
 			var saslPlain = client.params.saslPlain;
 			if (saslPlain != null) {
-				httpClient.addCredentials(filehostUrl, "", HttpClientBasicCredentials(saslPlain.username, saslPlain.password));
+				httpClient.addCredentials(filehostUrl, '', HttpClientBasicCredentials(saslPlain.username, saslPlain.password));
 			}
 
 			var req = await httpClient.postUrl(filehostUrl);
