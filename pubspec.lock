@@ -833,18 +833,18 @@ packages:
     dependency: "direct main"
     description:
       name: sqflite
-      sha256: c2c32eb0c74021d987336522acc3b6bf0082fbd0c540c36a9cf4ddb8ba891ddc
+      sha256: a9016f495c927cb90557c909ff26a6d92d9bd54fc42ba92e19d4e79d61e798c6
       url: "https://pub.dev"
     source: hosted
-    version: "2.3.1"
+    version: "2.3.2"
   sqflite_common:
     dependency: transitive
     description:
       name: sqflite_common
-      sha256: "76db4d324c8cbb16ca5b60ad2f3d25cec953107c93ae65aafa480d3e6fb69f14"
+      sha256: "28d8c66baee4968519fb8bd6cdbedad982d6e53359091f0b74544a9f32ec72d5"
       url: "https://pub.dev"
     source: hosted
-    version: "2.5.2-1"
+    version: "2.5.3"
   sqflite_common_ffi:
     dependency: "direct main"
     description:
@@ -937,10 +937,10 @@ packages:
     dependency: transitive
     description:
       name: unifiedpush_android
-      sha256: e067e16e25caed98d6f4e451bcbed73bf5dc664e3536197d892b3fae153c51ec
+      sha256: "610ad746294541f56d632adf9afba5d1c164c44e23ec0dd2162a41a6ff00a00e"
       url: "https://pub.dev"
     source: hosted
-    version: "2.2.2"
+    version: "2.2.3"
   unifiedpush_platform_interface:
     dependency: transitive
     description:
