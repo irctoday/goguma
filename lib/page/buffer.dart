@@ -350,7 +350,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 		}
 
 		MaterialBanner? banner;
-		if (isOnline && isChannel && !buffer.joined && !buffer.joining) {
+		if (network.state == NetworkState.online && isChannel && !buffer.joined && !buffer.joining) {
 			banner = MaterialBanner(
 				content: Text('You have left this channel.'),
 				actions: [
