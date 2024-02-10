@@ -350,8 +350,6 @@ Future<void> _waitNetworkOnline(NetworkModel network) async {
 	network.addListener(listener);
 
 	try {
-		// TODO: figure out what's up with this lint, seems like a false positive
-		// ignore: void_checks
 		await completer.future.timeout(const Duration(minutes: 5), onTimeout: () {
 			throw TimeoutException('Timed out waiting for network to come online');
 		});
