@@ -103,6 +103,7 @@ class Client {
 	final int _id;
 	final Set<String> _requestCaps;
 	ConnectParams _params;
+	ConnectionTask<Socket>? _connectionTask;
 	Socket? _socket;
 	String _nick;
 	String _realname;
@@ -163,31 +164,38 @@ class Client {
 		_lastConnectTime = DateTime.now();
 
 		await _socket?.close();
+		_connectionTask?.cancel();
 
 		params ??= _params;
 		_log('Connecting to ${params.host}...');
 
-		final connectTimeout = Duration(seconds: 15);
-		Future<Socket> socketFuture;
+		Future<ConnectionTask<Socket>> connectionTaskFuture;
 		if (params.tls) {
-			socketFuture = SecureSocket.connect(
+			connectionTaskFuture = SecureSocket.startConnect(
 				params.host,
 				params.port,
 				supportedProtocols: ['irc'],
-				timeout: connectTimeout,
 			);
 		} else {
-			socketFuture = Socket.connect(
+			connectionTaskFuture = Socket.startConnect(
 				params.host,
 				params.port,
-				timeout: connectTimeout,
 			);
 		}
 
+		final connectTimeout = Duration(seconds: 15);
 		Socket socket;
 		try {
-			socket = await socketFuture;
+			var connectionTask = await connectionTaskFuture;
+			_connectionTask = connectionTask;
+
+			socket = await connectionTask.socket.timeout(connectTimeout, onTimeout: () {
+				throw TimeoutException('Connection timed out');
+			});
+			_connectionTask = null;
 		} on Exception catch (err) {
+			_connectionTask?.cancel();
+			_connectionTask = null;
 			_log('Connection failed', error: err);
 			if (!_connectErrorsController.isClosed) {
 				_connectErrorsController.add(err);
@@ -260,6 +268,7 @@ class Client {
 	Future<void> disconnect() async {
 		_reconnectTimer?.cancel();
 		_reconnectTimer = null;
+		_connectionTask?.cancel();
 		await _socket?.close();
 	}
 
