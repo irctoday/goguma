@@ -65,5 +65,12 @@
 	<false/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Share your current location with a channel or user</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+	<key>flutter_apns.disable_swizzling</key>
+	<true/>
 </dict>
 </plist>

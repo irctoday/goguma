@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:workmanager/workmanager.dart';
 
 import 'android_le.dart';
+import 'apns.dart';
 import 'app.dart';
 import 'client.dart';
 import 'client_controller.dart';
@@ -46,6 +47,10 @@ void main() async {
 
 	WidgetsFlutterBinding.ensureInitialized();
 	await _initWorkManager();
+
+	if (Platform.isIOS) {
+		initPush = wrapApnsInitPush(initPush);
+	}
 
 	PushController? pushController;
 	try {
