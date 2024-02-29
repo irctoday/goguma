@@ -670,7 +670,7 @@ class ComposerState extends State<Composer> {
 			);
 		}
 
-		return Form(key: _formKey, child: Row(children: [
+		return SafeArea(child: Form(key: _formKey, child: Row(children: [
 			Expanded(child: RawFlippedAutocomplete(
 				optionsBuilder: _buildOptions,
 				displayStringForOption: _displayStringForOption,
@@ -681,6 +681,6 @@ class ComposerState extends State<Composer> {
 			)),
 			if (addMenu != null) addMenu,
 			fab,
-		]));
+		])));
 	}
 }
