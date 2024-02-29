@@ -513,8 +513,24 @@ class ComposerState extends State<Composer> {
 	}
 
 	Widget _buildTextField(BuildContext context, TextEditingController controller, FocusNode focusNode, VoidCallback onFieldSubmitted) {
+		var client = context.read<Client>();
 		var prefs = context.read<Prefs>();
 		var sendTyping = prefs.typingIndicator;
+
+		ContentInsertionConfiguration? contentInsertionConfiguration;
+		if (client.isupport.filehost != null) {
+			contentInsertionConfiguration = ContentInsertionConfiguration(
+				onContentInserted: (data) async {
+					if (!data.hasData) {
+						return;
+					}
+					var file = XFile.fromData(data.data!, mimeType: data.mimeType, path: data.uri);
+					_runAddMenuTask(() async {
+						await _uploadFile(file);
+					});
+				},
+			);
+		}
 
 		return TextFormField(
 			controller: controller,
@@ -548,6 +564,7 @@ class ComposerState extends State<Composer> {
 			minLines: 1,
 			maxLines: 5,
 			keyboardType: TextInputType.text, // disallows newlines
+			contentInsertionConfiguration: contentInsertionConfiguration,
 		);
 	}
 
