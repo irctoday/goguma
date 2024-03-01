@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_apns_only/flutter_apns_only.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -13,6 +14,7 @@ import 'push.dart';
 final _gatewayEndpoint = Uri.parse(
 	String.fromEnvironment('pushgardenEndpoint', defaultValue: 'https://pushgarden.emersion.fr')
 );
+const _environment = kReleaseMode ? 'production' : 'development';
 const _appId = 'me.jeanthomas.goguma';
 
 class ApnsPushController extends PushController {
@@ -43,7 +45,7 @@ class ApnsPushController extends PushController {
 	@override
 	Future<PushSubscription> createSubscription(NetworkEntry network, String? vapidKey) async {
 		var tag = _generateTag();
-		var pushUrl = _gatewayEndpoint.resolve('/apple/$_appId/push?token=$_token&state=$tag');
+		var pushUrl = _gatewayEndpoint.resolve('/apple/$_appId/$_environment/push?token=$_token&state=$tag');
 		return PushSubscription(
 			endpoint: pushUrl.toString(),
 			tag: tag,
