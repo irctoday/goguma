@@ -646,7 +646,7 @@ class ComposerState extends State<Composer> {
 				onPressed: () {
 					showModalBottomSheet<void>(
 						context: context,
-						builder: (context) => Column(mainAxisSize: MainAxisSize.min, children: [
+						builder: (context) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
 							if (_locationServiceAvailable) ListTile(
 								title: Text('Share my location'),
 								leading: Icon(Icons.my_location),
@@ -681,7 +681,7 @@ class ComposerState extends State<Composer> {
 									}
 								},
 							),
-						]),
+						])),
 					);
 				},
 			);
