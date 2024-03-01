@@ -1005,6 +1005,7 @@ class CtcpMessage {
 }
 
 final _alphaNumRegExp = RegExp(r'^[\p{L}0-9]$', unicode: true);
+final _spaceRegExp = RegExp(r'\s');
 
 bool _isWordBoundary(String ch) {
 	switch (ch) {
@@ -1014,6 +1015,29 @@ bool _isWordBoundary(String ch) {
 		return false;
 	default:
 		return !_alphaNumRegExp.hasMatch(ch);
+	}
+}
+
+bool _isUriPrefix(String text) {
+	var i = text.lastIndexOf(_spaceRegExp);
+	if (i >= 0) {
+		text = text.substring(i);
+	}
+
+	i = text.indexOf('://');
+	if (i <= 0) {
+		return false;
+	}
+
+	// See RFC 3986 section 3
+	var ch = text[i - 1];
+	switch (ch) {
+	case '+':
+	case '-':
+	case '.':
+		return true;
+	default:
+		return _alphaNumRegExp.hasMatch(ch);
 	}
 }
 
@@ -1036,7 +1060,7 @@ bool findTextHighlight(String text, String nick) {
 		if (i + nick.length < text.length) {
 			right = text[i + nick.length];
 		}
-		if (_isWordBoundary(left) && _isWordBoundary(right)) {
+		if (_isWordBoundary(left) && _isWordBoundary(right) && !_isUriPrefix(text.substring(0, i))) {
 			return true;
 		}
 
