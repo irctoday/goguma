@@ -3,9 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../ansi.dart';
 import '../client.dart';
+import '../dialog/authenticate.dart';
 import '../linkify.dart';
 import '../models.dart';
-import '../dialog/authenticate.dart';
 import 'buffer.dart';
 import 'edit_bouncer_network.dart';
 

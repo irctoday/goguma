@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'connect.dart';
 import '../client.dart';
 import '../client_controller.dart';
 import '../database.dart';
@@ -12,6 +11,7 @@ import '../dialog/edit_profile.dart';
 import '../irc.dart';
 import '../models.dart';
 import '../prefs.dart';
+import 'connect.dart';
 import 'edit_bouncer_network.dart';
 import 'network_details.dart';
 

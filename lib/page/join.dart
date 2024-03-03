@@ -3,13 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'buffer.dart';
 import '../ansi.dart';
-import '../irc.dart';
 import '../client.dart';
 import '../client_controller.dart';
+import '../irc.dart';
 import '../logging.dart';
 import '../models.dart';
+import 'buffer.dart';
 
 class JoinPage extends StatefulWidget {
 	static const routeName = '/join';

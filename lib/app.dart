@@ -19,9 +19,9 @@ import 'page/buffer.dart';
 import 'page/buffer_details.dart';
 import 'page/buffer_list.dart';
 import 'page/connect.dart';
+import 'page/edit_bouncer_network.dart';
 import 'page/gallery.dart';
 import 'page/join.dart';
-import 'page/edit_bouncer_network.dart';
 import 'page/network_details.dart';
 import 'page/settings.dart';
 

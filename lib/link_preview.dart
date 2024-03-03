@@ -4,8 +4,8 @@ import 'dart:io';
 // ignore: unnecessary_import
 import 'dart:typed_data';
 
-import 'package:html/parser.dart' as html;
 import 'package:html/dom.dart' as htmldom;
+import 'package:html/parser.dart' as html;
 import 'package:linkify/linkify.dart' as lnk;
 
 import 'database.dart';

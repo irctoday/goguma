@@ -11,6 +11,7 @@ analyzer:
 linter:
   rules:
     prefer_single_quotes: true
+    directives_ordering: true
     avoid_catches_without_on_clauses: true
     unawaited_futures: true
     # Disabled because of IRC command constants
