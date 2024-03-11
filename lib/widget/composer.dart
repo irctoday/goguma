@@ -446,7 +446,16 @@ class ComposerState extends State<Composer> {
 			}
 		}
 
-		var contentDisposition = HeaderValue('attachment', {'filename': file.name});
+		// Encode filename according to RFC 5987 if necessary. Note,
+		// encodeQueryComponent will percent-encode a superset of attr-char.
+		Map<String, String?> dispParams = {};
+		var encodedFilename = Uri.encodeQueryComponent(file.name);
+		if (file.name == encodedFilename) {
+			dispParams['filename'] = file.name;
+		} else {
+			dispParams['filename*'] = "UTF-8''" + encodedFilename;
+		}
+		var contentDisposition = HeaderValue('attachment', dispParams);
 
 		var contentLength = await file.length();
 
