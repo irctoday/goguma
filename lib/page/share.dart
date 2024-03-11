@@ -42,7 +42,7 @@ class _SharePageState extends State<SharePage> {
 						}
 					},
 				),
-				title: Text('Share'),
+				title: Text('Share to…'),
 			),
 			body: ListView.builder(
 				key: _listKey,
