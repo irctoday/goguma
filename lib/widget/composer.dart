@@ -9,6 +9,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
 import 'package:provider/provider.dart';
+import 'package:share_handler/share_handler.dart';
 
 import '../client.dart';
 import '../client_controller.dart';
@@ -22,7 +23,9 @@ import '../prefs.dart';
 final whitespaceRegExp = RegExp(r'\s', unicode: true);
 
 class Composer extends StatefulWidget {
-	const Composer({ super.key });
+	final SharedMedia? sharedMedia;
+
+	const Composer({ super.key, this.sharedMedia });
 
 	@override
 	ComposerState createState() => ComposerState();
@@ -45,6 +48,10 @@ class ComposerState extends State<Composer> {
 	void initState() {
 		super.initState();
 		_checkLocationService();
+
+		if (widget.sharedMedia != null) {
+			_initSharedMedia(widget.sharedMedia!);
+		}
 	}
 
 	void _checkLocationService() async {
@@ -66,6 +73,27 @@ class ComposerState extends State<Composer> {
 		setState(() {
 			_locationServiceAvailable = avail;
 		});
+	}
+
+	void _initSharedMedia(SharedMedia sharedMedia) {
+		var text = sharedMedia.content;
+		if (text != null) {
+			if (text.startsWith('/')) {
+				// Insert a zero-width space to ensure this doesn't end up
+				// being executed as a command
+				text = '\u200B$text';
+			}
+			_controller.text = text;
+			_isCommand = false;
+		}
+
+		var attachments = sharedMedia.attachments ?? [];
+		if (!attachments.isEmpty) {
+			var file = XFile(attachments.single!.path);
+			_runAddMenuTask(() async {
+				await _uploadFile(file);
+			});
+		}
 	}
 
 	int _getMaxPrivmsgLen() {

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:share_handler/share_handler.dart';
 
 import '../ansi.dart';
 import '../client.dart';
@@ -22,12 +23,23 @@ import '../widget/swipe_action.dart';
 import 'buffer_details.dart';
 import 'buffer_list.dart';
 
+class BufferPageArguments {
+	final BufferModel buffer;
+	final SharedMedia? sharedMedia;
+
+	const BufferPageArguments({
+		required this.buffer,
+		this.sharedMedia,
+	});
+}
+
 class BufferPage extends StatefulWidget {
 	static const routeName = '/buffer';
 
 	final String? unreadMarkerTime;
+	final SharedMedia? sharedMedia;
 
-	const BufferPage({ super.key, this.unreadMarkerTime });
+	const BufferPage({ super.key, this.unreadMarkerTime, this.sharedMedia });
 
 	@override
 	State<BufferPage> createState() => _BufferPageState();
@@ -565,7 +577,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Si
 					),
 					child: Material(elevation: 15, child: Container(
 						padding: EdgeInsets.all(10),
-						child: Composer(key: _composerKey),
+						child: Composer(key: _composerKey, sharedMedia: widget.sharedMedia),
 					)),
 				),
 			),

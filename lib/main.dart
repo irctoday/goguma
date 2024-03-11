@@ -7,6 +7,7 @@ import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:share_handler/share_handler.dart';
 import 'package:workmanager/workmanager.dart';
 
 import 'android_le.dart';
@@ -65,11 +66,14 @@ void main() async {
 
 	var appLinks = AppLinks();
 	IrcUri? initialUri;
+	SharedMedia? initialSharedMedia;
 	if (Platform.isAndroid || Platform.isIOS) {
 		var initialUriStr = await appLinks.getInitialAppLinkString();
 		if (initialUriStr != null) {
 			initialUri = IrcUri.parse(initialUriStr);
 		}
+
+		initialSharedMedia = await ShareHandler.instance.getInitialSharedMedia();
 	}
 
 	var notifController = await NotificationController.init();
@@ -142,7 +146,7 @@ void main() async {
 				dispose: (context, linkPreviewer) => linkPreviewer.dispose(),
 			),
 		],
-		child: App(initialUri: initialUri),
+		child: App(initialUri: initialUri, initialSharedMedia: initialSharedMedia),
 	));
 }
 

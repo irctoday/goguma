@@ -5,6 +5,7 @@ import 'package:app_links/app_links.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:share_handler/share_handler.dart';
 
 import 'ansi.dart';
 import 'client.dart';
@@ -24,13 +25,15 @@ import 'page/gallery.dart';
 import 'page/join.dart';
 import 'page/network_details.dart';
 import 'page/settings.dart';
+import 'page/share.dart';
 
 const _themeMode = ThemeMode.system;
 
 class App extends StatefulWidget {
 	final IrcUri? initialUri;
+	final SharedMedia? initialSharedMedia;
 
-	const App({ super.key, this.initialUri });
+	const App({ super.key, this.initialUri, this.initialSharedMedia });
 
 	@override
 	State<App> createState() => _AppState();
@@ -47,6 +50,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 	late StreamSubscription<void> _connectivitySub;
 	late StreamSubscription<void> _notifSelectionSub;
 	StreamSubscription<void>? _appLinksSub;
+	StreamSubscription<void>? _sharedMediaSub;
 	late NetworkStateAggregator _networkStateAggregator;
 	final Map<NetworkModel, List<ScaffoldFeatureController<SnackBar, SnackBarClosedReason>>> _snackBarControllers = {};
 	Set<NetworkModel> _faultyNetworks = {};
@@ -127,10 +131,14 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		if (Platform.isAndroid || Platform.isIOS) {
 			var appLinks = context.read<AppLinks>();
 			_appLinksSub = appLinks.stringLinkStream.listen(_handleAppLink);
+
+			_sharedMediaSub = ShareHandler.instance.sharedMediaStream.listen(_handleSharedMedia);
 		}
 
 		if (networkList.networks.isEmpty) {
 			_initialRoute = ConnectPage.routeName;
+		} else if (widget.initialSharedMedia != null) {
+			_initialRoute = SharePage.routeName;
 		} else {
 			_initialRoute = BufferListPage.routeName;
 
@@ -152,6 +160,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		_connectivitySub.cancel();
 		_notifSelectionSub.cancel();
 		_appLinksSub?.cancel();
+		_sharedMediaSub?.cancel();
 		_networkStateAggregator.removeListener(_handleNetworkStateChange);
 		_networkStateAggregator.dispose();
 		super.dispose();
@@ -245,12 +254,14 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 	void _handleSelectBufferNotification(String payload) {
 		var bufferId = int.parse(payload);
 		var bufferList = context.read<BufferListModel>();
+		var navigatorState = _navigatorKey.currentState!;
 		var buffer = bufferList.byId(bufferId);
 		if (buffer == null) {
 			return; // maybe closed by the user in-between
 		}
 		var until = ModalRoute.withName(BufferListPage.routeName);
-		_navigatorKey.currentState!.pushNamedAndRemoveUntil(BufferPage.routeName, until, arguments: buffer);
+		var args = BufferPageArguments(buffer: buffer);
+		navigatorState.pushNamedAndRemoveUntil(BufferPage.routeName, until, arguments: args);
 	}
 
 	void _handleSelectInviteNotification(String payload) {
@@ -341,7 +352,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 			if (uri.entity != null) {
 				var buffer = bufferList.get(uri.entity!.name, network);
 				if (buffer != null) {
-					navigatorState.pushNamed(BufferPage.routeName, arguments: buffer);
+					navigatorState.pushNamed(BufferPage.routeName, arguments: BufferPageArguments(buffer: buffer));
 				} else {
 					_confirmOpenBuffer(network, uri.entity!.name);
 				}
@@ -363,6 +374,11 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		}
 
 		navigatorState.pushNamed(EditBouncerNetworkPage.routeName, arguments: uri);
+	}
+
+	void _handleSharedMedia(SharedMedia sharedMedia) {
+		var navigatorState = _navigatorKey.currentState!;
+		navigatorState.pushNamed(SharePage.routeName, arguments: sharedMedia);
 	}
 
 	void _confirmOpenBuffer(NetworkModel network, String target) async {
@@ -425,7 +441,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 			builder = (context) => SettingsPage();
 			break;
 		case BufferPage.routeName:
-			var buffer = settings.arguments as BufferModel;
+			var args = settings.arguments as BufferPageArguments;
+			var buffer = args.buffer;
 			builder = (context) {
 				var client = context.read<ClientProvider>().get(buffer.network);
 				return MultiProvider(
@@ -434,7 +451,10 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 						ChangeNotifierProvider<NetworkModel>.value(value: buffer.network),
 						Provider<Client>.value(value: client),
 					],
-					child: BufferPage(unreadMarkerTime: buffer.entry.lastReadTime),
+					child: BufferPage(
+						unreadMarkerTime: buffer.entry.lastReadTime,
+						sharedMedia: args.sharedMedia,
+					),
 				);
 			};
 			break;
@@ -481,6 +501,10 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 			var args = settings.arguments as GalleryPageArguments;
 			builder = (context) => GalleryPage(uri: args.uri, heroTag: args.heroTag);
 			break;
+		case SharePage.routeName:
+			var sharedMedia = settings.arguments as SharedMedia;
+			builder = (context) => SharePage(sharedMedia: sharedMedia);
+			break;
 		default:
 			throw Exception('Unknown route ${settings.name}');
 		}
@@ -488,16 +512,21 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 	}
 
 	List<Route<dynamic>> _handleGenerateInitialRoutes(String initialRoute) {
+		Object? routeArguments;
 		if (initialRoute == ConnectPage.routeName) {
-			// Prevent the default implementation from generating routes for
-			// both '/' and '/connect'
-			return [_handleGenerateRoute(RouteSettings(
-				name: initialRoute,
-				arguments: widget.initialUri,
-			))!];
+			routeArguments = widget.initialUri;
+		} else if (initialRoute == SharePage.routeName) {
+			routeArguments = widget.initialSharedMedia!;
 		} else {
 			return Navigator.defaultGenerateInitialRoutes(_navigatorKey.currentState!, initialRoute);
 		}
+
+		// Prevent the default implementation from generating routes for
+		// both '/' and '/connect' (or '/share')
+		return [_handleGenerateRoute(RouteSettings(
+			name: initialRoute,
+			arguments: routeArguments,
+		))!];
 	}
 
 	@override

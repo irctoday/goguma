@@ -347,7 +347,7 @@ class _BufferItem extends AnimatedWidget {
 				softWrap: false,
 			),
 			onTap: () {
-				Navigator.pushNamed(context, BufferPage.routeName, arguments: buffer);
+				Navigator.pushNamed(context, BufferPage.routeName, arguments: BufferPageArguments(buffer: buffer));
 			},
 		));
 	}
