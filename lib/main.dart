@@ -73,7 +73,9 @@ void main() async {
 			initialUri = IrcUri.parse(initialUriStr);
 		}
 
-		initialSharedMedia = await ShareHandler.instance.getInitialSharedMedia();
+		if (initialUri == null) {
+			initialSharedMedia = await ShareHandler.instance.getInitialSharedMedia();
+		}
 	}
 
 	var notifController = await NotificationController.init();
