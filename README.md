@@ -50,6 +50,20 @@ Build with:
 
 The built APK is in `build/app/outputs/flutter-apk/app-release.apk`.
 
+### For the iOS platform
+
+Build with:
+
+    flutter build ios # Build .app
+    flutter build ipa # Build .ipa
+    flutter build ipa --release # Build .ipa for App Store/Testflight
+
+The built ipa file is in `build/ios/ipa`, ready for upload with [Transporter].
+
+Please note that the bundle identifier is currently hardcoded to the one currently
+being used for App Store distribution. You may want to change it if you want to
+distribute Goguma yourself on the App Store, or a third-party platform.
+
 ## Contributing
 
 Send patches to the [mailing list], report bugs on the [issue tracker]. Discuss
@@ -79,3 +93,4 @@ Copyright (C) 2021 The goguma Contributors
 [issue tracker]: https://todo.sr.ht/~emersion/goguma
 [#emersion on Libera Chat]: ircs://irc.libera.chat/#emersion
 [git-send-email-web]: https://man.sr.ht/git.sr.ht/#sending-patches-upstream
+[Transporter]: https://apps.apple.com/us/app/transporter/id1450874784
