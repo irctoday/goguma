@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 
 import 'client.dart';
+import 'database.dart';
 import 'irc.dart';
 import 'models.dart';
 
@@ -49,6 +50,24 @@ String? _mode(BuildContext context, String? param) {
 	return null;
 }
 
+String? _part(BuildContext context, String? param) {
+	var client = context.read<Client>();
+	var bufferList = context.read<BufferListModel>();
+	var buffer = context.read<BufferModel>();
+	var db = context.read<DB>();
+	if (!client.isChannel(buffer.name)) {
+		throw CommandException('This command can only be used in channels');
+	}
+	if (param != null) {
+		client.send(IrcMessage('PART', [buffer.name, param]));
+	} else {
+		client.send(IrcMessage('PART', [buffer.name]));
+	}
+	bufferList.setArchived(buffer, true);
+	db.storeBuffer(buffer.entry);
+	return null;
+}
+
 String? _quote(BuildContext context, String? param) {
 	var client = context.read<Client>();
 	IrcMessage msg;
@@ -66,5 +85,6 @@ const Map<String, Command> commands = {
 	'kick': _kick,
 	'me': _me,
 	'mode': _mode,
+	'part': _part,
 	'quote': _quote,
 };
