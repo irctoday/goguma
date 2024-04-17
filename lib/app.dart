@@ -118,7 +118,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		});
 
 		_connectivitySub = Connectivity().onConnectivityChanged.listen((result) {
-			if (result != ConnectivityResult.none) {
+			if (result.length > 0 && !result.contains(ConnectivityResult.none)) {
 				_pingAll();
 			}
 		});
