@@ -17,6 +17,10 @@ When running on a device with Google Services available, Goguma may use the
 Google infrastructure to deliver notifications. Notification payloads are
 end-to-end encrypted.
 
+Note that stable releases of Goguma published on the official F-Droid
+repository at f-droid.org does not include Google Services support. The Goguma
+nightly repository does include Google Services support.
+
 When Google Services are unavailable, Goguma will use [UnifiedPush].
 
 ## Servers supporting chathistory
