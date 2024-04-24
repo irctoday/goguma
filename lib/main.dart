@@ -117,10 +117,6 @@ void main() async {
 		bufferList: bufferList,
 	);
 
-	for (var client in clientProvider.clients) {
-		client.connect().ignore();
-	}
-
 	// Listen for sync requests coming from the work manager Isolate
 	syncReceivePort.listen((data) async {
 		var sendPort = data as SendPort;
