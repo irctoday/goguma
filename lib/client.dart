@@ -306,7 +306,7 @@ class Client {
 		}
 
 		Duration d;
-		if (DateTime.now().difference(_lastConnectTime!) > _autoReconnectDelay) {
+		if (_lastConnectTime == null || DateTime.now().difference(_lastConnectTime!) > _autoReconnectDelay) {
 			_log('Reconnecting immediately');
 			d = Duration.zero;
 		} else {
