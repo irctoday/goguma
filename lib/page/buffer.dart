@@ -635,7 +635,7 @@ class _CompactMessageItem extends StatelessWidget {
 		}).toList();
 
 		List<Widget> stack = [];
-		List<TextSpan> content = [];
+		List<InlineSpan> content = [];
 
 		if (!prevMsgSameSender) {
 			var colorSwatch = Colors.primaries[sender.hashCode % Colors.primaries.length];
@@ -646,9 +646,14 @@ class _CompactMessageItem extends StatelessWidget {
 				left: 0,
 				child: Text(sender, style: senderStyle),
 			));
-			content.add(TextSpan(
-				text: sender,
-				style: senderStyle.apply(color: Color(0x00000000)),
+			content.add(WidgetSpan(
+				child: SelectionContainer.disabled(
+					child: Text(
+						sender,
+						style: senderStyle.apply(color: Color(0x00000000)),
+						semanticsLabel: '',  // Make screen reader quiet
+					),
+				),
 			));
 		}
 
@@ -665,17 +670,24 @@ class _CompactMessageItem extends StatelessWidget {
 				right: 0,
 				child: Text(timeText, style: timeStyle),
 			));
-			content.add(TextSpan(
-				text: timeText,
-				style: timeStyle.apply(color: Color(0x00000000)),
+			content.add(WidgetSpan(
+				child: SelectionContainer.disabled(
+					child: Text(
+						timeText,
+						style: timeStyle.apply(color: Color(0x00000000)),
+						semanticsLabel: '',  // Make screen reader quiet
+					),
+				),
 			));
 		}
 
 		stack.add(Container(
 			margin: EdgeInsets.only(left: 4),
-			child: SelectableText.rich(
-				TextSpan(
-					children: content,
+			child: SelectionArea(
+				child: Text.rich(
+					TextSpan(
+						children: content,
+					),
 				),
 			),
 		));
