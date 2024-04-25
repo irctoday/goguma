@@ -6,7 +6,7 @@ Web Push support on Android.
 First, create a Firebase app and obtain the `google-services.json` file. Then
 run:
 
-    flutter pub run tool/gen_main.dart --firebase /path/to/google-services.json lib/main_generated.dart
+    dart run tool/gen_main.dart --firebase /path/to/google-services.json lib/main_generated.dart
 
 Then build Goguma with the generated main entrypoint, the Firebase Android
 project property and your pushgarden instance:
