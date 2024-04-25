@@ -647,11 +647,13 @@ class _CompactMessageItem extends StatelessWidget {
 				child: Text(sender, style: senderStyle),
 			));
 			content.add(WidgetSpan(
+				alignment: PlaceholderAlignment.top,
 				child: SelectionContainer.disabled(
 					child: Text(
 						sender,
 						style: senderStyle.apply(color: Color(0x00000000)),
 						semanticsLabel: '',  // Make screen reader quiet
+						textScaler: TextScaler.noScaling,
 					),
 				),
 			));
@@ -671,11 +673,13 @@ class _CompactMessageItem extends StatelessWidget {
 				child: Text(timeText, style: timeStyle),
 			));
 			content.add(WidgetSpan(
+				alignment: PlaceholderAlignment.top,
 				child: SelectionContainer.disabled(
 					child: Text(
 						timeText,
 						style: timeStyle.apply(color: Color(0x00000000)),
 						semanticsLabel: '',  // Make screen reader quiet
+						textScaler: TextScaler.noScaling,
 					),
 				),
 			));
