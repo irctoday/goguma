@@ -797,6 +797,10 @@ class _MessageItem extends StatelessWidget {
 			marginTop = margin / 4;
 		}
 
+		var target = ircMsg.params[0];
+		var i = parseTargetPrefix(target, client.isupport.statusMsg);
+		var statusMsgPrefix = target.substring(0, i);
+
 		var senderTextSpan = TextSpan(
 			text: sender,
 			style: TextStyle(fontWeight: FontWeight.bold),
@@ -805,6 +809,11 @@ class _MessageItem extends StatelessWidget {
 			senderTextSpan = TextSpan(children: [
 				senderTextSpan,
 				TextSpan(text: ' (only visible to you)', style: TextStyle(color: textColor.withOpacity(0.5))),
+			]);
+		} else if (statusMsgPrefix != '') {
+			senderTextSpan = TextSpan(children: [
+				senderTextSpan,
+				TextSpan(text: ' (only visible to $statusMsgPrefix)', style: TextStyle(color: textColor.withOpacity(0.5))),
 			]);
 		}
 

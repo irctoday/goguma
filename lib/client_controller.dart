@@ -619,6 +619,15 @@ class ClientController {
 			if (msg.batchByType('chathistory') != null) {
 				break;
 			}
+
+			var i = parseTargetPrefix(target, client.isupport.statusMsg);
+			if (i > 0) {
+				var channel = target.substring(i);
+				if (client.isChannel(channel)) {
+					target = channel;
+				}
+			}
+
 			// target can be my own nick for direct messages, "*" for server
 			// messages, "$xxx" for server-wide broadcasts
 			if (!client.isChannel(target) && !client.isMyNick(msg.source.name)) {
@@ -629,6 +638,7 @@ class ClientController {
 					target = msg.source.name;
 				}
 			}
+
 			if (msg.cmd == 'TAGMSG') {
 				var typing = msg.tags['+typing'];
 				if (typing != null && !client.isMyNick(msg.source.name)) {

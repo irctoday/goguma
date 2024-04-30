@@ -661,6 +661,7 @@ class IrcIsupportRegistry {
 	IrcIsupportElist? get elist => _elist;
 	String? get vapid => _raw['VAPID'];
 	String? get filehost => _raw['soju.im/FILEHOST'];
+	String get statusMsg => _raw['STATUSMSG'] ?? '';
 
 	void parse(List<String> tokens) {
 		for (var tok in tokens) {
@@ -1127,10 +1128,7 @@ class Whois {
 					if (raw == '') {
 						continue;
 					}
-					var i = 0;
-					while (i < raw.length && prefixes.contains(raw[i])) {
-						i++;
-					}
+					var i = parseTargetPrefix(raw, prefixes);
 					var prefix = raw.substring(0, i);
 					var channel = raw.substring(i);
 					channels[channel] = prefix;
@@ -1525,10 +1523,7 @@ class NamesReply {
 				if (raw == '') {
 					continue;
 				}
-				var i = 0;
-				while (i < raw.length && allPrefixes.contains(raw[i])) {
-					i++;
-				}
+				var i = parseTargetPrefix(raw, allPrefixes);
 				var prefix = raw.substring(0, i);
 				var nickname = raw.substring(i);
 				members.add(NamesReplyMember(nickname: nickname, prefix: prefix));
@@ -1548,6 +1543,14 @@ class NamesReplyMember {
 	final String nickname;
 
 	const NamesReplyMember({ required this.nickname, this.prefix = '' });
+}
+
+int parseTargetPrefix(String raw, String prefixes) {
+	var i = 0;
+	while (i < raw.length && prefixes.contains(raw[i])) {
+		i++;
+	}
+	return i;
 }
 
 // See https://modern.ircdocs.horse/#clients
