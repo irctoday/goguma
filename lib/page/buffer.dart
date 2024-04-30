@@ -750,7 +750,12 @@ class _MessageItem extends StatelessWidget {
 		var sender = ircMsg.source!.name;
 		var localDateTime = entry.dateTime.toLocal();
 		var ctcp = CtcpMessage.parse(ircMsg);
+		var hasChannelContext = ircMsg.tags['+draft/channel-context'] != null;
 		assert(ircMsg.cmd == 'PRIVMSG' || ircMsg.cmd == 'NOTICE');
+
+		var target = ircMsg.params[0];
+		var i = parseTargetPrefix(target, client.isupport.statusMsg);
+		var statusMsgPrefix = target.substring(0, i);
 
 		var prevIrcMsg = prevMsg?.msg;
 		var prevCtcp = prevIrcMsg != null ? CtcpMessage.parse(prevIrcMsg) : null;
@@ -763,7 +768,7 @@ class _MessageItem extends StatelessWidget {
 		var isAction = ctcp != null && ctcp.cmd == 'ACTION';
 		var showUnreadMarker = prevEntry != null && unreadMarkerTime != null && unreadMarkerTime!.compareTo(entry.time) < 0 && unreadMarkerTime!.compareTo(prevEntry.time) >= 0;
 		var showDateMarker = prevEntry == null || !_isSameDate(localDateTime, prevEntry.dateTime.toLocal());
-		var isFirstInGroup = showUnreadMarker || !prevMsgSameSender || (prevMsgIsAction != isAction);
+		var isFirstInGroup = showUnreadMarker || !prevMsgSameSender || prevMsgIsAction != isAction || hasChannelContext || statusMsgPrefix != '';
 		var showTime = !nextMsgSameSender || nextMsg!.entry.dateTime.difference(entry.dateTime) > Duration(minutes: 2);
 
 		var unreadMarkerColor = Theme.of(context).colorScheme.secondary;
@@ -797,15 +802,11 @@ class _MessageItem extends StatelessWidget {
 			marginTop = margin / 4;
 		}
 
-		var target = ircMsg.params[0];
-		var i = parseTargetPrefix(target, client.isupport.statusMsg);
-		var statusMsgPrefix = target.substring(0, i);
-
 		var senderTextSpan = TextSpan(
 			text: sender,
 			style: TextStyle(fontWeight: FontWeight.bold),
 		);
-		if (ircMsg.tags['+draft/channel-context'] != null) {
+		if (hasChannelContext) {
 			senderTextSpan = TextSpan(children: [
 				senderTextSpan,
 				TextSpan(text: ' (only visible to you)', style: TextStyle(color: textColor.withOpacity(0.5))),
