@@ -41,10 +41,7 @@ class Logger {
 			return;
 		}
 
-		// Workaround: we get some uncaught SocketException on Android without
-		// a stack. Ignore these.
-		// TODO: figure out where they're coming from.
-		if (_sentryEnabled && !(details.exception is SocketException)) {
+		if (_sentryEnabled) {
 			await Sentry.captureException(details.exception, stackTrace: details.stack);
 		}
 

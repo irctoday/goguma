@@ -222,6 +222,11 @@ class Client {
 			// bi-directional connection is closed. We close the outgoing side
 			// here.
 			_socket?.close().ignore();
+		}, onError: (Object err, StackTrace stack) {
+			_log('Connection error', error: err);
+			if (!_connectErrorsController.isClosed && err is Exception) {
+				_connectErrorsController.add(err);
+			}
 		});
 
 		if (register) {
