@@ -1400,11 +1400,11 @@ bool _chanModeTypeHasArg(_ChanModeType type, ChanModeUpdateKind kind) {
 }
 
 String updateIrcMembership(String str, ChanModeUpdate update, IrcIsupportRegistry isupport) {
-	var memberships = isupport.memberships.where((m) => m.mode == update.mode).toList();
-	if (memberships.length != 1) {
+	var updateMemberships = isupport.memberships.where((m) => m.mode == update.mode).toList();
+	if (updateMemberships.length != 1) {
 		return str;
 	}
-	var membership = memberships[0];
+	var membership = updateMemberships[0];
 
 	switch (update.kind) {
 	case ChanModeUpdateKind.add:
@@ -1414,8 +1414,8 @@ String updateIrcMembership(String str, ChanModeUpdate update, IrcIsupportRegistr
 		str = str + membership.prefix;
 		var l = str.split('');
 		l.sort((a, b) {
-			var i = _membershipIndexByPrefix(memberships, a);
-			var j = _membershipIndexByPrefix(memberships, b);
+			var i = _membershipIndexByPrefix(isupport.memberships, a);
+			var j = _membershipIndexByPrefix(isupport.memberships, b);
 			return i - j;
 		});
 		return l.join('');
