@@ -32,7 +32,10 @@ String? _kick(BuildContext context, String? param) {
 	if (!client.isChannel(buffer.name)) {
 		throw CommandException('This command can only be used in channels');
 	}
-	client.send(IrcMessage('KICK', [buffer.name, _requireParam(param)]));
+	var parts = _requireParam(param).split(' ');
+	var nick = parts[0];
+	var reason = parts.length > 1 ? [parts.sublist(1).join(' ')] : <String>[];
+	client.send(IrcMessage('KICK', [buffer.name, nick, ...reason]));
 	return null;
 }
 
