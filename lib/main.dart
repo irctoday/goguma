@@ -41,12 +41,33 @@ void main() async {
 		return true;
 	};
 
-	var syncReceivePort = ReceivePort('main:sync');
-	IsolateNameServer.registerPortWithName(syncReceivePort.sendPort, 'main:sync');
-
 	await log.init();
 
-	WidgetsFlutterBinding.ensureInitialized();
+	var syncReceivePort = ReceivePort('main:sync');
+	var syncPortRegistered = false;
+	var widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+	var appLifecycleListener = AppLifecycleListener(
+		binding: widgetsBinding,
+		onStateChange: (state) {
+			if (state == AppLifecycleState.detached) {
+				if (syncPortRegistered) {
+					if (!IsolateNameServer.removePortNameMapping('main:sync')) {
+						log.print('Warning: failed to unregister sync port');
+					}
+					syncPortRegistered = false;
+				}
+			} else {
+				if (!syncPortRegistered) {
+					syncPortRegistered = IsolateNameServer.registerPortWithName(syncReceivePort.sendPort, 'main:sync');
+					if (!syncPortRegistered) {
+						log.print('Warning: failed to register sync port');
+					}
+				}
+			}
+		},
+	);
+	appLifecycleListener.onStateChange!(widgetsBinding.lifecycleState ?? AppLifecycleState.resumed);
+
 	await _initWorkManager();
 
 	if (Platform.isIOS) {
