@@ -61,7 +61,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		WidgetsBinding.instance.addObserver(this);
 
 		var state = WidgetsBinding.instance.lifecycleState;
-		if (state == AppLifecycleState.resumed || state == AppLifecycleState.inactive || state == null) {
+		if (_shouldAutoReconnectInState(state)) {
 			_enableAutoReconnect();
 			_enablePingTimer();
 		}
@@ -118,7 +118,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		});
 
 		_connectivitySub = Connectivity().onConnectivityChanged.listen((result) {
-			if (result.length > 0 && !result.contains(ConnectivityResult.none)) {
+			var isConnected = result.length > 0 && !result.contains(ConnectivityResult.none);
+			if (isConnected && _shouldAutoReconnectInState(WidgetsBinding.instance.lifecycleState)) {
 				_pingAll();
 			}
 		});
@@ -170,7 +171,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 	void didChangeAppLifecycleState(AppLifecycleState state) {
 		super.didChangeAppLifecycleState(state);
 
-		if (state == AppLifecycleState.resumed || state == AppLifecycleState.inactive) {
+		if (_shouldAutoReconnectInState(state)) {
 			_enableAutoReconnect();
 			_enablePingTimer();
 		} else {
@@ -184,6 +185,10 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 			// Send PINGs to make sure the connections are healthy
 			_pingAll();
 		}
+	}
+
+	bool _shouldAutoReconnectInState(AppLifecycleState? state) {
+		return state != AppLifecycleState.detached && state != AppLifecycleState.paused;
 	}
 
 	void _showNetworkSnackBar(SnackBar snackBar, NetworkModel network) {
