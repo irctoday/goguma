@@ -477,9 +477,15 @@ class ClientController {
 			}
 
 			network.state = NetworkState.synchronizing;
-			Future.wait(syncFutures).whenComplete(() {
-				network.state = NetworkState.online;
-			}).ignore();
+			() async {
+				try {
+					await Future.wait(syncFutures);
+				} on Exception catch (err) {
+					log.print('Failed to synchronize network', error: err);
+				} finally {
+					network.state = NetworkState.online;
+				}
+			}();
 			break;
 		case 'JOIN':
 			var channel = msg.params[0];
