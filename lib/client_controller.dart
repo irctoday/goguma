@@ -443,11 +443,11 @@ class ClientController {
 				client.monitor(nicks);
 			}
 
-			if (client.caps.enabled.contains('soju.im/webpush')) {
-				_setupPushSync();
-			}
-
 			List<Future<void>> syncFutures = [];
+
+			if (client.caps.enabled.contains('soju.im/webpush')) {
+				syncFutures.add(_setupPushSync());
+			}
 
 			// TODO: use a different cap, see:
 			// https://github.com/ircv3/ircv3-ideas/issues/91
@@ -1020,7 +1020,7 @@ class ClientController {
 		}));
 	}
 
-	void _setupPushSync() async {
+	Future<void> _setupPushSync() async {
 		if (!_isPushSupported()) {
 			return;
 		}
