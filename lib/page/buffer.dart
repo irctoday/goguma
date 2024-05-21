@@ -818,7 +818,10 @@ class _MessageItem extends StatelessWidget {
 			]);
 		}
 
-		var linkStyle = TextStyle(decoration: TextDecoration.underline);
+		var linkStyle = TextStyle(
+			decoration: TextDecoration.underline,
+			decorationColor: textColor,
+		);
 
 		List<InlineSpan> content;
 		Widget? linkPreview;
