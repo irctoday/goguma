@@ -61,10 +61,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 		WidgetsBinding.instance.addObserver(this);
 
 		var state = WidgetsBinding.instance.lifecycleState;
-		if (_shouldAutoReconnectInState(state)) {
-			_enableAutoReconnect();
-			_enablePingTimer();
-		}
+		_handleAppLifecycleState(state ?? AppLifecycleState.resumed);
 
 		var notifController = context.read<NotificationController>();
 		notifController.popLaunchSelection().then(_handleSelectNotification);
@@ -171,6 +168,15 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 	void didChangeAppLifecycleState(AppLifecycleState state) {
 		super.didChangeAppLifecycleState(state);
 
+		_handleAppLifecycleState(state);
+
+		if (state == AppLifecycleState.resumed) {
+			// Send PINGs to make sure the connections are healthy
+			_pingAll();
+		}
+	}
+
+	void _handleAppLifecycleState(AppLifecycleState state) {
 		if (_shouldAutoReconnectInState(state)) {
 			_enableAutoReconnect();
 			_enablePingTimer();
@@ -179,11 +185,6 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 			_autoReconnectLock = null;
 			_pingTimer?.cancel();
 			_pingTimer = null;
-		}
-
-		if (state == AppLifecycleState.resumed) {
-			// Send PINGs to make sure the connections are healthy
-			_pingAll();
 		}
 	}
 
