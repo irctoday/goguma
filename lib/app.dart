@@ -186,6 +186,13 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 			_pingTimer?.cancel();
 			_pingTimer = null;
 		}
+
+		if (state == AppLifecycleState.detached) {
+			var clientProvider = context.read<ClientProvider>();
+			for (var client in clientProvider.clients) {
+				client.disconnect();
+			}
+		}
 	}
 
 	bool _shouldAutoReconnectInState(AppLifecycleState? state) {
