@@ -95,6 +95,7 @@ class ClientProvider {
 		_enableSync = enableSync,
 		_pushController = pushController;
 
+	// Takes ownership of the Client.
 	void add(Client client, NetworkModel network) {
 		_controllers[network] = ClientController._(this, client, network);
 	}
