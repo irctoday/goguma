@@ -121,6 +121,15 @@ class ClientProvider {
 		_networkList.clear();
 	}
 
+	void disconnectAll() {
+		if (!_autoReconnectLocks.isEmpty) {
+			return;
+		}
+		for (var client in clients) {
+			client.disconnect();
+		}
+	}
+
 	void _setupSync() {
 		if (!Platform.isAndroid || !_enableSync) {
 			return;

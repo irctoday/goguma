@@ -189,9 +189,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 
 		if (state == AppLifecycleState.detached) {
 			var clientProvider = context.read<ClientProvider>();
-			for (var client in clientProvider.clients) {
-				client.disconnect();
-			}
+			clientProvider.disconnectAll();
 		}
 	}
 
