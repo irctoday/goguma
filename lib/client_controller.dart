@@ -103,7 +103,7 @@ class ClientProvider {
 		return _controllers[network]!.client;
 	}
 
-	void disconnect(NetworkModel network) {
+	void remove(NetworkModel network) {
 		var client = get(network);
 		_controllers.remove(network);
 		_bufferList.removeByNetwork(network);
@@ -111,7 +111,7 @@ class ClientProvider {
 		client.dispose();
 	}
 
-	void disconnectAll() {
+	void clear() {
 		for (var cc in _controllers.values) {
 			cc.client.dispose();
 		}
@@ -847,7 +847,7 @@ class ClientController {
 		}
 
 		for (var childNetwork in stale) {
-			_provider.disconnect(childNetwork);
+			_provider.remove(childNetwork);
 			await _db.deleteNetwork(childNetwork.networkId);
 		}
 	}
@@ -871,7 +871,7 @@ class ClientController {
 				return;
 			}
 
-			_provider.disconnect(childNetwork);
+			_provider.remove(childNetwork);
 
 			await _db.deleteNetwork(childNetwork.networkId);
 			return;

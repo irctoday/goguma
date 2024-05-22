@@ -74,7 +74,7 @@ class _SettingsPageState extends State<SettingsPage> {
 		}
 		networkList.clear();
 		bouncerNetworkList.clear();
-		context.read<ClientProvider>().disconnectAll();
+		context.read<ClientProvider>().clear();
 
 		unawaited(Navigator.pushNamedAndRemoveUntil(context, ConnectPage.routeName, (Route<dynamic> route) => false));
 	}
