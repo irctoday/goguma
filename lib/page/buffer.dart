@@ -715,10 +715,13 @@ class _CompactMessageItem extends StatelessWidget {
 
 		return Container(
 			margin: EdgeInsets.only(top: prevMsgSameSender ? 0 : 2.5, bottom: last ? 10 : 0, left: 4, right: 5),
-			child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-				Stack(children: stack),
-				if (linkPreview != null) linkPreview,
-			]),
+			child: DefaultTextStyle.merge(
+				style: TextStyle(height: 1.15),
+				child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+					Stack(children: stack),
+					if (linkPreview != null) linkPreview,
+				]),
+			),
 		);
 	}
 }
