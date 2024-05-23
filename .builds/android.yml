@@ -44,7 +44,6 @@ tasks:
         --build-name="$build_name" \
         --build-number="$build_number" \
         --target=lib/main_generated.dart \
-        --android-project-arg=firebase=true \
         --dart-define=SENTRY_DSN="$sentry_dsn" \
         --dart-define=SENTRY_ENVIRONMENT="nightly" \
         --dart-define=SENTRY_RELEASE="$build_name"
