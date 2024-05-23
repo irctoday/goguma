@@ -34,7 +34,7 @@ class _GalleryPageState extends State<GalleryPage> {
 						tooltip: 'Share',
 						icon: const Icon(Icons.share),
 						onPressed: () {
-							Share.share(widget.uri.toString());
+							Share.shareUri(widget.uri);
 						},
 					),
 				],
