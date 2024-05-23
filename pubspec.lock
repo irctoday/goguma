@@ -756,10 +756,10 @@ packages:
     dependency: "direct main"
     description:
       name: sentry
-      sha256: "57514bc72d441ffdc463f498d6886aa586a2494fa467a1eb9d649c28010d7ee3"
+      sha256: fd1fbfe860c05f5c52820ec4dbf2b6473789e83ead26cfc18bca4fe80bf3f008
       url: "https://pub.dev"
     source: hosted
-    version: "7.20.2"
+    version: "8.2.0"
   share_handler:
     dependency: "direct main"
     description:

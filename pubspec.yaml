@@ -35,7 +35,7 @@ dependencies:
   firebase_messaging: ^14.0.2
   app_links: ^6.1.1
   unifiedpush: ^5.0.0
-  sentry: ^7.2.0
+  sentry: ^8.2.0
   share_plus: ^9.0.0
   flutter_flipped_autocomplete: ^1.0.0
   scrollable_positioned_list: ^0.3.5
