@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:workmanager/workmanager.dart';
@@ -241,6 +241,11 @@ class ClientProvider {
 	}
 
 	void _askNotificationPermissions() async {
+		var state = WidgetsBinding.instance.lifecycleState ?? AppLifecycleState.resumed;
+		if (state == AppLifecycleState.detached) {
+			return;
+		}
+
 		var plugin = FlutterLocalNotificationsPlugin();
 		var androidPlugin = plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 		if (androidPlugin == null) {
