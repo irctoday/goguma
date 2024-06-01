@@ -789,7 +789,7 @@ class ClientController {
 				}
 			}
 			if (bumped) {
-				unawaited(_db.storeNetwork(_network.networkEntry));
+				await _db.storeNetwork(_network.networkEntry);
 			}
 			return;
 		}
@@ -824,7 +824,7 @@ class ClientController {
 
 		_bufferList.bumpLastDeliveredTime(buf, t);
 		if (_network.networkEntry.bumpLastDeliveredTime(t)) {
-			unawaited(_db.storeNetwork(_network.networkEntry));
+			await _db.storeNetwork(_network.networkEntry);
 		}
 
 		if (isNewBuffer && client.isNick(buf.name)) {
