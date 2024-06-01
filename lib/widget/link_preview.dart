@@ -62,7 +62,7 @@ class _PhotoPreview extends StatelessWidget {
 						heroTag: _heroTag,
 					));
 				} else {
-					bool ok = await launchUrl(preview.url, mode: LaunchMode.externalApplication);
+					bool ok = await launchUrl(preview.url);
 					if (!ok) {
 						throw Exception('Failed to launch URL: ${preview.url}');
 					}

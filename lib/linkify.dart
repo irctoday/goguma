@@ -41,7 +41,7 @@ TextSpan linkify(BuildContext context, String text, {
 	return buildTextSpan(
 		elements,
 		onOpen: (link) async {
-			bool ok = await launchUrl(Uri.parse(link.url), mode: LaunchMode.externalApplication);
+			bool ok = await launchUrl(Uri.parse(link.url));
 			if (!ok) {
 				throw Exception('Failed to launch URL: ${link.url}');
 			}
