@@ -46,6 +46,7 @@ dependencies:
   file_selector: ^1.0.1
   flutter_apns_only: ^1.6.0
   share_handler: ^0.0.21
+  dynamic_color: ^1.7.0
 
 dev_dependencies:
   flutter_lints: ^4.0.0

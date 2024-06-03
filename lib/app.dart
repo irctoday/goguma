@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:app_links/app_links.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_handler/share_handler.dart';
@@ -545,17 +546,25 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 
 	@override
 	Widget build(BuildContext context) {
-		return MaterialApp(
-			title: 'Goguma',
-			theme: ThemeData(colorSchemeSeed: Colors.indigo),
-			darkTheme: ThemeData(brightness: Brightness.dark, colorSchemeSeed: Colors.indigo),
-			themeMode: _themeMode,
-			initialRoute: _initialRoute,
-			onGenerateRoute: _handleGenerateRoute,
-			onGenerateInitialRoutes: _handleGenerateInitialRoutes,
-			navigatorKey: _navigatorKey,
-			scaffoldMessengerKey: _scaffoldMessengerKey,
-			debugShowCheckedModeBanner: false,
-		);
+		return DynamicColorBuilder(builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+			ColorScheme lightColorScheme = ColorScheme.fromSeed(seedColor: Colors.indigo);
+			ColorScheme darkColorScheme = ColorScheme.fromSeed(seedColor: Colors.indigo, brightness: Brightness.dark);
+			if (lightDynamic != null && darkDynamic != null) {
+				lightColorScheme = lightDynamic.harmonized();
+				darkColorScheme = darkDynamic.harmonized();
+			}
+			return MaterialApp(
+				title: 'Goguma',
+				theme: ThemeData(colorScheme: lightColorScheme),
+				darkTheme: ThemeData(colorScheme: darkColorScheme),
+				themeMode: _themeMode,
+				initialRoute: _initialRoute,
+				onGenerateRoute: _handleGenerateRoute,
+				onGenerateInitialRoutes: _handleGenerateInitialRoutes,
+				navigatorKey: _navigatorKey,
+				scaffoldMessengerKey: _scaffoldMessengerKey,
+				debugShowCheckedModeBanner: false,
+			);
+		});
 	}
 }
