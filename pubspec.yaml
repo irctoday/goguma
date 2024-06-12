@@ -35,7 +35,7 @@ dependencies:
   shared_preferences_android: ^2.0.12
   # TODO: replace "webcrypto" with the "cryptography" package once they have a
   # pure Dart Ecdh.p256 implementation
-  webcrypto: ^0.5.3
+  webcrypto: ^0.5.7
   firebase_core: ^2.1.0
   firebase_messaging: ^14.0.2
   app_links: ^6.1.1
