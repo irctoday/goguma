@@ -1,5 +1,7 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../ansi.dart';
 import '../client_controller.dart';
@@ -233,7 +235,17 @@ class _BackgroundServicePermissionBanner extends StatelessWidget {
 				}
 				return Column(children: [
 					MaterialBanner(
-						content: Text('This server doesn\'t support modern IRCv3 features. Goguma needs additional permissions to maintain a persistent network connection. This may increase battery usage.'),
+						content: Text.rich(TextSpan(children: [
+							TextSpan(text: 'This server doesn\'t support modern IRCv3 features. Goguma needs additional permissions to maintain a persistent network connection. This may increase battery usage.\nAlternatively, use an '),
+							TextSpan(text: 'IRC bouncer', style: TextStyle(fontWeight: FontWeight.bold)),
+							TextSpan(text: ' to maintain a connection for you. This will also enable you to access multiple networks and get push notifications when you are highlighted. We recommend '),
+							TextSpan(text: 'IRC Today', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue), recognizer: TapGestureRecognizer()
+								..onTap = () async {
+									await launchUrl(Uri.parse('https://irctoday.com'));
+								}
+							),
+							TextSpan(text: '.'),
+						])),
 						actions: [
 							TextButton(
 								child: Text('DISMISS'),

@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:hex/hex.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../client.dart';
 import '../client_controller.dart';
@@ -26,6 +28,11 @@ class ConnectPage extends StatefulWidget {
 }
 
 class _ConnectPageState extends State<ConnectPage> {
+	static const ircTodayUrl = 'https://irctoday.com';
+	static const ircTodayServer = 'irctoday.com';
+
+	bool _tutorial = false;
+	bool _ircToday = false;
 	bool _loading = false;
 	Exception? _error;
 	bool _passwordRequired = false;
@@ -44,6 +51,10 @@ class _ConnectPageState extends State<ConnectPage> {
 
 		if (widget.initialUri != null) {
 			_populateFromUri(widget.initialUri!);
+			_ircToday = widget.initialUri?.host == ircTodayServer;
+			if (_ircToday) {
+				_passwordRequired = true;
+			}
 		}
 	}
 
@@ -59,6 +70,9 @@ class _ConnectPageState extends State<ConnectPage> {
 
 		if (uri.auth != null) {
 			nicknameController.text = uri.auth!.username;
+			if (uri.auth!.password != null) {
+				passwordController.text = uri.auth!.password!;
+			}
 		}
 	}
 
@@ -214,6 +228,63 @@ class _ConnectPageState extends State<ConnectPage> {
 
 	@override
 	Widget build(BuildContext context) {
+		if (_tutorial) {
+			return Scaffold(
+				appBar: AppBar(
+					title: Text('Goguma'),
+				),
+				body: Container(padding: EdgeInsets.all(10), child: Column(children: [
+					Expanded(child: ListView(children: [
+						ListTile(
+							leading: Icon(Icons.check),
+							title: Text('In order to have an optimal IRC experience (message history, notifications when highlighted, multiple networks, sharing files over chat), you will need an IRC bouncer that will stay connected to IRC for you.', textScaler: TextScaler.linear(0.9)),
+						),
+						ListTile(
+							leading: Icon(Icons.check),
+							title: Text('You can use Goguma without an IRC bouncer and connect directly to a single IRC network, but you will miss these key features.', textScaler: TextScaler.linear(0.9)),
+						),
+						ListTile(
+								leading: Icon(Icons.check),
+								title: Text.rich(TextSpan(children: [
+									TextSpan(text: 'If you do not have a bouncer account yet, we recommend using the bouncer service '),
+									TextSpan(
+										text: 'IRC Today',
+										style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+										recognizer: TapGestureRecognizer()
+											..onTap = () async {
+												await launchUrl(Uri.parse(ircTodayUrl));
+											}
+									),
+									TextSpan(text: '.'),
+								]), textScaler: TextScaler.linear(0.9))),
+						ListTile(
+							leading: Icon(Icons.check),
+							title: Text('You can change accounts at any time by signing out in the app options.', textScaler: TextScaler.linear(0.9)),
+						),
+					])),
+					Container(padding: EdgeInsets.symmetric(vertical: 15), child: OutlinedButton(
+						onPressed: () {
+							launchUrl(Uri.parse(ircTodayUrl));
+						},
+						child: Row(mainAxisSize: MainAxisSize.min, children: [
+							Text('Open the IRC Today website'),
+							Container(padding: EdgeInsets.only(left: 10), child: Icon(Icons.launch)),
+						]),
+					)),
+					Container(padding: EdgeInsets.symmetric(vertical: 10), child: OutlinedButton.icon(
+						onPressed: () {
+							setState(() {
+								_tutorial = false;
+								_ircToday = false;
+							});
+						},
+						icon: Icon(Icons.arrow_back),
+						label: Text('Back to Connect'),
+					)),
+				])),
+			);
+		}
+
 		String? serverErr, nicknameErr, passwordErr;
 		if (_error is IrcException) {
 			final ircErr = _error as IrcException;
@@ -250,77 +321,102 @@ class _ConnectPageState extends State<ConnectPage> {
 		}
 
 		final focusNode = FocusScope.of(context);
+
+		var children = [
+			Focus(onFocusChange: _handleServerFocusChange, child: TextFormField(
+				keyboardType: TextInputType.url,
+				autocorrect: false,
+				decoration: InputDecoration(
+					labelText: 'Server',
+					errorText: serverErr,
+				),
+				controller: serverController,
+				autofocus: !_ircToday,
+				readOnly: _ircToday,
+				onEditingComplete: () => focusNode.nextFocus(),
+				onChanged: (value) {
+					setState(() {
+						_passwordUnsupported = false;
+						_passwordRequired = false;
+						_pinnedCertSHA1 = null;
+					});
+				},
+				validator: (value) {
+					if (value!.isEmpty) {
+						return 'Required';
+					}
+					try {
+						parseServerUri(value);
+					} on FormatException catch(e) {
+						return e.message;
+					}
+					return null;
+				},
+			)),
+			TextFormField(
+				decoration: InputDecoration(
+					labelText: _ircToday ? 'IRC Today Username' : 'Nickname',
+					errorText: nicknameErr,
+				),
+				autocorrect: false,
+				controller: nicknameController,
+				onEditingComplete: () => focusNode.nextFocus(),
+				validator: (value) {
+					return (value!.isEmpty) ? 'Required' : null;
+				},
+			),
+			if (!_passwordUnsupported) TextFormField(
+				obscureText: true,
+				decoration: InputDecoration(
+					labelText: _ircToday ? 'IRC Today Password' : (_passwordRequired ? 'Password' : 'Password (optional)'),
+					errorText: passwordErr,
+				),
+				controller: passwordController,
+				onFieldSubmitted: (_) {
+					focusNode.unfocus();
+					_submit();
+				},
+				validator: (value) {
+					return (_passwordRequired && value!.isEmpty) ? 'Required' : null;
+				},
+			),
+			SizedBox(height: 20),
+			_loading
+					? CircularProgressIndicator()
+					: FloatingActionButton.extended(
+				onPressed: _submit,
+				label: Text(_ircToday ? 'Connect to IRC Today' : 'Connect'),
+			),
+			Spacer(),
+		];
+
+		if (!_ircToday) {
+			children.add(Container(padding: EdgeInsets.symmetric(vertical: 10), child: OutlinedButton.icon(
+				onPressed: () {
+					launchUrl(Uri.parse('$ircTodayUrl/log-in-goguma'));
+				},
+				icon: Icon(Icons.account_circle_outlined),
+				label: Text('Log in with IRC Today'),
+			)));
+		}
+		children.add(Container(padding: EdgeInsets.symmetric(vertical: 10), child: OutlinedButton.icon(
+			onPressed: () {
+				setState(() {
+					serverController.text = '';
+					_tutorial = true;
+				});
+			},
+			icon: Icon(Icons.info_outline),
+			label: Text('No account?'),
+		)));
+
 		return Scaffold(
 			appBar: AppBar(
 				title: Text('Goguma'),
 			),
 			body: Form(
 				key: formKey,
-				child: Container(padding: EdgeInsets.all(10), child: Column(children: [
-					Focus(onFocusChange: _handleServerFocusChange, child: TextFormField(
-						keyboardType: TextInputType.url,
-						autocorrect: false,
-						decoration: InputDecoration(
-							labelText: 'Server',
-							errorText: serverErr,
-						),
-						controller: serverController,
-						autofocus: true,
-						onEditingComplete: () => focusNode.nextFocus(),
-						onChanged: (value) {
-							setState(() {
-								_passwordUnsupported = false;
-								_passwordRequired = false;
-								_pinnedCertSHA1 = null;
-							});
-						},
-						validator: (value) {
-							if (value!.isEmpty) {
-								return 'Required';
-							}
-							try {
-								parseServerUri(value);
-							} on FormatException catch(e) {
-								return e.message;
-							}
-							return null;
-						},
-					)),
-					TextFormField(
-						decoration: InputDecoration(
-							labelText: 'Nickname',
-							errorText: nicknameErr,
-						),
-						autocorrect: false,
-						controller: nicknameController,
-						onEditingComplete: () => focusNode.nextFocus(),
-						validator: (value) {
-							return (value!.isEmpty) ? 'Required' : null;
-						},
-					),
-					if (!_passwordUnsupported) TextFormField(
-						obscureText: true,
-						decoration: InputDecoration(
-							labelText: _passwordRequired ? 'Password' : 'Password (optional)',
-							errorText: passwordErr,
-						),
-						controller: passwordController,
-						onFieldSubmitted: (_) {
-							focusNode.unfocus();
-							_submit();
-						},
-						validator: (value) {
-							return (_passwordRequired && value!.isEmpty) ? 'Required' : null;
-						},
-					),
-					SizedBox(height: 20),
-					_loading
-						? CircularProgressIndicator()
-						: FloatingActionButton.extended(
-							onPressed: _submit,
-							label: Text('Connect'),
-						),
-				])),
+				child: Container(padding: EdgeInsets.all(10), child: Column(children: children)),
 			),
 		);
 	}

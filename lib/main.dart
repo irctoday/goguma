@@ -90,7 +90,7 @@ void main() async {
 	SharedMedia? initialSharedMedia;
 	if (Platform.isAndroid || Platform.isIOS) {
 		var initialUriStr = await appLinks.getInitialLinkString();
-		if (initialUriStr != null) {
+		if (initialUriStr != null && !initialUriStr.startsWith('http://') && !initialUriStr.startsWith('https://')) {
 			initialUri = IrcUri.parse(initialUriStr);
 		}
 

@@ -25,11 +25,11 @@ class Prefs {
 	}
 
 	bool get bufferCompact => _prefs.getBool(_bufferCompactKey) ?? false;
-	bool get typingIndicator => _prefs.getBool(_typingIndicatorKey) ?? false;
+	bool get typingIndicator => _prefs.getBool(_typingIndicatorKey) ?? true;
 	String get nickname => _prefs.getString(_nicknameKey) ?? 'user';
 	String? get realname => _prefs.getString(_realnameKey);
 	String? get pushProvider => _prefs.getString(_pushProviderKey);
-	bool get linkPreview => _prefs.getBool(_linkPreviewKey) ?? false;
+	bool get linkPreview => _prefs.getBool(_linkPreviewKey) ?? true;
 
 	set bufferCompact(bool enabled) {
 		_prefs.setBool(_bufferCompactKey, enabled);
