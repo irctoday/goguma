@@ -357,6 +357,10 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 	}
 
 	void _handleAppLink(String uriStr) {
+		if (uriStr.startsWith('http://') || uriStr.startsWith('https://')) {
+			return;
+		}
+
 		var networkList = context.read<NetworkListModel>();
 		var bufferList = context.read<BufferListModel>();
 		var navigatorState = _navigatorKey.currentState!;
@@ -411,6 +415,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 	}
 
 	void _handleSharedMedia(SharedMedia sharedMedia) {
+		if (sharedMedia.attachments == null && sharedMedia.content != null && (sharedMedia.content!.startsWith('irc://') || sharedMedia.content!.startsWith('ircs://') || sharedMedia.content!.startsWith('http://') || sharedMedia.content!.startsWith('https://'))) {
+			return;
+		}
 		var navigatorState = _navigatorKey.currentState!;
 		navigatorState.pushNamed(SharePage.routeName, arguments: sharedMedia);
 	}

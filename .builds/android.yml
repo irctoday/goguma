@@ -9,15 +9,14 @@ packages:
   # for flutter
   - unzip
 sources:
-  - https://codeberg.org/emersion/goguma.git
+  - https://github.com/irctoday/goguma.git
 secrets:
-  - fa5c1c68-d266-4770-bfc3-a4068b1676a0 # deploy SSH key
-  - 6d21b97d-cd64-4490-b325-acf8b05a542f # keystore.jks
-  - 431b0b53-2af2-441b-b879-86c5913bab4d # keystore.properties
-  - 4e454305-057f-44c3-9a4e-eeb74d54545b # google-services.json
-  - a76ea4e0-b264-4b32-b701-7cadf78b3230 # sentry-dsn.txt
+  - 64f98067-fd93-42e0-9fc4-2bae7d748cc3 # keystore.jks
+  - 106092f8-1cf4-415e-b36b-d9876ff507ae # keystore.properties
+  - 4c39c4e2-569a-4060-b75e-295051737530 # google-services.json
+  - ca03061d-9bc8-4d57-bf4a-15a6096afe59 # sentry-dsn.txt
 artifacts:
-  - goguma/build/app/outputs/flutter-apk/app-release.apk
+  - goguma/build/app/outputs/bundle/release/app-release.aab
 tasks:
   - flutter: |
       git clone --depth=1 --branch=stable https://github.com/flutter/flutter.git
@@ -57,7 +56,7 @@ tasks:
       tag="$(git describe --abbrev=0)"
       hash="$(git rev-parse --short=12 HEAD)"
       build_name="${tag#v}-dev+$hash"
-      build_number="$(git rev-list --first-parent --count origin/master)"
+      build_number="$(git rev-list --first-parent --count HEAD)"
       target=lib/main.dart
       if [ -e ~/google-services.json ]; then
         build_name="$build_name.firebase"
@@ -65,12 +64,13 @@ tasks:
       fi
       sentry_dsn=""
       [ -e ~/sentry-dsn.txt ] && sentry_dsn="$(cat ~/sentry-dsn.txt)"
-      flutter build apk \
+      flutter build appbundle \
+        -PapplicationIdSuffix=.play \
         --build-name="$build_name" \
         --build-number="$build_number" \
         --target="$target" \
         --dart-define=SENTRY_DSN="$sentry_dsn" \
-        --dart-define=SENTRY_ENVIRONMENT="nightly" \
+        --dart-define=SENTRY_ENVIRONMENT="play" \
         --dart-define=SENTRY_RELEASE="$build_name"
   - deploy: |
       cd goguma

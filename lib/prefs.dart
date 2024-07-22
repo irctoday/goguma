@@ -22,11 +22,11 @@ class Prefs {
 	}
 
 	bool get bufferCompact => _prefs.getBool(_bufferCompactKey) ?? false;
-	bool get typingIndicator => _prefs.getBool(_typingIndicatorKey) ?? false;
+	bool get typingIndicator => _prefs.getBool(_typingIndicatorKey) ?? true;
 	String get nickname => _prefs.getString(_nicknameKey) ?? 'user';
 	String? get realname => _prefs.getString(_realnameKey);
 	String? get pushProvider => _prefs.getString(_pushProviderKey);
-	bool get linkPreview => _prefs.getBool(_linkPreviewKey) ?? false;
+	bool get linkPreview => _prefs.getBool(_linkPreviewKey) ?? true;
 	bool get linkExtApp => _prefs.getBool(_linkExtAppKey) ?? false;
 	List<String> get recentReactions => _prefs.getStringList(_recentReactionsKey) ?? [];
 	bool get uploadErrorReports => _prefs.getBool(_uploadErrorReportsKey) ?? true;

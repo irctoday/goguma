@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:hex/hex.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../client.dart';
 import '../client_controller.dart';
@@ -40,6 +42,11 @@ class ConnectPage extends StatefulWidget {
 }
 
 class _ConnectPageState extends State<ConnectPage> {
+	static const ircTodayUrl = 'https://irctoday.com';
+	static const ircTodayServer = 'irctoday.com';
+
+	bool _tutorial = false;
+	bool _ircToday = false;
 	bool _loading = false;
 	Exception? _error;
 	_ServerFeatures _serverFeatures = _ServerFeatures();
@@ -58,6 +65,11 @@ class _ConnectPageState extends State<ConnectPage> {
 
 		if (widget.initialUri != null) {
 			_populateFromUri(widget.initialUri!);
+			_ircToday = widget.initialUri?.host == ircTodayServer;
+			if (_ircToday) {
+				_serverFeatures.passwordUnsupported = false;
+				_serverFeatures.passwordRequired = true;
+			}
 		}
 	}
 
@@ -73,6 +85,9 @@ class _ConnectPageState extends State<ConnectPage> {
 
 		if (uri.auth != null) {
 			nicknameController.text = uri.auth!.username;
+			if (uri.auth!.password != null) {
+				passwordController.text = uri.auth!.password!;
+			}
 		}
 	}
 
@@ -270,6 +285,63 @@ class _ConnectPageState extends State<ConnectPage> {
 
 	@override
 	Widget build(BuildContext context) {
+		if (_tutorial) {
+			return Scaffold(
+				appBar: AppBar(
+					title: Text('Goguma'),
+				),
+				body: Container(padding: EdgeInsets.all(10), child: SafeArea(child: Column(children: [
+					Expanded(child: ListView(children: [
+						ListTile(
+							leading: Icon(Icons.check),
+							title: Text('In order to have an optimal IRC experience (message history, notifications when highlighted, multiple networks, sharing files over chat), you will need an IRC bouncer that will stay connected to IRC for you.', textScaler: TextScaler.linear(0.9)),
+						),
+						ListTile(
+							leading: Icon(Icons.check),
+							title: Text('You can use Goguma without an IRC bouncer and connect directly to a single IRC network, but you will miss these key features.', textScaler: TextScaler.linear(0.9)),
+						),
+						ListTile(
+								leading: Icon(Icons.check),
+								title: Text.rich(TextSpan(children: [
+									TextSpan(text: 'If you do not have a bouncer account yet, we recommend using the bouncer service '),
+									TextSpan(
+										text: 'IRC Today',
+										style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+										recognizer: TapGestureRecognizer()
+											..onTap = () async {
+												await launchUrl(Uri.parse(ircTodayUrl));
+											}
+									),
+									TextSpan(text: '.'),
+								]), textScaler: TextScaler.linear(0.9))),
+						ListTile(
+							leading: Icon(Icons.check),
+							title: Text('You can change accounts at any time by signing out in the app options.', textScaler: TextScaler.linear(0.9)),
+						),
+					])),
+					Container(padding: EdgeInsets.symmetric(vertical: 15), child: OutlinedButton(
+						onPressed: () {
+							launchUrl(Uri.parse(ircTodayUrl));
+						},
+						child: Row(mainAxisSize: MainAxisSize.min, children: [
+							Text('Open the IRC Today website'),
+							Container(padding: EdgeInsets.only(left: 10), child: Icon(Icons.launch)),
+						]),
+					)),
+					Container(padding: EdgeInsets.symmetric(vertical: 10), child: OutlinedButton.icon(
+						onPressed: () {
+							setState(() {
+								_tutorial = false;
+								_ircToday = false;
+							});
+						},
+						icon: Icon(Icons.arrow_back),
+						label: Text('Back to Connect'),
+					)),
+				]))),
+			);
+		}
+
 		var err = _error;
 		String? serverErr, nicknameErr, passwordErr;
 		if (err is IrcException) {
@@ -316,7 +388,7 @@ class _ConnectPageState extends State<ConnectPage> {
 			),
 			body: Form(
 				key: formKey,
-				child: Container(padding: EdgeInsets.all(10), child: AutofillGroup(child: Column(children: [
+				child: Container(padding: EdgeInsets.all(10), child: SafeArea(child: AutofillGroup(child: Column(children: [
 					Focus(onFocusChange: _handleServerFocusChange, child: TextFormField(
 						keyboardType: TextInputType.url,
 						autocorrect: false,
@@ -326,7 +398,8 @@ class _ConnectPageState extends State<ConnectPage> {
 							errorMaxLines: 10,
 						),
 						controller: serverController,
-						autofocus: true,
+						autofocus: !_ircToday,
+						readOnly: _ircToday,
 						onEditingComplete: () => focusNode.nextFocus(),
 						onChanged: (value) {
 							_disconnect();
@@ -350,7 +423,7 @@ class _ConnectPageState extends State<ConnectPage> {
 					)),
 					TextFormField(
 						decoration: InputDecoration(
-							labelText: 'Nickname',
+							labelText: _ircToday ? 'IRC Today Username' : 'Nickname',
 							errorText: nicknameErr,
 						),
 						autocorrect: false,
@@ -365,7 +438,7 @@ class _ConnectPageState extends State<ConnectPage> {
 					if (!_serverFeatures.passwordUnsupported) TextFormField(
 						obscureText: _obscurePassword,
 						decoration: InputDecoration(
-							labelText: _serverFeatures.passwordRequired ? 'Password' : 'Password (optional)',
+							labelText: _ircToday ? 'IRC Today Password' : (_serverFeatures.passwordRequired ? 'Password' : 'Password (optional)'),
 							errorText: passwordErr,
 							suffixIcon: IconButton(
 								tooltip: _obscurePassword ? 'Show password' : 'Hide password',
@@ -392,11 +465,29 @@ class _ConnectPageState extends State<ConnectPage> {
 						? CircularProgressIndicator()
 						: FloatingActionButton.extended(
 							onPressed: _submit,
-							label: Text(_serverFeatures.networkName != null ? 'Connect to ${_serverFeatures.networkName}' : 'Connect'),
+							label: Text(_ircToday ? 'Connect to IRC Today' : (_serverFeatures.networkName != null ? 'Connect to ${_serverFeatures.networkName}' : 'Connect')),
 						),
+					Spacer(),
+					if (!_ircToday) Container(padding: EdgeInsets.symmetric(vertical: 10), child: OutlinedButton.icon(
+						onPressed: () {
+							launchUrl(Uri.parse('$ircTodayUrl/log-in-goguma'));
+						},
+						icon: Icon(Icons.account_circle_outlined),
+						label: Text('Log in with IRC Today'),
+					)),
+					if (!_ircToday) Container(padding: EdgeInsets.symmetric(vertical: 10), child: OutlinedButton.icon(
+						onPressed: () {
+							setState(() {
+								serverController.text = '';
+								_tutorial = true;
+							});
+						},
+						icon: Icon(Icons.info_outline),
+						label: Text('No account?'),
+					)),
 				]))),
 			),
-		);
+		));
 	}
 
 	void askBadCertficate(BuildContext context, X509Certificate cert) {
