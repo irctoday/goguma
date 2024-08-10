@@ -434,7 +434,9 @@ class ComposerState extends State<Composer> {
 
 		Position pos;
 		try {
-			pos = await Geolocator.getCurrentPosition(timeLimit: Duration(seconds: 15));
+			pos = await Geolocator.getCurrentPosition(locationSettings: LocationSettings(
+				timeLimit: Duration(seconds: 15),
+			));
 		} on TimeoutException {
 			if (mounted) {
 				ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
