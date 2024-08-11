@@ -149,9 +149,7 @@ class ClientProvider {
 		_setupWorkManagerSync(useWorkManager, usePush);
 		_setupBackgroundServiceSync(!useWorkManager);
 
-		if (usePush || useWorkManager) {
-			_askNotificationPermissions();
-		}
+		_askNotificationPermissions();
 	}
 
 	void _setupWorkManagerSync(bool enable, bool lowFreq) {

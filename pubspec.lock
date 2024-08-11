@@ -329,10 +329,11 @@ packages:
   flutter_background:
     dependency: "direct main"
     description:
-      name: flutter_background
-      sha256: "035c31a738509d67ee70bbf174e5aa7db462c371e838ec8259700c5c4e7ca17f"
-      url: "https://pub.dev"
-    source: hosted
+      path: "."
+      ref: f3437614c405bac5023f8b58574d4b6a77c610f0
+      resolved-ref: f3437614c405bac5023f8b58574d4b6a77c610f0
+      url: "https://github.com/emersion/flutter_background.git"
+    source: git
     version: "1.2.0"
   flutter_flipped_autocomplete:
     dependency: "direct main"

@@ -3,9 +3,7 @@
     <uses-permission android:name="android.permission.INTERNET"/>
 
     <!-- To keep running in the background (flutter_background package) -->
-    <uses-permission android:name="android.permission.WAKE_LOCK"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
 
     <!-- To share the current location -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
@@ -67,5 +65,10 @@
         <meta-data android:name="firebase_analytics_collection_deactivated" android:value="true" />
         <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" />
         <meta-data android:name="google_analytics_ssaid_collection_enabled" android:value="false" />
+
+        <service
+            android:name="de.julianassmann.flutter_background.IsolateHolderService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
     </application>
 </manifest>
