@@ -330,9 +330,9 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: f3437614c405bac5023f8b58574d4b6a77c610f0
-      resolved-ref: f3437614c405bac5023f8b58574d4b6a77c610f0
-      url: "https://github.com/emersion/flutter_background.git"
+      ref: "2421c6cf7015ff07bddbe4016b251cf326b3a2f2"
+      resolved-ref: "2421c6cf7015ff07bddbe4016b251cf326b3a2f2"
+      url: "https://github.com/JulianAssmann/flutter_background.git"
     source: git
     version: "1.2.0"
   flutter_flipped_autocomplete:
