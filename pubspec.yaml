@@ -49,12 +49,12 @@ dependencies:
   dynamic_color: ^1.7.0
 
 dependency_overrides:
-  # TODO: drop once this is merged:
-  # https://github.com/UnifiedPush/flutter-connector/pull/152
+  # TODO: drop once this is released:
+  # https://codeberg.org/UnifiedPush/flutter-connector/commit/5c6dd52023b9b909773586299ce53e2f59142c6b
   unifiedpush_android:
     git:
-      url: https://github.com/emersion/UnifiedPush-flutter-connector.git
-      ref: 1c2861f9e1e744a5644efdcad957d0a6a3aac733
+      url: https://codeberg.org/UnifiedPush/flutter-connector.git
+      ref: f81e4b559d986a2264ea841c82edf2619b03f1ea
       path: unifiedpush_android
 
 dev_dependencies:

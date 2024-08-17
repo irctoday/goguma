@@ -1033,9 +1033,9 @@ packages:
     dependency: "direct overridden"
     description:
       path: unifiedpush_android
-      ref: "1c2861f9e1e744a5644efdcad957d0a6a3aac733"
-      resolved-ref: "1c2861f9e1e744a5644efdcad957d0a6a3aac733"
-      url: "https://github.com/emersion/UnifiedPush-flutter-connector.git"
+      ref: f81e4b559d986a2264ea841c82edf2619b03f1ea
+      resolved-ref: f81e4b559d986a2264ea841c82edf2619b03f1ea
+      url: "https://codeberg.org/UnifiedPush/flutter-connector.git"
     source: git
     version: "2.2.3"
   unifiedpush_platform_interface:
