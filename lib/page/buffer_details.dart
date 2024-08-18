@@ -109,9 +109,8 @@ class _BufferDetailsPageState extends State<BufferDetailsPage> {
 			if (buffer.members != null) {
 				membership = buffer.members!.members[client.nick] ?? '';
 			} else if (_members != null) {
-				var cm = client.isupport.caseMapping;
 				for (var who in _members!) {
-					if (cm(who.nickname) == cm(client.nick)) {
+					if (client.isupport.caseMapping.equals(who.nickname, client.nick)) {
 						membership = who.membershipPrefix ?? '';
 						break;
 					}

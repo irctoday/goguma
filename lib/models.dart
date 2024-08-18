@@ -247,10 +247,10 @@ class BufferKey {
 	final NetworkModel network;
 
 	BufferKey(String name, this.network, CaseMapping cm) :
-		name = cm(name);
+		name = cm.canonicalize(name);
 
 	BufferKey.fromBuffer(BufferModel buffer, CaseMapping cm) :
-		name = cm(buffer.name),
+		name = cm.canonicalize(buffer.name),
 		network = buffer.network;
 
 	@override

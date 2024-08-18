@@ -162,10 +162,9 @@ Future<ServerEntry?> _fetchServer(DB db, int id) async {
 }
 
 Future<BufferEntry?> _fetchBuffer(DB db, String name, NetworkEntry network) async {
-	var cm = network.isupport.caseMapping;
 	var entries = await db.listBuffers();
 	for (var entry in entries) {
-		if (entry.network == network.id && cm(entry.name) == cm(name)) {
+		if (entry.network == network.id && network.isupport.caseMapping.equals(entry.name, name)) {
 			return entry;
 		}
 	}

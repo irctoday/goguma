@@ -669,13 +669,11 @@ class Client {
 	}
 
 	bool isMyNick(String name) {
-		var cm = isupport.caseMapping;
-		return cm(name) == cm(nick);
+		return isupport.caseMapping.equals(name, nick);
 	}
 
 	bool isNick(String name) {
-		var cm = isupport.caseMapping;
-		if (_serverSource != null && cm(name) == cm(_serverSource!.name)) {
+		if (_serverSource != null && isupport.caseMapping.equals(name, _serverSource!.name)) {
 			return false;
 		}
 		// A dollar is used for server-wide broadcasts. Dots usually indicate
@@ -745,9 +743,8 @@ class Client {
 	Future<ClientBatch> _fetchChatHistory(String subcmd, String target, List<String> params) {
 		var msg = IrcMessage('CHATHISTORY', [subcmd, target, ...params]);
 
-		var cm = isupport.caseMapping;
 		return _roundtripBatch(msg, (batch) {
-			return batch.type == 'chathistory' && cm(batch.params[0]) == cm(target);
+			return batch.type == 'chathistory' && isupport.caseMapping.equals(batch.params[0], target);
 		});
 	}
 
@@ -798,7 +795,7 @@ class Client {
 			String? pendingKey;
 			var skip = 0;
 			if (!caps.enabled.contains('labeled-response')) {
-				pendingKey = req.cmd + ' ' + cm(target);
+				pendingKey = req.cmd + ' ' + cm.canonicalize(target);
 				skip = _pendingTextMsgs[pendingKey] ?? 0;
 				_pendingTextMsgs[pendingKey] = skip + 1;
 			}
@@ -810,13 +807,13 @@ class Client {
 					switch (reply.cmd) {
 					case ERR_NOSUCHNICK:
 					case ERR_CANNOTSENDTOCHAN:
-						match = cm(reply.params[1]) == cm(target);
+						match = cm.equals(reply.params[1], target);
 						break;
 					case ERR_NOTEXTTOSEND:
 						match = true;
 						break;
 					default:
-						match = reply.cmd == req.cmd && cm(reply.params[0]) == cm(target);
+						match = reply.cmd == req.cmd && cm.equals(reply.params[0], target);
 						break;
 					}
 					if (!match) {
@@ -862,9 +859,8 @@ class Client {
 
 	Future<void> fetchReadMarker(String target) {
 		var msg = IrcMessage('MARKREAD', [target]);
-		var cm = isupport.caseMapping;
 		return _roundtripMessage(msg, (msg) {
-			return msg.cmd == 'MARKREAD' && cm(msg.params[0]) == cm(target);
+			return msg.cmd == 'MARKREAD' && isupport.caseMapping.equals(msg.params[0], target);
 		}, timeout: Duration(seconds: 15));
 	}
 
@@ -876,10 +872,9 @@ class Client {
 	}
 
 	Future<NamesReply> names(String channel) async {
-		var cm = isupport.caseMapping;
 		var msg = IrcMessage('NAMES', [channel]);
 		var endMsg = await _roundtripMessage(msg, (msg) {
-			return msg.cmd == RPL_ENDOFNAMES && cm(msg.params[1]) == cm(channel);
+			return msg.cmd == RPL_ENDOFNAMES && isupport.caseMapping.equals(msg.params[1], channel);
 		});
 		var endOfNames = endMsg as ClientEndOfNames;
 		return endOfNames.names;
@@ -897,7 +892,6 @@ class Client {
 		var msg = IrcMessage('WHO', params);
 
 		List<WhoReply> replies = [];
-		var cm = isupport.caseMapping;
 		await _roundtripMessage(msg, (msg) {
 			switch (msg.cmd) {
 			case RPL_WHOREPLY:
@@ -907,7 +901,7 @@ class Client {
 				replies.add(WhoReply.parseWhox(msg, whoxFields, isupport));
 				break;
 			case RPL_ENDOFWHO:
-				return cm(msg.params[1]) == cm(mask);
+				return isupport.caseMapping.equals(msg.params[1], mask);
 			}
 			return false;
 		});
@@ -928,7 +922,6 @@ class Client {
 	}
 
 	Future<Whois> whois(String nick) async {
-		var cm = isupport.caseMapping;
 		var msg = IrcMessage('WHOIS', [nick]);
 		List<ClientMessage> replies = [];
 		var endMsg = await _roundtripMessage(msg, (msg) {
@@ -951,12 +944,12 @@ class Client {
 			case RPL_WHOISSECURE:
 			case RPL_AWAY:
 			case RPL_WHOISBOT:
-				if (cm(msg.params[1]) == cm(nick)) {
+				if (isupport.caseMapping.equals(msg.params[1], nick)) {
 					replies.add(msg);
 				}
 				break;
 			case RPL_ENDOFWHOIS:
-				return cm(msg.params[1]) == cm(nick);
+				return isupport.caseMapping.equals(msg.params[1], nick);
 			}
 			return false;
 		});
@@ -1073,7 +1066,7 @@ class Client {
 		var cm = isupport.caseMapping;
 		// TODO: split into multiple JOIN messages if too long
 		var req = IrcMessage('JOIN', [names.join(',')]);
-		Set<String> outstanding = { ...names.map(cm) };
+		Set<String> outstanding = { ...names.map(cm.canonicalize) };
 		await _roundtripMessage(req, (reply) {
 			switch (reply.cmd) {
 			case ERR_NOSUCHCHANNEL:
@@ -1083,7 +1076,7 @@ class Client {
 			case ERR_CHANNELISFULL:
 			case ERR_INVITEONLYCHAN:
 			case ERR_BADCHANMASK:
-				if (!outstanding.contains(cm(reply.params[1]))) {
+				if (!outstanding.contains(cm.canonicalize(reply.params[1]))) {
 					break;
 				}
 				throw IrcException(reply);
@@ -1091,7 +1084,7 @@ class Client {
 				if (!isMyNick(reply.source.name)) {
 					break;
 				}
-				outstanding.remove(cm(reply.params[0]));
+				outstanding.remove(cm.canonicalize(reply.params[0]));
 				return outstanding.isEmpty;
 			}
 			return false;
@@ -1099,19 +1092,18 @@ class Client {
 	}
 
 	Future<void> setTopic(String channel, String? topic) {
-		var cm = isupport.caseMapping;
 		var msg = IrcMessage('TOPIC', [channel, topic ?? '']);
 		return _roundtripMessage(msg, (msg) {
 			switch (msg.cmd) {
 			case ERR_NOSUCHCHANNEL:
 			case ERR_NOTONCHANNEL:
 			case ERR_CHANOPRIVSNEEDED:
-				if (cm(msg.params[1]) == cm(channel)) {
+				if (isupport.caseMapping.equals(msg.params[1], channel)) {
 					throw IrcException(msg);
 				}
 				break;
 			case 'TOPIC':
-				return cm(msg.params[0]) == cm(channel);
+				return isupport.caseMapping.equals(msg.params[0], channel);
 			}
 			return false;
 		});
@@ -1119,17 +1111,16 @@ class Client {
 
 	Future<IrcMessage> fetchMode(String target) {
 		assert(isChannel(target)); // TODO: support for fetching user modes
-		var cm = isupport.caseMapping;
 		var msg = IrcMessage('MODE', [target]);
 		return _roundtripMessage(msg, (msg) {
 			switch (msg.cmd) {
 			case ERR_NOSUCHCHANNEL:
-				if (cm(msg.params[1]) == cm(target)) {
+				if (isupport.caseMapping.equals(msg.params[1], target)) {
 					throw IrcException(msg);
 				}
 				break;
 			case RPL_CHANNELMODEIS:
-				return cm(msg.params[1]) == cm(target);
+				return isupport.caseMapping.equals(msg.params[1], target);
 			}
 			return false;
 		});
@@ -1137,10 +1128,9 @@ class Client {
 
 	Future<void> setNickname(String nick) async {
 		var msg = IrcMessage('NICK', [nick]);
-		var cm = isupport.caseMapping;
 		var oldNick = nick;
 		await _roundtripMessage(msg, (msg) {
-			return msg.cmd == 'NICK' && cm(msg.source.name) == cm(oldNick);
+			return msg.cmd == 'NICK' && isupport.caseMapping.equals(msg.source.name, oldNick);
 		});
 		_params = _params.apply(nick: nick);
 	}

@@ -560,8 +560,7 @@ class ClientController {
 			_bufferList.get(msg.source.name, network)?.away = away;
 			break;
 		case 'NICK':
-			var cm = client.isupport.caseMapping;
-			if (cm(network.nickname) == cm(msg.source.name)) {
+			if (client.isupport.caseMapping.equals(network.nickname, msg.source.name)) {
 				network.nickname = msg.params[0];
 			}
 

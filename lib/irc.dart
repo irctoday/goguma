@@ -868,10 +868,18 @@ class IrcIsupportElist {
 	}
 }
 
-typedef CaseMapping = String Function(String s);
+class CaseMapping {
+	final String Function(String s) canonicalize;
+
+	const CaseMapping(this.canonicalize);
+
+	bool equals(String a, String b) {
+		return canonicalize(a) == canonicalize(b);
+	}
+}
 
 CaseMapping? _caseMappingByName(String s) {
-	CaseMapping caseMapChar;
+	String Function(String s) caseMapChar;
 	switch (s) {
 	case 'ascii':
 		caseMapChar = _caseMapCharAscii;
@@ -885,7 +893,7 @@ CaseMapping? _caseMappingByName(String s) {
 	default:
 		return null;
 	}
-	return (String s) => s.split('').map(caseMapChar).join('');
+	return CaseMapping((String s) => s.split('').map(caseMapChar).join(''));
 }
 
 String _caseMapCharRfc1459(String ch) {
@@ -923,12 +931,12 @@ class IrcNameMap<V> extends MapBase<String, V> {
 
 	@override
 	V? operator [](Object? key) {
-		return _m[_cm(key as String)]?.value;
+		return _m[_cm.canonicalize(key as String)]?.value;
 	}
 
 	@override
 	void operator []=(String key, V value) {
-		_m[_cm(key)] = _IrcNameMapEntry(key, value);
+		_m[_cm.canonicalize(key)] = _IrcNameMapEntry(key, value);
 	}
 
 	@override
@@ -943,16 +951,16 @@ class IrcNameMap<V> extends MapBase<String, V> {
 
 	@override
 	V? remove(Object? key) {
-		return _m.remove(_cm(key as String))?.value;
+		return _m.remove(_cm.canonicalize(key as String))?.value;
 	}
 
 	@override
 	bool containsKey(Object? key) {
-		return _m.containsKey(_cm(key as String));
+		return _m.containsKey(_cm.canonicalize(key as String));
 	}
 
 	void setCaseMapping(CaseMapping cm) {
-		_m = Map.fromIterables(_m.values.map((entry) => cm(entry.name)), _m.values);
+		_m = Map.fromIterables(_m.values.map((entry) => cm.canonicalize(entry.name)), _m.values);
 		_cm = cm;
 	}
 }
