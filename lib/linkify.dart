@@ -15,6 +15,7 @@ List<LinkifyElement> extractLinks(String text, [NetworkModel? network]) {
 		_UrlLinkifier(),
 		_GeoLinkifier(),
 		EmailLinkifier(),
+		PhoneNumberLinkifier(),
 		if (network != null) _IrcChannelLinkifier(network.uri.toString()),
 	];
 	return lnk.linkify(text, linkifiers: linkifiers, options: lnk.LinkifyOptions(
