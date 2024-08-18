@@ -1,8 +1,9 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
-import 'package:flutter_linkify/flutter_linkify.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/widgets.dart';
 import 'package:linkify/linkify.dart' as lnk;
+import 'package:linkify/linkify.dart' hide linkify;
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -37,17 +38,24 @@ TextSpan linkify(BuildContext context, String text, {
 		// ignore
 	}
 
-	var elements = extractLinks(text, network);
-	return buildTextSpan(
-		elements,
-		onOpen: (link) async {
-			bool ok = await launchUrl(Uri.parse(link.url));
-			if (!ok) {
-				throw Exception('Failed to launch URL: ${link.url}');
-			}
-		},
-		linkStyle: linkStyle,
-	);
+	var children = extractLinks(text, network).map((elem) {
+		if (elem is LinkableElement) {
+			return TextSpan(
+				text: elem.text,
+				style: linkStyle,
+				recognizer: TapGestureRecognizer()..onTap = () async {
+					bool ok = await launchUrl(Uri.parse(elem.url));
+					if (!ok) {
+						throw Exception('Failed to launch URL: ${elem.url}');
+					}
+				},
+			);
+		} else {
+			return TextSpan(text: elem.text);
+		}
+	}).toList();
+
+	return TextSpan(children: children);
 }
 
 class _UrlLinkifier extends Linkifier {
