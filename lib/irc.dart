@@ -874,7 +874,8 @@ class CaseMapping {
 	const CaseMapping(this.canonicalize);
 
 	bool equals(String a, String b) {
-		return canonicalize(a) == canonicalize(b);
+		// Fast path in case both strings are identical
+		return a == b || canonicalize(a) == canonicalize(b);
 	}
 }
 
