@@ -871,7 +871,7 @@ class IrcIsupportElist {
 class CaseMapping {
 	final String Function(String s) canonicalize;
 
-	const CaseMapping(this.canonicalize);
+	const CaseMapping._(this.canonicalize);
 
 	bool equals(String a, String b) {
 		// Fast path in case both strings are identical
@@ -894,7 +894,7 @@ CaseMapping? _caseMappingByName(String s) {
 	default:
 		return null;
 	}
-	return CaseMapping((String s) => s.split('').map(caseMapChar).join(''));
+	return CaseMapping._((String s) => s.split('').map(caseMapChar).join(''));
 }
 
 String _caseMapCharRfc1459(String ch) {
