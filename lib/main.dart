@@ -96,6 +96,7 @@ void main() async {
 
 		if (initialUri == null) {
 			initialSharedMedia = await ShareHandler.instance.getInitialSharedMedia();
+			await ShareHandler.instance.resetInitialSharedMedia();
 		}
 	}
 
