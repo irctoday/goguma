@@ -66,11 +66,8 @@ distribute Goguma yourself on the App Store, or a third-party platform.
 
 ## Contributing
 
-Send patches to the [mailing list], report bugs on the [issue tracker]. Discuss
-in [#emersion on Libera Chat].
-
-If you aren't familiar with `git send-email`, you can use the
-[web interface][git-send-email-web] to submit patches.
+Send patches on [Codeberg] or to the [mailing list], report bugs on the
+[issue tracker]. Discuss in [#emersion on Libera Chat].
 
 ## License
 
@@ -89,8 +86,8 @@ Copyright (C) 2021 The goguma Contributors
 [Google Play Store]: https://play.google.com/store/apps/details?id=fr.emersion.goguma.play
 [Apple App Store]: https://apps.apple.com/fr/app/goguma-irc/id6470394620
 [documentation]: doc/README.md
+[Codeberg]: https://codeberg.org/emersion/goguma
 [mailing list]: https://lists.sr.ht/~emersion/goguma-dev
 [issue tracker]: https://todo.sr.ht/~emersion/goguma
 [#emersion on Libera Chat]: ircs://irc.libera.chat/#emersion
-[git-send-email-web]: https://man.sr.ht/git.sr.ht/#sending-patches-upstream
 [Transporter]: https://apps.apple.com/us/app/transporter/id1450874784
