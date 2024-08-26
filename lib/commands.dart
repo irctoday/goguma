@@ -20,6 +20,26 @@ String _requireParam(String? param) {
 	return param;
 }
 
+/// Remove the first parameter from a space-separated list
+///
+/// Each parameter may be separated by multiple spaces. Removes up to
+/// the first space and returns it along with the remainder after the
+/// first sequence of spaces.
+///
+/// The return value is either a length 2 list (param, remainder) or
+/// length 1 if there is no remainder.
+List<String> _chompParam(String params) {
+	var i = params.indexOf(' ');
+	if (i < 0) {
+		return [params];
+	}
+	var first = params.substring(0, i);
+	while (i < params.length && params[i] == ' ') {
+		i += 1;
+	}
+	return (i >= params.length) ? [first] : [first, params.substring(i)];
+}
+
 String? _join(BuildContext context, String? param) {
 	var client = context.read<Client>();
 	client.join([_requireParam(param)]);
@@ -50,6 +70,18 @@ String? _mode(BuildContext context, String? param) {
 		throw CommandException('This command can only be used in channels');
 	}
 	client.send(IrcMessage('MODE', [buffer.name, ..._requireParam(param).split(' ')]));
+	return null;
+}
+
+String? _oper(BuildContext context, String? param) {
+	var split = _chompParam(_requireParam(param));
+	if (split.length == 1) {
+		throw CommandException('This command requires a name and a password parameter');
+	}
+	var client = context.read<Client>();
+	var name = split[0];
+	var password = split[1];
+	client.send(IrcMessage('OPER', [name, password]));
 	return null;
 }
 
@@ -88,6 +120,7 @@ const Map<String, Command> commands = {
 	'kick': _kick,
 	'me': _me,
 	'mode': _mode,
+	'oper': _oper,
 	'part': _part,
 	'quote': _quote,
 };
