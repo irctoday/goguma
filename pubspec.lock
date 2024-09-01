@@ -1017,19 +1017,18 @@ packages:
     dependency: "direct main"
     description:
       name: unifiedpush
-      sha256: ef7f3ae6139d27169604e3844379ef7929af573a2be21d9e82187f44ab7b9a32
+      sha256: "6dbed5a6305ca33f1865c7a3d814ae39476b79a2d23ca76a5708f023f405730f"
       url: "https://pub.dev"
     source: hosted
-    version: "5.0.1"
+    version: "5.0.2"
   unifiedpush_android:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
-      path: unifiedpush_android
-      ref: f81e4b559d986a2264ea841c82edf2619b03f1ea
-      resolved-ref: f81e4b559d986a2264ea841c82edf2619b03f1ea
-      url: "https://codeberg.org/UnifiedPush/flutter-connector.git"
-    source: git
-    version: "2.2.3"
+      name: unifiedpush_android
+      sha256: "7443dece0a850ae956514f809983eb2b39fc518c2c7d24dbfe817198bec89134"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.0"
   unifiedpush_platform_interface:
     dependency: transitive
     description:
