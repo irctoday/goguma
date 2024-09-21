@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:hex/hex.dart';
 import 'package:provider/provider.dart';
 
 import '../client.dart';
@@ -29,6 +31,7 @@ class _ConnectPageState extends State<ConnectPage> {
 	bool _passwordRequired = false;
 	bool _passwordUnsupported = false;
 	Client? _fetchCapsClient;
+	String? _pinnedCertSHA1;
 
 	final formKey = GlobalKey<FormState>();
 	final serverController = TextEditingController();
@@ -68,6 +71,7 @@ class _ConnectPageState extends State<ConnectPage> {
 			tls: uri.scheme != 'irc+insecure',
 			saslPlainUsername: useSaslPlain ? nicknameController.text : null,
 			saslPlainPassword: useSaslPlain ? passwordController.text : null,
+			pinnedCertSHA1: _pinnedCertSHA1,
 		);
 	}
 
@@ -100,7 +104,6 @@ class _ConnectPageState extends State<ConnectPage> {
 		try {
 			await client.connect();
 			client.dispose();
-
 			await db.storeServer(serverEntry);
 			networkEntry = await db.storeNetwork(NetworkEntry(server: serverEntry.id!));
 		} on Exception catch (err) {
@@ -149,6 +152,11 @@ class _ConnectPageState extends State<ConnectPage> {
 			setState(() {
 				_error = err;
 			});
+
+			if (err is BadCertException) {
+				askBadCertficate(context, err.badCert);
+			}
+
 			return;
 		}
 
@@ -235,6 +243,8 @@ class _ConnectPageState extends State<ConnectPage> {
 				serverErr = ircErr.toString();
 				break;
 			}
+		} else if (_error is BadCertException) {
+			serverErr = 'Bad server certificate';
 		} else {
 			serverErr = _error?.toString();
 		}
@@ -261,6 +271,7 @@ class _ConnectPageState extends State<ConnectPage> {
 							setState(() {
 								_passwordUnsupported = false;
 								_passwordRequired = false;
+								_pinnedCertSHA1 = null;
 							});
 						},
 						validator: (value) {
@@ -311,6 +322,40 @@ class _ConnectPageState extends State<ConnectPage> {
 						),
 				])),
 			),
+		);
+	}
+
+	void askBadCertficate(BuildContext context, X509Certificate cert) {
+		showDialog<void>(
+			context: context,
+			builder: (BuildContext context) {
+				Widget noButton = TextButton(
+					child: const Text('Reject'),
+					onPressed:  () { Navigator.pop(context); },
+				);
+				Widget yesButton = TextButton(
+					child: const Text('Accept Always'),
+					onPressed:  () {
+						Navigator.pop(context);
+						setState(() => _pinnedCertSHA1 = HEX.encode(cert.sha1));
+						_handleServerFocusChange(false);
+					},
+				);
+				return AlertDialog(
+					title: const Text('Bad Certificate'),
+					content: SingleChildScrollView(
+						child: Text(
+							'Untrusted server certificate. '
+							'Only accept this certificate if you know what you\'re doing.\n\n'
+							'Issuer: ${cert.issuer}\n'
+							'SHA1 Fingerprint: ${HEX.encode(cert.sha1)}\n'
+							'From: ${cert.startValidity}\n'
+							'To: ${cert.endValidity}'
+						)
+					),
+					actions: [ noButton, yesButton ],
+				);
+			},
 		);
 	}
 }

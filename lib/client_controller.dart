@@ -33,6 +33,7 @@ ConnectParams connectParamsFromServerEntry(ServerEntry entry, Prefs prefs) {
 		realname: prefs.realname,
 		pass: entry.pass,
 		saslPlain: saslPlain,
+		pinnedCertSHA1: entry.pinnedCertSHA1
 	);
 }
 

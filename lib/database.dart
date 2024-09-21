@@ -19,6 +19,7 @@ class ServerEntry {
 	String? pass;
 	String? saslPlainUsername;
 	String? saslPlainPassword;
+	String? pinnedCertSHA1;
 
 	Map<String, Object?> toMap() {
 		return <String, Object?>{
@@ -30,6 +31,7 @@ class ServerEntry {
 			'pass': pass,
 			'sasl_plain_username': saslPlainUsername,
 			'sasl_plain_password': saslPlainPassword,
+			'pinned_cert_sha1': pinnedCertSHA1,
 		};
 	}
 
@@ -41,6 +43,7 @@ class ServerEntry {
 		this.pass,
 		this.saslPlainUsername,
 		this.saslPlainPassword,
+		this.pinnedCertSHA1,
 	});
 
 	ServerEntry.fromMap(Map<String, dynamic> m) :
@@ -51,7 +54,8 @@ class ServerEntry {
 		nick = m['nick'] as String?,
 		pass = m['pass'] as String?,
 		saslPlainUsername = m['sasl_plain_username'] as String?,
-		saslPlainPassword = m['sasl_plain_password'] as String?;
+		saslPlainPassword = m['sasl_plain_password'] as String?,
+		pinnedCertSHA1 = m['pinned_cert_sha1'] as String?;
 }
 
 class NetworkEntry {
@@ -340,7 +344,8 @@ const _schema = [
 			nick TEXT,
 			pass TEXT,
 			sasl_plain_username TEXT,
-			sasl_plain_password TEXT
+			sasl_plain_password TEXT,
+			pinned_cert_sha1 TEXT
 		)
 	''',
 	'''
@@ -459,6 +464,7 @@ const _migrations = [
 	'CREATE INDEX index_message_network_msgid on Message(network_msgid)',
 	'ALTER TABLE LinkPreview ADD COLUMN image_url TEXT',
 	'ALTER TABLE Network ADD COLUMN last_delivered_time TEXT',
+	'ALTER TABLE Server ADD COLUMN pinned_cert_sha1 TEXT',
 ];
 
 class DB {

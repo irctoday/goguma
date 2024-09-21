@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:hex/hex.dart';
 
 import 'irc.dart';
 import 'logging.dart';
@@ -25,6 +26,7 @@ class ConnectParams {
 	final SaslPlainCredentials? saslPlain;
 	final String? bouncerNetId;
 	final String? away;
+	final String? pinnedCertSHA1;
 
 	const ConnectParams({
 		required this.host,
@@ -36,6 +38,7 @@ class ConnectParams {
 		this.saslPlain,
 		this.bouncerNetId,
 		this.away,
+		this.pinnedCertSHA1,
 	}) : realname = realname ?? nick;
 
 	ConnectParams apply({
@@ -55,7 +58,18 @@ class ConnectParams {
 			saslPlain: saslPlain ?? this.saslPlain,
 			bouncerNetId: bouncerNetId ?? this.bouncerNetId,
 			away: away ?? this.away,
+			pinnedCertSHA1: pinnedCertSHA1,
 		);
+	}
+}
+
+class BadCertException implements Exception {
+	final X509Certificate badCert;
+	BadCertException(this.badCert);
+
+	@override
+	String toString() {
+		return 'Bad certificate. Issued by ' + badCert.issuer + '. SHA1 Fingerprint ' + HEX.encode(badCert.sha1) + '. Valid from: ' + badCert.startValidity.toString() + ' until ' + badCert.endValidity.toString();
 	}
 }
 
@@ -107,6 +121,7 @@ class Client {
 	Socket? _socket;
 	String _nick;
 	String _realname;
+	final String? _pinnedCertSHA1;
 	IrcSource? _serverSource;
 	ClientState _state = ClientState.disconnected;
 	bool _registered = false;
@@ -128,6 +143,7 @@ class Client {
 	String get nick => _nick;
 	String get realname => _realname;
 	IrcSource? get serverSource => _serverSource;
+	String? get pinnedCertSHA1 => _pinnedCertSHA1;
 	ClientState get state => _state;
 	bool get registered => _registered;
 	Stream<ClientMessage> get messages => _messagesController.stream;
@@ -145,6 +161,7 @@ class Client {
 		_requestCaps = requestCaps ?? _getDefaultCaps(params),
 		_nick = params.nick,
 		_realname = params.realname,
+		_pinnedCertSHA1 = params.pinnedCertSHA1,
 		_autoReconnect = autoReconnect,
 		isupport = isupport ?? IrcIsupportRegistry();
 
@@ -174,6 +191,12 @@ class Client {
 			connectionTaskFuture = SecureSocket.startConnect(
 				params.host,
 				params.port,
+				onBadCertificate: (X509Certificate cert) {
+					if (params?.pinnedCertSHA1 == HEX.encode(cert.sha1)) {
+						return true;
+					}
+					throw BadCertException(cert);
+				},
 				supportedProtocols: ['irc'],
 			);
 		} else {
