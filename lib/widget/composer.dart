@@ -7,7 +7,9 @@ import 'package:flutter/scheduler.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:record/record.dart';
 import 'package:share_handler/share_handler.dart';
 
 import '../client.dart';
@@ -42,6 +44,8 @@ class ComposerState extends State<Composer> {
 
 	DateTime? _ownTyping;
 	MessageModel? _replyTo;
+	AudioRecorder? _recorder;
+	Stream<String>? _recordTimer;
 
 	@override
 	void initState() {
@@ -582,7 +586,20 @@ class ComposerState extends State<Composer> {
 		_controller.text += uploadUrl;
 	}
 
-	void _runAddMenuTask(Future<void> Function() f) async {
+	Future<void> _startRecord() async {
+		var record = AudioRecorder();
+		if (!await record.hasPermission()) {
+			return;
+		}
+		var dir = await getTemporaryDirectory();
+		await record.start(RecordConfig(encoder: AudioEncoder.aacLc, numChannels: 1, autoGain: true, noiseSuppress: true), path: '${dir.path}/audio-record.m4a');
+		setState(() {
+			_recorder = record;
+			_recordTimer = Stream.periodic(Duration(seconds: 1), (n) => '${((n+1)/60).floor()}:${(n+1).remainder(60).toString().padLeft(2, '0')}');
+		});
+	}
+
+	Future<void> _runAddMenuTask(Future<void> Function() f) async {
 		setState(() {
 			_addMenuLoading = true;
 		});
@@ -603,10 +620,19 @@ class ComposerState extends State<Composer> {
 		}
 	}
 
+	Future<void> _cancelRecord() async {
+		var file = await _recorder?.stop();
+		await _recorder?.dispose();
+		if (file != null) {
+			await File(file).delete();
+		}
+	}
+
 	@override
 	void dispose() {
 		_focusNode.dispose();
 		_controller.dispose();
+		unawaited(_cancelRecord());
 		super.dispose();
 	}
 
@@ -623,7 +649,7 @@ class ComposerState extends State<Composer> {
 						return;
 					}
 					var file = XFile.fromData(data.data!, mimeType: data.mimeType, path: data.uri);
-					_runAddMenuTask(() async {
+					await _runAddMenuTask(() async {
 						await _uploadFile(file);
 					});
 				},
@@ -715,6 +741,55 @@ class ComposerState extends State<Composer> {
 		var canSendMessage = canSendMessageToBuffer(buffer, network);
 		var canUploadFiles = client.isupport.filehost != null && canSendMessage;
 
+		if (_recorder != null) {
+			return SafeArea(child: Row(children: [
+				Container(
+					width: 15,
+					height: 15,
+					margin: EdgeInsets.all(10),
+					child: CircularProgressIndicator(strokeWidth: 2),
+				),
+				Expanded(child: Text('Recording audio...')),
+				StreamBuilder(stream: _recordTimer!, initialData: '0:00', builder: (BuildContext context, AsyncSnapshot<String> snapshot) => Text(snapshot.data ?? '')),
+				IconButton(
+					icon: Icon(Icons.delete),
+					onPressed: () async {
+						await _cancelRecord();
+						setState(() {
+							_recorder = null;
+							_recordTimer = null;
+						});
+					},
+					tooltip: 'Cancel',
+					color: Colors.red,
+				),
+				FloatingActionButton(
+					onPressed: () async {
+						var file = await _recorder?.stop();
+						await _recorder?.dispose();
+						setState(() {
+							_recorder = null;
+							_recordTimer = null;
+						});
+						if (file == null) {
+							return;
+						}
+						await _runAddMenuTask(() async {
+							try {
+								await _uploadFile(XFile(file, mimeType: 'audio/mp4'));
+							} finally {
+								await File(file).delete();
+							}
+						});
+					},
+					tooltip: 'Accept',
+					mini: true,
+					elevation: 0,
+					child: Icon(Icons.check, size: 18),
+				),
+			]));
+		}
+
 		var fab = FloatingActionButton(
 			onPressed: _submit,
 			tooltip: _isCommand ? 'Execute' : 'Send',
@@ -755,7 +830,7 @@ class ComposerState extends State<Composer> {
 									Navigator.pop(context);
 									var file = await ImagePicker().pickImage(source: ImageSource.gallery);
 									if (file != null) {
-										_runAddMenuTask(() async {
+										await _runAddMenuTask(() async {
 											await _uploadFile(file);
 										});
 									}
@@ -768,10 +843,18 @@ class ComposerState extends State<Composer> {
 									Navigator.pop(context);
 									var file = await openFile(confirmButtonText: 'Upload');
 									if (file != null) {
-										_runAddMenuTask(() async {
+										await _runAddMenuTask(() async {
 											await _uploadFile(file);
 										});
 									}
+								},
+							),
+							if (client.isupport.filehost != null) ListTile(
+								title: Text('Record audio'),
+								leading: Icon(Icons.mic),
+								onTap: () async {
+									Navigator.pop(context);
+									await _startRecord();
 								},
 							),
 						])),

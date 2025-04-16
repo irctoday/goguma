@@ -67,6 +67,8 @@
 	<string>Share your current location with a channel or user</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Share photos from your library with a channel or user</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Record microphone audio and share it with a channel or user</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
