@@ -15,6 +15,7 @@ environment:
 dependencies:
   app_links: ^7.0.0
   async: ^2.11.0
+  audioplayers: ^6.4.0
   characters: ^1.4.0
   connectivity_plus: ^7.0.0
   crypto: ^3.0.7

@@ -11,6 +11,7 @@ import 'linkify.dart';
 import 'logging.dart';
 
 const maxPhotoSize = 10 * 1024 * 1024;
+const maxAudioSize = 10 * 1024 * 1024;
 const maxHtmlSize = 2 * 1024 * 1024;
 const minPeekHtmlSize = 50 * 1024;
 const maxPeekHtmlSize = 500 * 1024;
@@ -261,7 +262,8 @@ class LinkPreviewer {
 abstract class LinkPreview {
 	final Uri url;
 
-	Uri get imageUrl;
+	Uri? get imageUrl => null;
+	Uri? get audioUrl => null;
 
 	LinkPreview._(this.url);
 
@@ -277,6 +279,11 @@ abstract class LinkPreview {
 				return null;
 			}
 			return PhotoPreview(url);
+		} else if (mimeType.startsWith('audio/')) {
+			if (entry.contentLength != null && entry.contentLength! > maxAudioSize) {
+				return null;
+			}
+			return AudioPreview(url);
 		} else if (entry.imageUrl != null) {
 			return PagePreview(url, Uri.parse(entry.imageUrl!));
 		} else {
@@ -290,6 +297,13 @@ class PhotoPreview extends LinkPreview {
 
 	@override
 	Uri get imageUrl => url;
+}
+
+class AudioPreview extends LinkPreview {
+	AudioPreview(super.url) : super._();
+
+	@override
+	Uri? get audioUrl => url;
 }
 
 class PagePreview extends LinkPreview {
