@@ -105,7 +105,7 @@ class MessageSheet extends StatelessWidget {
 		var reactions = message.reactionMap;
 		var canReact = canSendMessage && client.caps.enabled.contains('message-tags') && client.isupport.isClientTagAllowed('draft/react') && message.entry.networkMsgid != null;
 
-		return Column(mainAxisSize: MainAxisSize.min, children: [
+		return SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
 			if (canReact) Container(
 				padding: EdgeInsets.symmetric(vertical: 10),
 				child: Row(
@@ -196,6 +196,6 @@ class MessageSheet extends StatelessWidget {
 					Navigator.pop(context);
 				},
 			),
-		]);
+		]));
 	}
 }
