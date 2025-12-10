@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:goguma/page/buffer_invite.dart';
 import 'package:provider/provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:share_handler/share_handler.dart';
@@ -626,6 +627,9 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 									db.storeBuffer(buffer.entry);
 								}
 								break;
+							case 'invite':
+								Navigator.pushNamed(context, InvitePage.routeName, arguments: buffer);
+								break;
 							case 'part':
 								var client = context.read<Client>();
 								if (client.isChannel(buffer.name)) {
@@ -649,6 +653,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 								PopupMenuItem(value: 'details', child: Text('Details')),
 								if (isOnline) PopupMenuItem(value: 'pin', child: Text(buffer.pinned ? 'Unpin' : 'Pin')),
 								if (isOnline) PopupMenuItem(value: 'mute', child: Text(buffer.muted ? 'Unmute' : 'Mute')),
+								if (!buffer.archived && (isOnline || !isChannel)) PopupMenuItem(value: 'invite', child: Text('Invite')),
 								if (!buffer.archived && (isOnline || !isChannel)) PopupMenuItem(value: 'part', child: Text(buffer.joined ? 'Leave' : 'Archive')),
 								if (buffer.archived) PopupMenuItem(value: 'delete', child: Text('Delete')),
 							];

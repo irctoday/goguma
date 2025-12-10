@@ -1231,6 +1231,32 @@ class Client {
 		});
 	}
 
+	Future<void> invite(String channel, String nick) {
+		var msg = IrcMessage('INVITE', [nick, channel]);
+		return _roundtripMessage(msg, (msg) {
+			switch (msg.cmd) {
+			case ERR_NOSUCHCHANNEL:
+			case ERR_NOTONCHANNEL:
+			case ERR_CHANOPRIVSNEEDED:
+				if (isupport.caseMapping.equals(msg.params[1], channel)) {
+					throw IrcException(msg);
+				}
+				break;
+      case ERR_USERONCHANNEL:
+        if (!isupport.caseMapping.equals(msg.params[1], nick)) {
+          return false;
+        }
+        if (!isupport.caseMapping.equals(msg.params[2], channel)) {
+          return false;
+        }
+        throw IrcException(msg);
+			case RPL_INVITING:
+        return isupport.caseMapping.equals(msg.params[1], nick) && isupport.caseMapping.equals(msg.params[2], channel);
+			}
+			return false;
+		});
+	}
+
 	Future<void> setTopic(String channel, String? topic) {
 		var msg = IrcMessage('TOPIC', [channel, topic ?? '']);
 		return _roundtripMessage(msg, (msg) {

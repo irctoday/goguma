@@ -23,6 +23,7 @@ import 'page/buffer_list.dart';
 import 'page/connect.dart';
 import 'page/edit_bouncer_network.dart';
 import 'page/gallery.dart';
+import 'page/buffer_invite.dart';
 import 'page/join.dart';
 import 'page/network_details.dart';
 import 'page/settings.dart';
@@ -480,6 +481,19 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 						Provider<Client>.value(value: client),
 					],
 					child: BufferDetailsPage(),
+				);
+			};
+			break;
+		case InvitePage.routeName:
+			var buffer = settings.arguments as BufferModel;
+			builder = (context) {
+				var client = context.read<ClientProvider>().get(buffer.network);
+				return MultiProvider(
+					providers: [
+						ChangeNotifierProvider<BufferModel>.value(value: buffer),
+						Provider<Client>.value(value: client),
+					],
+					child: InvitePage(),
 				);
 			};
 			break;
