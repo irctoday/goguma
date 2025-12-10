@@ -64,6 +64,7 @@ class NetworkEntry {
 	String? bouncerId;
 	String? bouncerName;
 	String? lastDeliveredTime;
+	String? lastDismissedError;
 	String? _rawBouncerUri;
 	String? _rawIsupport;
 	String? _rawCaps;
@@ -79,6 +80,7 @@ class NetworkEntry {
 			'bouncer_id': bouncerId,
 			'bouncer_name': bouncerName,
 			'last_delivered_time': lastDeliveredTime,
+			'last_dismissed_error': lastDismissedError,
 			'bouncer_uri': _rawBouncerUri,
 			'isupport': _rawIsupport,
 			'caps': _rawCaps,
@@ -95,6 +97,7 @@ class NetworkEntry {
 		bouncerId = m['bouncer_id'] as String?,
 		bouncerName = m['bouncer_name'] as String?,
 		lastDeliveredTime = m['last_delivered_time'] as String?,
+		lastDismissedError = m['last_dismissed_error'] as String?,
 		_rawBouncerUri = m['bouncer_uri'] as String?,
 		_rawIsupport = m['isupport'] as String?,
 		_rawCaps = m['caps'] as String?;
@@ -419,6 +422,7 @@ const _schema = [
 			isupport TEXT,
 			caps TEXT,
 			last_delivered_time TEXT,
+			last_dismissed_error TEXT,
 			FOREIGN KEY (server) REFERENCES Server(id) ON DELETE CASCADE,
 			UNIQUE(server, bouncer_id)
 		)
@@ -555,6 +559,7 @@ const _migrations = [
 	'ALTER TABLE Message ADD COLUMN redacted INTEGER NOT NULL DEFAULT 0',
 	'ALTER TABLE Buffer ADD COLUMN draft_text TEXT',
 	'ALTER TABLE Buffer ADD COLUMN draft_reply_to INTEGER REFERENCES Message(id) ON DELETE SET NULL',
+	'ALTER TABLE Network ADD COLUMN last_dismissed_error TEXT',
 ];
 
 class DB {

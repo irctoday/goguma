@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -92,6 +94,7 @@ class _BufferListPageState extends State<BufferListPage> {
 
 	@override
 	Widget build(BuildContext context) {
+		var db = context.read<DB>();
 		List<BufferModel> buffers = context.watch<BufferListModel>().buffers;
 		if (_searchQuery != null) {
 			var query = _searchQuery!;
@@ -160,6 +163,41 @@ class _BufferListPageState extends State<BufferListPage> {
 			);
 		}
 
+		var widgets = <Widget>[
+			Expanded(child: NetworkListIndicator(
+					child: _BackgroundServicePermissionBanner(child: body)
+			)),
+		];
+
+		var networkList = context.watch<NetworkListModel>();
+		for (var network in networkList.networks) {
+			var bouncerNetwork = network.bouncerNetwork;
+			if (bouncerNetwork == null) {
+				continue;
+			}
+			var error = bouncerNetwork.error;
+			if (error == null || error.isEmpty || error == network.networkEntry.lastDismissedError) {
+				continue;
+			}
+			widgets.add(MaterialBanner(
+				content: Text('Disconnected from ${network.displayName}: $error'),
+				actions: [
+					TextButton(
+						child: const Text('DISMISS'),
+						onPressed: () async {
+							if (network.networkEntry.lastDismissedError == error) {
+								return;
+							}
+							await db.storeNetwork(network.networkEntry);
+							setState(() {
+								network.networkEntry.lastDismissedError = error;
+							});
+						},
+					),
+				],
+			));
+		}
+
 		return Scaffold(
 			appBar: AppBar(
 				leading: _searchQuery != null ? CloseButton() : null,
@@ -208,9 +246,7 @@ class _BufferListPageState extends State<BufferListPage> {
 					),
 				],
 			),
-			body: NetworkListIndicator(
-				child: _BackgroundServicePermissionBanner(child: body)
-			),
+			body: Column(children: widgets),
 		);
 	}
 }
