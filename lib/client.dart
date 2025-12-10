@@ -898,6 +898,11 @@ class Client {
 		return _fetchChatHistory('BEFORE', target, params);
 	}
 
+	Future<ClientBatch> fetchChatHistoryAround(String target, String t, int limit) {
+		var params = ['timestamp=' + t, '$limit'];
+		return _fetchChatHistory('AROUND', target, params);
+	}
+
 	Future<ClientBatch> fetchChatHistoryLatest(String target, String? t, int limit) {
 		var bound = t == null ? '*' : 'timestamp=' + t;
 		var params = [bound, '$limit'];
@@ -1289,6 +1294,16 @@ class Client {
 		});
 		_params = _params.apply(realname: realname);
 	}
+
+  Future<ClientBatch> search(String target, String query) async {
+    var msg = IrcMessage('SEARCH', [formatIrcTags({
+      'in': target,
+      'text': query,
+    })]);
+    return _roundtripBatch(msg, (batch) {
+      return batch.type == 'soju.im/search';
+    });
+  }
 
 	Future<void> webPushRegister(String endpoint, Map<String, List<int>> keys) {
 		Map<String, String> encodedKeys = Map.fromEntries(keys.entries.map((kv) {

@@ -196,9 +196,13 @@ class ComposerState extends State<Composer> {
 		if (!client.caps.enabled.contains('echo-message')) {
 			messages = await Future.wait(futures);
 
+      var lastMessage = await db.listMessagesBefore(buffer.id, null, 1);
+
+      // TODO: false: we might have an old local message if we only fetched through AROUND?
+      //       -> in which case have a gap?
 			List<MessageEntry> entries = [];
-			for (var msg in messages) {
-				var entry = MessageEntry(msg, buffer.id);
+			for (var (i, msg) in messages.indexed) {
+				var entry = MessageEntry(msg, buffer.id, gapBefore: i == 0 && lastMessage.isEmpty);
 				entries.add(entry);
 			}
 			await db.storeMessages(entries);

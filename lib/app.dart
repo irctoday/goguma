@@ -5,6 +5,7 @@ import 'package:app_links/app_links.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
+import 'package:goguma/page/search.dart';
 import 'package:provider/provider.dart';
 import 'package:share_handler/share_handler.dart';
 
@@ -465,6 +466,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 					child: BufferPage(
 						unreadMarkerTime: buffer.entry.lastReadTime,
 						sharedMedia: args.sharedMedia,
+						searchMessage: args.searchMessage,
 					),
 				);
 			};
@@ -480,6 +482,20 @@ class _AppState extends State<App> with WidgetsBindingObserver {
 						Provider<Client>.value(value: client),
 					],
 					child: BufferDetailsPage(),
+				);
+			};
+			break;
+		case SearchPage.routeName:
+			var buffer = settings.arguments as BufferModel;
+			builder = (context) {
+				var client = context.read<ClientProvider>().get(buffer.network);
+				return MultiProvider(
+					providers: [
+						ChangeNotifierProvider<BufferModel>.value(value: buffer),
+						ChangeNotifierProvider<NetworkModel>.value(value: buffer.network),
+						Provider<Client>.value(value: client),
+					],
+					child: SearchPage(),
 				);
 			};
 			break;

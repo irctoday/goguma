@@ -205,6 +205,7 @@ class MessageEntry {
 	final int buffer;
 	final String raw;
 	bool redacted;
+  bool gapBefore;
 
 	IrcMessage? _msg;
 	DateTime? _dateTime;
@@ -217,10 +218,11 @@ class MessageEntry {
 			'buffer': buffer,
 			'raw': raw,
 			'redacted': redacted ? 1 : 0,
+			'gap_before': gapBefore ? 1 : 0,
 		};
 	}
 
-	MessageEntry(IrcMessage msg, this.buffer) :
+	MessageEntry(IrcMessage msg, this.buffer, {this.gapBefore = false}) :
 		time = msg.tags['time'] ?? formatIrcTime(DateTime.now()),
 		networkMsgid = msg.tags['msgid'],
 		raw = msg.toString(),
@@ -233,7 +235,8 @@ class MessageEntry {
 		networkMsgid = m['network_msgid'] as String?,
 		buffer = m['buffer'] as int,
 		raw = m['raw'] as String,
-		redacted = m['redacted'] == 1;
+		redacted = m['redacted'] == 1,
+		gapBefore = m['gap_before'] == 1;
 
 	IrcMessage get msg {
 		_msg ??= IrcMessage.parse(raw);
@@ -449,6 +452,7 @@ const _schema = [
 			buffer INTEGER NOT NULL,
 			raw TEXT NOT NULL,
 			redacted INTEGER NOT NULL DEFAULT 0,
+			gap_before INTEGER NOT NULL DEFAULT 0,
 			FOREIGN KEY (buffer) REFERENCES Buffer(id) ON DELETE CASCADE
 		)
 	''',
@@ -555,6 +559,7 @@ const _migrations = [
 	'ALTER TABLE Message ADD COLUMN redacted INTEGER NOT NULL DEFAULT 0',
 	'ALTER TABLE Buffer ADD COLUMN draft_text TEXT',
 	'ALTER TABLE Buffer ADD COLUMN draft_reply_to INTEGER REFERENCES Message(id) ON DELETE SET NULL',
+  'ALTER TABLE Message ADD COLUMN gap_before INTEGER NOT NULL DEFAULT 0',
 ];
 
 class DB {
@@ -762,18 +767,39 @@ class DB {
 		};
 	}
 
-	Future<List<MessageEntry>> listMessagesBefore(int buffer, int? msg, int limit) async {
-		var where = 'buffer = ?';
-		var params = [buffer];
-		if (msg != null) {
-			where += ' AND id != ? AND time <= (SELECT time FROM Message WHERE id = ?)';
-			params += [msg, msg];
-		}
+  Future<List<MessageEntry>> listMessagesAfterEqualTime(int buffer, String time, int limit) async {
+    var where = 'buffer = ? AND time >= ?';
+    var params = [buffer, time];
+    return _listMessages(where, params, true, limit);
+  }
+
+  Future<List<MessageEntry>> listMessagesBefore(int buffer, int? msg, int limit) async {
+    var where = 'buffer = ?';
+    var params = [buffer];
+    if (msg != null) {
+      where += ' AND id != ? AND time <= (SELECT time FROM Message WHERE id = ?)';
+      params += [msg, msg];
+    }
+    return _listMessages(where, params, false, limit);
+  }
+
+  Future<List<MessageEntry>> listMessagesAfter(int buffer, int? msg, int limit) async {
+    var where = 'buffer = ?';
+    var params = [buffer];
+    if (msg != null) {
+      where += ' AND id != ? AND time >= (SELECT time FROM Message WHERE id = ?)';
+      params += [msg, msg];
+    }
+    return _listMessages(where, params, true, limit);
+  }
+
+	Future<List<MessageEntry>> _listMessages(String where, List<Object?> params, bool ascending, int limit) async {
+    var order = ascending ? 'ASC' : 'DESC';
 		var entries = await _db.rawQuery('''
 			SELECT *
 			FROM Message
 			WHERE $where
-			ORDER BY time DESC LIMIT ?
+			ORDER BY time $order LIMIT ?
 		'''
 		, [...params, limit]);
 		var l = entries.map((m) => MessageEntry.fromMap(m)).toList();
@@ -800,6 +826,17 @@ class DB {
 		}
 		return messages;
 	}
+
+  Future<MessageEntry?> fetchMessageByEntry(MessageEntry msg) async {
+    if (msg.networkMsgid != null) {
+      return fetchMessageByNetworkMsgid(msg.buffer, msg.networkMsgid!);
+    }
+    var entries = await _db.rawQuery('SELECT * FROM Message WHERE time = ? AND buffer = ? AND raw = ?', [msg.time, msg.buffer, msg.raw]);
+    if (entries.isEmpty) {
+      return null;
+    }
+    return MessageEntry.fromMap(entries.first);
+  }
 
 	Future<MessageEntry?> fetchMessageByNetworkMsgid(int buffer, String msgid) async {
 		var messages = await fetchMessageSetByNetworkMsgid(buffer, [msgid]);

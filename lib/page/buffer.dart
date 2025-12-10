@@ -21,14 +21,17 @@ import '../widget/message_item.dart';
 import '../widget/network_indicator.dart';
 import 'buffer_details.dart';
 import 'buffer_list.dart';
+import 'search.dart';
 
 class BufferPageArguments {
 	final BufferModel buffer;
 	final SharedMedia? sharedMedia;
+	final MessageEntry? searchMessage;
 
 	const BufferPageArguments({
 		required this.buffer,
 		this.sharedMedia,
+		this.searchMessage,
 	});
 }
 
@@ -37,8 +40,9 @@ class BufferPage extends StatefulWidget {
 
 	final String? unreadMarkerTime;
 	final SharedMedia? sharedMedia;
+  final MessageEntry? searchMessage;
 
-	const BufferPage({ super.key, this.unreadMarkerTime, this.sharedMedia });
+	const BufferPage({ super.key, this.unreadMarkerTime, this.sharedMedia, this.searchMessage });
 
 	@override
 	State<BufferPage> createState() => _BufferPageState();
@@ -121,7 +125,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 		);
 
 		var buffer = context.read<BufferModel>();
-		if (buffer.messages.length >= 1000) {
+		if (widget.searchMessage == null && buffer.messages.length >= 1000) {
 			_setInitialChatHistoryLoaded();
 			_updateBufferFocus();
 			return;
@@ -132,6 +136,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 		// Timer.run prevents calling setState() from inside initState()
 		Timer.run(() async {
 			try {
+        await _fetchSearchMessage();
 				await _fetchChatHistory();
 			} on Exception catch (err) {
 				log.print('Failed to fetch chat history', error: err);
@@ -214,6 +219,28 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 			client.monitor([buffer.name]);
 		}
 	}
+
+  Future<void> _fetchSearchMessage() async {
+    if (widget.searchMessage == null) {
+      return;
+    }
+
+    var db = context.read<DB>();
+    var clientProvider = context.read<ClientProvider>();
+    var buffer = context.read<BufferModel>();
+    var msg = await db.fetchMessageByEntry(widget.searchMessage!);
+    if (msg != null) {
+      List<MessageEntry> entries = [];
+      entries.addAll(await db.listMessagesBefore(buffer.id, msg.id, 500));
+      entries.add(msg);
+      entries.addAll(await db.listMessagesAfter(buffer.id, msg.id, 500));
+      var models = await buildMessageModelList(db, entries);
+      // TODO: oops populateMessageHistory, merge
+      buffer.populateMessageHistory(models.toList());
+    } else {
+      await clientProvider.fetchChatHistory(buffer, around: widget.searchMessage!.time);
+    }
+  }
 
 	Future<void> _fetchChatHistory() async {
 		if (_chatHistoryLoading) {
@@ -608,6 +635,9 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 							case 'details':
 								Navigator.pushNamed(context, BufferDetailsPage.routeName, arguments: buffer);
 								break;
+							case 'search':
+								Navigator.pushNamed(context, SearchPage.routeName, arguments: buffer);
+								break;
 							case 'pin':
 								var client = context.read<Client>();
 								if (client.metadataSubs.contains('soju.im/pinned')) {
@@ -647,6 +677,7 @@ class _BufferPageState extends State<BufferPage> with WidgetsBindingObserver, Ti
 						itemBuilder: (context) {
 							return [
 								PopupMenuItem(value: 'details', child: Text('Details')),
+								PopupMenuItem(value: 'search', child: Text('Search')),
 								if (isOnline) PopupMenuItem(value: 'pin', child: Text(buffer.pinned ? 'Unpin' : 'Pin')),
 								if (isOnline) PopupMenuItem(value: 'mute', child: Text(buffer.muted ? 'Unmute' : 'Mute')),
 								if (!buffer.archived && (isOnline || !isChannel)) PopupMenuItem(value: 'part', child: Text(buffer.joined ? 'Leave' : 'Archive')),

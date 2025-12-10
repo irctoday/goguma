@@ -575,6 +575,11 @@ class BufferModel extends ChangeNotifier {
 	}
 
 	void populateMessageHistory(List<MessageModel> l) {
+    // TODO
+    _messageHistoryLoaded = true;
+    addMessages(l);
+    return;
+
 		// The messages passed here must be already sorted by the caller, and
 		// must always come before the existing messages
 		if (!_messageHistoryLoaded) {

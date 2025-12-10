@@ -309,24 +309,31 @@ class ClientProvider {
 		));
 	}
 
-	Future<void> fetchChatHistory(BufferModel buffer) async {
+	Future<void> fetchChatHistory(BufferModel buffer, {String? around}) async {
 		var controller = _controllers[buffer.network]!;
 		var client = controller.client;
 
+    var limit = 100;
+
 		String? before;
+    MessageEntry? beforeMessage;
+    int? beforeLimit;
 		if (!buffer.messages.isEmpty) {
-			before = buffer.messages.first.entry.time;
+      beforeMessage = buffer.messages.first.entry;
+      beforeLimit = limit;
+      before = beforeMessage.time;
 		}
 
-		var limit = 100;
 		ClientBatch batch;
-		if (before != null) {
+    if (around != null) {
+      batch = await client.fetchChatHistoryAround(buffer.name, around, limit);
+    } else if (before != null) {
 			batch = await client.fetchChatHistoryBefore(buffer.name, before, limit);
 		} else {
 			batch = await client.fetchChatHistoryLatest(buffer.name, null, limit);
 		}
 
-		await controller._handleChatMessages(buffer.name, batch.messages);
+		await controller._handleChatMessages(buffer.name, batch.messages, beforeMessage: beforeMessage, beforeLimit: beforeLimit);
 	}
 }
 
@@ -520,6 +527,7 @@ class ClientController {
 			}
 
 			if (_prevLastDeliveredTime != null) {
+        // TODO: what is last delivered time was bumped through a SEARCH?
 				var to = msg.tags['time'] ?? formatIrcTime(DateTime.now());
 				syncFutures.add(_fetchBacklog(_prevLastDeliveredTime!, to));
 			}
@@ -820,7 +828,7 @@ class ClientController {
 		return null;
 	}
 
-	Future<void> _handleChatMessages(String target, List<ClientMessage> messages) async {
+	Future<void> _handleChatMessages(String target, List<ClientMessage> messages, {MessageEntry? beforeMessage, int? beforeLimit}) async {
 		if (messages.length == 0) {
 			return;
 		}
@@ -893,8 +901,69 @@ class ClientController {
 		if (reactions.isNotEmpty) {
 			await _db.storeReactions(reactions);
 		}
+
 		if (privmsgs.isNotEmpty) {
-			await _db.storeMessages(privmsgs);
+      if (isHistory) {
+        privmsgs.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+        var toStore = <MessageEntry>[];
+        var toAdd = <MessageEntry>[];
+        // Add some extra messages to the limit in case of multiple messages at same timestamp.
+        var local = await _db.listMessagesAfterEqualTime(buf.id, privmsgs.first.time, privmsgs.length + 10);
+        var liNext = 0;
+        var completeHistory = beforeLimit != null && messages.length < beforeLimit;
+        for (var (i, m) in privmsgs.indexed) {
+          var gapBefore = i == 0 && !completeHistory;
+          var li = liNext;
+          MessageEntry? lm;
+          while (true) {
+            lm = li < local.length ? local[li] : null;
+            if (lm == null) {
+              // No local messages left: no match
+              break;
+            }
+            if (lm.dateTime.isBefore(m.dateTime)) {
+              // Local message too old: try next one
+              li++;
+              liNext = li;
+              continue;
+            }
+            if (lm.dateTime.isAfter(m.dateTime)) {
+              // Local message too recent: no match
+              lm = null;
+              break;
+            }
+            if (lm.raw != m.raw) {
+              // Local message raw differs: no match, try next
+              li++;
+              continue;
+            }
+            // Same message! Keep, and shift for next match.
+            li++;
+            liNext = li;
+            break;
+          }
+          if (lm != null) {
+            // Matching local message
+            if (lm.gapBefore && !gapBefore) {
+              lm.gapBefore = false;
+              toStore.add(lm);
+            }
+          } else {
+            // No matching local message
+            m.gapBefore = gapBefore;
+            toStore.add(m);
+            toAdd.add(m);
+          }
+        }
+        if (beforeMessage != null && beforeMessage.gapBefore) {
+          beforeMessage.gapBefore = false;
+          toStore.add(beforeMessage);
+        }
+        await _db.storeMessages(toStore);
+        privmsgs = toAdd;
+      } else {
+        await _db.storeMessages(privmsgs);
+      }
 		}
 
 		if (buf.messageHistoryLoaded) {
@@ -929,6 +998,7 @@ class ClientController {
 			client.setReadMarker(buf.name, buf.entry.lastReadTime!);
 		}
 
+    // TODO: if history AROUND, is last delivery time right?
 		_bufferList.bumpLastDeliveredTime(buf, t);
 		if (_network.networkEntry.bumpLastDeliveredTime(t)) {
 			await _db.storeNetwork(_network.networkEntry);
@@ -1149,6 +1219,7 @@ class ClientController {
 
 			var done = false;
 			for (var i = 0; i < 20; i++) {
+        // TODO: prevent gaps on between too? like beforeMessage
 				var batch = await client.fetchChatHistoryBetween(target.name, from, to, max);
 				await readMarkerFuture;
 				await _handleChatMessages(target.name, batch.messages);
