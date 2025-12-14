@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../client.dart';
+import '../client_controller.dart';
 import '../database.dart';
 import '../irc.dart';
 import '../models.dart';
@@ -14,6 +16,7 @@ class ReactionsSheet extends StatelessWidget {
 		_userList = userList;
 
 	static void open(BuildContext context, List<ReactionEntry> reactions) {
+    var client = context.read<ClientProvider>().get(buffer.network);
 		var network = context.read<NetworkModel>();
 		showModalBottomSheet<void>(
 			context: context,
@@ -24,7 +27,32 @@ class ReactionsSheet extends StatelessWidget {
 
 	@override
 	Widget build(BuildContext context) {
-		return ListView(shrinkWrap: true, children: _reactions.entries.map((entry) {
+    var client = context.read<Client>();
+
+    var reactionTypes = <String, int>{};
+    for (var reactions in _reactions.values) {
+      for (var reaction in reactions) {
+        var n = reactionTypes[reaction] ?? 0;
+        reactionTypes[reaction] = n + 1;
+      }
+    }
+    var reactionsEntries = reactionTypes.entries.toList();
+    reactionsEntries.sort((a, b) => -a.value.compareTo(b.value));
+
+		return Column(children: [
+      Row(children: reactionsEntries.map((reaction) => IconButton.filledTonal(
+        isSelected: _reactions[client.nick]?.contains(reaction.key) ?? false,
+        constraints: BoxConstraints(minWidth: 50, minHeight: 50),
+        onPressed: () {
+          Navigator.pop(context);
+          // TODO _handleReact(context, reaction);
+        },
+        icon: Text(
+          '${reaction.key} ${reaction.value}',
+          style: TextStyle(fontSize: 20),
+        ),
+      )).toList()),
+      Expanded(child: ListView(shrinkWrap: true, children: _reactions.entries.map((entry) {
 			var nickname = entry.key;
 			var reactions = entry.value;
 			var user = _userList.map[nickname];
@@ -42,7 +70,8 @@ class ReactionsSheet extends StatelessWidget {
 					)).toList(),
 				),
 			);
-		}).toList());
+		}).toList())),
+    ]);
 	}
 }
 
