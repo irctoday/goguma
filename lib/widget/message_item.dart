@@ -407,7 +407,8 @@ class _ReactionChip extends StatelessWidget {
 		var bg = Theme.of(context).colorScheme.surface;
 		return GestureDetector(
 			onTap: () {
-				ReactionsSheet.open(context, message.reactions);
+				var buffer = context.read<BufferModel>();
+				ReactionsSheet.open(context, buffer, message);
 			},
 			child: Container(
 				padding: EdgeInsets.symmetric(vertical: 2, horizontal: 7),
