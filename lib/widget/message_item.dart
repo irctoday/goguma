@@ -266,6 +266,7 @@ class RegularMessageItem extends StatelessWidget {
 		if (isAction || bigEmotes) {
 			decoratedMessage = inner;
 		} else {
+			var borderRadius = BorderRadius.circular(10);
 			decoratedMessage = ConstrainedBox(
 				constraints: BoxConstraints(
 					// Message bubbles are 80% of the screen width at most
@@ -273,13 +274,24 @@ class RegularMessageItem extends StatelessWidget {
 				),
 				child: Stack(children: [
 					Container(
-						decoration: BoxDecoration(
-							borderRadius: BorderRadius.circular(10),
-							color: boxColor,
-						),
 						margin: msg.reactions.isEmpty ? null : EdgeInsets.only(bottom: 25),
-						padding: EdgeInsets.all(10),
-						child: inner,
+						child: Ink(
+							decoration: BoxDecoration(
+								borderRadius: borderRadius,
+								color: boxColor,
+							),
+							child: InkWell(
+								borderRadius: borderRadius,
+								onLongPress: () {
+									var buffer = context.read<BufferModel>();
+									MessageSheet.open(context, buffer, msg, onReply);
+								},
+								child: Container(
+									padding: EdgeInsets.all(10),
+									child: inner,
+								),
+							),
+						),
 					),
 					if (!msg.reactions.isEmpty) Positioned(
 						bottom: 4,
@@ -304,14 +316,6 @@ class RegularMessageItem extends StatelessWidget {
 
 		decoratedMessage = Align(
 			alignment: boxAlignment,
-			child: decoratedMessage,
-		);
-
-		decoratedMessage = GestureDetector(
-			onLongPress: () {
-				var buffer = context.read<BufferModel>();
-				MessageSheet.open(context, buffer, msg, onReply);
-			},
 			child: decoratedMessage,
 		);
 
@@ -555,7 +559,7 @@ class CompactMessageItem extends StatelessWidget {
 			child: Stack(children: [
 				Container(
 					margin: reactions.isEmpty ? null : EdgeInsets.only(bottom: 30),
-					child: GestureDetector(
+					child: InkWell(
 						onLongPress: () {
 							var buffer = context.read<BufferModel>();
 							MessageSheet.open(context, buffer, msg, onReply);
