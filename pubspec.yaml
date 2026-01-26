@@ -52,6 +52,7 @@ dependencies:
   url_launcher: '^6.0.2'
   # TODO: replace "webcrypto" with the "cryptography" package once they have a
   # pure Dart Ecdh.p256 implementation
+  video_player: ^2.10.1
   webcrypto: ^0.6.0
   workmanager: ^0.9.0+2
 

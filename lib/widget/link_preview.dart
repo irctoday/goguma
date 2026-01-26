@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:video_player/video_player.dart';
 
 import '../cached_network_image.dart';
 import '../link_preview.dart' as lib;
@@ -41,7 +44,15 @@ class LinkPreview extends StatelessWidget {
 				}
 				// TODO: support multiple previews
 				var preview = previews.first;
-				return builder(context, _PhotoPreview(preview));
+				Widget child;
+				if (preview.imageUrl != null) {
+					child = _PhotoPreview(preview);
+				} else if (preview.videoUrl != null && !Platform.isLinux && !Platform.isWindows) {
+					child = _VideoPreview(preview);
+				} else {
+					return Container();
+				}
+				return builder(context, child);
 			},
 		);
 	}
@@ -107,5 +118,83 @@ class _PhotoPreview extends StatelessWidget {
 				},
 			)),
 		);
+	}
+}
+
+class _VideoPreview extends StatefulWidget {
+	final lib.LinkPreview preview;
+
+	const _VideoPreview(this.preview);
+
+	@override
+	State<_VideoPreview> createState() => _VideoPreviewState();
+}
+
+class _VideoPreviewState extends State<_VideoPreview> {
+	late VideoPlayerController _controller;
+
+	@override
+	void initState() {
+		super.initState();
+		_controller = VideoPlayerController.networkUrl(
+			widget.preview.url,
+			videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+		);
+		_controller.addListener(() {
+			setState(() {});
+		});
+		_controller.initialize();
+	}
+
+	@override
+	Widget build(BuildContext context) {
+		return _controller.value.isInitialized
+				? Container(height: 250, child: AspectRatio(
+			aspectRatio: _controller.value.aspectRatio,
+			child: Stack(
+				alignment: Alignment.bottomCenter,
+				children: [
+					VideoPlayer(_controller),
+					GestureDetector(
+						onTap: () async {
+							if (_controller.value.isPlaying) {
+								await _controller.pause();
+							} else {
+								await _controller.play();
+							}
+						},
+						child: Center(
+							child: Icon(
+								_controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+								color: Colors.white.withOpacity(0.7),
+								size: 100.0,
+							),
+						),
+					),
+					VideoProgressIndicator(
+						_controller,
+						allowScrubbing: true,
+						padding: const EdgeInsets.all(10),
+						colors: const VideoProgressColors(
+							playedColor: Colors.red,
+							bufferedColor: Colors.white24,
+							backgroundColor: Colors.grey,
+						),
+					),
+				],
+			),
+		))
+				: Container(
+			width: 250,
+			height: 250,
+			alignment: Alignment.center,
+			child: CircularProgressIndicator(),
+		);
+	}
+
+	@override
+	void dispose() {
+		_controller.dispose();
+		super.dispose();
 	}
 }
